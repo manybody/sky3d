@@ -1,0 +1,9 @@
+ &files wffile='Restart'/
+ &force name='SV-bas', pairing='NONE' /
+ &main tcoul=T,mprint=50,mplot=50,
+  mrest=100,writeselect='r',
+  imode=2,tfft=T,nof=2 /
+ &grid nx=48,ny=24,nz=48,dx=1.0, periodic=F /
+ &dynamic nt=1000, dt=0.2, rsep=16 /
+ &fragments filename=2*'../Static/O16', ecm=100, b=2, fix_boost=F,
+	fcent(1,1)=-1,0,-5, fcent(1,2)=1,0,5 /

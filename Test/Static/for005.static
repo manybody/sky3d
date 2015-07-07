@@ -1,0 +1,11 @@
+ &files wffile='O16' /
+ &force name='SV-bas', pairing='NONE' /
+ &main mprint=10,mplot=10,
+  mrest=100,writeselect='r',
+  imode=1,tfft=T,nof=0 /
+ &grid nx=24,ny=24,nz=24,dx=1.0,dy=1.0,dz=1.0,
+	periodic=F /
+ &static nprot=8, nneut=8, 
+  radinx=3.1,radiny=3.1,radinz=3.1,
+  x0dmp=0.40,e0dmp=100.0,tdiag=T,tlarge=F,
+  maxiter=2000,serr=1D-6 /

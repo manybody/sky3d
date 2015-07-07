@@ -1,0 +1,10 @@
+pdflatex Documentation.tex
+bibtex Documentation.aux
+pdflatex Documentation.tex
+for i in M N P V
+do makeindex $i
+sed "s/_ /_/g" $i.ind > qq
+rm $i.ind; mv qq $i.ind
+done
+pdflatex Documentation.tex
+pdflatex Documentation.tex

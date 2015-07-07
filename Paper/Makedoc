@@ -1,0 +1,6 @@
+latex Sky3D.tex
+bibtex Sky3D.aux
+latex Sky3D.tex
+latex Sky3D.tex
+dvips Sky3D.dvi
+ps2pdf Sky3D.ps
