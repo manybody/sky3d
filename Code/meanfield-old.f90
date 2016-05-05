@@ -26,9 +26,8 @@ CONTAINS
     USE Trivial, ONLY: rmulx,rmuly,rmulz
     REAL(db),PARAMETER :: epsilon=1.0d-25  
     REAL(db) :: rotspp,rotspn
-    REAL(db),ALLOCATABLE :: workden(:,:,:,:),workvec(:,:,:,:,:)
+    REAL(db) :: workden(nx,ny,nz,2),workvec(nx,ny,nz,3,2)
     INTEGER :: ix,iy,iz,ic,iq,icomp
-    ALLOCATE(workden(nx,ny,nz,2),workvec(nx,ny,nz,3,2))
     !  Step 1: 3-body contribution to upot.
     DO iq=1,2  
        ic=3-iq  
@@ -131,7 +130,6 @@ CONTAINS
        CALL rmuly(der1y,bmass(:,:,:,iq),dbmass(:,:,:,2,iq),0)
        CALL rmulz(der1z,bmass(:,:,:,iq),dbmass(:,:,:,3,iq),0)
     ENDDO
-    DEALLOCATE(workden,workvec)
   END SUBROUTINE skyrme
   !***********************************************************************
   SUBROUTINE hpsi(iq,eshift,pinn,pout)
@@ -145,12 +143,11 @@ CONTAINS
     INTENT(OUT) :: pout
     INTEGER :: is,ic
     REAL(db) :: sigis
-    COMPLEX(db),ALLOCATABLE,DIMENSION(:,:,:,:) :: pswk,pswk2
-    ALLOCATE(pswk(nx,ny,nz,2),pswk2(nx,ny,nz,2))
+    COMPLEX(db),DIMENSION(nx,ny,nz,2) :: pswk,pswk2
     ! Step 1: non-derivative parts not involving spin
     DO is=1,2  
        pout(:,:,:,is)=CMPLX(upot(:,:,:,iq)-eshift, &
-            -0D0,db)*pinn(:,:,:,is)
+            -0.5D0*divaq(:,:,:,iq),db)*pinn(:,:,:,is)
     ENDDO
     ! Step 2: the spin-current coupling
     pout(:,:,:,1)=pout(:,:,:,1)  &
@@ -168,25 +165,13 @@ CONTAINS
     ENDIF
     DO is=1,2  
        ic=3-is  
-       sigis=(3-2*is)*0.5D0  
+       sigis=3-2*is  
        pout(:,:,:,is)=pout(:,:,:,is) &
-            -CMPLX(dbmass(:,:,:,1,iq),0.5D0*aq(:,:,:,1,iq) &
+            -CMPLX(dbmass(:,:,:,1,iq),aq(:,:,:,1,iq) &
             -sigis*wlspot(:,:,:,2,iq),db)*pswk(:,:,:,is)  &
             -sigis*wlspot(:,:,:,3,iq)*pswk(:,:,:,ic) &
             -bmass(:,:,:,iq)*pswk2(:,:,:,is)
     ENDDO
-    pswk2(:,:,:,1) = CMPLX(0D0,-0.5D0,db)*&
-         (aq(:,:,:,1,iq)-wlspot(:,:,:,2,iq))*pinn(:,:,:,1)&
-         -0.5D0*wlspot(:,:,:,3,iq)*pinn(:,:,:,2)
-    pswk2(:,:,:,2) = CMPLX(0D0,-0.5D0,db)*&
-         (aq(:,:,:,1,iq)+wlspot(:,:,:,2,iq))*pinn(:,:,:,2)&
-         +0.5D0*wlspot(:,:,:,3,iq)*pinn(:,:,:,1)
-    IF(TFFT) THEN
-       CALL cdervx(pswk2,pswk)  
-    ELSE
-       CALL cmulx(der1x,pswk2,pswk,0)  
-    ENDIF
-    pout(:,:,:,:)=pout(:,:,:,:) + pswk(:,:,:,:)
     ! Step 4: derivative terms in y
     IF(TFFT) THEN
        CALL cdervy(pinn,pswk,d2psout=pswk2)  
@@ -196,25 +181,13 @@ CONTAINS
     ENDIF
     DO is=1,2  
        ic=3-is  
-       sigis=(3-2*is)*0.5D0  
+       sigis=3-2*is  
        pout(:,:,:,is)=pout(:,:,:,is) &
-            -CMPLX(dbmass(:,:,:,2,iq),0.5D0*aq(:,:,:,2,iq) &
+            -CMPLX(dbmass(:,:,:,2,iq),aq(:,:,:,2,iq) &
             +sigis*wlspot(:,:,:,1,iq),db)*pswk(:,:,:,is) &
-            +CMPLX(0.D0,0.5D0*wlspot(:,:,:,3,iq),db)*pswk(:,:,:,ic) &
+            +CMPLX(0.D0,wlspot(:,:,:,3,iq),db)*pswk(:,:,:,ic) &
             -bmass(:,:,:,iq)*pswk2(:,:,:,is)
     ENDDO
-    pswk2(:,:,:,1) = CMPLX(0D0,-0.5D0,db)*&
-         (aq(:,:,:,2,iq)+wlspot(:,:,:,1,iq))*pinn(:,:,:,1)&
-         +CMPLX(0D0,0.5D0,db)*wlspot(:,:,:,3,iq)*pinn(:,:,:,2)
-    pswk2(:,:,:,2) = CMPLX(0D0,-0.5D0,db)*&
-         (aq(:,:,:,2,iq)-wlspot(:,:,:,1,iq))*pinn(:,:,:,2)&
-         +CMPLX(0D0,0.5D0*wlspot(:,:,:,3,iq),db)*pinn(:,:,:,1)
-    IF(TFFT) THEN
-       CALL cdervy(pswk2,pswk)  
-    ELSE
-       CALL cmuly(der1y,pswk2,pswk,0)  
-    ENDIF
-    pout(:,:,:,:)=pout(:,:,:,:) + pswk(:,:,:,:)
     ! Step 5: derivative terms in z
     IF(TFFT) THEN
        CALL cdervz(pinn,pswk,d2psout=pswk2)  
@@ -224,24 +197,12 @@ CONTAINS
     ENDIF
     DO is=1,2  
        ic=3-is  
-       sigis=(3-2*is)*0.5D0  
+       sigis=3-2*is  
        pout(:,:,:,is)=pout(:,:,:,is) &
-            -CMPLX(dbmass(:,:,:,3,iq),0.5D0*aq(:,:,:,3,iq),db)*pswk(:,:,:,is) &
-            +CMPLX(sigis*wlspot(:,:,:,1,iq),-0.5D0*wlspot(:,:,:,2,iq),db)* &
+            -CMPLX(dbmass(:,:,:,3,iq),aq(:,:,:,3,iq),db)*pswk(:,:,:,is) &
+            +CMPLX(sigis*wlspot(:,:,:,1,iq),-wlspot(:,:,:,2,iq),db)* &
             pswk(:,:,:,ic)-bmass(:,:,:,iq)*pswk2(:,:,:,is)
     ENDDO
-    pswk2(:,:,:,1) = CMPLX(0D0,-0.5D0,db)*aq(:,:,:,3,iq)*pinn(:,:,:,1)&
-         +CMPLX(0.5D0*wlspot(:,:,:,1,iq),-0.5D0*wlspot(:,:,:,2,iq),db)*pinn(:,:,:,2)
-    pswk2(:,:,:,2) = CMPLX(0D0,-0.5D0,db)*aq(:,:,:,3,iq)*pinn(:,:,:,2)&
-         +CMPLX(-0.5D0*wlspot(:,:,:,1,iq),-0.5D0*wlspot(:,:,:,2,iq),db)*pinn(:,:,:,1)
-    IF(TFFT) THEN
-       CALL cdervz(pswk2,pswk)  
-    ELSE
-       CALL cmulz(der1z,pswk2,pswk,0)  
-    ENDIF
-    pout(:,:,:,:)=pout(:,:,:,:) + pswk(:,:,:,:)
-    !
-    DEALLOCATE(pswk,pswk2)
   END SUBROUTINE hpsi
   !***********************************************************************
 END Module Meanfield

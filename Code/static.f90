@@ -12,14 +12,15 @@ MODULE Static
   IMPLICIT NONE
   LOGICAL :: tdiag=.FALSE.
   LOGICAL :: tlarge=.FALSE.
+  LOGICAL :: tvaryx_0=.FALSE.
   INTEGER :: maxiter
   REAL(db) :: radinx,radiny,radinz, &
-       serr,delesum,x0dmp=0.2D0,e0dmp=100.D0
+       serr,delesum,x0dmp=0.2D0,e0dmp=100.D0,x0dmpmin=0.2d0
 CONTAINS
   !*************************************************************************
   SUBROUTINE getin_static
     NAMELIST/static/ tdiag,tlarge,maxiter, &
-         radinx,radiny,radinz,serr,x0dmp,e0dmp,nneut,nprot,npsi
+         radinx,radiny,radinz,serr,x0dmp,e0dmp,nneut,nprot,npsi,tvaryx_0
     npsi=0
     READ(5,static)
     IF(nof<=0) THEN
@@ -28,6 +29,7 @@ CONTAINS
              npsi(1)=nneut  
           ELSE  
              npsi(1)=NINT(nneut+1.65*FLOAT(nneut)**0.666667D0)  
+             IF(MOD(npsi(1),2)/=0) npsi(1)=npsi(1)+1
           ENDIF
        ENDIF
        IF(npsi(2)==0) THEN  
@@ -35,6 +37,7 @@ CONTAINS
              npsi(2)=nprot  
           ELSE  
              npsi(2)=NINT(nprot+1.65*FLOAT(nprot)**0.666667D0)  
+             IF(MOD(npsi(2),2)/=0) npsi(2)=npsi(2)+1
           ENDIF
        ENDIF
        IF(nneut>npsi(1).OR.nprot>npsi(2)) & 
@@ -42,6 +45,8 @@ CONTAINS
        nstmax=npsi(1)+npsi(2)
        charge_number=nprot  
        mass_number=nneut+nprot  
+       x0dmpmin=x0dmp
+       WRITE(*,*) "x0dmpmin=", x0dmpmin
     END IF
   END SUBROUTINE getin_static
   !*************************************************************************
@@ -122,9 +127,11 @@ CONTAINS
     ! produce and print detailed information
     CALL sp_properties
     CALL sinfo
+    !set x0dmp to 3* its value to get faster convergence
+    IF(tvaryx_0) x0dmp=3.0d0*x0dmp
     ! step 4: start static iteration loop
     Iteration: DO iter=firstiter,maxiter  
-       WRITE(*,'(a,i6)') ' Static Iteration No.',iter  
+       WRITE(*,'(a,i6,a,F12.4)') ' Static Iteration No.',iter,'  x0dmp= ',x0dmp
        ! Step 5: gradient step
        delesum=0.0D0  
        sumflu=0.0D0
@@ -171,9 +178,12 @@ CONTAINS
        ENDIF
        CALL skyrme
        ! calculate and print information
-       IF(mprint>0.AND.MOD(iter,mprint)==0) THEN  
+       IF(mprint>0.AND.MOD(iter,mprint)==0) THEN
           CALL sp_properties
           CALL sinfo
+       ELSEIF(tvaryx_0) THEN
+          CALL sp_properties
+          CALL sum_energy
        ENDIF
        ! Step 9: check for convergence, saving wave functions
        IF(sumflu/nstmax<serr.AND.iter>1) THEN
@@ -183,6 +193,19 @@ CONTAINS
        IF(MOD(iter,mrest)==0) THEN  
           CALL write_wavefunctions
        ENDIF
+       ! Step 10: update step size for the next iteration
+       IF(tvaryx_0) THEN
+          IF(ehf<ehfprev .OR. efluct1<(efluct1prev*(1.0d0-1.0d-5)) &
+               .OR. efluct2<(efluct2prev*(1.0d0-1.0d-5))) THEN
+             x0dmp=x0dmp*1.005
+          ELSE
+             x0dmp=x0dmp*0.8
+          END IF
+          IF(x0dmp<x0dmpmin) x0dmp=x0dmpmin
+          efluct1prev=efluct1
+          efluct2prev=efluct2
+          ehfprev=ehf
+       END IF
     END DO Iteration
     IF(tdiag) DEALLOCATE(hmatr)
   END SUBROUTINE statichf
@@ -216,7 +239,7 @@ CONTAINS
     ENDDO
     IF(tdiag) hmatr(nst,nst)=hmatr(nst,nst)+spe
     ! Step 3: calculate fluctuation, i.e. <h*h> and |h|**2
-    IF(mprint>0.AND.MOD(iter,mprint)==0) THEN  
+    IF((mprint>0.AND.MOD(iter,mprint)==0).OR.tvaryx_0) THEN  
        CALL hpsi(iq,esf,ps1,ps2)
        exph2=overlap(psin,ps2)
        varh2=rpsnorm(ps1)
@@ -340,12 +363,12 @@ CONTAINS
     OPEN(unit=scratch,file=spinfile, POSITION='APPEND')  
     WRITE(scratch,'(1x,i5,9F10.4)') iter,orbital,spin,total_angmom 
     CLOSE(unit=scratch)
-    WRITE(*,'(/,A,I7,A/2(A,F12.4),A/(3(A,E12.5),A))') &
+    WRITE(*,'(/,A,I7,A/2(A,F12.4),A/(3(A,E12.5),A),3(A,E12.5))') &
          ' ***** Iteration ',iter,' *****',' Total energy: ',ehf,' MeV  Total kinetic energy: ', &
          tke,' MeV',' de/e:      ',delesum,'      h**2  fluct.:    ',efluct1, &
          ' MeV, h*hfluc.:    ',efluct2,' MeV', &
          ' MeV. Rearrangement E: ',e3corr,' MeV. Coul.Rearr.: ', &
-         ecorc,' MeV'
+         ecorc,' MeV x0dmp: ',x0dmp
     ! detail printout
     WRITE(*,'(/A)') ' Energies integrated from density functional:'
     WRITE(*,'(4(A,1PE14.6),A/26X,3(A,1PE14.6),A)') &

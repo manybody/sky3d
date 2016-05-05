@@ -1,1 +1,37 @@
-Corrected Sly4d in forces.data.
+Changes relative to published CPC version from April 2014:
+----------------------------------------------------------
+
+
+Step 1.0:
+
+- Fortran90 standard for indentation.
+
+- dynamic.f90: Enforce two-body analysis and writeing of restart file 
+               at end of run, eben if not multiple of 'mrest'.
+
+- forces.data: SLy4d corrected
+
+- main3d.f90: New variable "nofsave" to maintain two-body structure
+              after restart.
+ 
+ 
+
+Step 2.0:
+
+- energies.f90: New variables to store previous energy fluctuationas.
+
+- main3d.f90: No new ortho-normalization after restart.
+
+- meanfield.f90: 'workden', 'workvec', 'pwwk', 'pswk2' made ALLOCATABLE. 
+                 Stabilized treatment of l*s potential. Better but
+                 slower. Old version kept in 'meanfield-old.f90'.
+
+- static.f90: Accelerated iteration by flexible step size.
+              'npsi' always set to even for consistent pairing.
+
+
+
+
+
+
+  

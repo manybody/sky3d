@@ -18,9 +18,12 @@ MODULE Energies
   REAL(db) :: ecorc     ! Slater & Koopman exchange
   REAL(db) :: ehfint    ! integrated total energy
   REAL(db) :: efluct1   ! energyfluctuation h**2
+  REAL(db) :: efluct1prev
   REAL(db) :: efluct2   ! fluctuation h*efluct
+  REAL(db) :: efluct2prev
   REAL(db) :: tke       ! kinetic energy summed
   REAL(db) :: ehf       ! Hartree-Fock energy from s.p. levels
+  REAL(db) :: ehfprev
   REAL(db) :: e3corr    ! rearrangement energy
   REAL(db) :: orbital(3),spin(3),total_angmom(3)
 CONTAINS

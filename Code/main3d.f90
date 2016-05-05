@@ -114,7 +114,7 @@ PROGRAM tdhf3d
   !********************************************************************
   IF(nof>0) THEN
      CALL read_fragments
-     IF(.NOT.tmpi) THEN
+     IF(.NOT.(tmpi.OR.trestart)) THEN
         CALL schmid
         WRITE(*,*) 'Reorthogonalization complete'
      END IF
