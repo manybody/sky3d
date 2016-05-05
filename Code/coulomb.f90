@@ -11,7 +11,7 @@ MODULE Coulomb
   PUBLIC :: poisson,coulinit,wcoul
   PRIVATE :: initiq
 CONTAINS
-!***************************************************
+  !***************************************************
   SUBROUTINE poisson
     COMPLEX(db) :: rho2(nx2,ny2,nz2)
     ! put proton density into array of same or double size, zeroing rest
@@ -30,8 +30,8 @@ CONTAINS
     CALL dfftw_execute_dft(coulplan2,rho2,rho2)
     wcoul=REAL(rho2(1:nx,1:ny,1:nz))/(nx2*ny2*nz2)
   END SUBROUTINE poisson
-!***************************************************
-   SUBROUTINE coulinit
+  !***************************************************
+  SUBROUTINE coulinit
     INCLUDE 'fftw3.f'
     REAL(db),ALLOCATABLE :: iqx(:),iqy(:),iqz(:)
     INTEGER :: i,j,k
@@ -66,7 +66,7 @@ CONTAINS
     END IF
     DEALLOCATE(iqx,iqy,iqz)
   END SUBROUTINE coulinit
-!***************************************************
+  !***************************************************
   SUBROUTINE initiq(n,d,iq)
     INTEGER,INTENT(IN) :: n
     REAL(db),INTENT(IN) :: d

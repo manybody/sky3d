@@ -37,40 +37,40 @@ PROGRAM tdhf3d
   tdynamic=imode==2
   IF(tmpi.AND.tstatic) STOP 'MPI not implemented for static mode'
   IF(.NOT.(tstatic.OR.tdynamic)) THEN
-    IF(wflag) WRITE(*,*) 'Illegal value for imode:',imode
-    STOP
+     IF(wflag) WRITE(*,*) 'Illegal value for imode:',imode
+     STOP
   END IF
   IF(wflag) THEN
-    WRITE(*,*) '***** Main parameter input *****'
-    IF(tstatic) WRITE(*,*) 'This is a static calculation'
-    IF(tdynamic) WRITE(*,*) 'This is a dynamic calculation'
-    WRITE(*,'(3(A16,I5))') 'Print interval:',mprint, &
-         'Plot interval:',mplot,'Save interval:',mrest
-    WRITE(*,'(A,F7.4)') 'Radius parameter r0=',r0
-    IF(trestart) THEN
-      WRITE(*,*) 'The calculation is being restarted from file ',wffile
-    ELSE
-      SELECT CASE(nof)
+     WRITE(*,*) '***** Main parameter input *****'
+     IF(tstatic) WRITE(*,*) 'This is a static calculation'
+     IF(tdynamic) WRITE(*,*) 'This is a dynamic calculation'
+     WRITE(*,'(3(A16,I5))') 'Print interval:',mprint, &
+          'Plot interval:',mplot,'Save interval:',mrest
+     WRITE(*,'(A,F7.4)') 'Radius parameter r0=',r0
+     IF(trestart) THEN
+        WRITE(*,*) 'The calculation is being restarted from file ',wffile
+     ELSE
+        SELECT CASE(nof)
         CASE(0)
-          IF(tdynamic) STOP &
-               'Harmonic oscillator initialization not allowed for dynamic case'
-          WRITE(*,*) 'Harmonic oscillator initialization'
+           IF(tdynamic) STOP &
+                'Harmonic oscillator initialization not allowed for dynamic case'
+           WRITE(*,*) 'Harmonic oscillator initialization'
         CASE(1:)
-          WRITE(*,'(A,I4,A)') ' Initialization from ',nof,' fragments'
+           WRITE(*,'(A,I4,A)') ' Initialization from ',nof,' fragments'
         CASE DEFAULT
-          WRITE(*,*) 'User initialization'
-      END SELECT
-    END IF
-    IF(tcoul) THEN
-      WRITE(*,*) "Coulomb field is included"
-    ELSE
-      WRITE(*,*) " Coulomb field *not* included"
-    END IF
-    WRITE(*,*) "Field output selection: ",writeselect
+           WRITE(*,*) 'User initialization'
+        END SELECT
+     END IF
+     IF(tcoul) THEN
+        WRITE(*,*) "Coulomb field is included"
+     ELSE
+        WRITE(*,*) " Coulomb field *not* included"
+     END IF
+     WRITE(*,*) "Field output selection: ",writeselect
   END IF
   IF(trestart) THEN
-    nofsave=nof ! save whether initial was 2-body
-    nof=1 ! restart simulated as fragment input
+     nofsave=nof ! save whether initial was 2-body
+     nof=1 ! restart simulated as fragment input
   END IF
   IF(.NOT.(tstatic.OR.tdynamic)) STOP 'Illegal value of imode'
   !********************************************************************
@@ -84,24 +84,24 @@ PROGRAM tdhf3d
   ! Step 5: get input for static or dynamic case
   !********************************************************************
   IF(tstatic) THEN
-    CALL getin_static
+     CALL getin_static
   ELSE
-    CALL getin_dynamic
+     CALL getin_dynamic
   END IF
   !********************************************************************
   ! Step 6: get input for static or dynamic case
   !********************************************************************
   ! Determine wave function numbers etc.
   IF(nof>mnof) THEN
-    STOP 'nof > mnof'
+     STOP 'nof > mnof'
   ELSE IF(nof>0) THEN
-    CALL getin_fragments
+     CALL getin_fragments
   ELSE
-    IF(nof==0.AND.tdynamic) STOP 'Dynamic case with nof==0 not allowed'
-    npmin(1)=1
-    npmin(2)=npsi(1)+1
-    npsi(2)=npsi(2)+npsi(1)
-    nstmax =npsi(2)
+     IF(nof==0.AND.tdynamic) STOP 'Dynamic case with nof==0 not allowed'
+     npmin(1)=1
+     npmin(2)=npsi(1)+1
+     npsi(2)=npsi(2)+npsi(1)
+     nstmax =npsi(2)
   END IF
   !********************************************************************
   ! Step 7: allocate wave functions
@@ -113,15 +113,15 @@ PROGRAM tdhf3d
   ! Step 8: initialize wave functions
   !********************************************************************
   IF(nof>0) THEN
-    CALL read_fragments
-    IF(.NOT.tmpi) THEN
-      CALL schmid
-      WRITE(*,*) 'Reorthogonalization complete'
-    END IF
+     CALL read_fragments
+     IF(.NOT.tmpi) THEN
+        CALL schmid
+        WRITE(*,*) 'Reorthogonalization complete'
+     END IF
   ELSEIF(nof==0) THEN    
-    CALL harmosc
+     CALL harmosc
   ELSE
-    CALL init_user
+     CALL init_user
   END IF
   CLOSE(5)
   !********************************************************************
@@ -132,16 +132,16 @@ PROGRAM tdhf3d
   ! Step 10: static or dynamic  calculation performed
   !********************************************************************
   IF(tstatic) THEN
-    IF(tmpi .AND. wflag) STOP ' static should not run parallel'
-    CALL init_static
-    CALL statichf
+     IF(tmpi .AND. wflag) STOP ' static should not run parallel'
+     CALL init_static
+     CALL statichf
   ELSE
-    !*************************************************************************
-    ! Dynamic branch
-    !*************************************************************************
-    IF(tmpi) CALL mpi_barrier (mpi_comm_world, mpi_ierror)
-    IF(trestart) nof=nofsave ! restore 2-body status so analysis is done
-    CALL dynamichf
+     !*************************************************************************
+     ! Dynamic branch
+     !*************************************************************************
+     IF(tmpi) CALL mpi_barrier (mpi_comm_world, mpi_ierror)
+     IF(trestart) nof=nofsave ! restore 2-body status so analysis is done
+     CALL dynamichf
   ENDIF
   CALL finish_mpi
 END PROGRAM tdhf3d

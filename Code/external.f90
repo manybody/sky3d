@@ -19,7 +19,7 @@ CONTAINS
     CHARACTER(14),PARAMETER :: pulsetype(0:2)=(/ 'Instantaneous ', &
          'Gaussian      ','Cosine squared' /)
     NAMELIST/extern/ amplq0,radext,widext,isoext,ipulse,omega,tau0,taut, &
-                     textfield_periodic
+         textfield_periodic
     READ(5,extern)
     IF(ipulse<0.OR.ipulse>2) STOP &
          ' External field: called with invalid pulse type'
@@ -57,11 +57,11 @@ CONTAINS
        DO iy=1,ny  
           DO ix=1,nx  
              IF(textfield_periodic) THEN       ! strictly periodic version
-               facr=amplq0 *(2.D0*SIN(z(iz)*PI/zlim)**2 &
-                             -SIN(x(ix)*PI/xlim)**2-SIN(y(iy)*PI/ylim)**2) 
+                facr=amplq0 *(2.D0*SIN(z(iz)*PI/zlim)**2 &
+                     -SIN(x(ix)*PI/xlim)**2-SIN(y(iy)*PI/ylim)**2) 
              ELSE                              ! damped version
-               facr=amplq0 *(2.D0*z(iz)**2-x(ix)**2-y(iy)**2) &
-                  /(1.0D0+EXP((SQRT(x(ix)**2+y(iy)**2+z(iz)**2)-radext)/widext))
+                facr=amplq0 *(2.D0*z(iz)**2-x(ix)**2-y(iy)**2) &
+                     /(1.0D0+EXP((SQRT(x(ix)**2+y(iy)**2+z(iz)**2)-radext)/widext))
              END IF
              extfield(ix,iy,iz,1)=facr*facn  
              extfield(ix,iy,iz,2)=facr*facp  

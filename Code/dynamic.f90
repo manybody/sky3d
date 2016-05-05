@@ -28,12 +28,12 @@ CONTAINS
     NAMELIST /dynamic/ nt,dt,mxpact,mrescm,rsep,texternal
     READ(5,dynamic)  
     IF(wflag) THEN
-      WRITE(*,*) '***** Parameters for the dynamic calculation *****'
-      WRITE(*,"(A,I8,A,F10.5,A)") " Number of time steps:",nt, &
-           ' Time step size: ',dt,' fm/c'
-      WRITE(*,'(A,F7.2,A)') ' The calculation stops at ',rsep, &
-           ' fm fragment separation'
-      WRITE(*,'(A,I3)') ' Power limit in operator expansion:',mxpact
+       WRITE(*,*) '***** Parameters for the dynamic calculation *****'
+       WRITE(*,"(A,I8,A,F10.5,A)") " Number of time steps:",nt, &
+            ' Time step size: ',dt,' fm/c'
+       WRITE(*,'(A,F7.2,A)') ' The calculation stops at ',rsep, &
+            ' fm fragment separation'
+       WRITE(*,'(A,I3)') ' Power limit in operator expansion:',mxpact
     ENDIF
     IF(texternal) CALL getin_external
   END SUBROUTINE getin_dynamic
@@ -43,37 +43,37 @@ CONTAINS
     COMPLEX(db) :: ps4(nx,ny,nz,2)
     ! Step 1: Preparation phase
     IF(.NOT.trestart) THEN
-      iter=0
-      time=0.0D0  
-      ! save wave functions
-      CALL write_wavefunctions
-      IF(wflag) WRITE(*,*) 'Wrote wave function file after initialization'
+       iter=0
+       time=0.0D0  
+       ! save wave functions
+       CALL write_wavefunctions
+       IF(wflag) WRITE(*,*) 'Wrote wave function file after initialization'
     END IF
     ! external boost
     IF(texternal) THEN
-      CALL extboost(text_timedep)
+       CALL extboost(text_timedep)
     END IF
     ! Create protocol files
     IF(wflag) THEN
-      ! Initialize *.res files
-      CALL start_protocol(energiesfile, &
-           '#    Time    N(n)    N(p)       E(sum)        E(integ)      Ekin &
-                &      Ecoll(n)     Ecoll(p)')
-      CALL start_protocol(monopolesfile, &
-           '#    Time      rms_n     rms_p   rms_tot   rms_n-rms_p')
-      CALL start_protocol(dipolesfile, &
-           '# Iter    c.m. x-y-z                                  Isovector&
-           &dipoles x-y-z')
-      CALL start_protocol(quadrupolesfile, &
-           '#     Time     Q(n)          Q(p)         Q(n+p)        x²(n)         &
-           &y²(n)         z²(n)         x²(p)         y²(p)         z²(p)')
-      CALL start_protocol(spinfile, &
-           '# Iter      Lx        Ly        Lz        Sx        Sy        &
-           &Sz        Jx        Jy        Jz')
-      CALL start_protocol(momentafile, &
-           '#     Time      Px            Py            Pz')
-      IF(texternal) CALL start_protocol(extfieldfile, &
-        '#   time       average_extfield')
+       ! Initialize *.res files
+       CALL start_protocol(energiesfile, &
+            '#    Time    N(n)    N(p)       E(sum)        E(integ)      Ekin &
+            &      Ecoll(n)     Ecoll(p)')
+       CALL start_protocol(monopolesfile, &
+            '#    Time      rms_n     rms_p   rms_tot   rms_n-rms_p')
+       CALL start_protocol(dipolesfile, &
+            '# Iter    c.m. x-y-z                                  Isovector&
+            &dipoles x-y-z')
+       CALL start_protocol(quadrupolesfile, &
+            '#     Time     Q(n)          Q(p)         Q(n+p)        x²(n)         &
+            &y²(n)         z²(n)         x²(p)         y²(p)         z²(p)')
+       CALL start_protocol(spinfile, &
+            '# Iter      Lx        Ly        Lz        Sx        Sy        &
+            &Sz        Jx        Jy        Jz')
+       CALL start_protocol(momentafile, &
+            '#     Time      Px            Py            Pz')
+       IF(texternal) CALL start_protocol(extfieldfile, &
+            '#   time       average_extfield')
 
     END IF
     ! calculate densities and currents
@@ -85,8 +85,8 @@ CONTAINS
     !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst) SCHEDULE(STATIC) &
     !$OMP REDUCTION(+:rho,tau,current,sdens,sodens)
     DO nst=1,nstloc
-      CALL add_density(isospin(globalindex(nst)),wocc(globalindex(nst)), &
-           psi(:,:,:,:,nst),rho,tau,current,sdens,sodens)  
+       CALL add_density(isospin(globalindex(nst)),wocc(globalindex(nst)), &
+            psi(:,:,:,:,nst),rho,tau,current,sdens,sodens)  
     ENDDO
     !$OMP END PARALLEL DO
     IF(tmpi) CALL collect_densities
@@ -98,82 +98,82 @@ CONTAINS
     istart=iter+1
     ! Step 2: start loop and do half-time step
     Timestepping:  DO iter=istart,nt  
-      IF(wflag) WRITE(*,'(/A,I6,A,F8.2,A)') ' Starting time step #',iter, &
-           ' at time=',time,' fm/c'
-      ! correction for parallel version
-      IF(tmpi) THEN
-        rho=rho/mpi_nprocs
-        tau=tau/mpi_nprocs
-        current=current/mpi_nprocs
-        sodens=sodens/mpi_nprocs
-        sdens=sdens/mpi_nprocs
-      ENDIF
-      ! propagate to end of time step and add to densities
-      !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,ps4) SCHEDULE(STATIC) &
-      !$OMP REDUCTION(+:rho,tau,current,sdens,sodens)
-      DO nst=1,nstloc
-        ps4=psi(:,:,:,:,nst) 
-        CALL tstep(isospin(globalindex(nst)),mxpact/2,ps4)
-        CALL add_density(isospin(globalindex(nst)),wocc(globalindex(nst)), &
-             ps4,rho,tau,current,sdens,sodens)  
-      ENDDO
-      !$OMP END PARALLEL DO
-      IF(tmpi) CALL collect_densities
-      ! average over time step
-      rho=0.5D0*rho
-      tau=0.5D0*tau
-      current=0.5D0*current
-      sodens=0.5D0*sodens
-      sdens=0.5D0*sdens
-      ! compute mean field and add external field
-      CALL skyrme  
-      IF(text_timedep) CALL extfld(time+dt/2.0D0)
-      ! Step 3: full time step
-      ! reset densities
-      rho=0.0D0
-      tau=0.0D0
-      current=0.0D0
-      sdens=0.0D0
-      sodens=0.0D0
-      ! propagate to end of step, accumulate densities
-      !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,ps4) SCHEDULE(STATIC) &
-      !$OMP REDUCTION(+:rho,tau,current,sdens,sodens)
-      DO nst=1,nstloc
-        ps4=psi(:,:,:,:,nst) 
-        CALL tstep(isospin(globalindex(nst)),mxpact,ps4)
-        CALL add_density(isospin(globalindex(nst)),wocc(globalindex(nst)), &
-             ps4,rho,tau,current,sdens,sodens)  
-        psi(:,:,:,:,nst)=ps4
-      ENDDO
-      !$OMP END PARALLEL DO
-      ! sum up over nodes
-      IF(tmpi) CALL collect_densities
-      ! Step 4: eliminate center-of-mass motion if desired
-      IF(mrescm/=0) THEN  
-         IF(MOD(iter,mrescm)==0) THEN  
-            CALL resetcm
-            !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst) SCHEDULE(STATIC) &
-            !$OMP REDUCTION(+:rho,tau,current,sdens,sodens)
-            DO nst=1,nstloc
-               CALL add_density(isospin(globalindex(nst)), &
-                    wocc(globalindex(nst)), &
-                    psi(:,:,:,:,nst),rho,tau,current,sdens,sodens)  
-            ENDDO
-            !$OMP END PARALLEL DO
-            IF(tmpi) CALL collect_densities
-         ENDIF
+       IF(wflag) WRITE(*,'(/A,I6,A,F8.2,A)') ' Starting time step #',iter, &
+            ' at time=',time,' fm/c'
+       ! correction for parallel version
+       IF(tmpi) THEN
+          rho=rho/mpi_nprocs
+          tau=tau/mpi_nprocs
+          current=current/mpi_nprocs
+          sodens=sodens/mpi_nprocs
+          sdens=sdens/mpi_nprocs
        ENDIF
-      ! Step 5: generating some output
-      time=time+dt
-      CALL tinfo
-      ! Step 6: finishing up
-      ! compute densities, currents, potentials etc.                  *
-      CALL skyrme  
-      IF(text_timedep) CALL extfld(time+dt)
-      IF(MOD(iter,mrest)==0) THEN  
-        CALL write_wavefunctions
-        IF(wflag) WRITE(*,*) ' Wrote restart file at end of  iter=',iter
-      ENDIF
+       ! propagate to end of time step and add to densities
+       !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,ps4) SCHEDULE(STATIC) &
+       !$OMP REDUCTION(+:rho,tau,current,sdens,sodens)
+       DO nst=1,nstloc
+          ps4=psi(:,:,:,:,nst) 
+          CALL tstep(isospin(globalindex(nst)),mxpact/2,ps4)
+          CALL add_density(isospin(globalindex(nst)),wocc(globalindex(nst)), &
+               ps4,rho,tau,current,sdens,sodens)  
+       ENDDO
+       !$OMP END PARALLEL DO
+       IF(tmpi) CALL collect_densities
+       ! average over time step
+       rho=0.5D0*rho
+       tau=0.5D0*tau
+       current=0.5D0*current
+       sodens=0.5D0*sodens
+       sdens=0.5D0*sdens
+       ! compute mean field and add external field
+       CALL skyrme  
+       IF(text_timedep) CALL extfld(time+dt/2.0D0)
+       ! Step 3: full time step
+       ! reset densities
+       rho=0.0D0
+       tau=0.0D0
+       current=0.0D0
+       sdens=0.0D0
+       sodens=0.0D0
+       ! propagate to end of step, accumulate densities
+       !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,ps4) SCHEDULE(STATIC) &
+       !$OMP REDUCTION(+:rho,tau,current,sdens,sodens)
+       DO nst=1,nstloc
+          ps4=psi(:,:,:,:,nst) 
+          CALL tstep(isospin(globalindex(nst)),mxpact,ps4)
+          CALL add_density(isospin(globalindex(nst)),wocc(globalindex(nst)), &
+               ps4,rho,tau,current,sdens,sodens)  
+          psi(:,:,:,:,nst)=ps4
+       ENDDO
+       !$OMP END PARALLEL DO
+       ! sum up over nodes
+       IF(tmpi) CALL collect_densities
+       ! Step 4: eliminate center-of-mass motion if desired
+       IF(mrescm/=0) THEN  
+          IF(MOD(iter,mrescm)==0) THEN  
+             CALL resetcm
+             !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst) SCHEDULE(STATIC) &
+             !$OMP REDUCTION(+:rho,tau,current,sdens,sodens)
+             DO nst=1,nstloc
+                CALL add_density(isospin(globalindex(nst)), &
+                     wocc(globalindex(nst)), &
+                     psi(:,:,:,:,nst),rho,tau,current,sdens,sodens)  
+             ENDDO
+             !$OMP END PARALLEL DO
+             IF(tmpi) CALL collect_densities
+          ENDIF
+       ENDIF
+       ! Step 5: generating some output
+       time=time+dt
+       CALL tinfo
+       ! Step 6: finishing up
+       ! compute densities, currents, potentials etc.                  *
+       CALL skyrme  
+       IF(text_timedep) CALL extfld(time+dt)
+       IF(MOD(iter,mrest)==0) THEN  
+          CALL write_wavefunctions
+          IF(wflag) WRITE(*,*) ' Wrote restart file at end of  iter=',iter
+       ENDIF
     END DO Timestepping
   END SUBROUTINE dynamichf
   !***********************************************************************
@@ -188,20 +188,20 @@ CONTAINS
     !        compute exp(-I*dt*h) by power series expansion              *
     !***********************************************************************
     DO m=1,mxp
-      fmd=-dt/(hbc*m)  
-      CALL hpsi(iq,esf,ps1,ps2)
-      DO is=1,2  
-        DO iz=1,nz  
-          DO iy=1,ny  
-            DO ix=1,nx  
-              ps1(ix,iy,iz,is)=& 
-                   CMPLX(-fmd*AIMAG(ps2(ix,iy,iz,is)),   &
-                   fmd*REAL(ps2(ix,iy,iz,is)),db)
-              psout(ix,iy,iz,is)=psout(ix,iy,iz,is)+ps1(ix,iy,iz,is)
-            ENDDO
+       fmd=-dt/(hbc*m)  
+       CALL hpsi(iq,esf,ps1,ps2)
+       DO is=1,2  
+          DO iz=1,nz  
+             DO iy=1,ny  
+                DO ix=1,nx  
+                   ps1(ix,iy,iz,is)=& 
+                        CMPLX(-fmd*AIMAG(ps2(ix,iy,iz,is)),   &
+                        fmd*REAL(ps2(ix,iy,iz,is)),db)
+                   psout(ix,iy,iz,is)=psout(ix,iy,iz,is)+ps1(ix,iy,iz,is)
+                ENDDO
+             ENDDO
           ENDDO
-        ENDDO
-      ENDDO
+       ENDDO
     END DO
   END SUBROUTINE tstep
   !***********************************************************************
@@ -252,9 +252,9 @@ CONTAINS
        IF(tmpi) THEN
           CALL collect_sp_properties
        ENDIF
-     END IF
-! Step 5: total energies & angular momenta
-     IF(printnow.AND.wflag) THEN
+    END IF
+    ! Step 5: total energies & angular momenta
+    IF(printnow.AND.wflag) THEN
        CALL integ_energy
        CALL sum_energy
        DO iq=1,2
@@ -303,10 +303,10 @@ CONTAINS
     ENDIF
     ! Step 8: check whether final distance is reached in twobody case
     IF(istwobody.AND.roft>rsep.AND.rdot>=0.D0) THEN  
-      CALL twobody_print
-      CALL write_wavefunctions
-      IF(wflag) WRITE(*,*) ' Final separation distance reached'
-      STOP ' Final distance reached'  
+       CALL twobody_print
+       CALL write_wavefunctions
+       IF(wflag) WRITE(*,*) ' Final separation distance reached'
+       STOP ' Final distance reached'  
     ENDIF
     initialcall=.FALSE.
   END SUBROUTINE tinfo

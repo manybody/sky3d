@@ -9,7 +9,7 @@ MODULE Moment
   PUBLIC :: pnr,pnrtot,cm,cmtot,pcm,rmstot,beta,gamma, &
        moments,moment_print,moment_shortprint
 CONTAINS
-!***********************************************************
+  !***********************************************************
   SUBROUTINE moments
     USE Densities, ONLY: rho,current
     INTEGER :: ix,iy,iz,iq
@@ -19,59 +19,59 @@ CONTAINS
     cm=0.D0
     pcm=0.D0
     DO iq=1,2  
-      DO iz=1,nz  
-        xx(3)=z(iz)  
-        DO iy=1,ny  
-          xx(2)=y(iy)  
-          DO ix=1,nx  
-            xx(1)=x(ix)
-            pnr(iq)=pnr(iq)+wxyz*rho(ix,iy,iz,iq)
-            cm(:,iq)=cm(:,iq)+wxyz*xx*rho(ix,iy,iz,iq)
-            IF(tdynamic) pcm(:,iq)=pcm(:,iq)+wxyz*current(ix,iy,iz,:,iq)
+       DO iz=1,nz  
+          xx(3)=z(iz)  
+          DO iy=1,ny  
+             xx(2)=y(iy)  
+             DO ix=1,nx  
+                xx(1)=x(ix)
+                pnr(iq)=pnr(iq)+wxyz*rho(ix,iy,iz,iq)
+                cm(:,iq)=cm(:,iq)+wxyz*xx*rho(ix,iy,iz,iq)
+                IF(tdynamic) pcm(:,iq)=pcm(:,iq)+wxyz*current(ix,iy,iz,:,iq)
+             ENDDO
           ENDDO
-        ENDDO
-      ENDDO
+       ENDDO
     ENDDO
     pnrtot=pnr(1)+pnr(2)  
     cmtot=(cm(:,1)+cm(:,2))/pnrtot  
     DO iq=1,2
-      cm(:,iq)=cm(:,iq)/pnr(iq)
+       cm(:,iq)=cm(:,iq)/pnr(iq)
     ENDDO
     !***********************************
     rms=0.D0
     qmat=0.D0
     x2m=0.D0
     DO iq=1,2  
-      DO iz=1,nz  
-        xx(3)=z(iz)-cm(3,iq)  
-        x2(3)=xx(3)**2  
-        DO iy=1,ny  
-          xx(2)=y(iy)-cm(2,iq)  
-          x2(2)=xx(2)**2
-          DO ix=1,nx  
-            xx(1)=x(ix)-cm(1,iq)  
-            x2(1)=xx(1)**2  
-            vol=wxyz*rho(ix,iy,iz,iq)  
-            rms(iq)=vol*SUM(x2)+rms(iq)
-            qmat(1,1,iq)=qmat(1,1,iq)+vol*(x2(1)+x2(1)-x2(2)-x2(3))
-            qmat(1,2,iq)=qmat(1,2,iq)+3.D0*vol*xx(1)*xx(2)
-            qmat(1,3,iq)=qmat(1,3,iq)+3.D0*vol*xx(1)*xx(3)
-            qmat(2,2,iq)=qmat(2,2,iq)+vol*(x2(2)+x2(2)-x2(1)-x2(3))
-            qmat(2,3,iq)=qmat(2,3,iq)+3.D0*vol*xx(2)*xx(3)
-            qmat(3,3,iq)=qmat(3,3,iq)+vol*(x2(3)+x2(3)-x2(1)-x2(2))
-            x2m(:,iq)=vol*x2(:)+x2m(:,iq)  
+       DO iz=1,nz  
+          xx(3)=z(iz)-cm(3,iq)  
+          x2(3)=xx(3)**2  
+          DO iy=1,ny  
+             xx(2)=y(iy)-cm(2,iq)  
+             x2(2)=xx(2)**2
+             DO ix=1,nx  
+                xx(1)=x(ix)-cm(1,iq)  
+                x2(1)=xx(1)**2  
+                vol=wxyz*rho(ix,iy,iz,iq)  
+                rms(iq)=vol*SUM(x2)+rms(iq)
+                qmat(1,1,iq)=qmat(1,1,iq)+vol*(x2(1)+x2(1)-x2(2)-x2(3))
+                qmat(1,2,iq)=qmat(1,2,iq)+3.D0*vol*xx(1)*xx(2)
+                qmat(1,3,iq)=qmat(1,3,iq)+3.D0*vol*xx(1)*xx(3)
+                qmat(2,2,iq)=qmat(2,2,iq)+vol*(x2(2)+x2(2)-x2(1)-x2(3))
+                qmat(2,3,iq)=qmat(2,3,iq)+3.D0*vol*xx(2)*xx(3)
+                qmat(3,3,iq)=qmat(3,3,iq)+vol*(x2(3)+x2(3)-x2(1)-x2(2))
+                x2m(:,iq)=vol*x2(:)+x2m(:,iq)  
+             ENDDO
           ENDDO
        ENDDO
-     ENDDO
-     qmat(2,1,iq)=qmat(1,2,iq)
-     qmat(3,1,iq)=qmat(1,3,iq)
-     qmat(3,2,iq)=qmat(2,3,iq)
+       qmat(2,1,iq)=qmat(1,2,iq)
+       qmat(3,1,iq)=qmat(1,3,iq)
+       qmat(3,2,iq)=qmat(2,3,iq)
     ENDDO
     rmstot=SQRT((rms(1)+rms(2))/pnrtot)
     rms=SQRT(rms/pnr)  
     x2mtot=(x2m(:,1)+x2m(:,2))/pnrtot  
     DO iq=1,2
-      x2m(:,iq)=x2m(:,iq)/pnr(iq)
+       x2m(:,iq)=x2m(:,iq)/pnr(iq)
     ENDDO
     qmtot=qmat(:,:,1)+qmat(:,:,2) 
     IF(printnow.AND.wflag) WRITE(*,'(/A)') 'Cartesian quadrupole tensor,&
@@ -85,15 +85,15 @@ CONTAINS
     beta=SQRT(beta20tot**2+2.0*beta22tot**2)
     gamma=ABS(ATAN2(SQRT(2.0)*beta22tot,beta20tot)*180.0D0/PI)
     IF(gamma>120.D0) THEN
-      gamma=gamma-120.D0
+       gamma=gamma-120.D0
     ELSEIF(gamma>60.D0) THEN
-      gamma=120.D0-gamma
+       gamma=120.D0-gamma
     ENDIF
     IF(printnow.AND.wflag) WRITE(*,'(4(A,F8.4)/)') &
          ' Beta20: ',beta20tot,' Beta22: ',beta22tot,' Beta: ',beta, &
          ' Gamma: ',gamma
   END SUBROUTINE moments
-!***********************************************************
+  !***********************************************************
   SUBROUTINE moment_shortprint
     OPEN(unit=scratch,file=monopolesfile,POSITION='APPEND')  
     WRITE(scratch,'(4F10.2,E14.5)') time,rms,rmstot,rms(1)-rms(2)
@@ -112,8 +112,8 @@ CONTAINS
     WRITE(*,'(a,2f12.4,1p,4e12.4,3e15.7)') '    Total: ',pnrtot,rmstot, &
          q20tot,x2mtot,cmtot
     DO iq=1,2
-      WRITE(*,'(a,2f12.4,1p,4e12.4,3e15.7)') name(iq),pnr(iq),rms(iq),q20(iq), &
-           x2m(:,iq),cm(:,iq)
+       WRITE(*,'(a,2f12.4,1p,4e12.4,3e15.7)') name(iq),pnr(iq),rms(iq),q20(iq), &
+            x2m(:,iq),cm(:,iq)
     ENDDO
   END SUBROUTINE moment_print
   !***********************************************************
@@ -129,8 +129,8 @@ CONTAINS
     q_vec=q_mat
     IF(info/=0) STOP 'Quadrupole diagonalization failed'
     IF(printnow.AND.wflag) THEN
-      WRITE(*,'(1X,A,3(F10.2,''('',3F8.4,'')''))') &
-           title,(REAL(q_eig(i)),REAL(q_vec(:,i)),i=3,1,-1)
+       WRITE(*,'(1X,A,3(F10.2,''('',3F8.4,'')''))') &
+            title,(REAL(q_eig(i)),REAL(q_vec(:,i)),i=3,1,-1)
     ENDIF
     q20x=SQRT(5.D0/(16.D0*pi))*REAL(q_eig(3))
     q22x=SQRT(5.D0/(96.D0*pi))*(REAL(q_eig(2))-REAL(q_eig(1)))

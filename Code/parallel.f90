@@ -9,11 +9,11 @@ MODULE Parallel
   INTEGER, ALLOCATABLE :: node(:),localindex(:),globalindex(:)
   INTEGER :: mpi_nprocs,mpi_ierror,mpi_myproc
 CONTAINS
-!***********************************************************************
+  !***********************************************************************
   SUBROUTINE alloc_nodes
     ALLOCATE(node(nstmax),localindex(nstmax),globalindex(nstmax))
   END SUBROUTINE alloc_nodes
-!***********************************************************************
+  !***********************************************************************
   SUBROUTINE init_all_mpi
     CALL mpi_init(mpi_ierror)
     CALL mpi_comm_size(mpi_comm_world,mpi_nprocs,mpi_ierror)
@@ -22,7 +22,7 @@ CONTAINS
     IF(wflag) WRITE(*,'(a,i5)') ' number of nodes=',mpi_nprocs
     CALL mpi_barrier (mpi_comm_world, mpi_ierror)
   END SUBROUTINE init_all_mpi
-!***********************************************************************
+  !***********************************************************************
   SUBROUTINE associate_nodes
     INTEGER :: ncount,nst,ip,iloc
     ncount=0
@@ -39,13 +39,13 @@ CONTAINS
        ENDIF
     ENDDO
     DO ip=0,mpi_nprocs-1
-      iloc=0
-      DO nst=1,nstmax
-        IF(node(nst)==ip) THEN
-          iloc=iloc+1
-          localindex(nst)=iloc
-        ENDIF
-      ENDDO
+       iloc=0
+       DO nst=1,nstmax
+          IF(node(nst)==ip) THEN
+             iloc=iloc+1
+             localindex(nst)=iloc
+          ENDIF
+       ENDDO
     ENDDO
     IF(wflag) THEN
        WRITE(*,'(A/(1X,20I4))')   &
@@ -53,7 +53,7 @@ CONTAINS
     ENDIF
     CALL mpi_barrier (mpi_comm_world, mpi_ierror)
   END SUBROUTINE associate_nodes
-!***********************************************************************
+  !***********************************************************************
   SUBROUTINE collect_densities
     USE Densities, ONLY : rho,tau,current,sodens,sdens
     REAL(db) :: tmp_rho(nx,ny,nz,2),tmp_current(nx,ny,nz,3,2)
@@ -78,7 +78,7 @@ CONTAINS
     CALL mpi_barrier (mpi_comm_world,mpi_ierror)
     RETURN
   END SUBROUTINE collect_densities
-!***********************************************************************
+  !***********************************************************************
   SUBROUTINE collect_sp_properties
     REAL(db) :: tmpgat(nstmax),tmpgat3(3,nstmax)
     CALL mpi_barrier (mpi_comm_world,mpi_ierror)
@@ -108,7 +108,7 @@ CONTAINS
     sp_parity=tmpgat
     CALL mpi_barrier (mpi_comm_world,mpi_ierror)
   END SUBROUTINE collect_sp_properties
-!***********************************************************************
+  !***********************************************************************
   SUBROUTINE finish_mpi
     INTEGER :: ierr    
     CALL mpi_finalize(ierr)

@@ -21,21 +21,21 @@ CONTAINS
     dz=0.D0
     READ(5,Grid)
     IF(MOD(nx,2)/=0.OR.MOD(ny,2)/=0.OR.MOD(nz,2)/=0) THEN
-      IF(wflag) WRITE(*,'(A,3I4)') 'Dimensions must be even: ',nx,ny,nz
-      STOP
+       IF(wflag) WRITE(*,'(A,3I4)') 'Dimensions must be even: ',nx,ny,nz
+       STOP
     END IF
     IF(wflag) THEN
-      WRITE(*,*) '***** Grid Definition *****'
-      IF(periodic) THEN
-        WRITE(*,*) 'Grid is periodic'
-      ELSE
-        WRITE(*,*) 'Grid is not periodic'
-      END IF
+       WRITE(*,*) '***** Grid Definition *****'
+       IF(periodic) THEN
+          WRITE(*,*) 'Grid is periodic'
+       ELSE
+          WRITE(*,*) 'Grid is not periodic'
+       END IF
     END IF
     IF(dx*dy*dz<=0.D0) THEN
-      IF(dx<=0.D0) STOP 'Grid spacing given as zero'
-      dy=dx
-      dz=dx
+       IF(dx<=0.D0) STOP 'Grid spacing given as zero'
+       dy=dx
+       dz=dx
     END IF
     CALL init_coord('x',nx,dx,x,der1x,der2x,cdmpx)
     CALL init_coord('y',ny,dy,y,der1y,der2y,cdmpy)

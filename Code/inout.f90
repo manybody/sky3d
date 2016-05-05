@@ -19,30 +19,30 @@ CONTAINS
     INTEGER :: nst,iq,number(2)
     CHARACTER(120) :: rsfp
     IF(wflag.AND.(wffile=='none'.OR.wffile=='NONE')) THEN
-      WRITE(*,*) " wffile='NONE'  --> no file written "
-      RETURN
+       WRITE(*,*) " wffile='NONE'  --> no file written "
+       RETURN
     ENDIF
     ! Determine number of states with non-zero occupation
     DO iq=1,2
-      number(iq)=COUNT(wocc(npmin(iq):npsi(iq))>0.D0)
+       number(iq)=COUNT(wocc(npmin(iq):npsi(iq))>0.D0)
     END DO
     IF(mpi_myproc==0) THEN
-      OPEN(UNIT=scratch2,FILE=wffile,STATUS='REPLACE',FORM='UNFORMATTED')
-      WRITE(scratch2) iter,time,f%name,nstmax,nneut,nprot,number,npsi, &
-           charge_number,mass_number,cm
-      WRITE(scratch2) nx,ny,nz,dx,dy,dz,wxyz
-      WRITE(scratch2) x,y,z
-      WRITE(scratch2) wocc,sp_energy,sp_parity,sp_norm,sp_kinetic, &
-           sp_efluct1
-      WRITE(scratch2) node,localindex
-      IF(mpi_nprocs>1) CLOSE(UNIT=scratch2,STATUS='KEEP')
+       OPEN(UNIT=scratch2,FILE=wffile,STATUS='REPLACE',FORM='UNFORMATTED')
+       WRITE(scratch2) iter,time,f%name,nstmax,nneut,nprot,number,npsi, &
+            charge_number,mass_number,cm
+       WRITE(scratch2) nx,ny,nz,dx,dy,dz,wxyz
+       WRITE(scratch2) x,y,z
+       WRITE(scratch2) wocc,sp_energy,sp_parity,sp_norm,sp_kinetic, &
+            sp_efluct1
+       WRITE(scratch2) node,localindex
+       IF(mpi_nprocs>1) CLOSE(UNIT=scratch2,STATUS='KEEP')
     ENDIF
     IF(mpi_nprocs>1) THEN
-      WRITE(rsfp,'(I3.3,''.'',A)') mpi_myproc,wffile
-      OPEN(UNIT=scratch2,FILE=rsfp,STATUS='REPLACE',FORM='UNFORMATTED')
+       WRITE(rsfp,'(I3.3,''.'',A)') mpi_myproc,wffile
+       OPEN(UNIT=scratch2,FILE=rsfp,STATUS='REPLACE',FORM='UNFORMATTED')
     ENDIF
     DO nst=1,nstloc
-      WRITE(scratch2) psi(:,:,:,:,nst)
+       WRITE(scratch2) psi(:,:,:,:,nst)
     ENDDO
     CLOSE(UNIT=scratch2,STATUS='KEEP')
   END SUBROUTINE write_wavefunctions
@@ -58,24 +58,24 @@ CONTAINS
     WRITE(scratch) iter,time,nx,ny,nz
     WRITE(scratch) dx,dy,dz,wxyz,x,y,z
     DO i=1,nselect
-      c=writeselect(i:i)
-      SELECT CASE(c)
-      CASE('r','R')
-        CALL write_one_density('Rho',rho)
-      CASE('t','T')
-        CALL write_one_density('Tau',tau)
-      CASE('u','U')
-        CALL write_one_density('Upot',upot)
-      CASE('w','W')
-        WRITE(scratch) 'Wcoul     ',.FALSE.,.FALSE.
-        WRITE(scratch) wcoul
-      CASE('c','C')
-        CALL write_vec_density('Current',current)
-      CASE('s','S')
-        CALL write_vec_density('Spindens',sdens)
-      CASE('o','O')
-        CALL write_vec_density('s-o-Dens',sodens)
-      END SELECT
+       c=writeselect(i:i)
+       SELECT CASE(c)
+       CASE('r','R')
+          CALL write_one_density('Rho',rho)
+       CASE('t','T')
+          CALL write_one_density('Tau',tau)
+       CASE('u','U')
+          CALL write_one_density('Upot',upot)
+       CASE('w','W')
+          WRITE(scratch) 'Wcoul     ',.FALSE.,.FALSE.
+          WRITE(scratch) wcoul
+       CASE('c','C')
+          CALL write_vec_density('Current',current)
+       CASE('s','S')
+          CALL write_vec_density('Spindens',sdens)
+       CASE('o','O')
+          CALL write_vec_density('s-o-Dens',sodens)
+       END SELECT
     END DO
     CLOSE(UNIT=scratch)
   END SUBROUTINE write_densities
@@ -88,10 +88,10 @@ CONTAINS
     stored_name=name
     WRITE(scratch) stored_name,.FALSE.,write_isospin
     IF(write_isospin) THEN
-      WRITE(scratch) values
+       WRITE(scratch) values
     ELSE
-      a=values(:,:,:,1)+values(:,:,:,2)
-      WRITE(scratch) a
+       a=values(:,:,:,1)+values(:,:,:,2)
+       WRITE(scratch) a
     END IF
   END SUBROUTINE write_one_density
   !**************************************************************************
@@ -103,10 +103,10 @@ CONTAINS
     stored_name=name
     WRITE(scratch) stored_name,.TRUE.,write_isospin
     IF(write_isospin) THEN
-      WRITE(scratch) values
+       WRITE(scratch) values
     ELSE
-      a=values(:,:,:,:,1)+values(:,:,:,:,2)
-      WRITE(scratch) a
+       a=values(:,:,:,:,1)+values(:,:,:,:,2)
+       WRITE(scratch) a
     END IF
   END SUBROUTINE write_vec_density
   !**************************************************************************
@@ -137,28 +137,28 @@ CONTAINS
     WRITE(*,'(A)') '  z '
     WRITE(*,'(1X,F6.2,1X,121A)') zco(1),ibor(1:nhor)
     DO i=2,nver-1
-      zcu=z(nz)-(i-1)*dzp
-      DO j=2,nhor-1
-        xcu=x(1)+(j-1)*dxp
-        jcar=1+INT(0.5D0+ &
-             bplina(nx,nz,x,z,rhoplt,xcu,zcu) &
-             *5.D0/density_scale)
-        jcar=MIN(jcar,25)
-        ifun(j)=icar(jcar)
-      END DO
-      IF(MOD(i-1,izsc)==0) THEN
-        ntz=(i+izsc-1)/izsc
-        ifun(nhor)='+'
-        WRITE(*,'(1X,F6.2,1X,A,120A)') zco(ntz),'+',ifun(2:nhor)
-      ELSE
-        ifun(nhor)='i'
-        WRITE(*,'(8X,A,120A)') 'i',ifun(2:nhor)
-      END IF
+       zcu=z(nz)-(i-1)*dzp
+       DO j=2,nhor-1
+          xcu=x(1)+(j-1)*dxp
+          jcar=1+INT(0.5D0+ &
+               bplina(nx,nz,x,z,rhoplt,xcu,zcu) &
+               *5.D0/density_scale)
+          jcar=MIN(jcar,25)
+          ifun(j)=icar(jcar)
+       END DO
+       IF(MOD(i-1,izsc)==0) THEN
+          ntz=(i+izsc-1)/izsc
+          ifun(nhor)='+'
+          WRITE(*,'(1X,F6.2,1X,A,120A)') zco(ntz),'+',ifun(2:nhor)
+       ELSE
+          ifun(nhor)='i'
+          WRITE(*,'(8X,A,120A)') 'i',ifun(2:nhor)
+       END IF
     END DO
     IF(MOD(nver-1,izsc)==0) THEN
-      WRITE(*,'(1X,F6.2,1X,121A)') zco(ntkz),ibor(1:nhor)
+       WRITE(*,'(1X,F6.2,1X,121A)') zco(ntkz),ibor(1:nhor)
     ELSE
-      WRITE(*,'(8X,A,120A)') '-',ibor(2:nhor)
+       WRITE(*,'(8X,A,120A)') '-',ibor(2:nhor)
     END IF
     WRITE(*,'(A,12(F6.2,4X),F6.2)') '  x= ',(xco(i),i=1,ntkx)
   END SUBROUTINE plot_density
@@ -172,12 +172,12 @@ CONTAINS
     !
     ff=0.D0
     DO i=1,n-1
-      IF(xar(i)<=xcu.AND.xcu<=xar(i+1)) GO TO 10
+       IF(xar(i)<=xcu.AND.xcu<=xar(i+1)) GO TO 10
     END DO
     RETURN
 10  icu=i
     DO i=1,m-1
-      IF(zar(i)<=zcu.AND.zcu<=zar(i+1)) GO TO 20
+       IF(zar(i)<=zcu.AND.zcu<=zar(i+1)) GO TO 20
     END DO
     RETURN
 20  jcu=i
@@ -201,61 +201,61 @@ CONTAINS
     yy=y-cmtot(2)
     zz=z-cmtot(3)
     DO nst=1,nstmax
-      IF(node(nst)/=mpi_myproc) CYCLE
-      pst=psi(:,:,:,:,localindex(nst))
-      IF(TFFT) THEN
-        CALL cdervx(pst,psx)  
-        CALL cdervy(pst,psy)  
+       IF(node(nst)/=mpi_myproc) CYCLE
+       pst=psi(:,:,:,:,localindex(nst))
+       IF(TFFT) THEN
+          CALL cdervx(pst,psx)  
+          CALL cdervy(pst,psy)  
 
-        CALL cdervz(pst,psz)  
-        CALL laplace(pst,psw)  
-      ELSE
-        CALL cmulx(der1x,pst,psx,0)  
-        CALL cmuly(der1y,pst,psy,0)  
-        CALL cmulz(der1z,pst,psz,0)  
-        CALL cmulx(der2x,pst,psw,0)  
-        CALL cmuly(der2y,pst,psw,1)  
-        CALL cmulz(der2z,pst,psw,1)  
-      ENDIF
-      cc=0.D0
-      ss=0.D0
-      kin=0.D0
-      xpar=0.D0
-      DO iz=1,nz  
-        izz=nz-iz+1  
-        DO iy=1,ny  
-          iyy=ny-iy+1  
-          DO ix=1,nx  
-            ixx=nx-ix+1  
-            DO is=1,2  
-              rp=REAL(pst(ix,iy,iz,is))
-              ip=AIMAG(pst(ix,iy,iz,is))
-              cc(1)=cc(1)+ &
-                   rp*(yy(iy)*AIMAG(psz(ix,iy,iz,is))-zz(iz)*AIMAG(psy(ix,iy,iz,is))) &
-                   +ip*(zz(iz)*REAL(psy(ix,iy,iz,is))-yy(iy)*REAL(psz(ix,iy,iz,is)))
-              cc(2)=cc(2)+ &
-                   rp*(zz(iz)*AIMAG(psx(ix,iy,iz,is))-xx(ix)*AIMAG(psz(ix,iy,iz,is))) &
-                   +ip*(xx(ix)*REAL(psz(ix,iy,iz,is))-zz(iz)*REAL(psx(ix,iy,iz,is)))
-              cc(3)=cc(3)+ &
-                   rp*(xx(ix)*AIMAG(psy(ix,iy,iz,is))-yy(iy)*AIMAG(psx(ix,iy,iz,is))) &
-                   +ip*(yy(iy)*REAL(psx(ix,iy,iz,is))-xx(ix)*REAL(psy(ix,iy,iz,is)))
-              kin=kin-rp*REAL(psw(ix,iy,iz,is))-ip*AIMAG(psw(ix,iy,iz,is))
-              xpar=xpar+REAL(pst(ix,iy,iz,is))*REAL(pst(ixx,iyy,izz,is)) &
-                   +AIMAG(pst(ix,iy,iz,is))*AIMAG(pst(ixx,iyy,izz,is))
-            END DO
-            ss(1)=ss(1) + CONJG(pst(ix,iy,iz,1))*pst(ix,iy,iz,2) &
-                 + CONJG(pst(ix,iy,iz,2))*pst(ix,iy,iz,1)
-            ss(2)=ss(2) + CONJG(pst(ix,iy,iz,1))*pst(ix,iy,iz,2)*CMPLX(0.D0,-1.D0,db) &
-                 + CONJG(pst(ix,iy,iz,2))*pst(ix,iy,iz,1)*CMPLX(0.D0,1.D0,db)
-            ss(3)=ss(3) + CONJG(pst(ix,iy,iz,1))*pst(ix,iy,iz,1) &
-                 - CONJG(pst(ix,iy,iz,2))*pst(ix,iy,iz,2)
+          CALL cdervz(pst,psz)  
+          CALL laplace(pst,psw)  
+       ELSE
+          CALL cmulx(der1x,pst,psx,0)  
+          CALL cmuly(der1y,pst,psy,0)  
+          CALL cmulz(der1z,pst,psz,0)  
+          CALL cmulx(der2x,pst,psw,0)  
+          CALL cmuly(der2y,pst,psw,1)  
+          CALL cmulz(der2z,pst,psw,1)  
+       ENDIF
+       cc=0.D0
+       ss=0.D0
+       kin=0.D0
+       xpar=0.D0
+       DO iz=1,nz  
+          izz=nz-iz+1  
+          DO iy=1,ny  
+             iyy=ny-iy+1  
+             DO ix=1,nx  
+                ixx=nx-ix+1  
+                DO is=1,2  
+                   rp=REAL(pst(ix,iy,iz,is))
+                   ip=AIMAG(pst(ix,iy,iz,is))
+                   cc(1)=cc(1)+ &
+                        rp*(yy(iy)*AIMAG(psz(ix,iy,iz,is))-zz(iz)*AIMAG(psy(ix,iy,iz,is))) &
+                        +ip*(zz(iz)*REAL(psy(ix,iy,iz,is))-yy(iy)*REAL(psz(ix,iy,iz,is)))
+                   cc(2)=cc(2)+ &
+                        rp*(zz(iz)*AIMAG(psx(ix,iy,iz,is))-xx(ix)*AIMAG(psz(ix,iy,iz,is))) &
+                        +ip*(xx(ix)*REAL(psz(ix,iy,iz,is))-zz(iz)*REAL(psx(ix,iy,iz,is)))
+                   cc(3)=cc(3)+ &
+                        rp*(xx(ix)*AIMAG(psy(ix,iy,iz,is))-yy(iy)*AIMAG(psx(ix,iy,iz,is))) &
+                        +ip*(yy(iy)*REAL(psx(ix,iy,iz,is))-xx(ix)*REAL(psy(ix,iy,iz,is)))
+                   kin=kin-rp*REAL(psw(ix,iy,iz,is))-ip*AIMAG(psw(ix,iy,iz,is))
+                   xpar=xpar+REAL(pst(ix,iy,iz,is))*REAL(pst(ixx,iyy,izz,is)) &
+                        +AIMAG(pst(ix,iy,iz,is))*AIMAG(pst(ixx,iyy,izz,is))
+                END DO
+                ss(1)=ss(1) + CONJG(pst(ix,iy,iz,1))*pst(ix,iy,iz,2) &
+                     + CONJG(pst(ix,iy,iz,2))*pst(ix,iy,iz,1)
+                ss(2)=ss(2) + CONJG(pst(ix,iy,iz,1))*pst(ix,iy,iz,2)*CMPLX(0.D0,-1.D0,db) &
+                     + CONJG(pst(ix,iy,iz,2))*pst(ix,iy,iz,1)*CMPLX(0.D0,1.D0,db)
+                ss(3)=ss(3) + CONJG(pst(ix,iy,iz,1))*pst(ix,iy,iz,1) &
+                     - CONJG(pst(ix,iy,iz,2))*pst(ix,iy,iz,2)
+             ENDDO
           ENDDO
-        ENDDO
-      END DO
-      sp_spin(:,nst)=0.5D0*wxyz*ss(:)
-      sp_orbital(:,nst)=wxyz*cc
-      sp_kinetic(nst)=wxyz*f%h2m(isospin(nst))*kin
-      sp_parity(nst)=wxyz*xpar
+       END DO
+       sp_spin(:,nst)=0.5D0*wxyz*ss(:)
+       sp_orbital(:,nst)=wxyz*cc
+       sp_kinetic(nst)=wxyz*f%h2m(isospin(nst))*kin
+       sp_parity(nst)=wxyz*xpar
     END DO
   END SUBROUTINE sp_properties
   !************************************************************

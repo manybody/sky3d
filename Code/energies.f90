@@ -24,7 +24,7 @@ MODULE Energies
   REAL(db) :: e3corr    ! rearrangement energy
   REAL(db) :: orbital(3),spin(3),total_angmom(3)
 CONTAINS
-!***************************************************************************
+  !***************************************************************************
   SUBROUTINE integ_energy
     USE Trivial, ONLY: rmulx,rmuly,rmulz
     USE Grids, ONLY: wxyz,der1x,der2x,der1y,der2y,der1z,der2z
@@ -35,29 +35,29 @@ CONTAINS
     REAL(db) :: workb(nx,ny,nz,3,2)
     ! Step 1: compute laplacian of densities, then ehf0, ehf2, and ehf3
     DO iq=1,2
-      CALL rmulx(der2x,rho(:,:,:,iq),worka(:,:,:,iq),0)
-      CALL rmuly(der2y,rho(:,:,:,iq),worka(:,:,:,iq),1)
-      CALL rmulz(der2z,rho(:,:,:,iq),worka(:,:,:,iq),1)
+       CALL rmulx(der2x,rho(:,:,:,iq),worka(:,:,:,iq),0)
+       CALL rmuly(der2y,rho(:,:,:,iq),worka(:,:,:,iq),1)
+       CALL rmulz(der2z,rho(:,:,:,iq),worka(:,:,:,iq),1)
     ENDDO
     ehf0=0.0D0
     ehf3=0.0D0
     ehf2=0.0D0
     DO iz=1,nz
-      DO iy=1,ny
-        DO ix=1,nx
-          rhot=rho(ix,iy,iz,1)+rho(ix,iy,iz,2)
-          rhon=rho(ix,iy,iz,1)
-          rhop=rho(ix,iy,iz,2)
-          ehf0=ehf0+wxyz*(b0*rhot**2-b0p*(rhop**2+rhon**2))/2.D0
-          ehf3=ehf3+wxyz*rhot**f%power*(b3*rhot**2 &
-               -b3p*(rhop**2+rhon**2))/3.D0
-          d2rho=worka(ix,iy,iz,1)+worka(ix,iy,iz,2)
-          d2rhon=worka(ix,iy,iz,1)
-          d2rhop=worka(ix,iy,iz,2)
-          ehf2=ehf2+wxyz*(-b2*rhot*d2rho+b2p*(rhop* &
-               d2rhop+rhon*d2rhon))/2.D0
-        ENDDO
-      ENDDO
+       DO iy=1,ny
+          DO ix=1,nx
+             rhot=rho(ix,iy,iz,1)+rho(ix,iy,iz,2)
+             rhon=rho(ix,iy,iz,1)
+             rhop=rho(ix,iy,iz,2)
+             ehf0=ehf0+wxyz*(b0*rhot**2-b0p*(rhop**2+rhon**2))/2.D0
+             ehf3=ehf3+wxyz*rhot**f%power*(b3*rhot**2 &
+                  -b3p*(rhop**2+rhon**2))/3.D0
+             d2rho=worka(ix,iy,iz,1)+worka(ix,iy,iz,2)
+             d2rhon=worka(ix,iy,iz,1)
+             d2rhop=worka(ix,iy,iz,2)
+             ehf2=ehf2+wxyz*(-b2*rhot*d2rho+b2p*(rhop* &
+                  d2rhop+rhon*d2rhon))/2.D0
+          ENDDO
+       ENDDO
     ENDDO
     e3corr=-f%power*ehf3/2.D0
     ! Step 2: b1-contribution. worka=square of the current vector
@@ -71,9 +71,9 @@ CONTAINS
     ! Step 3: the spin-orbit contribution
     !         (a) Time even part: worka=div J
     DO iq=1,2
-      CALL rmulx(der1x,sodens(:,:,:,1,iq),worka(:,:,:,iq),0)
-      CALL rmuly(der1y,sodens(:,:,:,2,iq),worka(:,:,:,iq),1)
-      CALL rmulz(der1z,sodens(:,:,:,3,iq),worka(:,:,:,iq),1)
+       CALL rmulx(der1x,sodens(:,:,:,1,iq),worka(:,:,:,iq),0)
+       CALL rmuly(der1y,sodens(:,:,:,2,iq),worka(:,:,:,iq),1)
+       CALL rmulz(der1z,sodens(:,:,:,3,iq),worka(:,:,:,iq),1)
     ENDDO
     ehfls=wxyz*SUM(-b4*(rho(:,:,:,1)+rho(:,:,:,2)) &
          *(worka(:,:,:,1)+worka(:,:,:,2)) &
@@ -98,28 +98,28 @@ CONTAINS
     ehfc=0.0D0
     ecorc=0.0D0
     IF(tcoul) THEN
-      IF(f%ex/=0) THEN
-        sc=-3.0D0/4.0D0*slate
-      ELSE
-        sc=0.D0
-      END IF
-      DO iz=1,nz
-        DO iy=1,ny
-          DO ix=1,nx
-            rhop=rho(ix,iy,iz,2)
-            ehfc=ehfc+wxyz *(0.5D0*rhop*wcoul(ix,iy,iz) &
-                 +sc*rhop**(4.0D0/3.0D0))
-            ecorc=ecorc+wxyz*sc/3.0D0*rhop**(4.0D0/3.0D0)
+       IF(f%ex/=0) THEN
+          sc=-3.0D0/4.0D0*slate
+       ELSE
+          sc=0.D0
+       END IF
+       DO iz=1,nz
+          DO iy=1,ny
+             DO ix=1,nx
+                rhop=rho(ix,iy,iz,2)
+                ehfc=ehfc+wxyz *(0.5D0*rhop*wcoul(ix,iy,iz) &
+                     +sc*rhop**(4.0D0/3.0D0))
+                ecorc=ecorc+wxyz*sc/3.0D0*rhop**(4.0D0/3.0D0)
+             ENDDO
           ENDDO
-        ENDDO
-      ENDDO
+       ENDDO
     ENDIF
     ! Step 5: kinetic energy contribution
     ehft=wxyz*SUM(f%h2m(1)*tau(:,:,:,1)+f%h2m(2)*tau(:,:,:,2))
     ! Step 6: form total energy
     ehfint=ehft+ehf0+ehf1+ehf2+ehf3+ehfls+ehfc-epair(1)-epair(2)
   END SUBROUTINE integ_energy
-!***************************************************************************
+  !***************************************************************************
   SUBROUTINE sum_energy
     USE Moment, ONLY: pnrtot
     INTEGER :: i
@@ -129,11 +129,11 @@ CONTAINS
     efluct1=SUM(wocc*sp_efluct1)/pnrtot
     efluct2=SUM(wocc*sp_efluct2)/pnrtot
     DO i=1,3
-      orbital(i)=SUM(wocc*sp_orbital(i,:))
-      spin(i)=SUM(wocc*sp_spin(i,:))
-      total_angmom(i)=orbital(i)+spin(i)
+       orbital(i)=SUM(wocc*sp_orbital(i,:))
+       spin(i)=SUM(wocc*sp_spin(i,:))
+       total_angmom(i)=orbital(i)+spin(i)
     END DO
   END SUBROUTINE sum_energy
-!***************************************************************************
+  !***************************************************************************
 END MODULE Energies
 

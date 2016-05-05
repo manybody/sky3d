@@ -22,7 +22,7 @@ CONTAINS
          isospin(nstmax))
     isospin(1:npsi(1))=1
     isospin(npmin(2):npsi(2))=2
-    END SUBROUTINE alloc_levels
+  END SUBROUTINE alloc_levels
   !************************************************************
   SUBROUTINE cdervx(psin,d1psout,d2psout)  
     COMPLEX(db), INTENT(IN) ::  psin(:,:,:,:)

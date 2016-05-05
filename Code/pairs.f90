@@ -22,20 +22,20 @@ CONTAINS
     CALL pairgap
     ! solve pairing problem for each isospin iq
     DO iq=1,2  
-      IF(iq==2) THEN
-        particle_number=charge_number
-      ELSE  
-        particle_number=mass_number-charge_number
-      ENDIF
-      CALL pairdn(particle_number)
+       IF(iq==2) THEN
+          particle_number=charge_number
+       ELSE  
+          particle_number=mass_number-charge_number
+       ENDIF
+       CALL pairdn(particle_number)
     ENDDO
     ! print pairing information
     IF(printnow.AND.wflag) THEN  
-      WRITE(*,'(/7x,a)') '   e_ferm      e_pair     aver_gap    aver_force '
-      DO iq=1,2  
-        WRITE(*,'(a,i2,a,4(1pg12.4))') 'iq=',iq,': ',eferm(iq) , &
-             epair(iq) ,avdelt(iq),avg(iq)
-      ENDDO
+       WRITE(*,'(/7x,a)') '   e_ferm      e_pair     aver_gap    aver_force '
+       DO iq=1,2  
+          WRITE(*,'(a,i2,a,4(1pg12.4))') 'iq=',iq,': ',eferm(iq) , &
+               epair(iq) ,avdelt(iq),avg(iq)
+       ENDDO
     ENDIF
   END SUBROUTINE pair
   !***********************************************************************
@@ -51,40 +51,40 @@ CONTAINS
     REAL(db) :: work(nx,ny,nz)  
     ! constant gap in early stages of iteration
     IF(iter<=itrsin) THEN  
-      deltaf=11.2/SQRT(mass_number)
-      RETURN  
+       deltaf=11.2/SQRT(mass_number)
+       RETURN  
     ENDIF
     ! now the detailed gaps:
     DO iqq=1,2  
-      work=0.D0
-      ! accumulate new pair-density
-      DO nst=npmin(iqq),npsi(iqq)  
-        DO is=1,2  
-          work=work+SQRT(MAX(wocc(nst)-wocc(nst)**2,smallp))*0.5* &
-               (REAL(psi(:,:,:,is,nst))**2+AIMAG(psi(:,:,:,is,nst))**2)
-        ENDDO
-      ENDDO
-      ! determine pairing strength
-      IF(iqq==2) THEN  
-        v0act=p%v0prot  
-      ELSE  
-        v0act=p%v0neut  
-      ENDIF
-      ! now multiply with strength to obtain local pair-potential
-      IF(ipair==6) THEN
-        work=v0act*work*(1D0-(rho(:,:,:,1)+rho(:,:,:,2))/p%rho0pr)
-      ELSE
-        work=v0act*work  
-      END IF
-      ! finally compute the actual gaps as s.p. expectation values with
-      ! the pair potential
-      DO nst=npmin(iqq),npsi(iqq)  
-        deltaf(nst)=0.0D0  
-        DO is=1,2  
-          deltaf(nst)=deltaf(nst)+wxyz*SUM(work* &
-               (REAL(psi(:,:,:,is,nst))**2+AIMAG(psi(:,:,:,is,nst))**2))
-        ENDDO
-      ENDDO
+       work=0.D0
+       ! accumulate new pair-density
+       DO nst=npmin(iqq),npsi(iqq)  
+          DO is=1,2  
+             work=work+SQRT(MAX(wocc(nst)-wocc(nst)**2,smallp))*0.5* &
+                  (REAL(psi(:,:,:,is,nst))**2+AIMAG(psi(:,:,:,is,nst))**2)
+          ENDDO
+       ENDDO
+       ! determine pairing strength
+       IF(iqq==2) THEN  
+          v0act=p%v0prot  
+       ELSE  
+          v0act=p%v0neut  
+       ENDIF
+       ! now multiply with strength to obtain local pair-potential
+       IF(ipair==6) THEN
+          work=v0act*work*(1D0-(rho(:,:,:,1)+rho(:,:,:,2))/p%rho0pr)
+       ELSE
+          work=v0act*work  
+       END IF
+       ! finally compute the actual gaps as s.p. expectation values with
+       ! the pair potential
+       DO nst=npmin(iqq),npsi(iqq)  
+          deltaf(nst)=0.0D0  
+          DO is=1,2  
+             deltaf(nst)=deltaf(nst)+wxyz*SUM(work* &
+                  (REAL(psi(:,:,:,is,nst))**2+AIMAG(psi(:,:,:,is,nst))**2))
+          ENDDO
+       ENDDO
     ENDDO
   END SUBROUTINE pairgap
   !***********************************************************************
@@ -108,13 +108,13 @@ CONTAINS
     sumduv=0.0D0 
     sumepa=0.0D0
     DO na=npmin(iq),npsi(iq)
-      edif=sp_energy(na)-eferm(iq)  
-      equasi=SQRT(edif*edif+deltaf(na)**2)  
-      v2=0.5D0-0.5D0*edif/equasi  
-      vol=0.5D0*SQRT(MAX(v2-v2*v2,xsmall))  
-      sumuv=vol+sumuv  
-      sumduv=vol*deltaf(na)+sumduv  
-      sumepa=0.5D0*deltaf(na)**2/equasi+sumepa  
+       edif=sp_energy(na)-eferm(iq)  
+       equasi=SQRT(edif*edif+deltaf(na)**2)  
+       v2=0.5D0-0.5D0*edif/equasi  
+       vol=0.5D0*SQRT(MAX(v2-v2*v2,xsmall))  
+       sumuv=vol+sumuv  
+       sumduv=vol*deltaf(na)+sumduv  
+       sumepa=0.5D0*deltaf(na)**2/equasi+sumepa  
     ENDDO
     sumuv=MAX(sumuv,xsmall)  
     avdelt(iq)=sumduv/sumuv  
@@ -145,83 +145,83 @@ CONTAINS
     rd=rb-ra  
     re=rd  
     IF((rfa>0.D0) .AND.(rfb>0.D0)) THEN  
-      IF(rfa>rfb) THEN  
-        rb=1.0  
-      ELSE  
-        rb=0.D0  
-      ENDIF
+       IF(rfa>rfb) THEN  
+          rb=1.0  
+       ELSE  
+          rb=0.D0  
+       ENDIF
     ELSEIF((rfa<0.D0) .AND.(rfb<0.D0)) THEN  
-      IF(rfa>rfb) THEN  
-        rb=0.D0  
-      ELSE  
-        rb=1.0  
-      ENDIF
+       IF(rfa>rfb) THEN  
+          rb=0.D0  
+       ELSE  
+          rb=1.0  
+       ENDIF
     ELSE  
-      iteration: DO ii=1,iitmax  
-        IF(((rfb>0.D0) .AND.(rfc>0.D0)).OR.((rfb<0.D0) &
-             .AND.(rfc<0.D0))) THEN
-          rc=ra  
-          rfc=rfa  
-          rd=rb-ra  
-          re=rd  
-        ENDIF
-        IF(ABS(rfc)<ABS(rfb)) THEN  
+       iteration: DO ii=1,iitmax  
+          IF(((rfb>0.D0) .AND.(rfc>0.D0)).OR.((rfb<0.D0) &
+               .AND.(rfc<0.D0))) THEN
+             rc=ra  
+             rfc=rfa  
+             rd=rb-ra  
+             re=rd  
+          ENDIF
+          IF(ABS(rfc)<ABS(rfb)) THEN  
+             ra=rb  
+             rb=rc  
+             rc=ra  
+             rfa=rfb  
+             rfb=rfc  
+             rfc=rfa  
+          ENDIF
+          !     convergence check
+          rtol1=2.0*reps*ABS(rb)+0.5*rtol  
+          rxm=0.5 *(rc-rb)  
+          IF((ABS(rxm) <=rtol1).OR.((ABS(rfb)==0.D0))) THEN
+             res=rb
+             CALL bcs_occupation(res,rfa)
+             RETURN  
+          ENDIF
+          IF((ABS(re)>=rtol1).OR.(ABS(rfa)>ABS(rfb))) &
+               THEN
+             rs=rfb/rfa  
+             IF(ra==rc) THEN  
+                rp=2.0*rxm*rs  
+                rq=1.0-rs  
+             ELSE  
+                rq=rfa/rfc  
+                rr=rfb/rfc  
+                rp=rs *(2.0*rxm*rq *(rq-rr)-(rb-ra) *(rr- &
+                     1.0))
+                rq=(rq-1.0) *(rr-1.0) *(rs-1.0)  
+             ENDIF
+             IF(rp>0.D0) THEN  
+                rq=-rq  
+             ENDIF
+             rp=ABS(rp)  
+             rmin1=3.0*rxm*rq-ABS(rtol1*rq)  
+             rmin2=ABS(rq*re)  
+             IF(2.0*rp<MIN(rmin1,rmin2)) THEN  
+                re=rd  
+                rd=rp/rq  
+             ELSE  
+                rd=rxm  
+                re=rd  
+             ENDIF
+          ELSE  
+             rd=rxm  
+             re=rd  
+          ENDIF
           ra=rb  
-          rb=rc  
-          rc=ra  
           rfa=rfb  
-          rfb=rfc  
-          rfc=rfa  
-        ENDIF
-        !     convergence check
-        rtol1=2.0*reps*ABS(rb)+0.5*rtol  
-        rxm=0.5 *(rc-rb)  
-        IF((ABS(rxm) <=rtol1).OR.((ABS(rfb)==0.D0))) THEN
-          res=rb
-          CALL bcs_occupation(res,rfa)
-          RETURN  
-        ENDIF
-        IF((ABS(re)>=rtol1).OR.(ABS(rfa)>ABS(rfb))) &
-             THEN
-          rs=rfb/rfa  
-          IF(ra==rc) THEN  
-            rp=2.0*rxm*rs  
-            rq=1.0-rs  
+          IF(ABS(rd) >rtol1) THEN  
+             rb=rb+rd  
           ELSE  
-            rq=rfa/rfc  
-            rr=rfb/rfc  
-            rp=rs *(2.0*rxm*rq *(rq-rr)-(rb-ra) *(rr- &
-                 1.0))
-            rq=(rq-1.0) *(rr-1.0) *(rs-1.0)  
+             rb=rb+SIGN(rtol1,rxm)  
           ENDIF
-          IF(rp>0.D0) THEN  
-            rq=-rq  
-          ENDIF
-          rp=ABS(rp)  
-          rmin1=3.0*rxm*rq-ABS(rtol1*rq)  
-          rmin2=ABS(rq*re)  
-          IF(2.0*rp<MIN(rmin1,rmin2)) THEN  
-            re=rd  
-            rd=rp/rq  
-          ELSE  
-            rd=rxm  
-            re=rd  
-          ENDIF
-        ELSE  
-          rd=rxm  
-          re=rd  
-        ENDIF
-        ra=rb  
-        rfa=rfb  
-        IF(ABS(rd) >rtol1) THEN  
-          rb=rb+rd  
-        ELSE  
-          rb=rb+SIGN(rtol1,rxm)  
-        ENDIF
-        CALL bcs_occupation(rb,rfb)
-        rfb=particle_number-rfb
-      ENDDO iteration
-      STOP 'No solution found in pairing iterations'  
+          CALL bcs_occupation(rb,rfb)
+          rfb=particle_number-rfb
+       ENDDO iteration
+       STOP 'No solution found in pairing iterations'  
     ENDIF
   END FUNCTION rbrent
   !***********************************************************************
@@ -235,10 +235,10 @@ CONTAINS
     REAL(db) :: edif
     bcs_partnum=0.0  
     DO k=npmin(iq),npsi(iq)  
-      edif=sp_energy(k)-efermi  
-      wocc(k)=0.5D0 *(1.0D0-edif/SQRT(edif**2+deltaf(k)**2))  
-      wocc(k)=MIN(MAX(wocc(k),smal),1.D0-smal)  
-      bcs_partnum=bcs_partnum+wocc(k)
+       edif=sp_energy(k)-efermi  
+       wocc(k)=0.5D0 *(1.0D0-edif/SQRT(edif**2+deltaf(k)**2))  
+       wocc(k)=MIN(MAX(wocc(k),smal),1.D0-smal)  
+       bcs_partnum=bcs_partnum+wocc(k)
     ENDDO
   END SUBROUTINE bcs_occupation
 END MODULE Pairs

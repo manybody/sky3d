@@ -30,21 +30,21 @@ CONTAINS
          (psin(:,:,:,1)*CONJG(psin(:,:,:,1))+ &
          psin(:,:,:,2)*CONJG(psin(:,:,:,2)))
     FORALL(iz=1:nz,iy=1:ny,ix=1:nx)
-      lsdens(ix,iy,iz,1,iq)=lsdens(ix,iy,iz,1,iq)+2.D0*weight &
-           *REAL(CONJG(psin(ix,iy,iz,1))*psin(ix,iy,iz,2))
-      lsdens(ix,iy,iz,2,iq)=lsdens(ix,iy,iz,2,iq)+2.D0*weight &
-           *AIMAG(CONJG(psin(ix,iy,iz,1))*psin(ix,iy,iz,2))
-      lsdens(ix,iy,iz,3,iq)=lsdens(ix,iy,iz,3,iq)+weight &
-           *(REAL(CONJG(psin(ix,iy,iz,1))*psin(ix,iy,iz,1)) &
-           -REAL(CONJG(psin(ix,iy,iz,2))*psin(ix,iy,iz,2)))
+       lsdens(ix,iy,iz,1,iq)=lsdens(ix,iy,iz,1,iq)+2.D0*weight &
+            *REAL(CONJG(psin(ix,iy,iz,1))*psin(ix,iy,iz,2))
+       lsdens(ix,iy,iz,2,iq)=lsdens(ix,iy,iz,2,iq)+2.D0*weight &
+            *AIMAG(CONJG(psin(ix,iy,iz,1))*psin(ix,iy,iz,2))
+       lsdens(ix,iy,iz,3,iq)=lsdens(ix,iy,iz,3,iq)+weight &
+            *(REAL(CONJG(psin(ix,iy,iz,1))*psin(ix,iy,iz,1)) &
+            -REAL(CONJG(psin(ix,iy,iz,2))*psin(ix,iy,iz,2)))
     END FORALL
     !***********************************************************************
     ! x-derivatives
     !***********************************************************************
     IF(TFFT) THEN
-      CALL cdervx(psin,ps1)  
+       CALL cdervx(psin,ps1)  
     ELSE
-      CALL cmulx(der1x,psin,ps1,0)  
+       CALL cmulx(der1x,psin,ps1,0)  
     ENDIF
     ltau(:,:,:,iq)=ltau(:,:,:,iq)+weight* &
          (ps1(:,:,:,1)*CONJG(ps1(:,:,:,1))+ps1(:,:,:,2)*CONJG(ps1(:,:,:,2)))
@@ -52,20 +52,20 @@ CONTAINS
          AIMAG(ps1(:,:,:,1)*CONJG(psin(:,:,:,1))+ &
          ps1(:,:,:,2)*CONJG(psin(:,:,:,2)))
     FORALL(ix=1:nx,iy=1:ny,iz=1:nz)
-      lsodens(ix,iy,iz,2,iq)=lsodens(ix,iy,iz,2,iq)-weight &
-           *(  AIMAG(ps1(ix,iy,iz,1)*CONJG(psin(ix,iy,iz,1))) &
-           - AIMAG(ps1(ix,iy,iz,2)*CONJG(psin(ix,iy,iz,2))) )
-      lsodens(ix,iy,iz,3,iq)=lsodens(ix,iy,iz,3,iq)-weight &
-           *(  REAL(psin(ix,iy,iz,1)*CONJG(ps1(ix,iy,iz,2))) &
-           - REAL(psin(ix,iy,iz,2)*CONJG(ps1(ix,iy,iz,1))) )
+       lsodens(ix,iy,iz,2,iq)=lsodens(ix,iy,iz,2,iq)-weight &
+            *(  AIMAG(ps1(ix,iy,iz,1)*CONJG(psin(ix,iy,iz,1))) &
+            - AIMAG(ps1(ix,iy,iz,2)*CONJG(psin(ix,iy,iz,2))) )
+       lsodens(ix,iy,iz,3,iq)=lsodens(ix,iy,iz,3,iq)-weight &
+            *(  REAL(psin(ix,iy,iz,1)*CONJG(ps1(ix,iy,iz,2))) &
+            - REAL(psin(ix,iy,iz,2)*CONJG(ps1(ix,iy,iz,1))) )
     END FORALL
     !***********************************************************************
     ! y-derivatives
     !***********************************************************************
     IF(TFFT) THEN
-      CALL cdervy(psin,ps1)  
+       CALL cdervy(psin,ps1)  
     ELSE
-      CALL cmuly(der1y,psin,ps1,0)  
+       CALL cmuly(der1y,psin,ps1,0)  
     ENDIF
     ltau(:,:,:,iq)=ltau(:,:,:,iq)+weight* &
          (ps1(:,:,:,1)*CONJG(ps1(:,:,:,1))+ps1(:,:,:,2)*CONJG(ps1(:,:,:,2)))
@@ -73,20 +73,20 @@ CONTAINS
          AIMAG(ps1(:,:,:,1)*CONJG(psin(:,:,:,1))+ &
          ps1(:,:,:,2)*CONJG(psin(:,:,:,2)))
     FORALL(ix=1:Nx,iy=1:ny,iz=1:nz)
-      lsodens(ix,iy,iz,1,iq)=lsodens(ix,iy,iz,1,iq)+weight &
-           *AIMAG( ps1(ix,iy,iz,1)*CONJG(psin(ix,iy,iz,1)) &
-           -ps1(ix,iy,iz,2)*CONJG(psin(ix,iy,iz,2)) )
-      lsodens(ix,iy,iz,3,iq)=lsodens(ix,iy,iz,3,iq)-weight &
-           *AIMAG( ps1(ix,iy,iz,2)*CONJG(psin(ix,iy,iz,1)) &
-           +ps1(ix,iy,iz,1)*CONJG(psin(ix,iy,iz,2)) )
+       lsodens(ix,iy,iz,1,iq)=lsodens(ix,iy,iz,1,iq)+weight &
+            *AIMAG( ps1(ix,iy,iz,1)*CONJG(psin(ix,iy,iz,1)) &
+            -ps1(ix,iy,iz,2)*CONJG(psin(ix,iy,iz,2)) )
+       lsodens(ix,iy,iz,3,iq)=lsodens(ix,iy,iz,3,iq)-weight &
+            *AIMAG( ps1(ix,iy,iz,2)*CONJG(psin(ix,iy,iz,1)) &
+            +ps1(ix,iy,iz,1)*CONJG(psin(ix,iy,iz,2)) )
     END FORALL
     !***********************************************************************
     ! z-derivatives
     !***********************************************************************
     IF(TFFT) THEN
-      CALL cdervz(psin,ps1)  
+       CALL cdervz(psin,ps1)  
     ELSE
-      CALL cmulz(der1z,psin,ps1,0)  
+       CALL cmulz(der1z,psin,ps1,0)  
     ENDIF
     ltau(:,:,:,iq)=ltau(:,:,:,iq)+weight* &
          (ps1(:,:,:,1)*CONJG(ps1(:,:,:,1))+ps1(:,:,:,2)*CONJG(ps1(:,:,:,2)))
@@ -94,12 +94,12 @@ CONTAINS
          AIMAG(ps1(:,:,:,1)*CONJG(psin(:,:,:,1))+ &
          ps1(:,:,:,2)*CONJG(psin(:,:,:,2)))
     FORALL(ix=1:Nx,iy=1:ny,iz=1:nz)
-      lsodens(ix,iy,iz,1,iq)=lsodens(ix,iy,iz,1,iq)+weight &
-           *REAL( ps1(ix,iy,iz,2)*CONJG(psin(ix,iy,iz,1)) &
-           -ps1(ix,iy,iz,1)*CONJG(psin(ix,iy,iz,2)) )
-      lsodens(ix,iy,iz,2,iq)=lsodens(ix,iy,iz,2,iq)+weight &
-           *AIMAG( ps1(ix,iy,iz,2)*CONJG(psin(ix,iy,iz,1)) &
-           +ps1(ix,iy,iz,1)*CONJG(psin(ix,iy,iz,2)) )
+       lsodens(ix,iy,iz,1,iq)=lsodens(ix,iy,iz,1,iq)+weight &
+            *REAL( ps1(ix,iy,iz,2)*CONJG(psin(ix,iy,iz,1)) &
+            -ps1(ix,iy,iz,1)*CONJG(psin(ix,iy,iz,2)) )
+       lsodens(ix,iy,iz,2,iq)=lsodens(ix,iy,iz,2,iq)+weight &
+            *AIMAG( ps1(ix,iy,iz,2)*CONJG(psin(ix,iy,iz,1)) &
+            +ps1(ix,iy,iz,1)*CONJG(psin(ix,iy,iz,2)) )
     END FORALL
   END SUBROUTINE add_density
 END MODULE Densities
