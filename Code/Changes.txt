@@ -29,6 +29,12 @@ Step 2.0:
 - static.f90: Accelerated iteration by flexible step size.
               'npsi' always set to even for consistent pairing.
 
+- New makefiles 'Makefile.gfortran' and 'Makefile.gfortran.openmp'
+  which invoke more optimizations.
+
+- Eliminate guru mode in FFTW3 to make the code compatible with
+  Intels MKL implementation of FFTW3.
+
 
 
 

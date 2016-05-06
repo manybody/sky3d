@@ -1,10 +1,10 @@
 COMPILER = gfortran
 COMPILERFLAGS  =  -O3 -msse4.2 -mfpmath=sse -ffast-math -finline-functions -funroll-loops
-#COMPILERFLAGS  = -g -fbacktrace
+#COMPILERFLAGS  =  -g -fbacktrace
 LINKERFLAGS    =  $(COMPILERFLAGS)
 
 SOURCE_TRAILER = .f90
-EXEC           = sky3d.seq
+EXEC           = sky3d.omp
 OBJS           = params.o grids.o levels.o fourier.o forces.o sequential.o \
 	inout.o coulomb.o trivial.o densities.o fragments.o twobody.o \
 	energies.o static.o meanfield.o dynamic.o pairs.o moment.o \
