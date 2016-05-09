@@ -35,6 +35,9 @@ Step 2.0:
 - Eliminate guru mode in FFTW3 to make the code compatible with
   Intels MKL implementation of FFTW3.
 
+- Separate 'getin_external' and 'init_external' to avoid singularity
+  in isovector external field.
+
 
 
 
