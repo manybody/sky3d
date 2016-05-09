@@ -51,6 +51,7 @@ CONTAINS
     END IF
     ! external boost
     IF(texternal) THEN
+       CALL init_external
        CALL extboost(text_timedep)
     END IF
     ! Create protocol files

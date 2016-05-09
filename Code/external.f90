@@ -14,13 +14,15 @@ MODULE External
 CONTAINS
   !***********************************************************************
   SUBROUTINE getin_external
+    NAMELIST/extern/ amplq0,radext,widext,isoext,ipulse,omega,tau0,taut, &
+         textfield_periodic
+    READ(5,extern)
+  END SUBROUTINE getin_external
+  SUBROUTINE init_external
     REAL(db) :: facn,facp,facr,xlim,ylim,zlim
     INTEGER :: ix,iy,iz
     CHARACTER(14),PARAMETER :: pulsetype(0:2)=(/ 'Instantaneous ', &
          'Gaussian      ','Cosine squared' /)
-    NAMELIST/extern/ amplq0,radext,widext,isoext,ipulse,omega,tau0,taut, &
-         textfield_periodic
-    READ(5,extern)
     IF(ipulse<0.OR.ipulse>2) STOP &
          ' External field: called with invalid pulse type'
     IF(wflag) THEN
@@ -49,6 +51,7 @@ CONTAINS
        facn=-1.0D0/(mass_number-charge_number)  
        facp=1.0D0/charge_number  
     ENDIF
+    WRITE(*,*) 'EXTERNAL: ',facn,facp
     ALLOCATE(extfield(nx,ny,nz,2))
     xlim=nx*dx
     ylim=ny*dy
@@ -68,7 +71,7 @@ CONTAINS
           ENDDO
        ENDDO
     ENDDO
-  END SUBROUTINE getin_external
+  END SUBROUTINE init_external
   !***********************************************************************
   SUBROUTINE extfld(time)  
     REAL(db) :: time
