@@ -40,7 +40,8 @@ CONTAINS
   !*************************************************************************
   SUBROUTINE dynamichf
     INTEGER :: nst,istart
-    COMPLEX(db) :: ps4(nx,ny,nz,2)
+    COMPLEX(db),ALLOCATABLE :: ps4(:,:,:,:)
+    ALLOCATE(ps4(nx,ny,nz,2))
     ! Step 1: Preparation phase
     IF(.NOT.trestart) THEN
        iter=0
@@ -176,6 +177,7 @@ CONTAINS
           IF(wflag) WRITE(*,*) ' Wrote restart file at end of  iter=',iter
        ENDIF
     END DO Timestepping
+    DEALLOCATE(ps4)
   END SUBROUTINE dynamichf
   !***********************************************************************
   SUBROUTINE tstep(iq,mxp,psout)
@@ -216,8 +218,9 @@ CONTAINS
     !     calculates dynamic observables for printout                      *
     !***********************************************************************
     INTEGER :: iq,nst
-    COMPLEX(db) :: ps1(nx,ny,nz,2)
+    COMPLEX(db),ALLOCATABLE :: ps1(:,:,:,:)
     LOGICAL,SAVE :: initialcall=.TRUE.
+    ALLOCATE(ps1(nx,ny,nz,2))
     ! Step 1
     printnow=mprint>0.AND.MOD(iter,mprint)==0
     ! Step 2: twobody analysis
@@ -302,6 +305,7 @@ CONTAINS
        ENDDO
        CALL moment_print
     ENDIF
+    DEALLOCATE(ps1)
     ! Step 8: check whether final distance is reached in twobody case
     IF(istwobody.AND.roft>rsep.AND.rdot>=0.D0) THEN  
        CALL twobody_print

@@ -20,8 +20,9 @@ CONTAINS
     REAL(db),DIMENSION(:,:,:,:,:),INTENT(INOUT) :: lcurrent,lsdens,lsodens
     INTEGER,INTENT(IN) :: iq
     REAL(db),INTENT(IN) :: weight
-    COMPLEX(db) :: ps1(nx,ny,nz,2)  
+    COMPLEX(db),ALLOCATABLE :: ps1(:,:,:,:)  
     INTEGER :: ix,iy,iz
+    ALLOCATE(ps1(nx,ny,nz,2))
     IF(weight<=0.D0) RETURN
     !***********************************************************************
     ! non-derivative terms
@@ -101,5 +102,6 @@ CONTAINS
             *AIMAG( ps1(ix,iy,iz,2)*CONJG(psin(ix,iy,iz,1)) &
             +ps1(ix,iy,iz,1)*CONJG(psin(ix,iy,iz,2)) )
     END FORALL
+    DEALLOCATE(ps1)
   END SUBROUTINE add_density
 END MODULE Densities

@@ -39,6 +39,8 @@ Step 2.0:
   in isovector external field.
 
 
+- Local arrays in subroutine made allocatable arrays.
+
 
 
 

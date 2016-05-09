@@ -13,7 +13,8 @@ MODULE Coulomb
 CONTAINS
   !***************************************************
   SUBROUTINE poisson
-    COMPLEX(db) :: rho2(nx2,ny2,nz2)
+    COMPLEX(db),ALLOCATABLE :: rho2(:,:,:)
+    ALLOCATE(rho2(nx2,ny2,nz2))
     ! put proton density into array of same or double size, zeroing rest
     IF(.NOT.periodic) rho2=(0.D0,0.D0)
     rho2(1:nx,1:ny,1:nz)=rho(:,:,:,2)
@@ -29,6 +30,7 @@ CONTAINS
     ! transform back to coordinate space and return in wcoul
     CALL dfftw_execute_dft(coulplan2,rho2,rho2)
     wcoul=REAL(rho2(1:nx,1:ny,1:nz))/(nx2*ny2*nz2)
+    DEALLOCATE(rho2)
   END SUBROUTINE poisson
   !***************************************************
   SUBROUTINE coulinit

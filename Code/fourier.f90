@@ -9,8 +9,13 @@ CONTAINS
   SUBROUTINE init_fft
     INCLUDE 'fftw3.f'
     COMPLEX(db),ALLOCATABLE :: p(:,:,:,:,:)
-    INTEGER,SAVE :: FFTW_planflag             ! set option here
-    FFTW_planflag=FFTW_EXHAUSTIVE
+    INTEGER,SAVE :: FFTW_planflag             
+! set option for FFTW setup here
+!    FFTW_planflag=FFTW_ESTIMATE
+!    FFTW_planflag=FFTW_MEASURE
+    FFTW_planflag=FFTW_PATIENT
+!    FFTW_planflag=FFTW_EXHAUSTIVE
+!    FFTW_planflag=FFTW_MEASURE+FFTW_UNALIGNED
     ALLOCATE(p(nx,ny,nz,2,2))
     CALL dfftw_plan_dft_3d(pforward,nx,ny,nz,p(:,:,:,1,1),p(:,:,:,1,1), &
          FFTW_FORWARD, FFTW_planflag)

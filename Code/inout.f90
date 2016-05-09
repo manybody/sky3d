@@ -190,8 +190,9 @@ CONTAINS
   SUBROUTINE sp_properties
     USE Trivial, ONLY: cmulx,cmuly,cmulz
     INTEGER :: nst,ix,iy,iz,is,ixx,iyy,izz
-    COMPLEX(db),DIMENSION(nx,ny,nz,2) :: pst,psx,psy,psz,psw
+    COMPLEX(db),ALLOCATABLE,DIMENSION(:,:,:,:) :: pst,psx,psy,psz,psw
     REAL(db) ::rp,ip,xx(nx),yy(ny),zz(nz),cc(3),ss(3),kin,xpar
+    ALLOCATE(pst(nx,ny,nz,2),psx(nx,ny,nz,2),psy(nx,ny,nz,2),psz(nx,ny,nz,2),psw(nx,ny,nz,2))
     sp_orbital=0.D0
     sp_spin=0.D0
     sp_kinetic=0.0D0  
@@ -257,6 +258,7 @@ CONTAINS
        sp_kinetic(nst)=wxyz*f%h2m(isospin(nst))*kin
        sp_parity(nst)=wxyz*xpar
     END DO
+    DEALLOCATE(pst,psx,psy,psz,psw)
   END SUBROUTINE sp_properties
   !************************************************************
   SUBROUTINE start_protocol(filename,header)
