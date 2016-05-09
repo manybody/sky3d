@@ -7,15 +7,15 @@ MODULE External
   IMPLICIT NONE  
   INTEGER,PRIVATE :: isoext=0,ipulse=0
   REAL(db),PRIVATE,ALLOCATABLE,DIMENSION(:,:,:,:) :: extfield
-  REAL(db),PRIVATE :: amplq0=0.D0,radext=100.D0,widext=1.D0, &
-       tau0,taut,omega=0.D0
+  REAL(db) :: amplq0=0.D0,amplx=0.D0,amply=0.D0,amplz=0.D0,&
+                      radext=100.D0,widext=1.D0,tau0,taut,omega=0.D0
   LOGICAL,PRIVATE :: textfield_periodic=.true.
   SAVE
 CONTAINS
   !***********************************************************************
   SUBROUTINE getin_external
-    NAMELIST/extern/ amplq0,radext,widext,isoext,ipulse,omega,tau0,taut, &
-         textfield_periodic
+    NAMELIST/extern/ amplq0,amplx,amply,amplz,radext,widext,isoext,&
+                     ipulse,omega,tau0,taut,textfield_periodic
     READ(5,extern)
   END SUBROUTINE getin_external
   SUBROUTINE init_external
@@ -27,7 +27,9 @@ CONTAINS
          ' External field: called with invalid pulse type'
     IF(wflag) THEN
        WRITE(*,*) "***** Parameters of external field *****"  
-       WRITE(*,"(a,e12.4)") " Amplitude of axial quad.   =",amplq0  
+       WRITE(*,"(a,1pg12.4)") " Amplitude of axial quadripole =",amplq0  
+       WRITE(*,"(a,3(1pg12.4))") " Amplitudes Cartesian dipoles  =",&
+               amplx,amply,amplz
        WRITE(*,"(2(A,F10.4),A)") " Radial damping: radius ",radext, &
             ' fm,  width ',widext,' fm'
        WRITE(*,"(2(A,I2),2A)") " Isospin of excitation:",isoext, &
@@ -61,10 +63,14 @@ CONTAINS
           DO ix=1,nx  
              IF(textfield_periodic) THEN       ! strictly periodic version
                 facr=amplq0 *(2.D0*SIN(z(iz)*PI/zlim)**2 &
-                     -SIN(x(ix)*PI/xlim)**2-SIN(y(iy)*PI/ylim)**2) 
+                     -SIN(x(ix)*PI/xlim)**2-SIN(y(iy)*PI/ylim)**2) &
+                    +amplx*SIN(x(ix)*2D0*PI/xlim) &
+                    +amply*SIN(y(iy)*2D0*PI/ylim) &
+                    +amplz*SIN(z(iz)*2D0*PI/zlim) 
              ELSE                              ! damped version
-                facr=amplq0 *(2.D0*z(iz)**2-x(ix)**2-y(iy)**2) &
-                     /(1.0D0+EXP((SQRT(x(ix)**2+y(iy)**2+z(iz)**2)-radext)/widext))
+               facr=(amplq0 *(2.D0*z(iz)**2-x(ix)**2-y(iy)**2) &
+                     +amplx*x(ix)+amply*x(iy)+amplz*x(iz)) &
+                  /(1.0D0+EXP((SQRT(x(ix)**2+y(iy)**2+z(iz)**2)-radext)/widext))
              END IF
              extfield(ix,iy,iz,1)=facr*facn  
              extfield(ix,iy,iz,2)=facr*facp  

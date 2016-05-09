@@ -1,0 +1,10 @@
+This file complements 'Changes.txt' with a protocol of changes
+for the private branch 'master' only:
+
+
+- Dipole excitations inserted in 'external.f90'.
+
+- Some analyzing routines (spin dipole, momentum space properties)
+  collected in 'user_PGR.f90'. These need explicit calls and coding
+  to be activated.
+  
