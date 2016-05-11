@@ -24,6 +24,8 @@ MODULE DYNAMIC
   LOGICAL :: texternal=.FALSE.  ! must be true if an external field is present
   LOGICAL :: text_timedep ! true for time-dependent external field
   REAL(db),PARAMETER :: esf=0.0D0  
+  REAL(db) :: pnrold(2)=(/0D0,0D0/),ehfold=0D0,eintold=0D0,ekinold=0D0,&
+              ecollold(2)=0D0
 CONTAINS
   !*************************************************************************
   SUBROUTINE getin_dynamic
@@ -49,7 +51,7 @@ CONTAINS
     ! Step 1: Preparation phase
     IF(.NOT.trestart) THEN
        iter=0
-       time=0.0D0  
+       time=0D0  
        ! save wave functions
        CALL write_wavefunctions
        IF(wflag) WRITE(*,*) 'Wrote wave function file after initialization'
@@ -65,6 +67,9 @@ CONTAINS
        CALL start_protocol(energiesfile, &
             '#    Time    N(n)    N(p)       E(sum)        E(integ)      Ekin &
             &      Ecoll(n)     Ecoll(p)')
+       CALL start_protocol(diffenergiesfile, &
+            '#    Time N_n(0)-N_n(t) N_p(0)-N_p(t) diff-E(sum)  diff-E(integ)    diff-Ekin &
+            &  diff-Ecoll(n)  diff-Ecoll(p)')
        CALL start_protocol(monopolesfile, &
             '#    Time      rms_n     rms_p   rms_tot   rms_n-rms_p')
        CALL start_protocol(dipolesfile, &
@@ -151,7 +156,7 @@ CONTAINS
                ps4,rho,tau,current,sdens,sodens)  
           psi(:,:,:,:,nst)=ps4
        ENDDO
-       !$OMP END PARALLEL DO
+       !$OMP END PARALLEL DOx
        ! sum up over nodes
        IF(tmpi) CALL collect_densities
        IF(nabsorb > 0) CALL absbc(nabsorb,iter,nt,time)
@@ -271,12 +276,24 @@ CONTAINS
                (current(:,:,:,1,iq)**2+current(:,:,:,2,iq)**2&
                +current(:,:,:,3,iq)**2)/rho(:,:,:,iq) )
        ENDDO
+       IF(time==0D0) THEN
+          pnrold=pnr
+          ehfold=ehf
+          eintold=ehfint
+          ekinold=tke
+          ecollold=ecoll
+       END IF
        OPEN(unit=scratch,file=spinfile, POSITION='APPEND')  
        WRITE(scratch,'(1x,i5,9F10.4)') iter,orbital,spin,total_angmom 
        CLOSE(unit=scratch)
        OPEN(unit=scratch,file=energiesfile,POSITION='APPEND')  
        WRITE(scratch,'(F10.2,2F8.3,2F15.7,3(1PG13.5))') &
             time,pnr,ehf,ehfint,tke,ecoll
+       CLOSE(unit=scratch)
+       OPEN(unit=scratch,file=diffenergiesfile,POSITION='APPEND')  
+       WRITE(scratch,'(F10.2,9(1pg13.5))') &
+            time,pnr-pnrold,ehf-ehfold,ehfint-eintold,&
+            tke-ekinold,ecoll-ecollold
        CLOSE(unit=scratch)
        WRITE(*,'(/A,I7,A,F12.4,A/2(A,F12.4),A)') &
             ' ***** Time step #',iter,' at time ',time,' fm/c *****', &

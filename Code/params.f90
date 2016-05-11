@@ -19,6 +19,7 @@ MODULE Params
   CHARACTER(LEN=80) :: dipolesfile='dipoles.res'
   CHARACTER(LEN=80) :: momentafile='momenta.res'
   CHARACTER(LEN=80) :: energiesfile='energies.res'
+  CHARACTER(LEN=80) :: diffenergiesfile='diffenergies.res'
   CHARACTER(LEN=80) :: quadrupolesfile='quadrupoles.res'
   CHARACTER(LEN=80) :: spinfile='spin.res'
   CHARACTER(LEN=80) :: extfieldfile='extfield.res'

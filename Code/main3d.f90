@@ -16,7 +16,8 @@ PROGRAM tdhf3d
   INTEGER :: imode,nofsave
   !***********************************************************************
   NAMELIST /files/ wffile,converfile,monopolesfile,dipolesfile, &
-       momentafile,energiesfile,quadrupolesfile,spinfile,extfieldfile
+       momentafile,energiesfile,quadrupolesfile,spinfile,extfieldfile,&
+       diffenergiesfile
   NAMELIST /main/ tcoul,mprint,mplot,trestart, &
        writeselect,write_isospin,mrest,imode,tfft,nof,r0
   !********************************************************************

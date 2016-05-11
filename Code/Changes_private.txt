@@ -8,3 +8,7 @@ for the private branch 'master' only:
   collected in 'user_PGR.f90'. These need explicit calls and coding
   to be activated.
   
+- absorbing boundary conditions implemented 
+  (special obseravbles as PES and PAD yet to be done).
+
+- protocol of energy and particle-number difference to initial state.
