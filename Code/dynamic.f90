@@ -12,12 +12,14 @@ MODULE DYNAMIC
   USE Inout, ONLY: write_wavefunctions,write_densities, plot_density, &
        sp_properties,start_protocol
   USE External
+  USE abso_bc
   IMPLICIT NONE
   SAVE
   INTEGER :: nt        ! number of time steps
   REAL(db) :: dt
   INTEGER :: mxpact=6 ! number of terms in expon. expansion
   INTEGER :: mrescm=0 ! frequency of c.m. motion correction
+  INTEGER :: nabsorb=0  !  number of absorbing points aling each direction
   REAL(db) :: rsep     ! distance where the calculation is stopped 
   LOGICAL :: texternal=.FALSE.  ! must be true if an external field is present
   LOGICAL :: text_timedep ! true for time-dependent external field
@@ -25,7 +27,7 @@ MODULE DYNAMIC
 CONTAINS
   !*************************************************************************
   SUBROUTINE getin_dynamic
-    NAMELIST /dynamic/ nt,dt,mxpact,mrescm,rsep,texternal
+    NAMELIST /dynamic/ nt,dt,mxpact,mrescm,rsep,texternal,nabsorb
     READ(5,dynamic)  
     IF(wflag) THEN
        WRITE(*,*) '***** Parameters for the dynamic calculation *****'
@@ -34,6 +36,8 @@ CONTAINS
        WRITE(*,'(A,F7.2,A)') ' The calculation stops at ',rsep, &
             ' fm fragment separation'
        WRITE(*,'(A,I3)') ' Power limit in operator expansion:',mxpact
+       WRITE(*,'(A,L7)') ' External field is invoked:',texternal
+       WRITE(*,'(A,I3)') ' Number of absorbing points:',nabsorb
     ENDIF
     IF(texternal) CALL getin_external
   END SUBROUTINE getin_dynamic
@@ -150,6 +154,7 @@ CONTAINS
        !$OMP END PARALLEL DO
        ! sum up over nodes
        IF(tmpi) CALL collect_densities
+       IF(nabsorb > 0) CALL absbc(nabsorb,iter,nt,time)
        ! Step 4: eliminate center-of-mass motion if desired
        IF(mrescm/=0) THEN  
           IF(MOD(iter,mrescm)==0) THEN  
