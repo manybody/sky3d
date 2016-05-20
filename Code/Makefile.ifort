@@ -1,9 +1,10 @@
-COMPILER = gfortran
-COMPILERFLAGS  =  -O3 -fopenmp -msse4.2 -mfpmath=sse -ffast-math -finline-functions -funroll-loops
+COMPILER = ifort
+COMPILERFLAGS  = -axsse4.2 -msse4.2 -O3 -ip -no-prec-div -align all -mcmodel=large -shared-intel
+# -mkl=sequential
 LINKERFLAGS    =  $(COMPILERFLAGS)
 
 SOURCE_TRAILER = .f90
-EXEC           = sky3d.omp
+EXEC           = sky3d.seq
 OBJS           = params.o grids.o levels.o fourier.o forces.o sequential.o \
 	inout.o coulomb.o trivial.o densities.o fragments.o twobody.o \
 	energies.o static.o meanfield.o dynamic.o pairs.o moment.o \
@@ -14,7 +15,7 @@ SHELL = /bin/sh
 #---------------------------------------------------------	
 all:$(EXEC) 
 $(EXEC):$(OBJS) 	
-	$(COMPILER) $(LINKERFLAGS) -o $@  $(OBJS) -lfftw3 -llapack
+	$(COMPILER) $(LINKERFLAGS) -o $@  $(OBJS)  -lfftw3 -llapack
 #
 
 user.o : user.f90 params.o grids.o levels.o
@@ -47,6 +48,9 @@ densities.o : densities.f90 params.o grids.o levels.o trivial.o
 fragments.o : fragments.f90 params.o grids.o forces.o levels.o twobody.o \
 	sequential.o 
 
+abso_bc.o : abso_bc.f90 params.o grids.o forces.o levels.o meanfield.o \
+	fragments.o sequential.o  Makefile
+
 twobody.o : twobody.f90 params.o grids.o densities.o moment.o forces.o
 
 energies.o :   energies.f90 params.o forces.o densities.o levels.o grids.o \
@@ -62,7 +66,7 @@ static.o : static.f90 params.o densities.o grids.o \
 
 dynamic.o : dynamic.f90 params.o densities.o grids.o trivial.o \
 	levels.o moment.o energies.o inout.o meanfield.o sequential.o \
-	twobody.o external.o
+	twobody.o external.o abso_bc.o
 
 main3d.o : main3d.f90 params.o fourier.o forces.o densities.o meanfield.o levels.o grids.o fragments.o sequential.o dynamic.o static.o coulomb.o user.o
 

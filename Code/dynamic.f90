@@ -66,7 +66,7 @@ CONTAINS
        ! Initialize *.res files
        CALL start_protocol(energiesfile, &
             '#    Time    N(n)    N(p)       E(sum)        E(integ)      Ekin &
-            &      Ecoll(n)     Ecoll(p)')
+            &      Ecoll(n)     Ecoll(p)  E_ext')
        CALL start_protocol(diffenergiesfile, &
             '#    Time N_n(0)-N_n(t) N_p(0)-N_p(t) diff-E(sum)  diff-E(integ)    diff-Ekin &
             &  diff-Ecoll(n)  diff-Ecoll(p)')
@@ -156,7 +156,7 @@ CONTAINS
                ps4,rho,tau,current,sdens,sodens)  
           psi(:,:,:,:,nst)=ps4
        ENDDO
-       !$OMP END PARALLEL DOx
+       !$OMP END PARALLEL DO
        ! sum up over nodes
        IF(tmpi) CALL collect_densities
        IF(nabsorb > 0) CALL absbc(nabsorb,iter,nt,time)
@@ -287,8 +287,13 @@ CONTAINS
        WRITE(scratch,'(1x,i5,9F10.4)') iter,orbital,spin,total_angmom 
        CLOSE(unit=scratch)
        OPEN(unit=scratch,file=energiesfile,POSITION='APPEND')  
-       WRITE(scratch,'(F10.2,2F8.3,2F15.7,3(1PG13.5))') &
-            time,pnr,ehf,ehfint,tke,ecoll
+       IF(ipulse==0) THEN  
+         WRITE(scratch,'(F10.2,2F8.3,2F15.7,3(1PG13.5))') &
+              time,pnr,ehf,ehfint,tke,ecoll
+       ELSE
+         WRITE(scratch,'(F10.2,2F8.3,2F15.7,4(1PG13.5))') &
+              time,pnr,ehf,ehfint,tke,ecoll,e_extern
+       END IF
        CLOSE(unit=scratch)
        OPEN(unit=scratch,file=diffenergiesfile,POSITION='APPEND')  
        WRITE(scratch,'(F10.2,9(1pg13.5))') &

@@ -4,8 +4,11 @@ MODULE External
   USE Grids, ONLY: nx,ny,nz,x,y,z,dx,dy,dz,wxyz
   USE Levels, ONLY: nstloc,isospin,charge_number,mass_number
   USE MEANFIELD, ONLY: upot
+  USE Densities, ONLY: rho
+  USE Energies, ONLY: e_extern
   IMPLICIT NONE  
-  INTEGER,PRIVATE :: isoext=0,ipulse=0
+  INTEGER :: ipulse=0
+  INTEGER,PRIVATE :: isoext=0
   REAL(db),PRIVATE,ALLOCATABLE,DIMENSION(:,:,:,:) :: extfield
   REAL(db) :: amplq0=0.D0,amplx=0.D0,amply=0.D0,amplz=0.D0,&
                       radext=100.D0,widext=1.D0,tau0,taut,omega=0.D0
@@ -83,6 +86,10 @@ CONTAINS
     REAL(db) :: time
     INTENT(IN) :: time
     REAL(db) :: time_factor
+!   variables for computing energy absorbed from external field
+    REAL(db),SAVE :: time_factor_old=0D0
+    REAL(db),SAVE :: upot_ext_int,upot_ext_int_old=0D0
+!
     IF(ipulse==1) THEN  
        time_factor=EXP(-((time-tau0)/taut) **2)  
     ELSE  
@@ -98,6 +105,13 @@ CONTAINS
        time_factor=COS(omega*(time-tau0))*time_factor
     ENDIF
     upot=time_factor*extfield + upot
+
+    upot_ext_int = wxyz*SUM(extfield*rho)
+    e_extern=e_extern+(upot_ext_int+upot_ext_int_old)*&
+                      (time_factor-time_factor_old)
+    upot_ext_int_old = upot_ext_int
+    time_factor_old = time_factor
+
   END SUBROUTINE extfld
   !***********************************************************************
   SUBROUTINE extboost(noboostflag)
