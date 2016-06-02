@@ -1,0 +1,145 @@
+MODULE User
+  USE Params
+  USE Grids
+  USE Levels
+  USE Trivial, ONLY: rpsnorm
+  IMPLICIT NONE
+CONTAINS
+  SUBROUTINE init_user
+    INTEGER :: ic,ix,iy,iz,kx,ky,kz,nst,iq,is
+    WRITE(*,*) 'nstmax= ',nstmax
+    WRITE(*,*) 'nstloc= ',nstloc
+    WRITE(*,*) 'nneut= ',nneut
+    WRITE(*,*) 'nprot= ',nprot
+    WRITE(*,*) 'npmin= ',npmin
+    WRITE(*,*) 'npsi= ',npsi
+    OPEN(UNIT=1000,FILE='restart.data',STATUS='OLD',FORM='UNFORMATTED')   
+    DO iq = 1,2  
+      READ(1000)   
+      READ(1000) 
+      READ(1000) 
+      READ(1000) 
+      READ(1000) 
+      READ(1000) 
+      READ(1000) 
+      READ(1000) 
+      READ(1000) 
+    END DO
+    READ(1000) 
+    READ(1000) 
+    READ(1000) 
+    wocc=0.0d0
+    !occupied neutrons
+    DO nst = npmin(1),npmin(1)+nneut-1
+      wocc(nst)=1.0d0
+      DO is = 1,2  
+        READ(1000) psi(:,:,:,is,nst)
+      ENDDO
+      WRITE(*,*)'Reading wf ',nst
+    ENDDO
+    !unoccupied neutrons
+    kx=0
+    ky=0
+    kz=0
+    DO nst = npmin(1)+nneut,npsi(1)  
+      IF(MOD(nst,2)==0) THEN
+        CALL plane_wave(nst,kx,ky,kz,2)   
+        ic=(nst-(npmin(1)+nneut)+1)/2+1
+        IF(MOD(ic,3)<1) THEN
+          kx=-1
+        ELSEIF(MOD(ic,3)<2) THEN
+          kx=0
+        ELSE
+          kx=1
+        ENDIF
+        IF(MOD(ic,9)>6 .OR. MOD(ic,9)==0) THEN
+          ky=-1
+        ELSEIF(MOD(ic,9)<4) THEN
+          ky=0
+        ELSE
+          ky=1
+        ENDIF
+        IF(ic>18) THEN
+          kz=-1
+        ELSEIF(ic>9) THEN
+          kz=1
+        ELSE
+          kz=0
+        ENDIF
+      ELSE
+        CALL plane_wave(nst,kx,ky,kz,1)
+      END IF
+    ENDDO
+    !occupied protons
+    DO nst = npmin(2),npmin(2)+nprot-1
+      wocc(nst)=1.0d0
+      DO is = 1,2  
+        READ(1000) psi(:,:,:,is,nst)
+      ENDDO
+      WRITE(*,*)'Reading wf ',nst
+    ENDDO
+    !unoccupied protons
+    kx=0
+    ky=0
+    kz=0
+    DO nst = npmin(2)+nprot,npsi(2)  
+      IF(MOD(nst,2)==0) THEN
+        CALL plane_wave(nst,kx,ky,kz,2)   
+        ic=(nst-(npmin(2)+nprot)+1)/2+1
+        IF(MOD(ic,3)<1) THEN
+          kx=-1
+        ELSEIF(MOD(ic,3)<2) THEN
+          kx=0
+        ELSE
+          kx=1
+        ENDIF
+        IF(MOD(ic,9)>6 .OR. MOD(ic,9)==0) THEN
+          ky=-1
+        ELSEIF(MOD(ic,9)<4) THEN
+          ky=0
+        ELSE
+          ky=1
+        ENDIF
+        IF(ic>18) THEN
+          kz=-1
+        ELSEIF(ic>9) THEN
+          kz=1
+        ELSE
+          kz=0
+        ENDIF
+      ELSE
+        CALL plane_wave(nst,kx,ky,kz,1)
+      END IF
+    ENDDO
+    CLOSE(1000)
+  END SUBROUTINE init_user
+    SUBROUTINE plane_wave(nst,kx,ky,kz,s)
+    IMPLICIT NONE
+    INTEGER,INTENT(IN) :: nst,kx,ky,kz,s
+    INTEGER :: ix,iy,iz
+    REAL(db) :: facx,facy,facz,norm
+    COMPLEX(db) :: fy,fz
+    DO iz = 1,nz  
+       facz=2.D0*pi*(iz-1)/FLOAT(nz)*REAL(kz)
+       fz=CMPLX(COS(facz),SIN(facz))
+       DO iy=1,ny
+          facy=2.D0*pi*(iy-1)/FLOAT(ny)*REAL(ky)
+          fy=CMPLX(COS(facy),SIN(facy))
+          DO ix=1,nx
+             facx=2.D0*pi*(ix-1)/FLOAT(nx)*REAL(kx)
+             IF(s>0) THEN
+                psi(ix,iy,iz,1,nst)=fz*fy*CMPLX(COS(facx),SIN(facx))
+                psi(ix,iy,iz,2,nst)=0.D0
+             ELSE
+                psi(ix,iy,iz,2,nst)=fz*fy*CMPLX(COS(facx),SIN(facx))
+                psi(ix,iy,iz,1,nst)=0.D0
+             END IF
+          ENDDO
+       ENDDO
+    ENDDO
+    norm=SQRT(rpsnorm(psi(:,:,:,:,nst)))
+    psi(:,:,:,:,nst)=psi(:,:,:,:,nst)/norm
+    WRITE(*,'(A25,3I2,A7,I2,A12,I3,A8,F9.5,A6)')'plane wave state with k=(',kx,ky,kz,&
+    '), spin= ',s,' at position',nst,' added'
+  END SUBROUTINE plane_wave
+END MODULE User
