@@ -207,6 +207,7 @@ CONTAINS
     zz=z-cmtot(3)
     DO nst=1,nstmax
        IF(node(nst)/=mpi_myproc) CYCLE
+!                                                     PGR2BS: check !
        pst=psi(:,:,:,:,localindex(nst))
        IF(TFFT) THEN
           CALL cdervx(pst,psx)  
@@ -222,6 +223,7 @@ CONTAINS
           CALL cmuly(der2y,pst,psw,1)  
           CALL cmulz(der2z,pst,psw,1)  
        ENDIF
+!                                                     PGR2BS: check !
        cc=0.D0
        ss=0.D0
        kin=0.D0
