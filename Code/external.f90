@@ -2,7 +2,7 @@ MODULE External
   USE Params, ONLY: db,pi,wflag,extfieldfile,time,scratch
   USE Parallel,ONLY: globalindex
   USE Grids, ONLY: nx,ny,nz,x,y,z,dx,dy,dz,wxyz
-  USE Levels, ONLY: nstloc,isospin,charge_number,mass_number
+  USE Levels, ONLY: nstloc,isospin,nprot,nneut,charge_number,mass_number
   USE MEANFIELD, ONLY: upot
   USE Densities, ONLY: rho
   USE Energies, ONLY: e_extern
@@ -30,7 +30,7 @@ CONTAINS
          ' External field: called with invalid pulse type'
     IF(wflag) THEN
        WRITE(*,*) "***** Parameters of external field *****"  
-       WRITE(*,"(a,1pg12.4)") " Amplitude of axial quadripole =",amplq0  
+       WRITE(*,"(a,1pg12.4)") " Amplitude of axial quadrupole =",amplq0  
        WRITE(*,"(a,3(1pg12.4))") " Amplitudes Cartesian dipoles  =",&
                amplx,amply,amplz
        WRITE(*,"(2(A,F10.4),A)") " Radial damping: radius ",radext, &
@@ -130,7 +130,8 @@ CONTAINS
   SUBROUTINE print_extfield()
     USE Densities, ONLY: rho
     OPEN(UNIT=scratch,file=extfieldfile,POSITION='APPEND')  
-    WRITE(scratch,'(F12.3,1pg15.7)') time,wxyz*SUM(rho*extfield)
+    WRITE(scratch,'(F12.3,4(1pg15.7))') time,wxyz*SUM(rho*extfield),&
+         SUM(rho),SUM(rho**2)
     CLOSE(UNIT=scratch)
   END SUBROUTINE print_extfield
 END MODULE External

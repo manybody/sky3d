@@ -1,6 +1,6 @@
 MODULE Levels
-  USE Params, ONLY: db,pi
-  USE Grids, ONLY: nx,ny,nz,dx,dy,dz
+  USE Params, ONLY: db,pi,number_threads
+  USE Grids, ONLY: nx,ny,nz,dx,dy,dz,bangx,bangy,bangz
   USE Fourier
   IMPLICIT NONE
   SAVE
@@ -24,7 +24,7 @@ CONTAINS
     isospin(npmin(2):npsi(2))=2
   END SUBROUTINE alloc_levels
   !************************************************************
-  SUBROUTINE cdervx(psin,d1psout,d2psout)  
+  SUBROUTINE cdervx0(psin,d1psout,d2psout)  
     COMPLEX(db), INTENT(IN) ::  psin(:,:,:,:)
     COMPLEX(db), INTENT(OUT):: d1psout(:,:,:,:)
     COMPLEX(db), INTENT(OUT), OPTIONAL :: d2psout(:,:,:,:)  
@@ -49,30 +49,58 @@ CONTAINS
     ENDDO
     d1psout(nx/2+1,:,:,:)=(0.D0,0.D0)
     CALL dfftw_execute_dft(xbackward,d1psout,d1psout)
+  END SUBROUTINE cdervx0
+  !*************************************************************
+  SUBROUTINE cdervx(psin,d1psout,d2psout)  
+    COMPLEX(db), INTENT(IN) ::  psin(:,:,:,:)
+    COMPLEX(db), INTENT(OUT):: d1psout(:,:,:,:)
+    COMPLEX(db), INTENT(OUT), OPTIONAL :: d2psout(:,:,:,:) 
+    COMPLEX(db),ALLOCATABLE :: p_temp(:,:,:,:)
+    INTEGER :: shapep(4),i
+    shapep=shape(psin)
+    ALLOCATE(p_temp(shapep(1),shapep(2),shapep(3),shapep(4))) 
+    IF(abs(bangx)>0.00001) THEN
+       DO i=1,nx
+          p_temp(i,:,:,:)=psin(i,:,:,:)*exp(CMPLX(0.0d0,-bangx/nx*i,db))
+       END DO
+    ELSE
+       p_temp=psin
+    END IF
+    IF(PRESENT(d2psout)) THEN
+       CALL cdervx0(p_temp,d1psout,d2psout)
+    ELSE
+       CALL cdervx0(p_temp,d1psout)
+    END IF
+    IF(abs(bangx)>0.00001) THEN
+       DO i=1,nx
+          d1psout(i,:,:,:)=d1psout(i,:,:,:)*exp(CMPLX(0.0d0,bangx/nx*i,db))&
+               +CMPLX(0.0d0,bangx/(nx*dx),db)*psin(i,:,:,:)
+       END DO
+       IF(PRESENT(d2psout)) THEN
+          DO i=1,nx
+             d2psout(i,:,:,:)=d2psout(i,:,:,:)*exp(CMPLX(0.0d0,bangx/nx*i,db))&
+                  +(bangx/(nx*dx))**2*psin(i,:,:,:)&
+                  +CMPLX(0.0d0,2.0d0*bangx/(nx*dx),db)*d1psout(i,:,:,:)
+          END DO
+       END IF
+    END IF
+    DEALLOCATE(p_temp)
   END SUBROUTINE cdervx
   !************************************************************
-  SUBROUTINE cdervy(psin,d1psout,d2psout)  
+  SUBROUTINE cdervy0(psin,d1psout,d2psout)  
     COMPLEX(db), INTENT(IN) :: psin(:,:,:,:)
     COMPLEX(db), INTENT(OUT):: d1psout(:,:,:,:)
     COMPLEX(db), INTENT(OUT), OPTIONAL :: d2psout(:,:,:,:)  
     REAL(db) :: kfac
-    INTEGER :: iy,is,k
+    INTEGER :: iy
     kfac=(PI+PI)/(dy*ny)
-    DO is=1,2
-       DO k=1,nz
-          CALL dfftw_execute_dft(yforward,psin(:,:,k,is),d1psout(:,:,k,is))
-       END DO
-    END DO
+    CALL dfftw_execute_dft(yforward,psin,d1psout)
     IF(PRESENT(d2psout)) THEN
        DO iy=1,ny/2
           d2psout(:,iy,:,:)=-((iy-1)*kfac)**2*d1psout(:,iy,:,:)/REAL(ny)
           d2psout(:,ny-iy+1,:,:)=-(iy*kfac)**2*d1psout(:,ny-iy+1,:,:)/REAL(ny)
        ENDDO
-       DO is=1,2
-          DO k=1,nz
-             CALL dfftw_execute_dft(ybackward,d2psout(:,:,k,is),d2psout(:,:,k,is))
-          END DO
-       END DO
+       CALL dfftw_execute_dft(ybackward,d2psout,d2psout)
     ENDIF
     d1psout(:,1,:,:)=(0.D0,0.D0)
     DO iy=2,ny/2
@@ -83,31 +111,59 @@ CONTAINS
             /REAL(ny)
     ENDDO
     d1psout(:,ny/2+1,:,:)=(0.D0,0.D0)
-    DO is=1,2
-       DO k=1,nz
-          CALL dfftw_execute_dft(ybackward,d1psout(:,:,k,is),d1psout(:,:,k,is))
+    CALL dfftw_execute_dft(ybackward,d1psout,d1psout)
+  END SUBROUTINE cdervy0
+  !************************************************************
+  SUBROUTINE cdervy(psin,d1psout,d2psout)  
+    COMPLEX(db), INTENT(IN) ::  psin(:,:,:,:)
+    COMPLEX(db), INTENT(OUT):: d1psout(:,:,:,:)
+    COMPLEX(db), INTENT(OUT), OPTIONAL :: d2psout(:,:,:,:) 
+    COMPLEX(db),ALLOCATABLE :: p_temp(:,:,:,:)
+    INTEGER :: shapep(4),i
+    shapep=shape(psin)
+    ALLOCATE(p_temp(shapep(1),shapep(2),shapep(3),shapep(4))) 
+    IF(abs(bangy)>0.00001) THEN
+       DO i=1,ny
+          p_temp(:,i,:,:)=psin(:,i,:,:)*exp(CMPLX(0.0d0,-bangy/ny*i,db))
        END DO
-    END DO
+    ELSE
+       p_temp=psin
+    END IF
+    IF(PRESENT(d2psout)) THEN
+       CALL cdervy0(p_temp,d1psout,d2psout)
+    ELSE
+       CALL cdervy0(p_temp,d1psout)
+    END IF
+    IF(abs(bangy)>0.00001) THEN
+       DO i=1,ny
+          d1psout(:,i,:,:)=d1psout(:,i,:,:)*exp(CMPLX(0.0d0,bangy/ny*i,db))&
+               +CMPLX(0.0d0,bangy/(ny*dy),db)*psin(:,i,:,:)
+       END DO
+       IF(PRESENT(d2psout)) THEN
+          DO i=1,ny
+             d2psout(:,i,:,:)=d2psout(:,i,:,:)*exp(CMPLX(0.0d0,bangy/ny*i,db))&
+                  +(bangy/(ny*dy))**2*psin(:,i,:,:)&
+                  +CMPLX(0.0d0,2.0d0*bangy/(ny*dy),db)*d1psout(:,i,:,:)
+          END DO
+       END IF
+    END IF
+    DEALLOCATE(p_temp)
   END SUBROUTINE cdervy
   !************************************************************
-  SUBROUTINE cdervz(psin,d1psout,d2psout)  
+  SUBROUTINE cdervz0(psin,d1psout,d2psout)  
     COMPLEX(db), INTENT(IN) :: psin(:,:,:,:)
     COMPLEX(db), INTENT(OUT):: d1psout(:,:,:,:)
     COMPLEX(db), INTENT(OUT), OPTIONAL :: d2psout(:,:,:,:)  
     REAL(db) :: kfac
-    INTEGER :: iz,is
+    INTEGER :: iz
     kfac=(PI+PI)/(dz*nz)
-    DO is=1,2
-       CALL dfftw_execute_dft(zforward,psin(:,:,:,is),d1psout(:,:,:,is))
-    END DO
+    CALL dfftw_execute_dft(zforward,psin,d1psout)
     IF(PRESENT(d2psout)) THEN
        DO iz=1,nz/2
           d2psout(:,:,iz,:)=-((iz-1)*kfac)**2*d1psout(:,:,iz,:)/REAL(nz)
           d2psout(:,:,nz-iz+1,:)=-(iz*kfac)**2*d1psout(:,:,nz-iz+1,:)/REAL(nz)
        ENDDO
-       DO is=1,2
-          CALL dfftw_execute_dft(zbackward,d2psout(:,:,:,is),d2psout(:,:,:,is))
-       END DO
+       CALL dfftw_execute_dft(zbackward,d2psout,d2psout)
     ENDIF
     d1psout(:,:,1,:)=(0.D0,0.D0)
     DO iz=2,nz/2
@@ -118,9 +174,43 @@ CONTAINS
             /REAL(nz)
     ENDDO
     d1psout(:,:,nz/2+1,:)=(0.D0,0.D0)
-    DO is=1,2
-       CALL dfftw_execute_dft(zbackward,d1psout(:,:,:,is),d1psout(:,:,:,is))
-    END DO
+    CALL dfftw_execute_dft(zbackward,d1psout,d1psout)
+  END SUBROUTINE cdervz0
+  !************************************************************
+  SUBROUTINE cdervz(psin,d1psout,d2psout)  
+    COMPLEX(db), INTENT(IN) ::  psin(:,:,:,:)
+    COMPLEX(db), INTENT(OUT):: d1psout(:,:,:,:)
+    COMPLEX(db), INTENT(OUT), OPTIONAL :: d2psout(:,:,:,:) 
+    COMPLEX(db),ALLOCATABLE :: p_temp(:,:,:,:)
+    INTEGER :: shapep(4),i
+    shapep=shape(psin)
+    ALLOCATE(p_temp(shapep(1),shapep(2),shapep(3),shapep(4))) 
+    IF(abs(bangz)>0.00001) THEN
+       DO i=1,nz
+          p_temp(:,:,i,:)=psin(:,:,i,:)*exp(CMPLX(0.0d0,-bangz/nz*i,db))
+       END DO
+    ELSE
+       p_temp=psin
+    END IF
+    IF(PRESENT(d2psout)) THEN
+       CALL cdervz0(p_temp,d1psout,d2psout)
+    ELSE
+       CALL cdervz0(p_temp,d1psout)
+    END IF
+    IF(abs(bangz)>0.00001) THEN
+       DO i=1,nz
+          d1psout(:,:,i,:)=d1psout(:,:,i,:)*exp(CMPLX(0.0d0,bangz/nz*i,db))&
+               +CMPLX(0.0d0,bangz/(nz*dz),db)*psin(:,:,i,:)
+       END DO
+       IF(PRESENT(d2psout)) THEN
+          DO i=1,nz
+             d2psout(:,:,i,:)=d2psout(:,:,i,:)*exp(CMPLX(0.0d0,bangz/nz*i,db))&
+                  +(bangz/(nz*dz))**2*psin(:,:,i,:)&
+                  +CMPLX(0.0d0,2.0d0*bangz/(nz*dz),db)*d1psout(:,:,i,:)
+          END DO
+       END IF
+    END IF
+    DEALLOCATE(p_temp)
   END SUBROUTINE cdervz
   !************************************************************
   SUBROUTINE laplace(psin,psout,e0inv)  
@@ -147,7 +237,14 @@ CONTAINS
        k2facx(ix)=-((ix-1)*kfacx)**2
        k2facx(nx-ix+1)=-(ix*kfacx)**2
     ENDDO
-    psout=psin
+    IF(bangx>0.000001 .OR. bangy>0.000001 .OR. bangz>0.000001) THEN
+       FORALL(ix=1:nx,iy=1:ny,iz=1:nz)
+          psout(ix,iy,iz,:)=psin(ix,iy,iz,:)*exp(CMPLX(0.0d0,-bangx/nx*ix,db))*exp(CMPLX(0.0d0,-bangy/ny*iy,db))*&
+               exp(CMPLX(0.0d0,-bangz/nz*iz,db))
+       END FORALL
+    ELSE
+       psout=psin
+    END IF
     DO is=1,2
        CALL dfftw_execute_dft(pforward,psout(:,:,:,is),psout(:,:,:,is))
     END DO
@@ -167,6 +264,12 @@ CONTAINS
     DO is=1,2
        CALL dfftw_execute_dft(pbackward,psout(:,:,:,is),psout(:,:,:,is))
     END DO
+    IF(bangx>0.000001 .OR. bangy>0.000001 .OR. bangz>0.000001) THEN
+       FORALL(ix=1:nx,iy=1:ny,iz=1:nz)
+          psout(ix,iy,iz,:)=psout(ix,iy,iz,:)*exp(CMPLX(0.0d0,bangx/nx*ix,db))*exp(CMPLX(0.0d0,bangy/ny*iy,db))*&
+               exp(CMPLX(0.0d0,bangz/nz*iz,db))
+       END FORALL
+    END IF
   END SUBROUTINE laplace
   !************************************************************
   SUBROUTINE schmid
@@ -177,13 +280,11 @@ CONTAINS
        ! gram-schmidt procedure - neutrons
        IF(npsi(iq)-npmin(iq)+1 /= 1) THEN
           DO nst=npmin(iq),npsi(iq)
-             omptemp=0
-             !$OMP PARALLEL DO PRIVATE(j,oij) REDUCTION(+:omptemp) 
+             omptemp=0.0d0
              DO j=npmin(iq),nst-1
                 oij=overlap(psi(:,:,:,:,j),psi(:,:,:,:,nst))
                 omptemp(:,:,:,:)=omptemp(:,:,:,:)+oij*psi(:,:,:,:,j)
              END DO
-             !$OMP END PARALLEL DO
              psi(:,:,:,:,nst)=psi(:,:,:,:,nst)-omptemp
              sp_norm(nst)=rpsnorm(psi(:,:,:,:,nst))
              psi(:,:,:,:,nst)=psi(:,:,:,:,nst)/SQRT(sp_norm(nst))

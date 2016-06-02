@@ -1,10 +1,10 @@
 MODULE Grids
-  USE Params, ONLY: db,pi,wflag
+  USE Params, ONLY: db,pi,wflag,myid,nprocs
   IMPLICIT NONE
   SAVE
   INTEGER :: nx,ny,nz
   LOGICAL :: periodic
-  REAL(db) :: dx,dy,dz
+  REAL(db) :: dx,dy,dz,bangx,bangy,bangz
   REAL(db) :: wxyz
   REAL(db),POINTER ::  x(:),y(:),z(:)
   REAL(db),POINTER,DIMENSION(:,:) ::  der1x,der2x,cdmpx, &
@@ -15,11 +15,28 @@ CONTAINS
   ! Initialization of all the grid quantities,
   !***************************************************
   SUBROUTINE init_grid
-    NAMELIST /Grid/ nx,ny,nz,dx,dy,dz,periodic
+    NAMELIST /Grid/ nx,ny,nz,dx,dy,dz,periodic,bangx,bangy,bangz
     dx=0.D0
     dy=0.D0
     dz=0.D0
+    bangx=0.0d0
+    bangy=0.0d0
+    bangz=0.0d0
     READ(5,Grid)
+    IF(nprocs==8) THEN
+       WRITE(*,*)'****TABC****'
+       bangx=MOD(myid,2)-1.0d0
+       bangy=-1.0d0
+       bangz=-1.0d0
+       IF(myid==2.OR.myid==3.OR.myid==6.OR.myid==7) bangy=1.0d0
+       IF(myid>=4)bangz=1.0d0
+       bangx=0.5+bangx*0.25
+       bangy=0.5+bangy*0.25
+       bangz=0.5+bangz*0.25
+    END IF
+    bangx=bangx*PI
+    bangy=bangy*PI
+    bangz=bangz*PI
     IF(MOD(nx,2)/=0.OR.MOD(ny,2)/=0.OR.MOD(nz,2)/=0) THEN
        IF(wflag) WRITE(*,'(A,3I4)') 'Dimensions must be even: ',nx,ny,nz
        STOP
@@ -28,6 +45,9 @@ CONTAINS
        WRITE(*,*) '***** Grid Definition *****'
        IF(periodic) THEN
           WRITE(*,*) 'Grid is periodic'
+          WRITE(*,*) 'Bloch angular x-direction: ',bangx
+          WRITE(*,*) 'Bloch angular y-direction: ',bangy
+          WRITE(*,*) 'Bloch angular z-direction: ',bangz
        ELSE
           WRITE(*,*) 'Grid is not periodic'
        END IF

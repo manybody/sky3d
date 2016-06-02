@@ -94,7 +94,8 @@ CONTAINS
     sdens=0.0D0
     sodens=0.0D0
     !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst) SCHEDULE(STATIC) &
-    !$OMP REDUCTION(+:rho,tau,current,sdens,sodens)
+    !$OMP REDUCTION(+:rho,tau,current,sdens,sodens) &
+    !$OMP NUM_THREADS(number_threads)
     DO nst=1,nstloc
        CALL add_density(isospin(globalindex(nst)),wocc(globalindex(nst)), &
             psi(:,:,:,:,nst),rho,tau,current,sdens,sodens)  
@@ -102,7 +103,7 @@ CONTAINS
     !$OMP END PARALLEL DO
     IF(tmpi) CALL collect_densities
     ! calculate mean fields and external fields
-    CALL skyrme
+    CALL skyrme(.FALSE.,'N')
     IF(text_timedep) CALL extfld(0.D0)
     CALL tinfo
     !***********************************************************************
@@ -121,7 +122,8 @@ CONTAINS
        ENDIF
        ! propagate to end of time step and add to densities
        !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,ps4) SCHEDULE(STATIC) &
-       !$OMP REDUCTION(+:rho,tau,current,sdens,sodens)
+       !$OMP REDUCTION(+:rho,tau,current,sdens,sodens) &
+       !$OMP NUM_THREADS(number_threads)
        DO nst=1,nstloc
           ps4=psi(:,:,:,:,nst) 
           CALL tstep(isospin(globalindex(nst)),mxpact/2,ps4)
@@ -137,7 +139,7 @@ CONTAINS
        sodens=0.5D0*sodens
        sdens=0.5D0*sdens
        ! compute mean field and add external field
-       CALL skyrme  
+       CALL skyrme(.FALSE.,'N')
        IF(text_timedep) CALL extfld(time+dt/2.0D0)
        ! Step 3: full time step
        ! reset densities
@@ -148,7 +150,8 @@ CONTAINS
        sodens=0.0D0
        ! propagate to end of step, accumulate densities
        !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,ps4) SCHEDULE(STATIC) &
-       !$OMP REDUCTION(+:rho,tau,current,sdens,sodens)
+       !$OMP REDUCTION(+:rho,tau,current,sdens,sodens) &
+       !$OMP NUM_THREADS(number_threads)
        DO nst=1,nstloc
           ps4=psi(:,:,:,:,nst) 
           CALL tstep(isospin(globalindex(nst)),mxpact,ps4)
@@ -165,7 +168,8 @@ CONTAINS
           IF(MOD(iter,mrescm)==0) THEN  
              CALL resetcm
              !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst) SCHEDULE(STATIC) &
-             !$OMP REDUCTION(+:rho,tau,current,sdens,sodens)
+             !$OMP REDUCTION(+:rho,tau,current,sdens,sodens) &
+             !$OMP NUM_THREADS(number_threads)
              DO nst=1,nstloc
                 CALL add_density(isospin(globalindex(nst)), &
                      wocc(globalindex(nst)), &
@@ -180,7 +184,7 @@ CONTAINS
        CALL tinfo
        ! Step 6: finishing up
        ! compute densities, currents, potentials etc.                  *
-       CALL skyrme  
+       CALL skyrme(.FALSE.,'N')
        IF(text_timedep) CALL extfld(time+dt)
        IF(MOD(iter,mrest)==0) THEN  
           CALL write_wavefunctions
@@ -243,10 +247,11 @@ CONTAINS
     CALL moments
     IF(printnow.AND.wflag) THEN
        OPEN(unit=scratch,file=dipolesfile,POSITION='APPEND')  
-       WRITE(scratch,'(1x,i5,6E14.4)') iter,cmtot,cm(:,2)-cm(:,1)
+       WRITE(scratch,'(1x,i5,6(1pg14.4))') iter,cmtot,cm(:,2)-cm(:,1)
        CLOSE(unit=scratch)
        OPEN(unit=scratch,file=momentafile, POSITION='APPEND')  
-       WRITE(scratch,'(1x,f10.2,3g14.6)') time,pcm(:,1)+pcm(:,2)
+       WRITE(scratch,'(1x,f10.2,6(1pg14.6))') time,pcm(:,1)+pcm(:,2),&
+            (pnr(2)*pcm(:,2)-pnr(1)*pcm(:,1))/(pnr(1)+pnr(2)) 
        CLOSE(unit=scratch)
        CALL moment_shortprint
        IF(texternal) CALL print_extfield()

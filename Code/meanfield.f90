@@ -22,8 +22,11 @@ CONTAINS
     dbmass=0.D0
   END SUBROUTINE alloc_fields
   !***********************************************************************
-  SUBROUTINE skyrme 
+  SUBROUTINE skyrme(outpot,outertype)
     USE Trivial, ONLY: rmulx,rmuly,rmulz
+    LOGICAL,INTENT(IN) :: outpot
+    CHARACTER(1),INTENT(IN) :: outertype
+
     REAL(db),PARAMETER :: epsilon=1.0d-25  
     REAL(db) :: rotspp,rotspn
     REAL(db),ALLOCATABLE :: workden(:,:,:,:),workvec(:,:,:,:,:)
@@ -132,6 +135,28 @@ CONTAINS
        CALL rmulz(der1z,bmass(:,:,:,iq),dbmass(:,:,:,3,iq),0)
     ENDDO
     DEALLOCATE(workden,workvec)
+!   external guiding potential
+    IF (outpot) THEN
+       SELECT CASE(outertype)
+       CASE('P')
+          FORALL(iq=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
+             upot(ix,iy,iz,iq)=30*(cos(REAL(ix)/nx*2*pi) &
+                     +cos(REAL(iy)/ny*2*pi)+cos(REAL(iz)/nz*2*pi))
+          END FORALL
+       CASE('G')
+          FORALL(iq=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
+             upot(ix,iy,iz,iq)=30*( &
+                  cos(REAL(ix)/nx*2*pi)*sin(REAL(iy)/ny*2*pi)+&
+                  cos(REAL(iy)/ny*2*pi)*sin(REAL(iz)/nz*2*pi)+& 
+                  cos(REAL(iz)/nz*2*pi)*sin(REAL(ix)/nx*2*pi))-30
+          END FORALL
+       CASE('S')
+          FORALL(iq=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
+             upot(ix,iy,iz,iq)=50*(cos(REAL(ix)/nx*2*pi))
+          END FORALL
+       END SELECT
+    END IF
+
   END SUBROUTINE skyrme
   !***********************************************************************
   SUBROUTINE hpsi(iq,eshift,pinn,pout)
@@ -231,9 +256,11 @@ CONTAINS
             pswk(:,:,:,ic)-bmass(:,:,:,iq)*pswk2(:,:,:,is)
     ENDDO
     pswk2(:,:,:,1) = CMPLX(0D0,-0.5D0,db)*aq(:,:,:,3,iq)*pinn(:,:,:,1)&
-         +CMPLX(0.5D0*wlspot(:,:,:,1,iq),-0.5D0*wlspot(:,:,:,2,iq),db)*pinn(:,:,:,2)
+         +CMPLX(0.5D0*wlspot(:,:,:,1,iq),-0.5D0*wlspot(:,:,:,2,iq),db)*&
+            pinn(:,:,:,2)
     pswk2(:,:,:,2) = CMPLX(0D0,-0.5D0,db)*aq(:,:,:,3,iq)*pinn(:,:,:,2)&
-         +CMPLX(-0.5D0*wlspot(:,:,:,1,iq),-0.5D0*wlspot(:,:,:,2,iq),db)*pinn(:,:,:,1)
+         +CMPLX(-0.5D0*wlspot(:,:,:,1,iq),-0.5D0*wlspot(:,:,:,2,iq),db)*&
+            pinn(:,:,:,1)
     IF(TFFT) THEN
        CALL cdervz(pswk2,pswk)  
     ELSE

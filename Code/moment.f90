@@ -1,10 +1,11 @@
 MODULE Moment
   USE Params
   USE Grids, ONLY: nx,ny,nz,x,y,z,wxyz
+  USE Levels, ONLY: nprot,nneut
   IMPLICIT NONE
   PRIVATE
   REAL(db) :: pnr(2),pnrtot,cm(3,2),cmtot(3),pcm(3,2)
-  REAL(db) :: rms(2),rmstot,q20(2),q20tot,q22(2),q22tot, &
+  REAL(db) :: rms(2),rmstot,q20(2),q20tot,q22(2),q22tot,q20T1, &
        x2m(3,2),x2mtot(3),beta20tot,beta22tot,beta,gamma
   PUBLIC :: pnr,pnrtot,cm,cmtot,pcm,rmstot,beta,gamma, &
        moments,moment_print,moment_shortprint
@@ -79,6 +80,7 @@ CONTAINS
     CALL q2diag(qmat(:,:,1),q20(1),q22(1),'Neutrons ')
     CALL q2diag(qmat(:,:,2),q20(2),q22(2),'Protons  ')
     CALL q2diag(qmtot,q20tot,q22tot,'Total    ')
+    q20T1 = -q20(1)/nneut+q20(2)/nprot
     radius=r0*pnrtot**(1.D0/3.D0)
     beta20tot=q20tot*(4.0D0*PI/(5.0D0*radius**2*pnrtot))
     beta22tot=q22tot*(4.0D0*PI/(5.0D0*radius**2*pnrtot))
@@ -95,11 +97,25 @@ CONTAINS
   END SUBROUTINE moments
   !***********************************************************
   SUBROUTINE moment_shortprint
+    REAL(db),SAVE :: q2old(4,3),asig(4)=(/1D0,1D0,1D0,1D0/)
+    INTEGER, SAVE :: countcall=0
+    INTEGER :: i
+    countcall = 1+countcall
+    q2old(:,1) = q2old(:,2)
+    q2old(:,2) = q2old(:,3)
+    q2old(1:2,3) = q20
+    q2old(3,3) = q20tot
+    q2old(4,3) = q20T1
+    IF(countcall>2) THEN
+       DO i=1,4
+          IF(q2old(i,1)>q2old(i,2) .AND. q2old(i,3)>q2old(i,2)) &
+               asig(i) = -asig(i)
+       END DO
+    END IF
     OPEN(unit=scratch,file=monopolesfile,POSITION='APPEND')  
     WRITE(scratch,'(4F10.2,E14.5)') time,rms,rmstot,rms(1)-rms(2)
     CLOSE(unit=scratch)
     OPEN(unit=scratch,file=quadrupolesfile,POSITION='APPEND')  
-    WRITE(scratch,'(1x,F10.2,9G14.6)') time,q20,q20tot,x2m
     CLOSE(unit=scratch)
   END SUBROUTINE moment_shortprint
   !***********************************************************
@@ -127,7 +143,10 @@ CONTAINS
     if(printnow.AND.wflag) write(*,'(3(f12.5,1x))') ((q_mat(j,k),k=1,3),j=1,3)    
     CALL DSYEV('V','U',3,q_mat,3,q_eig,fv1,20,info)
     q_vec=q_mat
-    IF(info/=0) STOP 'Quadrupole diagonalization failed'
+    IF(info/=0) THEN
+       q_mat=0.0d0
+       q_eig=0.0d0
+    END IF
     IF(printnow.AND.wflag) THEN
        WRITE(*,'(1X,A,3(F10.2,''('',3F8.4,'')''))') &
             title,(REAL(q_eig(i)),REAL(q_vec(:,i)),i=3,1,-1)

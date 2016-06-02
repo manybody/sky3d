@@ -25,8 +25,13 @@ MODULE Energies
   REAL(db) :: ehf       ! Hartree-Fock energy from s.p. levels
   REAL(db) :: ehfprev
   REAL(db) :: e3corr    ! rearrangement energy
-  REAL(db) :: e_extern=0D0  ! energy from external field (accumulator)
   REAL(db) :: orbital(3),spin(3),total_angmom(3)
+  REAL(db) :: e_extern=0D0  ! energy from external field (accumulator)
+  REAL(db) :: ehfCrho0,ehfCrho1    !
+  REAL(db) :: ehfCdrho0,ehfCdrho1  !
+  REAL(db) :: ehfCtau0,ehfCtau1    !
+  REAL(db) :: ehfCdJ0,ehfCdJ1      !
+  REAL(db) :: ehfCj0,ehfCj1
 CONTAINS
   !***************************************************************************
   SUBROUTINE integ_energy
@@ -35,6 +40,7 @@ CONTAINS
     USE Coulomb, ONLY: wcoul
     INTEGER :: ix,iy,iz,iq
     REAL(db) :: rhot,rhon,rhop,d2rho,d2rhon,d2rhop,sc
+    REAL(db) :: rho0,rho1,d2rho0,d2rho1,tau0,tau1
     REAL(db) :: worka(nx,ny,nz,2)
     REAL(db) :: workb(nx,ny,nz,3,2)
     ! Step 1: compute laplacian of densities, then ehf0, ehf2, and ehf3
@@ -46,20 +52,38 @@ CONTAINS
     ehf0=0.0D0
     ehf3=0.0D0
     ehf2=0.0D0
+    ehfCrho0=0.0d0
+    ehfCrho1=0.0d0
+    ehfCdrho0=0.0d0
+    ehfCdrho1=0.0d0
+    ehfCtau0=0.0d0
+    ehfCtau1=0.0d0
     DO iz=1,nz
        DO iy=1,ny
           DO ix=1,nx
              rhot=rho(ix,iy,iz,1)+rho(ix,iy,iz,2)
+             rho0=rhot
+             rho1=-rho(ix,iy,iz,1)+rho(ix,iy,iz,2)
              rhon=rho(ix,iy,iz,1)
              rhop=rho(ix,iy,iz,2)
-             ehf0=ehf0+wxyz*(b0*rhot**2-b0p*(rhop**2+rhon**2))/2.D0
-             ehf3=ehf3+wxyz*rhot**f%power*(b3*rhot**2 &
-                  -b3p*(rhop**2+rhon**2))/3.D0
-             d2rho=worka(ix,iy,iz,1)+worka(ix,iy,iz,2)
              d2rhon=worka(ix,iy,iz,1)
              d2rhop=worka(ix,iy,iz,2)
+             d2rho=worka(ix,iy,iz,1)+worka(ix,iy,iz,2)
+             d2rho0=d2rho
+             d2rho1=-worka(ix,iy,iz,1)+worka(ix,iy,iz,2)
+             tau0=tau(ix,iy,iz,1)+tau(ix,iy,iz,2)
+             tau1=-tau(ix,iy,iz,1)+tau(ix,iy,iz,2)
+             ehf0=ehf0+wxyz*(b0*rhot**2-b0p*(rhop**2+rhon**2))/2.D0
+             ehfCrho0=ehfCrho0+wxyz*(Crho0+Crho0D*rho0**f%power)*rho0**2
+             ehfCrho1=ehfCrho1+wxyz*(Crho1+Crho1D*rho0**f%power)*rho1**2
+             ehf3=ehf3+wxyz*rhot**f%power*(b3*rhot**2 &
+                  -b3p*(rhop**2+rhon**2))/3.D0
              ehf2=ehf2+wxyz*(-b2*rhot*d2rho+b2p*(rhop* &
                   d2rhop+rhon*d2rhon))/2.D0
+             ehfCdrho0=ehfCdrho0+wxyz*Cdrho0*rho0*d2rho0
+             ehfCdrho1=ehfCdrho1+wxyz*Cdrho1*rho1*d2rho1
+             ehfCtau0=ehfCtau0+wxyz*Ctau0*tau0*rho0
+             ehfCtau1=ehfCtau1+wxyz*Ctau1*tau1*rho1
           ENDDO
        ENDDO
     ENDDO
@@ -72,6 +96,14 @@ CONTAINS
          + (current(:,:,:,3,1)+current(:,:,:,3,2))**2))&
          -b1p*(rho(:,:,:,1)*tau(:,:,:,1)+rho(:,:,:,2)*tau(:,:,:,2)&
          -worka(:,:,:,1)-worka(:,:,:,2)))
+    ehf1=wxyz*SUM(b1*((rho(:,:,:,1)+rho(:,:,:,2))*(tau(:,:,:,1)+tau(:,:,:,2))) &
+         -b1p*(rho(:,:,:,1)*tau(:,:,:,1)+rho(:,:,:,2)*tau(:,:,:,2)))
+    ehfCj0=-wxyz*SUM(Ctau0*((current(:,:,:,1,1)+current(:,:,:,1,2))**2 &
+         + (current(:,:,:,2,1)+current(:,:,:,2,2))**2 &
+         + (current(:,:,:,3,1)+current(:,:,:,3,2))**2))
+    ehfCj1=-wxyz*SUM(Ctau1*((-current(:,:,:,1,1)+current(:,:,:,1,2))**2 &
+         + (-current(:,:,:,2,1)+current(:,:,:,2,2))**2 &
+         + (-current(:,:,:,3,1)+current(:,:,:,3,2))**2))
     ! Step 3: the spin-orbit contribution
     !         (a) Time even part: worka=div J
     DO iq=1,2
@@ -82,6 +114,8 @@ CONTAINS
     ehfls=wxyz*SUM(-b4*(rho(:,:,:,1)+rho(:,:,:,2)) &
          *(worka(:,:,:,1)+worka(:,:,:,2)) &
          -b4p *(rho(:,:,:,2)*worka(:,:,:,2)+rho(:,:,:,1)*worka(:,:,:,1)))
+    ehfCdJ0=wxyz*sum(CdJ0*(rho(:,:,:,1)+rho(:,:,:,2))*(worka(:,:,:,1)+worka(:,:,:,2)))
+    ehfCdJ1=wxyz*sum(CdJ1*(-rho(:,:,:,1)+rho(:,:,:,2))*(-worka(:,:,:,1)+worka(:,:,:,2)))
     ! Step 3: the spin-orbit contribution
     !         (b) odd-odd part: workb = curl J
     DO iq = 1,2

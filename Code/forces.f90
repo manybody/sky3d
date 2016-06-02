@@ -28,6 +28,8 @@ MODULE Forces
   REAL(db) :: nucleon_mass
   ! derived "b" and Slater coefficients
   REAL(db) :: b0,b0p,b1,b1p,b2,b2p,b3,b3p,b4,b4p,slate
+  ! derived "C" coefficients
+  REAL(db) :: Crho0,Crho1,Crho0D,Crho1D,Cdrho0,Cdrho1,Ctau0,Ctau1,CdJ0,CdJ1
 CONTAINS
   SUBROUTINE read_force
     CHARACTER(8) :: name,pairing
@@ -88,6 +90,16 @@ CONTAINS
     b4=f%t4/2.D0 
     b4p=f%b4p  
     slate=(3.0D0/pi)**(1.0D0/3.0D0)*e2
+    Crho0=0.5d0*b0-0.25d0*b0p
+    Crho1=-0.25d0*b0p
+    Crho0D=0.3333333333d0*b3-0.1666666666d0*b3p
+    Crho1D=-0.1666666666d0*b3p    
+    Cdrho0=-0.5d0*b2+0.25d0*b2p
+    Cdrho1=0.25*b2p
+    Ctau0=b1-0.5d0*b1p
+    Ctau1=-0.5d0*b1p
+    CdJ0=-b4-0.5d0*b4p
+    CdJ1=-0.5d0*b4p
     ! now set up pairing: first case of none
     IF(TRIM(pairing)=='NONE') THEN
        p%v0prot=0.D0; p%v0neut=0.D0; p%rho0pr=0.16D0

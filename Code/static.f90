@@ -13,14 +13,16 @@ MODULE Static
   LOGICAL :: tdiag=.FALSE.
   LOGICAL :: tlarge=.FALSE.
   LOGICAL :: tvaryx_0=.FALSE.
-  INTEGER :: maxiter
+  INTEGER :: maxiter,M=1,outerpot=0
   REAL(db) :: radinx,radiny,radinz, &
-       serr,delesum,x0dmp=0.2D0,e0dmp=100.D0,x0dmpmin=0.2d0
+       serr,delesum,x0dmp=0.2D0,e0dmp=100.D0,x0dmpmin=0.2d0,ttime(10,20)=0.0d0
+  CHARACTER(1) :: outertype='N'
 CONTAINS
   !*************************************************************************
   SUBROUTINE getin_static
     NAMELIST/static/ tdiag,tlarge,maxiter, &
-         radinx,radiny,radinz,serr,x0dmp,e0dmp,nneut,nprot,npsi,tvaryx_0
+         radinx,radiny,radinz,serr,x0dmp,e0dmp,nneut,nprot,npsi,tvaryx_0,&
+         M,outerpot,outertype
     npsi=0
     READ(5,static)
     IF(nof<=0) THEN
@@ -47,6 +49,7 @@ CONTAINS
        mass_number=nneut+nprot  
        x0dmpmin=x0dmp
        WRITE(*,*) "x0dmpmin=", x0dmpmin
+       IF(M<1) M=1
     END IF
   END SUBROUTINE getin_static
   !*************************************************************************
@@ -69,6 +72,10 @@ CONTAINS
        CALL start_protocol(spinfile, &
             '# Iter      Lx        Ly        Lz        Sx        Sy        &
             &Sz        Jx        Jy        Jz')
+       CALL start_protocol(energiesfile, &
+            '# Iter    N(n)    N(p)       E(sum)         E(integ)       Ekin         &
+            &E_Coul         ehfCrho0       ehfCrho1       ehfCdrho0      ehfCdrh     & 
+            &ehfCtau0       ehfCtau1       ehfCdJ0        ehfCdJ1')
     ENDIF
     ! calculate damping matrices
     IF(e0dmp>0.0D0) CALL setup_damping(e0dmp)
@@ -81,7 +88,7 @@ CONTAINS
   !*************************************************************************
   SUBROUTINE statichf
     LOGICAL, PARAMETER :: taddnew=.TRUE. ! mix old and new densities
-    INTEGER :: iq,nst,firstiter
+    INTEGER :: iq,nst,firstiter,c0,c1,c2,crate,i
     REAL(db) :: sumflu,denerg
     REAL(db),PARAMETER :: addnew=0.2D0,addco=1.0D0-addnew      
     ! Step 1: initialization
@@ -96,7 +103,9 @@ CONTAINS
        sp_efluct2=0.D0
        sp_norm=0.0D0  
        sumflu=0.D0
+       WRITE(*,'(A25)',advance="no") 'Initial schmid... '
        CALL schmid
+       WRITE(*,*)'DONE'
     END IF
     ! Step 2: calculate densities and mean field
     rho=0.0D0
@@ -104,16 +113,21 @@ CONTAINS
     current=0.0D0
     sdens=0.0D0
     sodens=0.0D0
+    WRITE(*,'(A25)',advance="no")'Initial add_density... '
     DO nst=1,nstmax
        CALL add_density(isospin(nst),wocc(nst),psi(:,:,:,:,nst), &
             rho,tau,current,sdens,sodens)  
     ENDDO
-    CALL skyrme
+    WRITE(*,*) 'DONE'
+    WRITE(*,'(A25)',advance="no")'Initial skyrme... '
+    CALL skyrme(iter<=outerpot,outertype)
     ! Step 3: initial gradient step
     delesum=0.0D0  
     sumflu=0.0D0  
+    WRITE(*,'(A25)',advance="no")'Initial grstep... '
     !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,denerg) &
     !$OMP    SCHEDULE(STATIC) REDUCTION(+: sumflu , delesum)
+    !$OMP NUM_THREADS(number_threads) 
     DO nst=1,nstmax
        CALL grstep(nst,isospin(nst),sp_energy(nst),denerg, &
             psi(:,:,:,:,nst))
@@ -121,22 +135,30 @@ CONTAINS
        delesum=delesum+wocc(nst)*denerg  
     ENDDO
     !$OMP END PARALLEL DO
+    WRITE(*,*) 'DONE'
     ! pairing and orthogonalization
     IF(ipair/=0) CALL pair
+    WRITE(*,'(A25)',advance="no") 'Initial schmid... '
     CALL schmid
+    WRITE(*,*) 'DONE'
     ! produce and print detailed information
     CALL sp_properties
-    CALL sinfo
+    CALL sinfo(.TRUE.)
     !set x0dmp to 3* its value to get faster convergence
     IF(tvaryx_0) x0dmp=3.0d0*x0dmp
     ! step 4: start static iteration loop
-    Iteration: DO iter=firstiter,maxiter  
-       WRITE(*,'(a,i6,a,F12.4)') ' Static Iteration No.',iter,'  x0dmp= ',x0dmp
+    Iteration: DO iter=firstiter,maxiter
+       CALL system_clock(c0)  
+       WRITE(*,'(a,i6)') ' Static Iteration No.',iter
+       IF(ttaketime) number_threads=iter
+       WRITE(*,*)'number of threads= ',number_threads
        ! Step 5: gradient step
        delesum=0.0D0  
        sumflu=0.0D0
+       CALL system_clock(c1,crate)
        !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,denerg) &
-       !$OMP    SCHEDULE(STATIC) REDUCTION(+: sumflu , delesum)
+       !$OMP SCHEDULE(STATIC) REDUCTION(+: sumflu , delesum) &
+       !$OMP NUM_THREADS(number_threads)
        DO nst=1,nstmax
           CALL grstep(nst,isospin(nst),sp_energy(nst),denerg, &
                psi(:,:,:,:,nst))
@@ -144,17 +166,17 @@ CONTAINS
           delesum=delesum+wocc(nst)*denerg  
        ENDDO
        !$OMP END PARALLEL DO
-       ! Step 6: diagonalize if desired
-       IF(tdiag.AND.iter>20) THEN
-          !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(iq) SCHEDULE(STATIC) 
-          DO iq=1,2
-             CALL diagstep(iq,npsi(iq)-npmin(iq)+1)
-          ENDDO
-          !$OMP END PARALLEL DO
-       ENDIF
-       ! Step 7: do pairing and orthogonalization
+       CALL system_clock(c2)
+       IF(ttaketime.AND.iter<=20)ttime(1,iter)=REAL(c2-c1)/REAL(crate) 
+       ! Step 6: diagonalize and orthonormalize
+       CALL system_clock(c1)
+       DO iq=1,2
+          CALL diagstep(iq,npsi(iq)-npmin(iq)+1)
+       ENDDO
+       CALL system_clock(c2)
+       IF(ttaketime.AND.iter<=20)ttime(2,iter)=REAL(c2-c1)/REAL(crate) 
+       ! Step 7: do pairing
        IF(ipair/=0) CALL pair
-       CALL schmid
        ! Step 8: get new densities and fields with relaxation
        IF(taddnew) THEN
           upot=rho
@@ -165,39 +187,40 @@ CONTAINS
        current=0.0D0
        sdens=0.0D0
        sodens=0.0D0
+       CALL system_clock(c1)
        !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst) SCHEDULE(STATIC) &
-       !$OMP REDUCTION(+:rho, tau, current, sdens, sodens)
+       !$OMP REDUCTION(+:rho, tau, current, sdens, sodens) &
+       !$OMP NUM_THREADS(number_threads)
        DO nst=1,nstmax
           CALL add_density(isospin(nst),wocc(nst),psi(:,:,:,:,nst), &
                rho,tau,current,sdens,sodens)  
        ENDDO
        !$OMP END PARALLEL DO
+       CALL system_clock(c2)
+       IF(ttaketime.AND.iter<=20)ttime(4,iter)=REAL(c2-c1)/REAL(crate) 
        IF(taddnew) THEN
           rho=addnew*rho+addco*upot
           tau=addnew*tau+addco*bmass
        ENDIF
-       CALL skyrme
+       CALL system_clock(c1)
+       CALL skyrme(iter<=outerpot,outertype)
+       CALL system_clock(c2)
+       IF(ttaketime.AND.iter<=20)ttime(5,iter)=REAL(c2-c1)/REAL(crate) 
        ! calculate and print information
-       IF(mprint>0.AND.MOD(iter,mprint)==0) THEN
-          CALL sp_properties
-          CALL sinfo
-       ELSEIF(tvaryx_0) THEN
-          CALL sp_properties
-          CALL sum_energy
-       ENDIF
-       ! Step 9: check for convergence, saving wave functions
-       IF(sumflu/nstmax<serr.AND.iter>1) THEN
+       CALL sp_properties
+       CALL sinfo(mprint>0.AND.MOD(iter,mprint)==0)
+       ! Step 9: check for convergence, saving wave functions, update stepsize
+       IF(sumflu/nstmax<serr.AND.iter>1 .AND. MOD(iter,M)==0) THEN
           CALL write_wavefunctions
           EXIT Iteration  
        END IF
        IF(MOD(iter,mrest)==0) THEN  
           CALL write_wavefunctions
        ENDIF
-       ! Step 10: update step size for the next iteration
-       IF(tvaryx_0) THEN
+       IF(tvaryx_0 .AND.MOD(iter,M)==0) THEN
           IF(ehf<ehfprev .OR. efluct1<(efluct1prev*(1.0d0-1.0d-5)) &
                .OR. efluct2<(efluct2prev*(1.0d0-1.0d-5))) THEN
-             x0dmp=x0dmp*1.005
+             x0dmp=x0dmp*1.005**M
           ELSE
              x0dmp=x0dmp*0.8
           END IF
@@ -206,7 +229,14 @@ CONTAINS
           efluct2prev=efluct2
           ehfprev=ehf
        END IF
+       CALL system_clock(c2)
+       IF(ttaketime.AND.iter<=20)ttime(6,iter)=REAL(c2-c0)/REAL(crate) 
     END DO Iteration
+    WRITE(*,*)'num_threads     grstep   diagstep     schmid   add_dens     skyrme      &
+         &total   calctens      diagh    diagrho transtates'
+    DO iter=1,20
+       WRITE(*,'(X,I11,X,10(E10.4,X))') iter, ttime(:,iter)
+    END DO
     IF(tdiag) DEALLOCATE(hmatr)
   END SUBROUTINE statichf
   !*************************************************************************
@@ -239,7 +269,7 @@ CONTAINS
     ENDDO
     IF(tdiag) hmatr(nst,nst)=hmatr(nst,nst)+spe
     ! Step 3: calculate fluctuation, i.e. <h*h> and |h|**2
-    IF((mprint>0.AND.MOD(iter,mprint)==0).OR.tvaryx_0) THEN  
+    IF(mprint>0.AND.MOD(iter,mprint)==0) THEN  
        CALL hpsi(iq,esf,ps1,ps2)
        exph2=overlap(psin,ps2)
        varh2=rpsnorm(ps1)
@@ -274,17 +304,20 @@ CONTAINS
     !     diagstep= diagonalize Hamiltonian matrix of active shells      *
     !                                                                      *
     !***********************************************************************
+    USE Trivial, ONLY: overlap,rpsnorm
     INTEGER,INTENT(IN) :: iq,nlin
-    INTEGER :: nst,nst2,noffset
+    INTEGER :: nst,nst2,noffset,i,j,ix,iy,iz,is
+    INTEGER :: c0,c1,c2,crate
     INTEGER :: infoconv
-    REAL(db) :: eigen(nstmax)
-    COMPLEX(db) :: unitary(nstmax,nstmax)
-    COMPLEX(db), ALLOCATABLE :: psiw(:,:,:,:)          ! work space
+    REAL(db) :: eigen_h(nlin),norm
+    COMPLEX(db) :: unitary_h(nlin,nlin),unitary_rho(nlin,nlin),unitary(nlin,nlin),overlaps(nlin)
     COMPLEX(db), ALLOCATABLE :: ps1(:,:,:,:,:)
-    COMPLEX(db) :: hmatr_lin(nlin+1,nlin)
-    COMPLEX(db) :: cwork(2*nlin*nlin)
+    COMPLEX(db) :: ps2(nx,ny,nz,2),pstemp(nlin),pstemp1(nlin),cmplxone=CMPLX(1.0,0.0),cmplxzero=CMPLX(0.0,0.0)
+    COMPLEX(db) :: hmatr_lin(nlin+1,nlin),rhomatr_lin(nlin+1,nlin)
+    COMPLEX(db) :: cwork(2*nlin*nlin),work(nlin)
     REAL(db)    :: rwork(2*nlin*nlin+5*nlin+1)
     INTEGER     :: iwork(5*nlin+3)
+    EXTERNAL    :: zgemv
     INTERFACE
        SUBROUTINE zhbevd( jobz, uplo, n, kd, ab, ldab, w, z, ldz, work, &
             lwork, rwork, lrwork, iwork, liwork, info )
@@ -300,51 +333,86 @@ CONTAINS
     END INTERFACE
     ! Step 1: copy matrix into symmetric storage mode, then diagonalize
     noffset=npmin(iq)-1
-    DO nst=npmin(iq),npsi(iq)
-       DO nst2=nst,npsi(iq)
+    hmatr_lin=0.0d0
+    rhomatr_lin=0.0d0
+    CALL system_clock(c1,crate)
+    !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,nst2) &
+    !$OMP SCHEDULE(STATIC) &
+    !$OMP NUM_THREADS(number_threads)  
+    DO i=nlin/2+1,nlin
+       DO j=1,2*(nlin/2)+1
+          IF(j>i) THEN
+             nst2=noffset+2*(nlin/2)-i+1
+             nst=noffset+2*(nlin/2)+2-j
+          ELSE
+             nst2=noffset+i
+             nst=noffset+j
+          END IF
           hmatr_lin(1+nst2-nst,nst-noffset)=&
                0.5D0*(CONJG(hmatr(nst,nst2))+hmatr(nst2,nst))
+          rhomatr_lin(nst-noffset,nst2-noffset)=overlap(psi(:,:,:,:,nst),psi(:,:,:,:,nst2))
+          IF(nst==nst2) THEN
+             sp_norm(nst)=rhomatr_lin(nst-noffset,nst2-noffset)
+          ELSE
+             rhomatr_lin(nst2-noffset,nst-noffset)=CONJG(rhomatr_lin(nst-noffset,nst2-noffset))
+          END IF
        ENDDO
     ENDDO
-    CALL ZHBEVD('V','L',nlin,nlin,hmatr_lin,nlin+1,eigen,unitary,nstmax, &
+    !$OMP END PARALLEL DO
+    CALL system_clock(c2)
+    IF(ttaketime.AND.iter<=20)ttime(7,iter)=REAL(c2-c1)/REAL(crate) 
+    CALL system_clock(c1,crate)
+    CALL ZHBEVD('V','L',nlin,nlin,hmatr_lin,nlin+1,eigen_h,unitary_h,nlin, &
          cwork,nlin*nlin*2,rwork,2*nlin*nlin+5*nlin+1,       &
          iwork,5*nlin+3,infoconv)
+    CALL system_clock(c2)
+    IF(ttaketime.AND.iter<=20)ttime(8,iter)=REAL(c2-c1)/REAL(crate) 
+    ! Gram-Schmidt
+    CALL system_clock(c1,crate)
+    unitary_rho=0.0d0
+    unitary_rho(1,1)=sqrt(1.0d0/rhomatr_lin(1,1))
+    DO nst=2,nlin
+       unitary_rho(nst,nst)=1.0d0
+       overlaps=0.0d0
+       DO i=1,nst-1
+          overlaps(i)=SUM(CONJG(unitary_rho(1:i,i))*rhomatr_lin(1:i,nst))
+          unitary_rho(1:nst-1,nst)=unitary_rho(1:nst-1,nst)-unitary_rho(1:nst-1,i)*overlaps(i)
+       END DO
+       norm=sqrt(rhomatr_lin(nst,nst)-sum(REAL(overlaps(1:nst-1))**2+AIMAG(overlaps(1:nst-1))**2))
+       unitary_rho(:,nst)=unitary_rho(:,nst)/norm
+    END DO
+    CALL system_clock(c2)
+    IF(ttaketime.AND.iter<=20)ttime(9,iter)=REAL(c2-c1)/REAL(crate) 
+    CALL system_clock(c1,crate)
     !  Step 2: transform states, replace original ones
-    IF(tlarge) THEN
-       OPEN(scratch,status='scratch',form='unformatted')
-       ALLOCATE(psiw(nx,ny,nz,2))
-       noffset=npmin(iq)-1
-       DO nst=npmin(iq),npsi(iq)
-          psiw=CMPLX(0.0D0,0.0D0,db)
-          DO nst2=npmin(iq),npsi(iq)
-             psiw(:,:,:,:)=psiw(:,:,:,:) &
-                  + unitary(nst2-noffset,nst-noffset)*psi(:,:,:,:,nst2)
-          ENDDO
-          WRITE(scratch) psiw
-       ENDDO
-       REWIND(scratch)
-       DO nst=npmin(iq),npsi(iq)
-          READ(scratch) psi(:,:,:,:,nst)
-       ENDDO
-       DEALLOCATE(psiw)
-       CLOSE(scratch)
-    ELSE
-       ALLOCATE(ps1(nx,ny,nz,2,nlin))
-       noffset=npmin(iq)-1
-       ps1=0.0D0
-       DO nst=npmin(iq),npsi(iq)
-          DO nst2=npmin(iq),npsi(iq)
-             ps1(:,:,:,:,nst-noffset)=ps1(:,:,:,:,nst-noffset) &
-                  + unitary(nst2-noffset,nst-noffset)*psi(:,:,:,:,nst2)
-          ENDDO
-       ENDDO
-       psi(:,:,:,:,npmin(iq):npsi(iq))=ps1
-       DEALLOCATE(ps1)
-    ENDIF
+    unitary=MATMUL(unitary_rho,unitary_h)
+    noffset=npmin(iq)-1
+    !$OMP PARALLEL DO DEFAULT(SHARED) COLLAPSE(2) PRIVATE(pstemp,pstemp1)&
+    !$OMP SCHEDULE(STATIC) &
+    !$OMP NUM_THREADS(number_threads)  
+    DO ix=1,nx
+       DO iy=1,ny
+          DO iz=1,nz
+             DO is=1,2
+                pstemp=psi(ix,iy,iz,is,npmin(iq):npsi(iq))
+                CALL zgemv('T',nlin,nlin,cmplxone,unitary,nlin,&
+                     pstemp,1,cmplxzero,pstemp1,1)
+                psi(ix,iy,iz,is,npmin(iq):npsi(iq))=pstemp1
+             END DO
+          END DO
+       END DO
+    END DO
+    !$OMP END PARALLEL DO
+    DO i=npmin(iq),npsi(iq)
+       psi(:,:,:,:,i)=psi(:,:,:,:,i)/sqrt(rpsnorm(psi(:,:,:,:,i)))
+    END DO
+    CALL system_clock(c2)
+    IF(ttaketime.AND.iter<=20)ttime(10,iter)=REAL(c2-c1)/REAL(crate) 
   END SUBROUTINE diagstep
   !*************************************************************************
-  SUBROUTINE sinfo
+  SUBROUTINE sinfo(printing)
     INTEGER :: il
+    LOGICAL :: printing
     CHARACTER(*),PARAMETER :: &
          header='  #  Par   v**2   var_h1   var_h2    Norm     Ekin    Energy &
          &    Lx      Ly      Lz     Sx     Sy     Sz  '   
@@ -353,50 +421,64 @@ CONTAINS
     CALL integ_energy
     CALL sum_energy
     ! add information to summary files
-    OPEN(unit=scratch,file=converfile,POSITION='APPEND')  
-    WRITE(scratch,'(1x,i5,f9.2,3(1pg11.3),2(0pf8.3),f6.1)') &
-         iter,ehf,delesum/pnrtot,efluct1,efluct2,rmstot,beta,gamma
-    CLOSE(scratch)
-    OPEN(unit=scratch,file=dipolesfile, POSITION='APPEND')  
-    WRITE(scratch,'(1x,i5,6E14.4)') iter,cmtot,cm(:,2)-cm(:,1)
-    CLOSE(unit=scratch)
-    OPEN(unit=scratch,file=spinfile, POSITION='APPEND')  
-    WRITE(scratch,'(1x,i5,9F10.4)') iter,orbital,spin,total_angmom 
-    CLOSE(unit=scratch)
-    WRITE(*,'(/,A,I7,A/2(A,F12.4),A/(3(A,E12.5),A),3(A,E12.5))') &
-         ' ***** Iteration ',iter,' *****',' Total energy: ',ehf,' MeV  Total kinetic energy: ', &
-         tke,' MeV',' de/e:      ',delesum,'      h**2  fluct.:    ',efluct1, &
-         ' MeV, h*hfluc.:    ',efluct2,' MeV', &
-         ' MeV. Rearrangement E: ',e3corr,' MeV. Coul.Rearr.: ', &
-         ecorc,' MeV x0dmp: ',x0dmp
-    ! detail printout
-    WRITE(*,'(/A)') ' Energies integrated from density functional:'
-    WRITE(*,'(4(A,1PE14.6),A/26X,3(A,1PE14.6),A)') &
-         ' Total:',ehfint,' MeV. t0 part:',ehf0,' MeV. t1 part:',ehf1, &
-         ' MeV. t2 part:',ehf2,' MeV',' t3 part:',ehf3,' MeV. t4 part:',ehfls, &
-         ' MeV. Coulomb:',ehfc,' MeV.'
-    IF(ipair/=0) WRITE(*,'(2(A,1PE14.6))') ' Pairing energy neutrons: ', &
-         epair(1),' protons: ',epair(2)
-    ! output densities
-    IF(mplot/=0) THEN  
-       IF(MOD(iter,mplot)==0) THEN
-          CALL plot_density
-          CALL write_densities
+    IF(printing) THEN
+       OPEN(unit=scratch,file=energiesfile,POSITION='APPEND')  
+       WRITE(scratch,'(1x,i5,2F8.3,12F15.7)') &
+            iter,pnr,ehf,ehfint,tke,ehfc,ehfCrho0,ehfCrho1,ehfCdrho0,ehfCdrho1,ehfCtau0,ehfCtau1,ehfCdJ0,ehfCdJ1
+       CLOSE(unit=scratch)
+       OPEN(unit=scratch,file=converfile,POSITION='APPEND')  
+       WRITE(scratch,'(1x,i5,f9.2,3(1pg11.3),2(0pf8.3),f6.1,f10.7)') &
+            iter,ehf,delesum/pnrtot,efluct1,efluct2,rmstot,beta,gamma,x0dmp
+       CLOSE(scratch)
+       OPEN(unit=scratch,file=dipolesfile, POSITION='APPEND')  
+       WRITE(scratch,'(1x,i5,6E14.4)') iter,cmtot,cm(:,2)-cm(:,1)
+       CLOSE(unit=scratch)
+       OPEN(unit=scratch,file=spinfile, POSITION='APPEND')  
+       WRITE(scratch,'(1x,i5,9F10.4)') iter,orbital,spin,total_angmom 
+       CLOSE(unit=scratch)
+       WRITE(*,'(/,A,I7,A/2(A,F12.4),A/(3(A,E12.5),A))') &
+            ' ***** Iteration ',iter,' *****',' Total energy: ',ehf,' MeV  Total kinetic energy: ', &
+            tke,' MeV',' de/e:      ',delesum,'      h**2  fluct.:    ',efluct1, &
+            ' MeV, h*hfluc.:    ',efluct2,' MeV', &
+            ' MeV. Rearrangement E: ',e3corr,' MeV. Coul.Rearr.: ', &
+            ecorc,' MeV'
+       ! detail printout
+       WRITE(*,'(/A)') ' Energies integrated from density functional:'
+       WRITE(*,'(4(A,1PE14.6),A/26X,3(A,1PE14.6),A)') &
+            ' Total:',ehfint,' MeV. t0 part:',ehf0,' MeV. t1 part:',ehf1, &
+            ' MeV. t2 part:',ehf2,' MeV',' t3 part:',ehf3,' MeV. t4 part:',ehfls, &
+            ' MeV. Coulomb:',ehfc,' MeV.'
+       WRITE(*,'(4(A,1PE14.6))')' Crho0',ehfCrho0,' Crho1:',ehfCrho1,&
+            ' sum:',ehfCrho0+ehfCrho1,' t0 + t3',ehf0+ehf3
+       WRITE(*,'(4(A,1PE14.6))')' Cdrho0',ehfCdrho0,' Cdrho1:',ehfCdrho1,&
+            ' sum:',ehfCdrho0+ehfCdrho1,' t2-sum',ehf2-ehfCdrho0-ehfCdrho1
+       WRITE(*,'(4(A,1PE14.6))')' Ctau0',ehfCtau0,' Ctau1:',ehfCtau1,&
+            ' sum:',ehfCtau0+ehfCtau1,' t1-sum',ehf1-ehfCtau0-ehfCtau1
+       WRITE(*,'(4(A,1PE14.6))')' CdJ0',ehfCdJ0,' CdJ1:',ehfCdJ1,&
+            ' sum:',ehfCdJ0+ehfCdJ1,' t4-sum',ehfls-ehfCdJ0-ehfCdJ1
+       IF(ipair/=0) WRITE(*,'(2(A,1PE14.6))') ' Pairing energy neutrons: ', &
+            epair(1),' protons: ',epair(2)
+       ! output densities
+       IF(mplot/=0) THEN  
+          IF(MOD(iter,mplot)==0) THEN
+             !CALL plot_density
+             CALL write_densities
+          ENDIF
        ENDIF
-    ENDIF
-    IF(.NOT.wflag) RETURN
-    ! print details of s.p. levels
-    WRITE(*,'(A)') ' Neutron Single Particle States:',header
-    DO il=1,nstmax
-       IF(il==npmin(2)) THEN
-          WRITE(*,'(A)') ' Proton Single Particle States:',header  
-       END IF
-       WRITE(*,'(1X,I3,F4.0,F8.5,2F9.5,F9.6,F8.3,F10.3,3F8.3,3F7.3)') &
-            il,sp_parity(il),wocc(il),sp_efluct1(il),sp_efluct2(il), &
-            sp_norm(il),sp_kinetic(il),sp_energy(il), &
-            sp_orbital(:,il),sp_spin(:,il)
-    ENDDO
-    CALL moment_print
+       IF(.NOT.wflag) RETURN
+       ! print details of s.p. levels
+       WRITE(*,'(A)') ' Neutron Single Particle States:',header
+       DO il=1,nstmax
+          IF(il==npmin(2)) THEN
+             WRITE(*,'(A)') ' Proton Single Particle States:',header  
+          END IF
+          WRITE(*,'(1X,I3,F4.0,F8.5,2F9.5,F9.6,F8.3,F10.3,3F8.3,3F7.3)') &
+               il,sp_parity(il),wocc(il),sp_efluct1(il),sp_efluct2(il), &
+               sp_norm(il),sp_kinetic(il),sp_energy(il), &
+               sp_orbital(:,il),sp_spin(:,il)
+       ENDDO
+       CALL moment_print
+    END IF
   END SUBROUTINE sinfo
   !*************************************************************************
   SUBROUTINE harmosc

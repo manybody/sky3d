@@ -20,6 +20,10 @@ CONTAINS     !  all dummy subroutines to run on a sequential machine
     mpi_myproc=0
     wflag=.TRUE.
   END SUBROUTINE init_all_mpi
+  !************************************************************************     
+  SUBROUTINE mpi_init_filename
+    CONTINUE
+  END SUBROUTINE mpi_init_filename
   !************************************************************************
   SUBROUTINE mpi_init(ierror)
     INTEGER :: ierror

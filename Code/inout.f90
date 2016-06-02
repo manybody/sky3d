@@ -2,7 +2,7 @@ MODULE Inout
   ! This module contains routines related to producing output files
   ! containing wave functions, densities, etc.
   USE Params
-  USE Parallel, ONLY: node,localindex,mpi_myproc
+  USE Parallel, ONLY: node,localindex,mpi_myproc,mpi_nprocs
   USE Grids
   USE Forces, ONLY:f
   USE Moment, ONLY: cm,cmtot
@@ -52,7 +52,11 @@ CONTAINS
     CHARACTER(1) :: c
     INTEGER :: i
     IF(.NOT.wflag) RETURN
-    WRITE(filename,'(I6.6,A4)') iter,'.tdd'
+    IF(mpi_nprocs==1) THEN
+       WRITE(filename,'(I6.6,A4)') iter,'.tdd'
+    ELSE
+       WRITE(filename,'(I6.6,A3,I1.1)') iter,'.td',mpi_myproc
+    END IF
     IF(.NOT.tdynamic) time=0.D0
     OPEN(UNIT=scratch,FILE=filename,FORM='UNFORMATTED',STATUS='REPLACE')
     WRITE(scratch) iter,time,nx,ny,nz

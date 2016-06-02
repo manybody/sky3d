@@ -19,13 +19,15 @@ PROGRAM tdhf3d
        momentafile,energiesfile,quadrupolesfile,spinfile,extfieldfile,&
        diffenergiesfile
   NAMELIST /main/ tcoul,mprint,mplot,trestart, &
-       writeselect,write_isospin,mrest,imode,tfft,nof,r0
+       writeselect,write_isospin,mrest,imode,tfft,nof,r0,&
+       number_threads,ttaketime
   !********************************************************************
   ! Step 1: filename definitions
   !********************************************************************
   CALL init_all_mpi
   OPEN(unit=05,file='for005',status='old',form='formatted')
   READ(5,files)
+  CALL mpi_init_filename
   !********************************************************************
   ! Step 2: read force definition and determine force
   !********************************************************************
@@ -122,7 +124,7 @@ PROGRAM tdhf3d
   ELSEIF(nof==0) THEN    
      CALL harmosc
   ELSE
-     CALL init_user
+!     CALL init_user
   END IF
 !  CLOSE(5)
   !********************************************************************
@@ -144,5 +146,6 @@ PROGRAM tdhf3d
      IF(trestart) nof=nofsave ! restore 2-body status so analysis is done
      CALL dynamichf
   ENDIF
+  CALL init_user
   CALL finish_mpi
 END PROGRAM tdhf3d
