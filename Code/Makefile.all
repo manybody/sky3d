@@ -120,7 +120,7 @@ main3d.o : main3d.f90 params.o fourier.o forces.o densities.o meanfield.o \
 %.o : %.mod
 
 %.o : %.f90
-	$(COMPILER_SKY) $(COMPILERFLAGS_SKY)  -c $<
+	$(COMPILER_SKY) $(COMPILERFLAGS_SKY) -c $<
 
 %.o : %f
-	$(COMPILER_SKY) $(COMPILERFLAGS_SKY)  -c $<
+	$(COMPILER_SKY) $(COMPILERFLAGS_SKY) -c $<

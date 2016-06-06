@@ -125,6 +125,7 @@ CONTAINS
             *EXP(CMPLX(0.0D0, &
             -extfield(:,:,:,isospin(globalindex(nst))),db))
     END FORALL
+    WRITE(*,*)MAXVAL(extfield)
   END SUBROUTINE extboost
   !***********************************************************************
   SUBROUTINE print_extfield()

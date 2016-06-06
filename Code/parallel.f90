@@ -22,10 +22,28 @@ CONTAINS
     IF(wflag) WRITE(*,'(a,i5)') ' number of nodes=',mpi_nprocs
     CALL mpi_barrier (mpi_comm_world, mpi_ierror)
   END SUBROUTINE init_all_mpi
-  !************************************************************************     
-  SUBROUTINE mpi_init_filename
+  !************************************************************************  
+    SUBROUTINE mpi_init_filename
     CONTINUE
-  END SUBROUTINE mpi_init_filename
+  END SUBROUTINE mpi_init_filename   
+  !************************************************************************
+  FUNCTION tabc_dens(density)
+    REAL(db),INTENT(IN) :: density(nx,ny,nz,2)
+    REAL(db)            :: tabc_dens(nx,ny,nz,2)
+    tabc_dens=density
+  END FUNCTION tabc_filename
+  !************************************************************************
+  FUNCTION tabc_vec_dens(density)
+    REAL(db),INTENT(IN) :: density(nx,ny,nz,3,2)
+    REAL(db)            :: tabc_vec_dens(nx,ny,nz,3,2)
+    tabc_vec_dens=density
+  END FUNCTION tabc_vec_filename  
+  !************************************************************************  
+  FUNCTION tabc_filename(filename)
+    CHARACTER(64),INTENT(IN) :: filename
+    CHARACTER(64)            :: tabc_filename
+    tabc_filename=filename
+  END FUNCTION tabc_filename
   !***********************************************************************
   SUBROUTINE associate_nodes
     INTEGER :: ncount,nst,ip,iloc

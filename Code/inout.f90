@@ -2,7 +2,7 @@ MODULE Inout
   ! This module contains routines related to producing output files
   ! containing wave functions, densities, etc.
   USE Params
-  USE Parallel, ONLY: node,localindex,mpi_myproc,mpi_nprocs
+  USE Parallel, ONLY: node,localindex,mpi_myproc,mpi_nprocs,tabc_dens,tabc_vec_dens
   USE Grids
   USE Forces, ONLY:f
   USE Moment, ONLY: cm,cmtot
@@ -52,36 +52,32 @@ CONTAINS
     CHARACTER(1) :: c
     INTEGER :: i
     IF(.NOT.wflag) RETURN
-    IF(mpi_nprocs==1) THEN
-       WRITE(filename,'(I6.6,A4)') iter,'.tdd'
-    ELSE
-       WRITE(filename,'(I6.6,A3,I1.1)') iter,'.td',mpi_myproc
-    END IF
+    WRITE(filename,'(I6.6,A4)') iter,'.tdd'
     IF(.NOT.tdynamic) time=0.D0
-    OPEN(UNIT=scratch,FILE=filename,FORM='UNFORMATTED',STATUS='REPLACE')
+    IF(tabc_myid==0) OPEN(UNIT=scratch,FILE=filename,FORM='UNFORMATTED',STATUS='REPLACE')
     WRITE(scratch) iter,time,nx,ny,nz
     WRITE(scratch) dx,dy,dz,wxyz,x,y,z
     DO i=1,nselect
        c=writeselect(i:i)
        SELECT CASE(c)
        CASE('r','R')
-          CALL write_one_density('Rho',rho)
+          CALL write_one_density('Rho',tabc_dens(rho))
        CASE('t','T')
-          CALL write_one_density('Tau',tau)
+          CALL write_one_density('Tau',tabc_dens(tau))
        CASE('u','U')
-          CALL write_one_density('Upot',upot)
+          CALL write_one_density('Upot',tabc_dens(upot))
        CASE('w','W')
           WRITE(scratch) 'Wcoul     ',.FALSE.,.FALSE.
           WRITE(scratch) wcoul
        CASE('c','C')
-          CALL write_vec_density('Current',current)
+          CALL write_vec_density('Current',tabc_vec_dens(current))
        CASE('s','S')
-          CALL write_vec_density('Spindens',sdens)
+          CALL write_vec_density('Spindens',tabc_vec_dens(sdens))
        CASE('o','O')
-          CALL write_vec_density('s-o-Dens',sodens)
+          CALL write_vec_density('s-o-Dens',tabc_vec_dens(sodens))
        END SELECT
     END DO
-    CLOSE(UNIT=scratch)
+    IF(tabc_myid==0) CLOSE(UNIT=scratch)
   END SUBROUTINE write_densities
   !**************************************************************************
   SUBROUTINE write_one_density(name,values)
@@ -92,10 +88,10 @@ CONTAINS
     stored_name=name
     WRITE(scratch) stored_name,.FALSE.,write_isospin
     IF(write_isospin) THEN
-       WRITE(scratch) values
+       IF(tabc_myid==0) WRITE(scratch) values
     ELSE
        a=values(:,:,:,1)+values(:,:,:,2)
-       WRITE(scratch) a
+       IF(tabc_myid==0) WRITE(scratch) a
     END IF
   END SUBROUTINE write_one_density
   !**************************************************************************
@@ -107,10 +103,10 @@ CONTAINS
     stored_name=name
     WRITE(scratch) stored_name,.TRUE.,write_isospin
     IF(write_isospin) THEN
-       WRITE(scratch) values
+       IF(tabc_myid==0) WRITE(scratch) values
     ELSE
        a=values(:,:,:,:,1)+values(:,:,:,:,2)
-       WRITE(scratch) a
+       IF(tabc_myid==0) WRITE(scratch) a
     END IF
   END SUBROUTINE write_vec_density
   !**************************************************************************

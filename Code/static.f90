@@ -9,11 +9,12 @@ MODULE Static
   USE Inout, ONLY: write_wavefunctions, write_densities, plot_density, &
        sp_properties,start_protocol
   USE Pairs, ONLY: pair,epair
+  USE Parallel, ONLY:ttabc 
   IMPLICIT NONE
   LOGICAL :: tdiag=.FALSE.
   LOGICAL :: tlarge=.FALSE.
   LOGICAL :: tvaryx_0=.FALSE.
-  INTEGER :: maxiter,M=1,outerpot=0
+  INTEGER :: maxiter,outerpot=0
   REAL(db) :: radinx,radiny,radinz, &
        serr,delesum,x0dmp=0.2D0,e0dmp=100.D0,x0dmpmin=0.2d0,ttime(10,20)=0.0d0
   CHARACTER(1) :: outertype='N'
@@ -22,7 +23,7 @@ CONTAINS
   SUBROUTINE getin_static
     NAMELIST/static/ tdiag,tlarge,maxiter, &
          radinx,radiny,radinz,serr,x0dmp,e0dmp,nneut,nprot,npsi,tvaryx_0,&
-         M,outerpot,outertype
+         outerpot,outertype
     npsi=0
     READ(5,static)
     IF(nof<=0) THEN
@@ -49,7 +50,6 @@ CONTAINS
        mass_number=nneut+nprot  
        x0dmpmin=x0dmp
        WRITE(*,*) "x0dmpmin=", x0dmpmin
-       IF(M<1) M=1
     END IF
   END SUBROUTINE getin_static
   !*************************************************************************
@@ -217,17 +217,17 @@ CONTAINS
        !****************************************************
        ! Step 9: check for convergence, saving wave functions, update stepsize
        !****************************************************
-       IF(sumflu/nstmax<serr.AND.iter>1 .AND. MOD(iter,M)==0) THEN
+       IF(sumflu/nstmax<serr.AND.iter>1.AND..NOT.ttabc) THEN
           CALL write_wavefunctions
           EXIT Iteration  
        END IF
        IF(MOD(iter,mrest)==0) THEN  
           CALL write_wavefunctions
        ENDIF
-       IF(tvaryx_0 .AND.MOD(iter,M)==0) THEN
+       IF(tvaryx_0) THEN
           IF(ehf<ehfprev .OR. efluct1<(efluct1prev*(1.0d0-1.0d-5)) &
                .OR. efluct2<(efluct2prev*(1.0d0-1.0d-5))) THEN
-             x0dmp=x0dmp*1.005**M
+             x0dmp=x0dmp*1.005
           ELSE
              x0dmp=x0dmp*0.8
           END IF

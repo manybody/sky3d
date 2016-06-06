@@ -2,7 +2,7 @@ MODULE Grids
   USE Params, ONLY: db,pi,wflag,tabc_myid,tabc_nprocs,tfft
   IMPLICIT NONE
   SAVE
-  INTEGER :: nx,ny,nz,tabc_x=1,tabc_y=1,tabc_z=1
+  INTEGER :: nx,ny,nz,tabc_x=0,tabc_y=0,tabc_z=0
   LOGICAL :: periodic
   REAL(db) :: dx,dy,dz,bangx,bangy,bangz
   REAL(db) :: wxyz
@@ -26,7 +26,9 @@ CONTAINS
     READ(5,Grid)
     IF(.NOT.TFFT.AND.(abs(bangx)>0.00001.OR.abs(bangy)>0.00001.OR.abs(bangz)>0.00001)) &
       STOP 'Bloch boundaries cannot be used without TFFT'
-    CALL tabc_init_blochboundary
+    IF(tabc_nprocs>1) CALL tabc_init_blochboundary
+    IF(tabc_nprocs==1.AND.(tabc_x/=0.OR.tabc_y/=0.OR.tabc_z/=0)) &
+      STOP 'No TABC possible with tabc_nprocs=1!!!' 
     bangx=bangx*PI
     bangy=bangy*PI
     bangz=bangz*PI
@@ -38,12 +40,12 @@ CONTAINS
        WRITE(*,*) '***** Grid Definition *****'
        IF(periodic) THEN
           WRITE(*,*) 'Grid is periodic'
-          WRITE(*,*) 'Bloch angular x-direction: ',bangx
-          WRITE(*,*) 'Bloch angular y-direction: ',bangy
-          WRITE(*,*) 'Bloch angular z-direction: ',bangz
        ELSE
           WRITE(*,*) 'Grid is not periodic'
        END IF
+       WRITE(*,*) 'Bloch angular x-direction: ',bangx
+       WRITE(*,*) 'Bloch angular y-direction: ',bangy
+       WRITE(*,*) 'Bloch angular z-direction: ',bangz
     END IF
     IF(dx*dy*dz<=0.D0) THEN
        IF(dx<=0.D0) STOP 'Grid spacing given as zero'
@@ -199,25 +201,22 @@ CONTAINS
     IF (tabc_x<0) THEN
       bangx=(REAL(xbloch)+0.5d0)/REAL(abs(tabc_x))
     ELSE IF(tabc_x>0) THEN
-      bangx=-1.0+REAL(xbloch+1)*2.0d0/REAL(abs(tabc_x))
+      bangx=-1.0+(REAL(xbloch)+0.5d0)*2.0d0/REAL(abs(tabc_x))
     END IF
 !
     IF (tabc_y<0) THEN
       bangy=(REAL(ybloch)+0.5d0)/REAL(abs(tabc_y))
     ELSE IF(tabc_y>0) THEN
-      bangy=-1.0+REAL(ybloch+1)*2.0d0/REAL(abs(tabc_y))
+      bangy=-1.0+(REAL(ybloch)+0.5d0)*2.0d0/REAL(abs(tabc_y))
     END IF
 !
     IF (tabc_z<0) THEN
       bangz=(REAL(zbloch)+0.5d0)/REAL(abs(tabc_z))
     ELSE IF(tabc_z>0) THEN
-      bangz=-1.0+REAL(zbloch+1)*2.0d0/REAL(abs(tabc_z))
+      bangz=-1.0+(REAL(zbloch)+0.5d0)*2.0d0/REAL(abs(tabc_z))
     END IF
 !
-    CALL sleep(tabc_myid+1)
     WRITE(*,*) 'BLOCH:',nbloch,tabc_myid,xbloch,ybloch,zbloch,bangx,bangy,bangz
-    CALL sleep(tabc_nprocs)
-    STOP
   END SUBROUTINE tabc_init_blochboundary
 END MODULE Grids
 
