@@ -24,6 +24,15 @@ CONTAINS
     bangy=0.0d0
     bangz=0.0d0
     READ(5,Grid)
+    IF(wflag) THEN
+       WRITE(*,*)
+       WRITE(*,*) '***** Grid Definition *****'
+       IF(periodic) THEN
+          WRITE(*,*) 'Grid is periodic'
+       ELSE
+          WRITE(*,*) 'Grid is not periodic'
+       END IF
+    END IF
     IF(.NOT.TFFT.AND.(abs(bangx)>0.00001.OR.abs(bangy)>0.00001.OR.abs(bangz)>0.00001)) &
       STOP 'Bloch boundaries cannot be used without TFFT'
     IF(tabc_nprocs>1) CALL tabc_init_blochboundary
@@ -37,15 +46,9 @@ CONTAINS
        STOP
     END IF
     IF(wflag) THEN
-       WRITE(*,*) '***** Grid Definition *****'
-       IF(periodic) THEN
-          WRITE(*,*) 'Grid is periodic'
-       ELSE
-          WRITE(*,*) 'Grid is not periodic'
-       END IF
-       WRITE(*,*) 'Bloch angular x-direction: ',bangx
-       WRITE(*,*) 'Bloch angular y-direction: ',bangy
-       WRITE(*,*) 'Bloch angular z-direction: ',bangz
+      WRITE(*,*) 'Bloch twist x-direction: ',bangx
+       WRITE(*,*) 'Bloch twist y-direction: ',bangy
+       WRITE(*,*) 'Bloch twist z-direction: ',bangz
     END IF
     IF(dx*dy*dz<=0.D0) THEN
        IF(dx<=0.D0) STOP 'Grid spacing given as zero'
@@ -191,7 +194,8 @@ CONTAINS
   SUBROUTINE tabc_init_blochboundary
     INTEGER :: xbloch,ybloch,zbloch,nbloch
     nbloch=MAX(1,abs(tabc_x))*MAX(1,abs(tabc_y))*MAX(1,abs(tabc_z))
-    WRITE(*,*) nbloch,' sets of bloch twists' 
+    WRITE(*,'(X,I4,A,I3,A,I3,A,I3,A)') nbloch,' sets of bloch twists (x:',abs(tabc_x),&
+    ', y:',abs(tabc_y),', z:',abs(tabc_z),')' 
     IF (nbloch/=tabc_nprocs) &
       STOP 'number of processes not adequate for this setup of TABC'
     IF(tabc_x/=0) xbloch=MOD(tabc_myid,abs(tabc_x))
@@ -216,17 +220,9 @@ CONTAINS
       bangz=-1.0+(REAL(zbloch)+0.5d0)*2.0d0/REAL(abs(tabc_z))
     END IF
 !
-    WRITE(*,*) 'BLOCH:',nbloch,tabc_myid,xbloch,ybloch,zbloch,bangx,bangy,bangz
+    WRITE(*,'(X,A,I4,A,I3,A,I3,A,I3)') 'TABC-ranks: ',tabc_myid,' x=',xbloch,' y=',ybloch,' z=',zbloch
+    WRITE(*,'(X,A,F8.2,A,F8.2,A,F8.2)')  'local values: x:', bangx,' y:',bangy,' z:',bangz
   END SUBROUTINE tabc_init_blochboundary
 END MODULE Grids
-
-
-
-
-
-
-
-
-
 
 

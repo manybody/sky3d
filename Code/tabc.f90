@@ -55,6 +55,14 @@ CONTAINS     !  all dummy subroutines to run tabc on a parallel machine
     tabc_dens=tabc_dens/REAL(tabc_nprocs)
   END FUNCTION tabc_dens
   !************************************************************************
+  FUNCTION tabc_av(val)
+    REAL(db),INTENT(IN) :: val
+    REAL(db)            :: tabc_av
+    CALL mpi_barrier (mpi_comm_world, mpi_ierror)
+    CALL mpi_allreduce(val,tabc_av,1,mpi_double_precision,mpi_sum,mpi_comm_world,mpi_ierror)
+    tabc_av=tabc_av/REAL(tabc_nprocs)
+  END FUNCTION tabc_av
+  !************************************************************************
   FUNCTION tabc_vec_dens(density)
     REAL(db),INTENT(IN) :: density(nx,ny,nz,3,2)
     REAL(db)            :: tabc_vec_dens(nx,ny,nz,3,2)

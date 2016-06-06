@@ -15,7 +15,8 @@ CONTAINS
   LOGICAL :: check
   INTEGER :: ki(3,8*7**3),ki_t(3,7**3)
   REAL(db) :: temp_e,temp_energies(8*7**3)
-  WRITE(*,*)'init plane waves'
+  WRITE(*,*)
+  WRITE(*,*)'*****init plane waves:*****'
   psi=(0.d0,0.d0)
   !***********************************************************************
   !                                                                      *

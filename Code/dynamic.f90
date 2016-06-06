@@ -91,6 +91,10 @@ CONTAINS
             '#     Time      Px            Py            Pz')
        IF(texternal) CALL start_protocol(extfieldfile, &
             '#   time       average_extfield')
+       IF(tabc_nprocs>1.AND.tabc_myid==0.AND.texternal) CALL start_protocol(tabcfile, &
+            '# Iter   Energy         E_kin          E_Coul         E_Skyrme       av_extfield')
+       IF(tabc_nprocs>1.AND.tabc_myid==0.AND..NOT.texternal) CALL start_protocol(tabcfile, &
+            '# Iter   Energy         E_kin          E_Coul         E_Skyrme')
 
     END IF
     ! calculate densities and currents
@@ -227,6 +231,7 @@ CONTAINS
   SUBROUTINE tinfo
     REAL(db), DIMENSION(2) :: ecoll     ! storage for collective-flow energy
     INTEGER :: il
+    REAL(db):: tabc_energy, tabc_ekin, tabc_ecoul, tabc_eskyrme, tabc_ext
     CHARACTER(*),PARAMETER :: &
          header='  #    v**2    Norm     Ekin    Energy &
          &    Lx      Ly      Lz     Sx     Sy     Sz  '   
@@ -289,6 +294,24 @@ CONTAINS
           eintold=ehfint
           ekinold=tke
           ecollold=ecoll
+       END IF
+       IF(tabc_nprocs>1) THEN
+          tabc_energy=tabc_av(ehf)
+          tabc_ekin=tabc_av(tke)
+          tabc_ecoul=tabc_av(ehfc)
+          tabc_eskyrme=tabc_energy-tabc_ekin-tabc_ecoul
+          tabc_ext=tabc_extfield()
+          IF(tabc_myid==0) THEN
+             OPEN(unit=scratch,file=tabcfile,POSITION='APPEND') 
+             IF(texternal) THEN
+               WRITE(scratch,'(1x,i5,5F15.7)') &
+                    iter, tabc_energy, tabc_ekin, tabc_ecoul, tabc_eskyrme, tabc_ext
+             ELSE
+               WRITE(scratch,'(1x,i5,4F15.7)') &
+                    iter, tabc_energy, tabc_ekin, tabc_ecoul, tabc_eskyrme
+             END IF
+             CLOSE(unit=scratch)
+          END IF
        END IF
        OPEN(unit=scratch,file=spinfile, POSITION='APPEND')  
        WRITE(scratch,'(1x,i5,9F10.4)') iter,orbital,spin,total_angmom 

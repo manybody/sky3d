@@ -36,6 +36,7 @@ CONTAINS
          3,(/nx,ny,2/),(/1,nx,nx*ny*nz/),(/1,nx,nx*ny*nz/), &
          p(:,:,:,:,1),p(:,:,:,:,1), &
          FFTW_BACKWARD, FFTW_MEASURE+FFTW_UNALIGNED)
+    IF(wflag) WRITE(*,*)
     IF(wflag) WRITE(*,*) '***** FFTW3 plans established *****'
     DEALLOCATE(p)
   END SUBROUTINE init_fft

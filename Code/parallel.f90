@@ -27,6 +27,12 @@ CONTAINS
     CONTINUE
   END SUBROUTINE mpi_init_filename   
   !************************************************************************
+  FUNCTION tabc_av(val)
+    REAL(db),INTENT(IN) :: val
+    REAL(db)            :: tabc_av
+    tabc_av=val
+  END FUNCTION tabc_av
+  !************************************************************************
   FUNCTION tabc_dens(density)
     REAL(db),INTENT(IN) :: density(nx,ny,nz,2)
     REAL(db)            :: tabc_dens(nx,ny,nz,2)

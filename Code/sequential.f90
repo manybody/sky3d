@@ -26,6 +26,12 @@ CONTAINS     !  all dummy subroutines to run on a sequential machine
     CONTINUE
   END SUBROUTINE mpi_init_filename   
   !************************************************************************  
+  FUNCTION tabc_av(val)
+    REAL(db),INTENT(IN) :: val
+    REAL(db)            :: tabc_av
+    tabc_av=val
+  END FUNCTION tabc_av
+  !************************************************************************
   FUNCTION tabc_filename(filename)
     CHARACTER(64),INTENT(IN) :: filename
     CHARACTER(64)            :: tabc_filename
