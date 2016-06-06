@@ -35,6 +35,7 @@ PROGRAM tdhf3d
   ! Step 3: read principal parameters
   !********************************************************************
   READ(5,main)
+  CALL mpi_init_filename
   tstatic=imode==1
   tdynamic=imode==2
   IF(tmpi.AND.tstatic) STOP 'MPI not implemented for static mode'
