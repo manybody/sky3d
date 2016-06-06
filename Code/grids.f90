@@ -2,7 +2,7 @@ MODULE Grids
   USE Params, ONLY: db,pi,wflag,tabc_myid,tabc_nprocs,tfft
   IMPLICIT NONE
   SAVE
-  INTEGER :: nx,ny,nz
+  INTEGER :: nx,ny,nz,tabc_x=1,tabc_y=1,tabc_z=1
   LOGICAL :: periodic
   REAL(db) :: dx,dy,dz,bangx,bangy,bangz
   REAL(db) :: wxyz
@@ -15,7 +15,8 @@ CONTAINS
   ! Initialization of all the grid quantities,
   !***************************************************
   SUBROUTINE init_grid
-    NAMELIST /Grid/ nx,ny,nz,dx,dy,dz,periodic,bangx,bangy,bangz
+    NAMELIST /Grid/ nx,ny,nz,dx,dy,dz,periodic,bangx,bangy,bangz,&
+                    tabc_x,tabc_y,tabc_z
     dx=0.D0
     dy=0.D0
     dz=0.D0
@@ -25,17 +26,7 @@ CONTAINS
     READ(5,Grid)
     IF(.NOT.TFFT.AND.(abs(bangx)>0.00001.OR.abs(bangy)>0.00001.OR.abs(bangz)>0.00001)) &
       STOP 'Bloch boundaries cannot be used without TFFT'
-    IF(tabc_nprocs==8) THEN
-       WRITE(*,*)'****TABC****'
-       bangx=MOD(tabc_myid,2)-1.0d0
-       bangy=-1.0d0
-       bangz=-1.0d0
-       IF(tabc_myid==2.OR.tabc_myid==3.OR.tabc_myid==6.OR.tabc_myid==7) bangy=1.0d0
-       IF(tabc_myid>=4)bangz=1.0d0
-       bangx=0.5+bangx*0.25
-       bangy=0.5+bangy*0.25
-       bangz=0.5+bangz*0.25
-    END IF
+    CALL tabc_init_blochboundary
     bangx=bangx*PI
     bangy=bangy*PI
     bangz=bangz*PI
@@ -195,4 +186,48 @@ CONTAINS
     END DO
   END SUBROUTINE gauss
   !***************************************************
+  SUBROUTINE tabc_init_blochboundary
+    INTEGER :: xbloch,ybloch,zbloch,nbloch
+    nbloch=MAX(1,abs(tabc_x))*MAX(1,abs(tabc_y))*MAX(1,abs(tabc_z))
+    WRITE(*,*) nbloch,' sets of bloch twists' 
+    IF (nbloch/=tabc_nprocs) &
+      STOP 'number of processes not adequate for this setup of TABC'
+    IF(tabc_x/=0) xbloch=MOD(tabc_myid,abs(tabc_x))
+    IF(tabc_y/=0) ybloch=MOD(tabc_myid/MAX(1,abs(tabc_x)),abs(tabc_y))
+    IF(tabc_z/=0) zbloch=MOD(tabc_myid/MAX(1,abs(tabc_x))/MAX(1,abs(tabc_y)),abs(tabc_z))
+!
+    IF (tabc_x<0) THEN
+      bangx=(REAL(xbloch)+0.5d0)/REAL(abs(tabc_x))
+    ELSE IF(tabc_x>0) THEN
+      bangx=-1.0+REAL(xbloch+1)*2.0d0/REAL(abs(tabc_x))
+    END IF
+!
+    IF (tabc_y<0) THEN
+      bangy=(REAL(ybloch)+0.5d0)/REAL(abs(tabc_y))
+    ELSE IF(tabc_y>0) THEN
+      bangy=-1.0+REAL(ybloch+1)*2.0d0/REAL(abs(tabc_y))
+    END IF
+!
+    IF (tabc_z<0) THEN
+      bangz=(REAL(zbloch)+0.5d0)/REAL(abs(tabc_z))
+    ELSE IF(tabc_z>0) THEN
+      bangz=-1.0+REAL(zbloch+1)*2.0d0/REAL(abs(tabc_z))
+    END IF
+!
+    CALL sleep(tabc_myid+1)
+    WRITE(*,*) 'BLOCH:',nbloch,tabc_myid,xbloch,ybloch,zbloch,bangx,bangy,bangz
+    CALL sleep(tabc_nprocs)
+    STOP
+  END SUBROUTINE tabc_init_blochboundary
 END MODULE Grids
+
+
+
+
+
+
+
+
+
+
+
