@@ -1,5 +1,5 @@
 MODULE Grids
-  USE Params, ONLY: db,pi,wflag,myid,nprocs
+  USE Params, ONLY: db,pi,wflag,myid,nprocs,tfft
   IMPLICIT NONE
   SAVE
   INTEGER :: nx,ny,nz
@@ -23,6 +23,8 @@ CONTAINS
     bangy=0.0d0
     bangz=0.0d0
     READ(5,Grid)
+    IF(.NOT.TFFT.AND.(abs(bangx)>0.00001.OR.abs(bangy)>0.00001.OR.abs(bangz)>0.00001)) &
+      STOP 'Bloch boundaries cannot be used without TFFT'
     IF(nprocs==8) THEN
        WRITE(*,*)'****TABC****'
        bangx=MOD(myid,2)-1.0d0

@@ -2,7 +2,7 @@ Module Meanfield
   USE Params, ONLY: db,tcoul
   USE Densities
   USE Forces 
-  USE Grids, ONLY: nx,ny,nz,der1x,der2x,der1y,der2y,der1z,der2z
+  USE Grids, ONLY: nx,ny,nz,der1x,der2x,der1y,der2y,der1z,der2z,dx,dy,dz,x,y,z
   USE Coulomb, ONLY: poisson,wcoul
   IMPLICIT NONE
   REAL(db),ALLOCATABLE,DIMENSION(:,:,:,:) :: upot,bmass,divaq
@@ -137,26 +137,56 @@ CONTAINS
     DEALLOCATE(workden,workvec)
 !   external guiding potential
     IF (outpot) THEN
-       SELECT CASE(outertype)
-       CASE('P')
-          FORALL(iq=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
-             upot(ix,iy,iz,iq)=30*(cos(REAL(ix)/nx*2*pi) &
-                     +cos(REAL(iy)/ny*2*pi)+cos(REAL(iz)/nz*2*pi))
-          END FORALL
-       CASE('G')
-          FORALL(iq=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
-             upot(ix,iy,iz,iq)=30*( &
-                  cos(REAL(ix)/nx*2*pi)*sin(REAL(iy)/ny*2*pi)+&
-                  cos(REAL(iy)/ny*2*pi)*sin(REAL(iz)/nz*2*pi)+& 
-                  cos(REAL(iz)/nz*2*pi)*sin(REAL(ix)/nx*2*pi))-30
-          END FORALL
-       CASE('S')
-          FORALL(iq=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
-             upot(ix,iy,iz,iq)=50*(cos(REAL(ix)/nx*2*pi))
-          END FORALL
-       END SELECT
+      SELECT CASE(outertype)
+      CASE('P')
+        FORALL(iq=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
+          upot(ix,iy,iz,iq)=30*(cos(REAL(ix)/nx*2*pi)+cos(REAL(iy)/ny*2*pi)+cos(REAL(iz)/nz*2*pi))
+        END FORALL
+        WRITE(*,*) 'P-surface guiding potential'
+      CASE('G')
+        FORALL(iq=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
+              upot(ix,iy,iz,iq)=30*(cos(REAL(ix)/nx*2*pi)*sin(REAL(iy)/ny*2*pi)+&
+              cos(REAL(iy)/ny*2*pi)*sin(REAL(iz)/nz*2*pi)+cos(REAL(iz)/nz*2*pi)*sin(REAL(ix)/nx*2*pi))-30
+        END FORALL
+        WRITE(*,*) 'Gyroid guiding potential'
+      CASE('S')
+        FORALL(iq=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
+         upot(ix,iy,iz,iq)=50*(cos(REAL(ix)/nx*2*pi))
+        END FORALL
+        WRITE(*,*) 'Slab guiding potential'
+      CASE('R')
+        FORALL(iq=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
+         upot(ix,iy,iz,iq)=exp(-((x(ix))**2+(y(iy))**2)/(dx*nx/4)**2)
+        END FORALL  
+        upot=upot*(-50)/maxval(upot(:,:,:,:))
+        WRITE(*,*) 'Rod guiding potential'
+      CASE('H')
+        IF(abs((ny*dy)/(nx*dx)-sqrt(3.0))>0.01) STOP 'Ratio L_y/L_x makes no &
+        &sense for hexagonal'
+        FORALL(iq=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
+         upot(ix,iy,iz,iq)=exp(-((x(ix)-dx*nx/4)**2+(y(iy)-dy*ny/4)**2)/(dx*nx/4)**2)&
+                          +exp(-((x(ix)+dx*nx/4)**2+(y(iy)+dy*ny/4)**2)/(dx*nx/4)**2)&
+                          +exp(-((x(ix)-5*dx*nx/4)**2+(y(iy)-dy*ny/4)**2)/(dx*nx/4)**2)&
+                          +exp(-((x(ix)+5*dx*nx/4)**2+(y(iy)+dy*ny/4)**2)/(dx*nx/4)**2)&
+                          +exp(-((x(ix)-dx*nx/4)**2+(y(iy)-5*dy*ny/4)**2)/(dx*nx/4)**2)&
+                          +exp(-((x(ix)+dx*nx/4)**2+(y(iy)+5*dy*ny/4)**2)/(dx*nx/4)**2)&
+                          +exp(-((x(ix)-5*dx*nx/4)**2+(y(iy)-5*dy*ny/4)**2)/(dx*nx/4)**2)&
+                          +exp(-((x(ix)+5*dx*nx/4)**2+(y(iy)+5*dy*ny/4)**2)/(dx*nx/4)**2)&
+                          +exp(-((x(ix)+3*dx*nx/4)**2+(y(iy)-dy*ny/4)**2)/(dx*nx/4)**2)&
+                          +exp(-((x(ix)-3*dx*nx/4)**2+(y(iy)+dy*ny/4)**2)/(dx*nx/4)**2)&
+                          +exp(-((x(ix)-dx*nx/4)**2+(y(iy)+3*dy*ny/4)**2)/(dx*nx/4)**2)&
+                          +exp(-((x(ix)+dx*nx/4)**2+(y(iy)-3*dy*ny/4)**2)/(dx*nx/4)**2)&
+                          +exp(-((x(ix)+3*dx*nx/4)**2+(y(iy)+3*dy*ny/4)**2)/(dx*nx/4)**2)&
+                          +exp(-((x(ix)-3*dx*nx/4)**2+(y(iy)-3*dy*ny/4)**2)/(dx*nx/4)**2)&
+                          +exp(-((x(ix)-5*dx*nx/4)**2+(y(iy)+3*dy*ny/4)**2)/(dx*nx/4)**2)&
+                          +exp(-((x(ix)+5*dx*nx/4)**2+(y(iy)-3*dy*ny/4)**2)/(dx*nx/4)**2)&
+                          +exp(-((x(ix)+3*dx*nx/4)**2+(y(iy)-5*dy*ny/4)**2)/(dx*nx/4)**2)&
+                          +exp(-((x(ix)-3*dx*nx/4)**2+(y(iy)+5*dy*ny/4)**2)/(dx*nx/4)**2)
+        END FORALL  
+        upot=upot*(-50)/maxval(upot(:,:,:,:))
+        WRITE(*,*) 'Hexagonal rod guiding potential'
+      END SELECT
     END IF
-
   END SUBROUTINE skyrme
   !***********************************************************************
   SUBROUTINE hpsi(iq,eshift,pinn,pout)

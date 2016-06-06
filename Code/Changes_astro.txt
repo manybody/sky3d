@@ -1,9 +1,10 @@
 This file complements the files Changes.txt and Changes_private.txt 
 with a protocol of changes for the astro branch:
 
-- Derivative routines 'cederx' etc modified to include twisted angle
+- Derivative routines 'cederx' etc modified to include Bloch
   boundary conditions (new input parameters 'bangx',  'bangy',
-  'bangz' to be netred via namelist 'grid').
+  'bangz' to be netred via namelist 'grid'(in units of pi)). Can 
+  only be run with TFFT=.True..
 
 - Compute and print detailed energy terms in sorting according to
   the 'C...' parameters of Dobaczewski at al.
@@ -14,7 +15,17 @@ with a protocol of changes for the astro branch:
 - Option for strictly periodic systems for astro-physical applications.
 
 - External guiding potential with periodic structures to drive
-  static iteration toward wanted periodic geometries (e.g. gyroid).
+  static iteration toward wanted periodic geometries. The new input 
+  parameters are 'outerpot' and 'outertype':
+  'outerpot', INTEGER:       Defines how many iterations the guiding 
+    potential is turned on.
+  'outertype', CHARACTER(1): Defines the form of the guiding potential.
+    Can be one of the following:
+    'P': P-surface. 
+    'G': Gyroid.
+    'S': Slab.
+    'R': Rod.
+    'H': Hexagonal rod. Here it must hold: L_y=L_x*sqrt(3). 
 
 - A couple of 'user...' files for initializing different peridioc
   geometries.

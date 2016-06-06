@@ -1,5 +1,5 @@
 MODULE Levels
-  USE Params, ONLY: db,pi,number_threads
+  USE Params, ONLY: db,pi
   USE Grids, ONLY: nx,ny,nz,dx,dy,dz,bangx,bangy,bangz
   USE Fourier
   IMPLICIT NONE
@@ -222,6 +222,8 @@ CONTAINS
     REAL(db) :: kfacx, kfacy, kfacz
     REAL(db) :: k2facx(nx),k2facy(ny),k2facz(nz)
     INTEGER :: ix, iy, iz, is
+    IF(.NOT.PRESENT(e0inv).AND.(bangx>0.000001 .OR. bangy>0.000001 .OR. bangz>0.000001))&
+      STOP 'Laplace does not work with Bloch boundaries'
     kfacz=(PI+PI)/(dz*nz)
     kfacy=(PI+PI)/(dy*ny)
     kfacx=(PI+PI)/(dx*nx)

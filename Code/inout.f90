@@ -194,9 +194,10 @@ CONTAINS
   SUBROUTINE sp_properties
     USE Trivial, ONLY: cmulx,cmuly,cmulz
     INTEGER :: nst,ix,iy,iz,is,ixx,iyy,izz
-    COMPLEX(db),ALLOCATABLE,DIMENSION(:,:,:,:) :: pst,psx,psy,psz,psw
+    COMPLEX(db),ALLOCATABLE,DIMENSION(:,:,:,:) :: pst,psx,psy,psz,psw,ps2
     REAL(db) ::rp,ip,xx(nx),yy(ny),zz(nz),cc(3),ss(3),kin,xpar
-    ALLOCATE(pst(nx,ny,nz,2),psx(nx,ny,nz,2),psy(nx,ny,nz,2),psz(nx,ny,nz,2),psw(nx,ny,nz,2))
+    ALLOCATE(pst(nx,ny,nz,2),psx(nx,ny,nz,2),psy(nx,ny,nz,2),psz(nx,ny,nz,2),&
+             psw(nx,ny,nz,2),ps2(nx,ny,nz,2))
     sp_orbital=0.D0
     sp_spin=0.D0
     sp_kinetic=0.0D0  
@@ -207,15 +208,15 @@ CONTAINS
     zz=z-cmtot(3)
     DO nst=1,nstmax
        IF(node(nst)/=mpi_myproc) CYCLE
-!                                                     PGR2BS: check !
        pst=psi(:,:,:,:,localindex(nst))
        IF(TFFT) THEN
-          CALL cdervx(pst,psx)  
-          CALL cdervy(pst,psy)  
-
-          CALL cdervz(pst,psz)  
-          CALL laplace(pst,psw)  
-       ELSE
+        CALL cdervx(psi(:,:,:,:,localindex(nst)),psx,psw)  
+        CALL cdervy(psi(:,:,:,:,localindex(nst)),psy,ps2)
+        psw=psw+ps2  
+        CALL cdervz(psi(:,:,:,:,localindex(nst)),psz,ps2)  
+        psw=psw+ps2  
+        !laplace() derivatives do not work with TABC yet
+       ELSE  
           CALL cmulx(der1x,pst,psx,0)  
           CALL cmuly(der1y,pst,psy,0)  
           CALL cmulz(der1z,pst,psz,0)  
@@ -223,7 +224,6 @@ CONTAINS
           CALL cmuly(der2y,pst,psw,1)  
           CALL cmulz(der2z,pst,psw,1)  
        ENDIF
-!                                                     PGR2BS: check !
        cc=0.D0
        ss=0.D0
        kin=0.D0

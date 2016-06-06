@@ -32,7 +32,6 @@ MODULE Params
   LOGICAL :: tdynamic
   LOGICAL :: tfft=.TRUE.
   LOGICAL :: trestart=.FALSE.
-  LOGICAL :: ttaketime=.FALSE.
   !**********************************************************************
   ! parameters controlling printout frequency etc.
   !**********************************************************************
@@ -47,6 +46,6 @@ MODULE Params
   LOGICAL :: write_isospin=.FALSE.
   INTEGER,PARAMETER ::  mnof=4   ! maximum number of fragments
   INTEGER :: nof                 ! real number of fragments
-  INTEGER :: number_threads=4,nprocs=1,myid=0
+  INTEGER :: nprocs=1,myid=0
   REAL(db) :: r0=1.2D0
 END MODULE Params

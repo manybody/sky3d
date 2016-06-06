@@ -45,10 +45,16 @@ CONTAINS
   END SUBROUTINE getin_dynamic
   !*************************************************************************
   SUBROUTINE dynamichf
-    INTEGER :: nst,istart
-    COMPLEX(db),ALLOCATABLE :: ps4(:,:,:,:)
+    INTEGER                   :: nst,istart,number_threads
+    COMPLEX(db),ALLOCATABLE   :: ps4(:,:,:,:)
+    INTEGER,  EXTERNAL        :: omp_get_num_threads 
     ALLOCATE(ps4(nx,ny,nz,2))
     ! Step 1: Preparation phase
+    number_threads=1
+    !$OMP PARALLEL
+    !$ number_threads=OMP_GET_NUM_THREADS()
+    !$OMP END PARALLEL
+    WRITE(*,*)'number of threads= ',number_threads
     IF(.NOT.trestart) THEN
        iter=0
        time=0D0  
@@ -94,8 +100,7 @@ CONTAINS
     sdens=0.0D0
     sodens=0.0D0
     !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst) SCHEDULE(STATIC) &
-    !$OMP REDUCTION(+:rho,tau,current,sdens,sodens) &
-    !$OMP NUM_THREADS(number_threads)
+    !$OMP REDUCTION(+:rho,tau,current,sdens,sodens)
     DO nst=1,nstloc
        CALL add_density(isospin(globalindex(nst)),wocc(globalindex(nst)), &
             psi(:,:,:,:,nst),rho,tau,current,sdens,sodens)  
@@ -122,8 +127,7 @@ CONTAINS
        ENDIF
        ! propagate to end of time step and add to densities
        !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,ps4) SCHEDULE(STATIC) &
-       !$OMP REDUCTION(+:rho,tau,current,sdens,sodens) &
-       !$OMP NUM_THREADS(number_threads)
+       !$OMP REDUCTION(+:rho,tau,current,sdens,sodens)
        DO nst=1,nstloc
           ps4=psi(:,:,:,:,nst) 
           CALL tstep(isospin(globalindex(nst)),mxpact/2,ps4)
@@ -150,8 +154,7 @@ CONTAINS
        sodens=0.0D0
        ! propagate to end of step, accumulate densities
        !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,ps4) SCHEDULE(STATIC) &
-       !$OMP REDUCTION(+:rho,tau,current,sdens,sodens) &
-       !$OMP NUM_THREADS(number_threads)
+       !$OMP REDUCTION(+:rho,tau,current,sdens,sodens)
        DO nst=1,nstloc
           ps4=psi(:,:,:,:,nst) 
           CALL tstep(isospin(globalindex(nst)),mxpact,ps4)
@@ -168,8 +171,7 @@ CONTAINS
           IF(MOD(iter,mrescm)==0) THEN  
              CALL resetcm
              !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst) SCHEDULE(STATIC) &
-             !$OMP REDUCTION(+:rho,tau,current,sdens,sodens) &
-             !$OMP NUM_THREADS(number_threads)
+             !$OMP REDUCTION(+:rho,tau,current,sdens,sodens)
              DO nst=1,nstloc
                 CALL add_density(isospin(globalindex(nst)), &
                      wocc(globalindex(nst)), &
