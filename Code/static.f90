@@ -126,7 +126,7 @@ CONTAINS
     sumflu=0.0D0  
     WRITE(*,'(A25)',advance="no")'Initial grstep... '
     !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,denerg) &
-    !$OMP    SCHEDULE(STATIC) REDUCTION(+: sumflu , delesum)
+    !$OMP SCHEDULE(STATIC) REDUCTION(+: sumflu , delesum) &
     !$OMP NUM_THREADS(number_threads) 
     DO nst=1,nstmax
        CALL grstep(nst,isospin(nst),sp_energy(nst),denerg, &

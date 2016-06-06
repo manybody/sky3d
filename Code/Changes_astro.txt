@@ -1,1 +1,13 @@
 This file complements the files Changes.txt and Changes_private.txt with a protocol of changes for the astro branch:
+
+Makefile.all :
+
+Use Malefile.all as 
+make -f Makefile.all <target>
+<target> can be one of the following:
+seq              : sequential program is compiled with gfortran
+mpi              : MPI parallelized program is compiled with mpif90
+omp              : OpenMP parallelized program is compiled with gfortran
+debug, seq_debug : sequential program is compiled with gfortran and debugging compiler options
+mpi_debug        : MPI parallelized program is compiled with mpif90 and debugging compiler options
+omp_debug        : OpenMP parallelized program is compiled with gfortran and debugging compiler options
