@@ -1,6 +1,7 @@
 MODULE Parallel
   USE Params, ONLY: wflag,db
   USE Levels, ONLY: nstmax,npsi,nstloc
+  USE Grids, ONLY: nx,ny,nz
   IMPLICIT NONE
   SAVE
   LOGICAL,PARAMETER :: tmpi=.FALSE.,ttabc=.FALSE.
@@ -35,13 +36,13 @@ CONTAINS     !  all dummy subroutines to run on a sequential machine
     REAL(db),INTENT(IN) :: density(nx,ny,nz,2)
     REAL(db)            :: tabc_dens(nx,ny,nz,2)
     tabc_dens=density
-  END FUNCTION tabc_filename
+  END FUNCTION tabc_dens
   !************************************************************************
   FUNCTION tabc_vec_dens(density)
     REAL(db),INTENT(IN) :: density(nx,ny,nz,3,2)
     REAL(db)            :: tabc_vec_dens(nx,ny,nz,3,2)
     tabc_vec_dens=density
-  END FUNCTION tabc_vec_filename
+  END FUNCTION tabc_vec_dens
   !************************************************************************
   SUBROUTINE mpi_init(ierror)
     INTEGER :: ierror

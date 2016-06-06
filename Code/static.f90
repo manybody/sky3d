@@ -8,7 +8,7 @@ MODULE Static
   USE Energies
   USE Inout, ONLY: write_wavefunctions, write_densities, plot_density, &
        sp_properties,start_protocol
-  USE Pairs, ONLY: pair,epair
+  USE Pairs, ONLY: pair,epair,avdelt,avg,eferm
   USE Parallel, ONLY:ttabc 
   IMPLICIT NONE
   LOGICAL :: tdiag=.FALSE.
@@ -446,8 +446,17 @@ CONTAINS
             ' MeV. diff:   ',ehf1-ehfCtau0-ehfCtau1,' MeV.'
        WRITE(*,'(26X,3(A,1PE14.6),A)')' CdJ0:   ',ehfCdJ0,' MeV. CdJ1:   ',ehfCdJ1,&
             ' MeV. diff:   ',ehfls-ehfCdJ0-ehfCdJ1,' MeV.'
-       IF(ipair/=0) WRITE(*,'(2(A,1PE14.6))') ' Pairing energy neutrons: ', &
-            epair(1),' protons: ',epair(2)
+       WRITE(*,*)'**********************************************************************&
+                  &**************************************'
+       IF(ipair/=0) THEN
+         WRITE(*,'(/7x,a)') '   e_ferm      e_pair     aver_gap    aver_force '
+         DO il=1,2  
+            WRITE(*,'(a,i2,a,4(1pg12.4))') 'iq=',il,': ',eferm(il) , &
+               epair(il) ,avdelt(il),avg(il)
+         ENDDO
+         WRITE(*,*)'**********************************************************************&
+                  &**************************************'
+       END IF
        ! output densities
        IF(mplot/=0) THEN  
           IF(MOD(iter,mplot)==0) THEN

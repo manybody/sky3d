@@ -6,7 +6,7 @@ MODULE Pairs
   USE Levels
   IMPLICIT NONE
   PRIVATE
-  PUBLIC :: pair,epair
+  PUBLIC :: pair,epair,avdelt,avg,eferm
   INTEGER :: iq
   REAL(db),SAVE :: eferm(2),epair(2),avdelt(2),avg(2)  
   REAL(db),SAVE,ALLOCATABLE :: deltaf(:)

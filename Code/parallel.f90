@@ -31,13 +31,13 @@ CONTAINS
     REAL(db),INTENT(IN) :: density(nx,ny,nz,2)
     REAL(db)            :: tabc_dens(nx,ny,nz,2)
     tabc_dens=density
-  END FUNCTION tabc_filename
+  END FUNCTION tabc_dens
   !************************************************************************
   FUNCTION tabc_vec_dens(density)
     REAL(db),INTENT(IN) :: density(nx,ny,nz,3,2)
     REAL(db)            :: tabc_vec_dens(nx,ny,nz,3,2)
     tabc_vec_dens=density
-  END FUNCTION tabc_vec_filename  
+  END FUNCTION tabc_vec_dens
   !************************************************************************  
   FUNCTION tabc_filename(filename)
     CHARACTER(64),INTENT(IN) :: filename
