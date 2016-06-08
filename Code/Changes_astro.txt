@@ -1,13 +1,33 @@
-This file complements the files Changes.txt and Changes_private.txt with a protocol of changes for the astro branch:
+This file complements the files Changes.txt and Changes_private.txt 
+with a protocol of changes for the astro branch:
 
-Makefile.all :
+- Derivative routines 'cederx' etc modified to include twisted angle
+  boundary conditions (new input parameters 'bangx',  'bangy',
+  'bangz' to be netred via namelist 'grid').
 
-Use Malefile.all as 
-make -f Makefile.all <target>
-<target> can be one of the following:
-seq              : sequential program is compiled with gfortran
-mpi              : MPI parallelized program is compiled with mpif90
-omp              : OpenMP parallelized program is compiled with gfortran
-debug, seq_debug : sequential program is compiled with gfortran and debugging compiler options
-mpi_debug        : MPI parallelized program is compiled with mpif90 and debugging compiler options
-omp_debug        : OpenMP parallelized program is compiled with gfortran and debugging compiler options
+- Compute and print detailed energy terms in sorting according to
+  the 'C...' parameters of Dobaczewski at al.
+
+- Accelerated static iteration. OpenMP version of orthogonalization
+  and diagonialization.
+
+- Option for strictly periodic systems for astro-physical applications.
+
+- External guiding potential with periodic structures to drive
+  static iteration toward wanted periodic geometries (e.g. gyroid).
+
+- A couple of 'user...' files for initializing different peridioc
+  geometries.
+
+- New and more flexible makeile 'Makefile.all' to be used as follows:
+  make -f Makefile.all <target>
+  <target> can be one of the following:
+  seq              : sequential program is compiled with gfortran
+  mpi              : MPI parallelized program is compiled with mpif90
+  omp              : OpenMP parallelized program is compiled with gfortran
+  debug, seq_debug : sequential program is compiled with gfortran and 
+                     debugging compiler options
+  mpi_debug        : MPI parallelized program is compiled with mpif90
+                     and debugging compiler options
+  omp_debug        : OpenMP parallelized program is compiled with gfortran 
+                     and debugging compiler options
