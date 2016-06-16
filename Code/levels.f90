@@ -92,15 +92,25 @@ CONTAINS
     COMPLEX(db), INTENT(OUT):: d1psout(:,:,:,:)
     COMPLEX(db), INTENT(OUT), OPTIONAL :: d2psout(:,:,:,:)  
     REAL(db) :: kfac
-    INTEGER :: iy
+    INTEGER :: iy,is,k
     kfac=(PI+PI)/(dy*ny)
-    CALL dfftw_execute_dft(yforward,psin,d1psout)
+!guru    CALL dfftw_execute_dft(yforward,psin,d1psout)
+    DO is=1,2
+       DO k=1,nz
+          CALL dfftw_execute_dft(yforward,psin(:,:,k,is),d1psout(:,:,k,is))
+       END DO
+    END DO
     IF(PRESENT(d2psout)) THEN
        DO iy=1,ny/2
           d2psout(:,iy,:,:)=-((iy-1)*kfac)**2*d1psout(:,iy,:,:)/REAL(ny)
           d2psout(:,ny-iy+1,:,:)=-(iy*kfac)**2*d1psout(:,ny-iy+1,:,:)/REAL(ny)
        ENDDO
-       CALL dfftw_execute_dft(ybackward,d2psout,d2psout)
+!guru       CALL dfftw_execute_dft(ybackward,d2psout,d2psout)
+       DO is=1,2
+          DO k=1,nz
+             CALL dfftw_execute_dft(ybackward,d2psout(:,:,k,is),d2psout(:,:,k,is))
+          END DO
+       END DO
     ENDIF
     d1psout(:,1,:,:)=(0.D0,0.D0)
     DO iy=2,ny/2
@@ -111,7 +121,12 @@ CONTAINS
             /REAL(ny)
     ENDDO
     d1psout(:,ny/2+1,:,:)=(0.D0,0.D0)
-    CALL dfftw_execute_dft(ybackward,d1psout,d1psout)
+!guru    CALL dfftw_execute_dft(ybackward,d1psout,d1psout)
+    DO is=1,2
+       DO k=1,nz
+          CALL dfftw_execute_dft(ybackward,d1psout(:,:,k,is),d1psout(:,:,k,is))
+       END DO
+    END DO
   END SUBROUTINE cdervy0
   !************************************************************
   SUBROUTINE cdervy(psin,d1psout,d2psout)  
@@ -155,15 +170,21 @@ CONTAINS
     COMPLEX(db), INTENT(OUT):: d1psout(:,:,:,:)
     COMPLEX(db), INTENT(OUT), OPTIONAL :: d2psout(:,:,:,:)  
     REAL(db) :: kfac
-    INTEGER :: iz
+    INTEGER :: iz,is
     kfac=(PI+PI)/(dz*nz)
-    CALL dfftw_execute_dft(zforward,psin,d1psout)
+!guru    CALL dfftw_execute_dft(zforward,psin,d1psout)
+    DO is=1,2
+       CALL dfftw_execute_dft(zforward,psin(:,:,:,is),d1psout(:,:,:,is))
+    END DO
     IF(PRESENT(d2psout)) THEN
        DO iz=1,nz/2
           d2psout(:,:,iz,:)=-((iz-1)*kfac)**2*d1psout(:,:,iz,:)/REAL(nz)
           d2psout(:,:,nz-iz+1,:)=-(iz*kfac)**2*d1psout(:,:,nz-iz+1,:)/REAL(nz)
        ENDDO
-       CALL dfftw_execute_dft(zbackward,d2psout,d2psout)
+!guru       CALL dfftw_execute_dft(zbackward,d2psout,d2psout)
+       DO is=1,2
+          CALL dfftw_execute_dft(zbackward,d2psout(:,:,:,is),d2psout(:,:,:,is))
+       END DO
     ENDIF
     d1psout(:,:,1,:)=(0.D0,0.D0)
     DO iz=2,nz/2
@@ -174,7 +195,10 @@ CONTAINS
             /REAL(nz)
     ENDDO
     d1psout(:,:,nz/2+1,:)=(0.D0,0.D0)
-    CALL dfftw_execute_dft(zbackward,d1psout,d1psout)
+!guru    CALL dfftw_execute_dft(zbackward,d1psout,d1psout)
+    DO is=1,2
+       CALL dfftw_execute_dft(zbackward,d1psout(:,:,:,is),d1psout(:,:,:,is))
+    END DO
   END SUBROUTINE cdervz0
   !************************************************************
   SUBROUTINE cdervz(psin,d1psout,d2psout)  
