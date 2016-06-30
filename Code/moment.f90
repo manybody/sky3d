@@ -116,6 +116,7 @@ CONTAINS
     WRITE(scratch,'(4F10.2,E14.5)') time,rms,rmstot,rms(1)-rms(2)
     CLOSE(unit=scratch)
     OPEN(unit=scratch,file=quadrupolesfile,POSITION='APPEND')  
+    WRITE(scratch,'(4F10.2,E14.5)') time,q20,q20tot,x2m
     CLOSE(unit=scratch)
   END SUBROUTINE moment_shortprint
   !***********************************************************
