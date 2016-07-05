@@ -140,8 +140,7 @@ CONTAINS
     CHARACTER(LEN=*),INTENT(IN) :: title
     REAL(db) :: q_eig(3),q_vec(3,3),fv1(20)
     INTEGER :: info,i, j,k
-
-    if(printnow.AND.wflag) write(*,'(3(f12.5,1x))') ((q_mat(j,k),k=1,3),j=1,3)    
+    IF(printnow.AND.wflag) WRITE(*,'(3(f12.5,1x))') ((q_mat(j,k),k=1,3),j=1,3)    
     CALL DSYEV('V','U',3,q_mat,3,q_eig,fv1,20,info)
     q_vec=q_mat
     IF(info/=0) THEN

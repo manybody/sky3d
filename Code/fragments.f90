@@ -3,6 +3,7 @@ MODULE Fragments
   USE Grids 
   USE Forces, ONLY: f,nucleon_mass
   USE Levels
+  USE Parallel, ONLY: tabc_filename
   IMPLICIT NONE 
   SAVE
   PRIVATE
@@ -36,6 +37,10 @@ CONTAINS
     ELSE
        fix_boost=.FALSE.
        READ(5,fragments)
+       IF(nof==1) THEN
+         filename(1)=tabc_filename(filename(1))
+         WRITE(*,*) 'Reading one file from ',filename(1)
+       END IF
     END IF
     IF(nof/=2.AND..NOT.fix_boost) THEN  
        IF(wflag) WRITE(*,"(//,a,//)") "Non-fixed boost only for nof=2"  

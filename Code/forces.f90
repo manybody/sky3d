@@ -57,6 +57,7 @@ CONTAINS
           f=pforces(i)
        ENDIF
     END DO
+    IF(wflag)WRITE(*,*)
     IF(wflag)WRITE(*,*) '***** Force definition *****'
     IF(predefined) THEN
        IF(wflag) WRITE(*,*) 'Using predefined force ',name

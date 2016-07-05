@@ -1,34 +1,37 @@
 #
 # ----- targets--------------------------------------------------------------
 #
-.PHONY : seq mpi omp debug seq_debug omp_debug mpi_debug
+.PHONY : seq mpi omp debug seq_debug omp_debug mpi_debug tabc tabc_seq tabc_omp
 #
 # ----- define compiler flags and linker flags-------------------------------
 #
-seq mpi       : export COMPILERFLAGS_SKY = -O3 -msse4.2 -mfpmath=sse -ffast-math -finline-functions -funroll-loops
-omp           : export COMPILERFLAGS_SKY = -O3 -fopenmp -msse4.2 -mfpmath=sse -ffast-math -finline-functions -funroll-loops
+seq mpi tabc tabc_seq     : export COMPILERFLAGS_SKY = -O3 -msse4.2 -mfpmath=sse -ffast-math -finline-functions -funroll-loops
+omp tabc_omp              : export COMPILERFLAGS_SKY = -O3 -fopenmp -msse4.2 -mfpmath=sse -ffast-math -finline-functions -funroll-loops
 seq_debug mpi_debug debug : export COMPILERFLAGS_SKY = -g -fbacktrace
-omp_debug     : export COMPILERFLAGS_SKY = -g -fbacktrace -fopenmp
+omp_debug                 : export COMPILERFLAGS_SKY = -g -fbacktrace -fopenmp
 #
 # ----- which object file to use for building--------------------------------
 #
 seq omp seq_debug omp_debug debug : export PARALLEL = sequential.o
 mpi mpi_debug                     : export PARALLEL = parallel.o
+tabc tabc_seq tabc_omp            : export PARALLEL = tabc.o
 #
 # ----- executables----------------------------------------------------------
 #
-seq debug seq_debug : export EXEC_SKY       = sky3d.seq
-mpi mpi_debug       : export EXEC_SKY       = sky3d.mpi
-omp omp_debug       : export EXEC_SKY       = sky3d.omp
+seq debug seq_debug : export EXEC_SKY = sky3d.seq
+mpi mpi_debug       : export EXEC_SKY = sky3d.mpi
+omp omp_debug       : export EXEC_SKY = sky3d.omp
+tabc tabc_seq       : export EXEC_SKY = sky3d.tabc
+tabc_omp            : export EXEC_SKY = sky3d.tabc_omp   
 #
 # ----- define the compiler being used---------------------------------------
 #
-seq omp seq_debug omp_debug debug : export COMPILER_SKY = gfortran
-mpi mpi_debug                     : export COMPILER_SKY = mpif90
+seq omp seq_debug omp_debug debug    : export COMPILER_SKY = gfortran
+mpi mpi_debug tabc tabc_seq tabc_omp : export COMPILER_SKY = mpif90
 #
 # ----- restart make---------------------------------------------------------
 #
-seq omp mpi debug seq_debug mpi_debug omp_debug:
+seq omp mpi debug seq_debug mpi_debug omp_debug tabc tabc_seq tabc_omp:
 	@$(MAKE) -f $(firstword $(MAKEFILE_LIST)) makeit
 #
 # ----- object files---------------------------------------------------------
@@ -117,7 +120,7 @@ main3d.o : main3d.f90 params.o fourier.o forces.o densities.o meanfield.o \
 %.o : %.mod
 
 %.o : %.f90
-	$(COMPILER_SKY) $(COMPILERFLAGS_SKY)  -c $<
+	$(COMPILER_SKY) $(COMPILERFLAGS_SKY) -c $<
 
 %.o : %f
-	$(COMPILER_SKY) $(COMPILERFLAGS_SKY)  -c $<
+	$(COMPILER_SKY) $(COMPILERFLAGS_SKY) -c $<

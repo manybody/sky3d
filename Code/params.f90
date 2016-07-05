@@ -23,6 +23,7 @@ MODULE Params
   CHARACTER(LEN=80) :: quadrupolesfile='quadrupoles.res'
   CHARACTER(LEN=80) :: spinfile='spin.res'
   CHARACTER(LEN=80) :: extfieldfile='extfield.res'
+  CHARACTER(LEN=80) :: tabcfile='tabc.res'
   INTEGER,PARAMETER :: scratch=11, scratch2=12
   !**********************************************************************
   !     basic parameters controlling the job                            *
@@ -46,6 +47,6 @@ MODULE Params
   LOGICAL :: write_isospin=.FALSE.
   INTEGER,PARAMETER ::  mnof=4   ! maximum number of fragments
   INTEGER :: nof                 ! real number of fragments
-  INTEGER :: nprocs=1,myid=0
+  INTEGER :: tabc_nprocs=1,tabc_myid=0
   REAL(db) :: r0=1.2D0
 END MODULE Params

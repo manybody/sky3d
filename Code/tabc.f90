@@ -1,84 +1,82 @@
 MODULE Parallel
-  USE Params, ONLY: wflag,db
-  USE Levels, ONLY: nstmax,npsi,nstloc
+  USE Params, ONLY: wflag,db,tabc_nprocs,tabc_myid,converfile,wffile,dipolesfile,&
+  momentafile,energiesfile,quadrupolesfile,spinfile,extfieldfile,diffenergiesfile
   USE Grids, ONLY: nx,ny,nz
+  USE Levels, ONLY: nstmax,npsi,nstloc
   IMPLICIT NONE
+  INCLUDE 'mpif.h'
   SAVE
-  LOGICAL,PARAMETER :: tmpi=.FALSE.,ttabc=.FALSE.
+  LOGICAL,PARAMETER :: tmpi=.FALSE.,ttabc=.TRUE.
   INTEGER, ALLOCATABLE :: node(:),localindex(:),globalindex(:)
   INTEGER :: mpi_nprocs,mpi_ierror,mpi_myproc, &
        processor_name,proc_namelen
-  INTEGER :: mpi_comm_world,mpi_sum,mpi_double_precision
-CONTAINS     !  all dummy subroutines to run on a sequential machine
+CONTAINS     !  all dummy subroutines to run tabc on a parallel machine
   !************************************************************************
   SUBROUTINE alloc_nodes
     ALLOCATE(node(nstmax),localindex(nstmax),globalindex(nstmax))
   END SUBROUTINE alloc_nodes
   !************************************************************************
   SUBROUTINE init_all_mpi
-    WRITE(*,*) '***** Running sequential version *****'
+    WRITE(*,*) '***** Running TABC version *****'
+    CALL mpi_init(mpi_ierror)
+    CALL mpi_comm_size(mpi_comm_world,tabc_nprocs,mpi_ierror)
+    CALL mpi_comm_rank(mpi_comm_world,tabc_myid,mpi_ierror)
     mpi_nprocs=1
     mpi_myproc=0
     wflag=.TRUE.
   END SUBROUTINE init_all_mpi
-  !************************************************************************  
+  !************************************************************************
   SUBROUTINE mpi_init_filename
-    CONTINUE
-  END SUBROUTINE mpi_init_filename   
-  !************************************************************************  
-  FUNCTION tabc_av(val)
-    REAL(db),INTENT(IN) :: val
-    REAL(db)            :: tabc_av
-    tabc_av=val
-  END FUNCTION tabc_av
+    WRITE(wffile,'(A3,I0.3)')'wf-',tabc_myid
+    WRITE(converfile,'(A5,I0.3,A4)')'conver',tabc_myid,'.res'
+    WRITE(dipolesfile,'(A6,I0.3,A4)')'dipole',tabc_myid,'.res'
+    WRITE(momentafile,'(A3,I0.3,A4)')'mom',tabc_myid,'.res'
+    WRITE(energiesfile,'(A5,I0.3,A4)')'energ',tabc_myid,'.res'
+    WRITE(diffenergiesfile,'(A9,I0.3,A4)')'diffenerg',tabc_myid,'.res'
+    WRITE(quadrupolesfile,'(A4,I0.3,A4)')'quad',tabc_myid,'.res'
+    WRITE(spinfile,'(A4,I0.3,A4)')'spin',tabc_myid,'.res'
+    WRITE(extfieldfile,'(A3,I0.3,A4)')'ext',tabc_myid,'.res'  
+    WRITE(*,*)'Number of processes: ', tabc_nprocs,'Process number: ',tabc_myid
+  END SUBROUTINE mpi_init_filename
   !************************************************************************
   FUNCTION tabc_filename(filename)
     CHARACTER(64),INTENT(IN) :: filename
-    CHARACTER(64)            :: tabc_filename
-    tabc_filename=filename
+    CHARACTER(64)            :: tabc_filename,myid
+    WRITE(myid,'(A1,I0.3)')'-',tabc_myid
+    tabc_filename=TRIM(filename)//TRIM(myid)
   END FUNCTION tabc_filename
   !************************************************************************
   FUNCTION tabc_dens(density)
     REAL(db),INTENT(IN) :: density(nx,ny,nz,2)
     REAL(db)            :: tabc_dens(nx,ny,nz,2)
-    tabc_dens=density
+    CALL mpi_barrier (mpi_comm_world, mpi_ierror)
+    CALL mpi_allreduce(density,tabc_dens,2*nx*ny*nz,        &
+         mpi_double_precision,mpi_sum,mpi_comm_world,mpi_ierror)
+    tabc_dens=tabc_dens/REAL(tabc_nprocs)
   END FUNCTION tabc_dens
+  !************************************************************************
+  FUNCTION tabc_av(val)
+    REAL(db),INTENT(IN) :: val
+    REAL(db)            :: tabc_av
+    CALL mpi_barrier (mpi_comm_world, mpi_ierror)
+    CALL mpi_allreduce(val,tabc_av,1,mpi_double_precision,mpi_sum,mpi_comm_world,mpi_ierror)
+    tabc_av=tabc_av/REAL(tabc_nprocs)
+  END FUNCTION tabc_av
   !************************************************************************
   FUNCTION tabc_vec_dens(density)
     REAL(db),INTENT(IN) :: density(nx,ny,nz,3,2)
     REAL(db)            :: tabc_vec_dens(nx,ny,nz,3,2)
-    tabc_vec_dens=density
+    CALL mpi_barrier (mpi_comm_world, mpi_ierror)
+    CALL mpi_allreduce(density,tabc_vec_dens,2*3*nx*ny*nz,        &
+         mpi_double_precision,mpi_sum,mpi_comm_world,mpi_ierror)
+    tabc_vec_dens=tabc_vec_dens/REAL(tabc_nprocs)
   END FUNCTION tabc_vec_dens
-  !************************************************************************
-  SUBROUTINE mpi_init(ierror)
-    INTEGER :: ierror
-    STOP ' MPI_INIT: parallel calls inhibited '
-    RETURN
-  END SUBROUTINE mpi_init
-  !************************************************************************
-  SUBROUTINE mpi_comm_size(comm_world,nprocs,ierror)
-    INTEGER :: ierror, nprocs, comm_world
-    STOP ' MPI_COMM_SIZE: parallel calls inhibited '
-    RETURN
-  END SUBROUTINE mpi_comm_size
-  !************************************************************************
-  SUBROUTINE mpi_comm_rank(comm_world,myproc,ierror)
-    INTEGER :: ierror, myproc, comm_world
-    STOP ' parallel calls inhibited '
-    RETURN
-  END SUBROUTINE mpi_comm_rank
   !************************************************************************
   SUBROUTINE mpi_get_processor_name(processor_name,proc_namelen,ierror)
     INTEGER :: ierror, processor_name, proc_namelen
     STOP ' parallel calls inhibited '
     RETURN
   END SUBROUTINE mpi_get_processor_name
-  !************************************************************************
-  SUBROUTINE mpi_barrier (comm_world, ierror)
-    INTEGER :: ierror, comm_world
-    STOP ' parallel calls inhibited '
-    RETURN
-  END SUBROUTINE mpi_barrier
   !************************************************************************
   SUBROUTINE associate_nodes
     INTEGER :: i
@@ -89,15 +87,6 @@ CONTAINS     !  all dummy subroutines to run on a sequential machine
        localindex(i)=i
     END FORALL
   END SUBROUTINE associate_nodes
-  !************************************************************************
-  SUBROUTINE mpi_allreduce(rho,tmp_rho,length,        &
-       i_double_precision,sum,  &
-       comm_world,ierror)
-    INTEGER :: ierror, comm_world, i_double_precision, length, sum
-    REAL(db), DIMENSION(*), INTENT(IN) :: rho,tmp_rho
-    STOP ' parallel calls inhibited '
-    RETURN
-  END SUBROUTINE mpi_allreduce
   !************************************************************************
   SUBROUTINE collect_densities
     STOP ' parallel calls inhibited '
@@ -110,5 +99,7 @@ CONTAINS     !  all dummy subroutines to run on a sequential machine
   END SUBROUTINE collect_sp_properties
   !************************************************************************
   SUBROUTINE finish_mpi
+    INTEGER :: ierr    
+    CALL mpi_finalize(ierr)
   END SUBROUTINE finish_mpi
 END MODULE Parallel

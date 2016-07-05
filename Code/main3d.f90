@@ -35,6 +35,7 @@ PROGRAM tdhf3d
   ! Step 3: read principal parameters
   !********************************************************************
   READ(5,main)
+  CALL mpi_init_filename
   tstatic=imode==1
   tdynamic=imode==2
   IF(tmpi.AND.tstatic) STOP 'MPI not implemented for static mode'
@@ -43,12 +44,13 @@ PROGRAM tdhf3d
      STOP
   END IF
   IF(wflag) THEN
+     WRITE(*,*)
      WRITE(*,*) '***** Main parameter input *****'
      IF(tstatic) WRITE(*,*) 'This is a static calculation'
      IF(tdynamic) WRITE(*,*) 'This is a dynamic calculation'
      WRITE(*,'(3(A16,I5))') 'Print interval:',mprint, &
           'Plot interval:',mplot,'Save interval:',mrest
-     WRITE(*,'(A,F7.4)') 'Radius parameter r0=',r0
+     WRITE(*,'(X,A,F7.4)') 'Radius parameter r0=',r0
      IF(trestart) THEN
         WRITE(*,*) 'The calculation is being restarted from file ',wffile
      ELSE

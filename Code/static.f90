@@ -8,12 +8,13 @@ MODULE Static
   USE Energies
   USE Inout, ONLY: write_wavefunctions, write_densities, plot_density, &
        sp_properties,start_protocol
-  USE Pairs, ONLY: pair,epair
+  USE Pairs, ONLY: pair,epair,avdelt,avg,eferm
+  USE Parallel, ONLY:ttabc, tabc_av
   IMPLICIT NONE
   LOGICAL :: tdiag=.FALSE.
   LOGICAL :: tlarge=.FALSE.
   LOGICAL :: tvaryx_0=.FALSE.
-  INTEGER :: maxiter,M=1,outerpot=0
+  INTEGER :: maxiter,outerpot=0
   REAL(db) :: radinx,radiny,radinz, &
        serr,delesum,x0dmp=0.2D0,e0dmp=100.D0,x0dmpmin=0.2d0,ttime(10,20)=0.0d0
   CHARACTER(1) :: outertype='N'
@@ -22,7 +23,7 @@ CONTAINS
   SUBROUTINE getin_static
     NAMELIST/static/ tdiag,tlarge,maxiter, &
          radinx,radiny,radinz,serr,x0dmp,e0dmp,nneut,nprot,npsi,tvaryx_0,&
-         M,outerpot,outertype
+         outerpot,outertype
     npsi=0
     READ(5,static)
     IF(nof<=0) THEN
@@ -48,19 +49,23 @@ CONTAINS
        charge_number=nprot  
        mass_number=nneut+nprot  
        x0dmpmin=x0dmp
-       WRITE(*,*) "x0dmpmin=", x0dmpmin
-       IF(M<1) M=1
     END IF
   END SUBROUTINE getin_static
   !*************************************************************************
   SUBROUTINE init_static
     IF(wflag) THEN
+       WRITE(*,*)
        WRITE(*,*) '***** Parameters for static calculation *****'
        WRITE(*,"(3(A,I4))") ' Neutrons:',nneut,' in ',npsi(1),' levels'
        WRITE(*,"(3(A,I4))") ' Protons :',nprot,' in ',npsi(2)-npsi(1),' levels'
-       WRITE(*,"(A,I6)") " Maximum number of iterations: ",maxiter  
+       WRITE(*,"(A,I6)") " Maximum number of iterations: ",maxiter
+       IF(tvaryx_0) THEN
+       WRITE(*,"(2(A,G12.5))") ' Min. damping coefficient:',x0dmpmin, &
+            " Damping energy scale: ",e0dmp
+       ELSE
        WRITE(*,"(2(A,G12.5))") ' Damping coefficient:',x0dmp, &
             " Damping energy scale: ",e0dmp
+       END IF
        WRITE(*,"(A,1PE12.4)") " Convergence limit: ",serr  
        ! initialize *.res files
        CALL start_protocol(converfile, &
@@ -76,6 +81,8 @@ CONTAINS
             '# Iter    N(n)    N(p)       E(sum)         E(integ)       Ekin         &
             &E_Coul         ehfCrho0       ehfCrho1       ehfCdrho0      ehfCdrh     & 
             &ehfCtau0       ehfCtau1       ehfCdJ0        ehfCdJ1')
+       IF(tabc_nprocs>1.AND.tabc_myid==0) CALL start_protocol(tabcfile, &
+            '# Iter   Energy         E_kin          E_Coul         E_Skyrme ')
     ENDIF
     ! calculate damping matrices
     IF(e0dmp>0.0D0) CALL setup_damping(e0dmp)
@@ -99,7 +106,8 @@ CONTAINS
     !$OMP PARALLEL
     !$ number_threads=OMP_GET_NUM_THREADS()
     !$OMP END PARALLEL
-    WRITE(*,*)'number of threads= ',number_threads
+    IF(wflag)WRITE(*,*)'number of threads= ',number_threads
+    IF(wflag)WRITE(*,*)
     ALLOCATE(hmatr(nstmax,nstmax))
     IF(trestart) THEN
        firstiter=iter+1
@@ -162,7 +170,7 @@ CONTAINS
     ! step 4: start static iteration loop
     !****************************************************  
     Iteration: DO iter=firstiter,maxiter
-       WRITE(*,'(a,i6)') ' Static Iteration No.',iter
+       IF(wflag)WRITE(*,'(a,i6)') ' Static Iteration No.',iter
        !****************************************************  
        ! Step 5: gradient step
        !****************************************************  
@@ -217,17 +225,17 @@ CONTAINS
        !****************************************************
        ! Step 9: check for convergence, saving wave functions, update stepsize
        !****************************************************
-       IF(sumflu/nstmax<serr.AND.iter>1 .AND. MOD(iter,M)==0) THEN
+       IF(sumflu/nstmax<serr.AND.iter>1.AND..NOT.ttabc) THEN
           CALL write_wavefunctions
           EXIT Iteration  
        END IF
        IF(MOD(iter,mrest)==0) THEN  
           CALL write_wavefunctions
        ENDIF
-       IF(tvaryx_0 .AND.MOD(iter,M)==0) THEN
+       IF(tvaryx_0) THEN
           IF(ehf<ehfprev .OR. efluct1<(efluct1prev*(1.0d0-1.0d-5)) &
                .OR. efluct2<(efluct2prev*(1.0d0-1.0d-5))) THEN
-             x0dmp=x0dmp*1.005**M
+             x0dmp=x0dmp*1.005
           ELSE
              x0dmp=x0dmp*0.8
           END IF
@@ -401,6 +409,7 @@ CONTAINS
   SUBROUTINE sinfo(printing)
     INTEGER :: il
     LOGICAL :: printing
+    REAL(db):: tabc_energy, tabc_ekin, tabc_ecoul, tabc_eskyrme
     CHARACTER(*),PARAMETER :: &
          header='  #  Par   v**2   var_h1   var_h2    Norm     Ekin    Energy &
          &    Lx      Ly      Lz     Sx     Sy     Sz  '   
@@ -410,9 +419,22 @@ CONTAINS
     CALL sum_energy
     ! add information to summary files
     IF(printing) THEN
+       IF(tabc_nprocs>1) THEN
+          tabc_energy=tabc_av(ehf)
+          tabc_ekin=tabc_av(tke)
+          tabc_ecoul=tabc_av(ehfc)
+          tabc_eskyrme=tabc_energy-tabc_ekin-tabc_ecoul
+          IF(tabc_myid==0) THEN
+             OPEN(unit=scratch,file=tabcfile,POSITION='APPEND')  
+               WRITE(scratch,'(1x,i5,4F15.7)') &
+                    iter, tabc_energy, tabc_ekin, tabc_ecoul, tabc_eskyrme
+             CLOSE(unit=scratch)
+          END IF
+       END IF
        OPEN(unit=scratch,file=energiesfile,POSITION='APPEND')  
        WRITE(scratch,'(1x,i5,2F8.3,12F15.7)') &
-            iter,pnr,ehf,ehfint,tke,ehfc,ehfCrho0,ehfCrho1,ehfCdrho0,ehfCdrho1,ehfCtau0,ehfCtau1,ehfCdJ0,ehfCdJ1
+            iter,pnr,ehf,ehfint,tke,ehfc,ehfCrho0,ehfCrho1,ehfCdrho0,ehfCdrho1,ehfCtau0,&
+            ehfCtau1,ehfCdJ0,ehfCdJ1
        CLOSE(unit=scratch)
        OPEN(unit=scratch,file=converfile,POSITION='APPEND')  
        WRITE(scratch,'(1x,i5,f9.2,3(1pg11.3),2(0pf8.3),f6.1,f10.7)') &
@@ -425,29 +447,36 @@ CONTAINS
        WRITE(scratch,'(1x,i5,9F10.4)') iter,orbital,spin,total_angmom 
        CLOSE(unit=scratch)
        WRITE(*,'(/,A,I7,A/2(A,F12.4),A/(3(A,E12.5),A))') &
-            ' ***** Iteration ',iter,' *****',' Total energy: ',ehf,' MeV  Total kinetic energy: ', &
-            tke,' MeV',' de/e:      ',delesum,'      h**2  fluct.:    ',efluct1, &
-            ' MeV, h*hfluc.:    ',efluct2,' MeV', &
+            ' ***** Iteration ',iter,' *************************************************&
+            &***********************************',' Total energy: ',ehf,&
+            ' MeV  Total kinetic energy: ', tke,' MeV',' de/e:      ',delesum,&
+            '      h**2  fluct.:    ',efluct1,' MeV, h*hfluc.:    ',efluct2,' MeV', &
             ' MeV. Rearrangement E: ',e3corr,' MeV. Coul.Rearr.: ', &
             ecorc,' MeV'
        ! detail printout
-       WRITE(*,'(/A)') ' Energies integrated from density functional:'
+       WRITE(*,'(/A)') ' Energies integrated from density functional:********************&
+                  &********************************************'
        WRITE(*,'(4(A,1PE14.6),A/26X,3(A,1PE14.6),A)') &
             ' Total:',ehfint,' MeV. t0 part:',ehf0,' MeV. t1 part:',ehf1, &
             ' MeV. t2 part:',ehf2,' MeV.',' t3 part:',ehf3,' MeV. t4 part:',ehfls, &
             ' MeV. Coulomb:',ehfc,' MeV.'
+       WRITE(*,*)'                          *********************************************&
+                  &**************************************'
+       WRITE(*,'(26X,3(A,1PE14.6),A)')' Crho0:  ',ehfCrho0,' MeV. Crho1:  ',ehfCrho1,' MeV.'
+       WRITE(*,'(26X,3(A,1PE14.6),A)')' Cdrho0: ',ehfCdrho0,' MeV. Cdrho1: ',ehfCdrho1,' MeV.'
+       WRITE(*,'(26X,3(A,1PE14.6),A)')' Ctau0:  ',ehfCtau0,' MeV. Ctau1:  ',ehfCtau1,' MeV.'
+       WRITE(*,'(26X,3(A,1PE14.6),A)')' CdJ0:   ',ehfCdJ0,' MeV. CdJ1:   ',ehfCdJ1,' MeV.'
        WRITE(*,*)'**********************************************************************&
                   &**************************************'
-       WRITE(*,'(26X,3(A,1PE14.6),A)')' Crho0:  ',ehfCrho0,' MeV. Crho1:  ',ehfCrho1,&
-            ' MeV. diff:   ',ehfCrho0+ehfCrho1-ehf0-ehf3,' MeV.'
-       WRITE(*,'(26X,3(A,1PE14.6),A)')' Cdrho0: ',ehfCdrho0,' MeV. Cdrho1: ',ehfCdrho1,&
-            ' MeV. diff:   ',ehf2-ehfCdrho0-ehfCdrho1,' MeV.'
-       WRITE(*,'(26X,3(A,1PE14.6),A)')' Ctau0:  ',ehfCtau0,' MeV. Ctau1:  ',ehfCtau1,&
-            ' MeV. diff:   ',ehf1-ehfCtau0-ehfCtau1,' MeV.'
-       WRITE(*,'(26X,3(A,1PE14.6),A)')' CdJ0:   ',ehfCdJ0,' MeV. CdJ1:   ',ehfCdJ1,&
-            ' MeV. diff:   ',ehfls-ehfCdJ0-ehfCdJ1,' MeV.'
-       IF(ipair/=0) WRITE(*,'(2(A,1PE14.6))') ' Pairing energy neutrons: ', &
-            epair(1),' protons: ',epair(2)
+       IF(ipair/=0) THEN
+         WRITE(*,'(a)') '   e_ferm      e_pair     aver_gap    aver_force '
+         DO il=1,2  
+            WRITE(*,'(a,i2,a,4(1pg12.4))') 'iq=',il,': ',eferm(il) , &
+               epair(il) ,avdelt(il),avg(il)
+         ENDDO
+         WRITE(*,*)'**********************************************************************&
+                  &**************************************'
+       END IF
        ! output densities
        IF(mplot/=0) THEN  
           IF(MOD(iter,mplot)==0) THEN

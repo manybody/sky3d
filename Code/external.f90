@@ -1,6 +1,6 @@
 MODULE External
   USE Params, ONLY: db,pi,wflag,extfieldfile,time,scratch
-  USE Parallel,ONLY: globalindex
+  USE Parallel,ONLY: globalindex,tabc_av
   USE Grids, ONLY: nx,ny,nz,x,y,z,dx,dy,dz,wxyz
   USE Levels, ONLY: nstloc,isospin,nprot,nneut,charge_number,mass_number
   USE MEANFIELD, ONLY: upot
@@ -125,6 +125,7 @@ CONTAINS
             *EXP(CMPLX(0.0D0, &
             -extfield(:,:,:,isospin(globalindex(nst))),db))
     END FORALL
+    WRITE(*,*)MAXVAL(extfield)
   END SUBROUTINE extboost
   !***********************************************************************
   SUBROUTINE print_extfield()
@@ -134,4 +135,9 @@ CONTAINS
          SUM(rho),SUM(rho**2)
     CLOSE(UNIT=scratch)
   END SUBROUTINE print_extfield
+  !***********************************************************************
+  FUNCTION tabc_extfield()
+    REAL(db)            :: tabc_extfield
+    tabc_extfield=tabc_av(wxyz*SUM(rho*extfield))
+  END FUNCTION tabc_extfield
 END MODULE External

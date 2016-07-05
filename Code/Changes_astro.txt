@@ -2,7 +2,7 @@ This file complements the files Changes.txt and Changes_private.txt
 with a protocol of changes for the astro branch:
 
 - Derivative routines 'cederx' etc modified to include Bloch
-  boundary conditions (new input parameters 'bangx',  'bangy',
+  boundary conditions (new input parameters 'bangx', 'bangy',
   'bangz' to be netred via namelist 'grid'(in units of pi)). Can 
   only be run with TFFT=.True..
 
@@ -42,3 +42,30 @@ with a protocol of changes for the astro branch:
                      and debugging compiler options
   omp_debug        : OpenMP parallelized program is compiled with gfortran 
                      and debugging compiler options
+  tabc, tabc_seq   : MPI parallelized program is compiled with mpif90 and 
+                     performs TABC
+  tabc_omp         : MPI parallelized program is compiled with mpif90 and 
+                     performs TABC, for single bloch sets OpenMP 
+                     paralellization is added
+                     
+*********TABC*********
+ - new parameters tabc_{x,y,z} determine the setup for TABC:
+  tabc{x,y,z} = 0     : only periodic boundary conditions for {x,y,z}
+  tabc{x,y,z} = n > 0 : calculate n twists in {x,y,z} direction between -pi 
+                        and +pi. The twists are symmetric to zero and 
+                        equidistant.
+  tabc{x,y,z} = n < 0 : calculate n twists in {x,y,z} direction between 0 
+                        and +pi. Here the trapezoidal rule is used.
+  NOTE: If there is only one twist in a direction, there are three different 
+        possibilities: tabc{x,y,z} = -1, 0 or 1 results in 0.5*pi, bang{x,y,z}
+        and 0, respectively
+ 
+- The number of launched processes must be equal to the total number of set 
+  of twists.
+
+- Launch your program with either 
+     mpirun -n #OfTwists -output-filename out /YourPath/sky3d.tabc &
+  or
+     mpirun -n #OfTwists --outfile-pattern=out.%r ~/YourPath/sky3d.tabc &
+  depending on you implementation of MPI in order to have separate output 
+  files.
