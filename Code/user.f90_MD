@@ -1,0 +1,66 @@
+MODULE User
+  USE Params
+  USE Grids
+  USE Levels
+  USE Trivial, ONLY: rpsnorm
+  IMPLICIT NONE
+CONTAINS
+  SUBROUTINE init_user
+  IMPLICIT NONE
+  INTEGER  :: nst,i,iq
+  REAL(db) :: r(3)
+  CHARACTER(20)::filename(2)
+  filename=(/'neutrons.tab','protons.tab '/)
+  psi=(0.d0,0.d0)
+  nst=1
+  DO iq=1,2
+    OPEN(UNIT=1000,FILE=filename(iq))
+    DO WHILE(nst<=npsi(iq))
+      READ(1000,*)r(1),r(2),r(3)
+      IF(r(1)>nx*dx.OR.r(2)>ny*dy.OR.r(3)>nz*dz) STOP 'Box too small'
+      CALL gauss(nst,r(1)+x(1),r(2)+y(1),r(3)+z(1),2.5d0,1)
+    nst=nst+1
+    END DO
+    CLOSE(1000)
+  END DO
+  END SUBROUTINE init_user
+  !
+SUBROUTINE gauss(nst,rx,ry,rz,width,s)
+  IMPLICIT NONE
+  INTEGER,INTENT(IN) :: nst,s
+  REAL(db),INTENT(IN) :: rx,ry,rz,width
+  INTEGER :: ix,iy,iz,ixx,iyy,izz
+  REAL(db) :: expo,norm,xm,ym,zm
+  COMPLEX(db) :: fy,fz
+  wocc(nst)=0.0d0
+  IF(nst>=npmin(1) .AND. (nst<npmin(1)+nneut)) wocc(nst)=1.0d0
+  IF(nst>=npmin(2) .AND. (nst<npmin(2)+nprot)) wocc(nst)=1.0d0
+  DO iz=1,nz  
+    DO iy=1,ny
+      DO ix=1,nx
+        DO ixx=-1,1
+          DO iyy=-1,1
+            DO izz=-1,1
+              xm=rx+ixx*nx*dx
+              ym=ry+iyy*ny*dy
+              zm=rz+izz*nz*dz
+              expo=exp(-0.5d0*((x(ix)-xm)**2+(y(iy)-ym)**2+(z(iz)-zm)**2)/width**2)
+!              IF(s>0) THEN
+                psi(ix,iy,iz,1,nst)=psi(ix,iy,iz,1,nst)+expo
+!                psi(ix,iy,iz,2,nst)=0.D0
+!              ELSE
+                psi(ix,iy,iz,2,nst)=psi(ix,iy,iz,2,nst)+expo
+!                psi(ix,iy,iz,1,nst)=0.D0
+!              END IF
+            END DO
+          END DO
+        END DO
+      ENDDO
+    ENDDO
+  ENDDO
+  norm=SQRT(rpsnorm(psi(:,:,:,:,nst)))
+  psi(:,:,:,:,nst)=psi(:,:,:,:,nst)/norm
+  WRITE(*,*)'state at r=(',&
+       rx,ry,rz,'), radius= ',width,' position',nst,' wocc=',wocc(nst)
+END SUBROUTINE gauss
+END MODULE User

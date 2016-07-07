@@ -25,17 +25,18 @@ with a protocol of changes for the astro branch:
     'G': Gyroid.
     'S': Slab.
     'R': Rod.
-    'H': Hexagonal rod. Here it must hold: L_y=L_x*sqrt(3). 
+    'H': Hexagonal rod. Here box lengths have to be L_y=L_x*sqrt(3). 
 
 - A couple of 'user...' files for initializing different peridioc
   geometries.
 
 - New and more flexible makeile 'Makefile.all' to be used as follows:
-  make -f Makefile.all <target>
+  make <target>
   <target> can be one of the following:
   seq              : sequential program is compiled with gfortran
   mpi              : MPI parallelized program is compiled with mpif90
   omp              : OpenMP parallelized program is compiled with gfortran
+  mpi-omp          : MPI+OpenMP parallelized program is compiled with mpif90
   debug, seq_debug : sequential program is compiled with gfortran and 
                      debugging compiler options
   mpi_debug        : MPI parallelized program is compiled with mpif90
@@ -47,6 +48,8 @@ with a protocol of changes for the astro branch:
   tabc_omp         : MPI parallelized program is compiled with mpif90 and 
                      performs TABC, for single bloch sets OpenMP 
                      paralellization is added
+  ifort, ifort_seq : sequential program is compiled with ifort
+  ifort_omp        : OpenMP parallelized program is compiled with ifort
                      
 *********TABC*********
  - new parameters tabc_{x,y,z} determine the setup for TABC:
