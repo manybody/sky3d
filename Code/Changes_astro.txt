@@ -72,3 +72,7 @@ with a protocol of changes for the astro branch:
      mpirun -n #OfTwists --outfile-pattern=out.%r ~/YourPath/sky3d.tabc &
   depending on you implementation of MPI in order to have separate output 
   files.
+
+*********Pairing regularization*********
+Pairing regularization implemented as described in ---PRC 73 044319---
+Variable pair_reg in namelist 'forces' serves as a switch. Default is .FLASE.  

@@ -1,6 +1,6 @@
 MODULE Pairs
-  USE Params, ONLY: db,iter,printnow,wflag
-  USE Forces, ONLY: ipair,p
+  USE Params, ONLY: db,iter,printnow,wflag,hbc
+  USE Forces, ONLY: ipair,p,pair_reg
   USE Grids, ONLY: nx,ny,nz,wxyz
   USE Densities, ONLY:rho
   USE Levels
@@ -72,7 +72,11 @@ CONTAINS
        ENDIF
        ! now multiply with strength to obtain local pair-potential
        IF(ipair==6) THEN
-          work=v0act*work*(1D0-(rho(:,:,:,1)+rho(:,:,:,2))/p%rho0pr)
+         IF(pair_reg) THEN
+           work=g_eff(v0act*(1D0-(rho(:,:,:,1)+rho(:,:,:,2))/p%rho0pr),iqq)*work
+         ELSE
+           work=v0act*work*(1D0-(rho(:,:,:,1)+rho(:,:,:,2))/p%rho0pr)
+         END IF
        ELSE
           work=v0act*work  
        END IF
@@ -241,4 +245,55 @@ CONTAINS
        bcs_partnum=bcs_partnum+wocc(k)
     ENDDO
   END SUBROUTINE bcs_occupation
+  !***********************************************************************
+  ! Calc. pairing regulator
+  !***********************************************************************
+  FUNCTION g_eff(g,iq)
+    USE Meanfield, ONLY :  bmass,upot
+    USE Grids    , ONLY :  x,y,z
+    USE Forces   , ONLY :  h2ma
+    USE Levels   , ONLY :  sp_energy
+    INTEGER             :: ixyz,ix,iy,iz
+    INTEGER,INTENT(IN)  :: iq
+    REAL(db)            :: fac(nx,ny,nz),g_eff(nx,ny,nz)
+    REAL(db),INTENT(IN) :: g(nx,ny,nz)
+    COMPLEX(db)         :: k_cut(nx,ny,nz),k_f(nx,ny,nz) !without factor!!!!!!!!!!!!
+    !
+    k_f(:,:,:)=sqrt(CMPLX(eferm(iq)-upot(:,:,:,iq),0.0d0,db))
+    k_cut(:,:,:)=sqrt(CMPLX(sp_energy(npsi(iq))-upot(:,:,:,iq),0.0d0,db))
+    DO ix=1,nx; DO iy=1,ny; DO iz=1,nz
+      IF(AIMAG(k_f(ix,iy,iz))>1D-20) THEN
+        fac(ix,iy,iz)=AIMAG(k_f(ix,iy,iz))/REAL(k_cut(ix,iy,iz))
+        fac(ix,iy,iz)=1.0d0+fac(ix,iy,iz)*atan(fac(ix,iy,iz))
+      ELSE
+        fac(ix,iy,iz)=(REAL(k_cut(ix,iy,iz))+REAL(k_f(ix,iy,iz)))/&
+                         (REAL(k_cut(ix,iy,iz))-REAL(k_f(ix,iy,iz)))
+        fac(ix,iy,iz)=1-REAL(k_f(ix,iy,iz))/(2.0*REAL(k_cut(ix,iy,iz)))*log(fac(ix,iy,iz))
+      END IF
+    END DO; END DO; END DO
+    fac(:,:,:)=fac(:,:,:)/(4.0d0*pi**2*bmass(:,:,:,iq)**(3.0d0/2.0d0))
+    g_eff(:,:,:)=1.0d0/(1.0d0/g(:,:,:)-fac(:,:,:))
+    IF(iq==1) THEN
+      OPEN(33,file='pair_neut.res',status='replace')
+    ELSE
+      OPEN(33,file='pair_prot.res',status='replace') 
+    END IF   
+    WRITE(33,'(/a,2f8.4)')  '#        eferm= ',eferm
+    WRITE(33,'(/a)')  '#   x          k_f'
+    WRITE(33,'(1x,f6.2,2g13.5)') &
+         (x(ixyz),k_f(ixyz,NY/2,NZ/2),ixyz=1,NX)
+    WRITE(33,'(/a,2f8.4)')  '#        e_cut= ',sp_energy(npsi(:))
+    WRITE(33,'(/a)')  '#   x          k_cut'
+    WRITE(33,'(1x,f6.2,2g13.5)') &
+         (x(ixyz),k_cut(ixyz,NY/2,NZ/2),ixyz=1,NX)
+    WRITE(33,'(/a)')  '#     '
+    WRITE(33,'(/a)')  '#   x          U_pot'
+    WRITE(33,'(1x,f6.2,g13.5)') &
+         (x(ixyz),upot(ixyz,NY/2,NZ/2,iq),ixyz=1,NX)
+    WRITE(33,'(/a)')  '#     '
+    WRITE(33,'(/a)')  '#                     g                           g_eff'
+    WRITE(33,'(1x,f6.2,2g13.5)') &
+         (x(ixyz),g(ixyz,NY/2,NZ/2),g_eff(ixyz,NY/2,NZ/2),ixyz=1,NX)         
+    CLOSE(33) 
+  END FUNCTION g_eff
 END MODULE Pairs

@@ -469,7 +469,7 @@ CONTAINS
        WRITE(*,*)'**********************************************************************&
                   &**************************************'
        IF(ipair/=0) THEN
-         WRITE(*,'(a)') '   e_ferm      e_pair     aver_gap    aver_force '
+         WRITE(*,'(a)') '          e_ferm      e_pair     aver_gap    aver_force '
          DO il=1,2  
             WRITE(*,'(a,i2,a,4(1pg12.4))') 'iq=',il,': ',eferm(il) , &
                epair(il) ,avdelt(il),avg(il)
