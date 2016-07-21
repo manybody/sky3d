@@ -22,6 +22,7 @@ MODULE Forces
   ! now the structure used in the run itself
   INTEGER :: ipair
   LOGICAL :: pair_reg=.FALSE.
+  REAL(db):: delta_fit(2)=-1.0d0
   TYPE(Force) :: f         ! force actually used
   TYPE(Pairing) :: p       !pairing parameters actually used
   ! charge and mass number in static case for pairing
@@ -46,9 +47,9 @@ CONTAINS
     ! read force definition
     NAMELIST /force/ name,pairing, &
          ex,zpe,h2m,t0,t1,t2,t3,t4,x0,x1,x2,x3,b4p,power, &
-         ipair,v0prot,v0neut,rho0pr,turnoff_zpe,pair_reg
+         ipair,v0prot,v0neut,rho0pr,turnoff_zpe,pair_reg,delta_fit
     ! mark force & pairing parameters as undefined
-    h2m=-1.0; v0prot=-1.0; v0neut=-1.0; 
+    h2m=-1.0; v0prot=-1.0; v0neut=-1.0; rho0pr=-1.0
     READ(5,force)
     ! seek for force in predefined ones
     predefined=.FALSE.
@@ -119,6 +120,7 @@ CONTAINS
        ENDIF
        IF(v0prot>0.0d0) p%v0prot=v0prot
        IF(v0neut>0.0d0) p%v0neut=v0neut
+       IF(rho0pr>0.0d0) p%rho0pr=rho0pr
        ! stop if this has not yielded meaningful parameters
        IF(p%v0prot<0.D0) STOP 'Pairing not defined properly'
        IF(wflag) WRITE(*,*) 'Using pairing type ',pairing,'=',ipair

@@ -1,14 +1,14 @@
 MODULE Pairs
   USE Params, ONLY: db,iter,printnow,wflag,hbc
-  USE Forces, ONLY: ipair,p,pair_reg
+  USE Forces, ONLY: ipair,p,pair_reg,delta_fit
   USE Grids, ONLY: nx,ny,nz,wxyz
   USE Densities, ONLY:rho
   USE Levels
   IMPLICIT NONE
   PRIVATE
-  PUBLIC :: pair,epair,avdelt,avg,eferm
+  PUBLIC :: pair,epair,avdelt,avg,eferm,avdeltv2
   INTEGER :: iq
-  REAL(db),SAVE :: eferm(2),epair(2),avdelt(2),avg(2)  
+  REAL(db),SAVE :: eferm(2),epair(2),avdelt(2),avdeltv2(2),avg(2)  
   REAL(db),SAVE,ALLOCATABLE :: deltaf(:)
 CONTAINS
   !***********************************************************************
@@ -31,10 +31,10 @@ CONTAINS
     ENDDO
     ! print pairing information
     IF(printnow.AND.wflag) THEN  
-       WRITE(*,'(/7x,a)') '   e_ferm      e_pair     aver_gap    aver_force '
+       WRITE(*,'(/7x,a)') '   e_ferm      e_pair     <uv delta>   <v2 delta>    aver_force '
        DO iq=1,2  
-          WRITE(*,'(a,i2,a,4(1pg12.4))') 'iq=',iq,': ',eferm(iq) , &
-               epair(iq) ,avdelt(iq),avg(iq)
+          WRITE(*,'(a,i2,a,5(1pg12.4))') 'iq=',iq,': ',eferm(iq) , &
+               epair(iq) ,avdelt(iq), avdeltv2(iq),avg(iq)
        ENDDO
     ENDIF
   END SUBROUTINE pair
@@ -99,7 +99,7 @@ CONTAINS
     REAL(db),INTENT(IN) :: particle_number
     REAL(db),PARAMETER :: xsmall=1.d-20
     INTEGER :: it,na
-    REAL(db) :: sumuv,sumduv,sumepa,edif,equasi,v2,vol
+    REAL(db) :: sumuv,sumduv,sumepa,edif,equasi,v2,vol,sumv2,sumdv2
     ! start with non-pairing value of Fermi energy
     it=npmin(iq)+NINT(particle_number)-1  
     eferm(iq)=0.5D0*(sp_energy(it)+sp_energy(it+1))  
@@ -111,6 +111,8 @@ CONTAINS
     sumuv=0.0D0  
     sumduv=0.0D0 
     sumepa=0.0D0
+    sumv2=0.0D0
+    sumdv2=0.0D0
     DO na=npmin(iq),npsi(iq)
        edif=sp_energy(na)-eferm(iq)  
        equasi=SQRT(edif*edif+deltaf(na)**2)  
@@ -118,12 +120,32 @@ CONTAINS
        vol=0.5D0*SQRT(MAX(v2-v2*v2,xsmall))  
        sumuv=vol+sumuv  
        sumduv=vol*deltaf(na)+sumduv  
+       sumv2=sumv2+v2
+       sumdv2=sumdv2+deltaf(na)*v2
        sumepa=0.5D0*deltaf(na)**2/equasi+sumepa  
     ENDDO
     sumuv=MAX(sumuv,xsmall)  
-    avdelt(iq)=sumduv/sumuv  
+    avdelt(iq)=sumduv/sumuv
+    avdeltv2(iq)=sumdv2/sumv2  
     epair(iq)=sumduv  
     avg(iq)=epair(iq)/sumuv**2  
+!    IF(iq==1) WRITE(*,*) avdelt(1),delta_fit(iq)+1d-2,delta_fit(iq)-1d-2
+    IF(delta_fit(iq)>1.0d-5.AND.avdeltv2(iq)>delta_fit(iq)+1d-3.AND.iq==1) THEN
+      p%v0neut=p%v0neut-MAX(ABS(avdeltv2(iq)-delta_fit(iq)),0.1d-1)
+      WRITE(*,*) ' V0_neut= ',p%v0neut
+    END IF
+    IF(delta_fit(iq)>1.0d-5.AND.avdeltv2(iq)<delta_fit(iq)-1d-3.AND.iq==1) THEN
+      p%v0neut=p%v0neut+MAX(ABS(avdeltv2(iq)-delta_fit(iq)),0.1d-1)
+      WRITE(*,*) ' V0_neut= ',p%v0neut
+    END IF
+    IF(delta_fit(iq)>1.0d-5.AND.avdeltv2(iq)>delta_fit(iq)+1d-3.AND.iq==2) THEN
+      p%v0prot=p%v0prot-MAX(ABS(avdeltv2(iq)-delta_fit(iq)),0.1d-1)
+      WRITE(*,*) ' V0_prot= ',p%v0prot
+    END IF
+    IF(delta_fit(iq)>1.0d-5.AND.avdeltv2(iq)<delta_fit(iq)-1d-3.AND.iq==2) THEN
+      p%v0prot=p%v0prot+MAX(ABS(avdeltv2(iq)-delta_fit(iq)),0.1d-1)
+      WRITE(*,*) ' V0_prot= ',p%v0prot
+    END IF
   END SUBROUTINE pairdn
   !***********************************************************************
   ! Search the solution for efermi where the particle number is correct
@@ -261,18 +283,19 @@ CONTAINS
     !
     k_f(:,:,:)=sqrt(CMPLX(eferm(iq)-upot(:,:,:,iq),0.0d0,db))
     k_cut(:,:,:)=sqrt(CMPLX(sp_energy(npsi(iq))-upot(:,:,:,iq),0.0d0,db))
+    IF(MINVAL(REAL(k_cut))<1d-1) WRITE(*,*) ' ***WARNING*** Cutoff is too small for iq= ',&
+                                             iq, MINVAL(REAL(k_cut)), MINLOC(REAL(k_cut))
     DO ix=1,nx; DO iy=1,ny; DO iz=1,nz
+      IF(REAL(k_cut(ix,iy,iz))<1d-1) k_cut(ix,iy,iz)=CMPLX(1d-1,0.0d0)
       IF(AIMAG(k_f(ix,iy,iz))>1D-20) THEN
         fac(ix,iy,iz)=AIMAG(k_f(ix,iy,iz))/REAL(k_cut(ix,iy,iz))
         fac(ix,iy,iz)=1.0d0+fac(ix,iy,iz)*atan(fac(ix,iy,iz))
       ELSE
         fac(ix,iy,iz)=(REAL(k_cut(ix,iy,iz))+REAL(k_f(ix,iy,iz)))/&
                          (REAL(k_cut(ix,iy,iz))-REAL(k_f(ix,iy,iz)))
-        fac(ix,iy,iz)=1-REAL(k_f(ix,iy,iz))/(2.0*REAL(k_cut(ix,iy,iz)))*log(fac(ix,iy,iz))
+        fac(ix,iy,iz)=1.0d0-REAL(k_f(ix,iy,iz))/(2.0*REAL(k_cut(ix,iy,iz)))*log(fac(ix,iy,iz))
       END IF
     END DO; END DO; END DO
-    fac(:,:,:)=fac(:,:,:)/(4.0d0*pi**2*bmass(:,:,:,iq)**(3.0d0/2.0d0))
-    g_eff(:,:,:)=1.0d0/(1.0d0/g(:,:,:)-fac(:,:,:))
     IF(iq==1) THEN
       OPEN(33,file='pair_neut.res',status='replace')
     ELSE
@@ -287,11 +310,17 @@ CONTAINS
     WRITE(33,'(1x,f6.2,2g13.5)') &
          (x(ixyz),k_cut(ixyz,NY/2,NZ/2),ixyz=1,NX)
     WRITE(33,'(/a)')  '#     '
-    WRITE(33,'(/a)')  '#   x          U_pot'
+    WRITE(33,'(/a)')  '#   x          fac1'
     WRITE(33,'(1x,f6.2,g13.5)') &
-         (x(ixyz),upot(ixyz,NY/2,NZ/2,iq),ixyz=1,NX)
+         (x(ixyz),fac(ixyz,NY/2,NZ/2),ixyz=1,NX)
+    fac(:,:,:)=fac(:,:,:)*REAL(k_cut(:,:,:))/(4.0d0*pi**2*bmass(:,:,:,iq)**(3.0d0/2.0d0))
+    g_eff(:,:,:)=-1.0d0/(-1.0d0/g(:,:,:)-fac(:,:,:))!be careful!! g should be negative in the formulas!!
     WRITE(33,'(/a)')  '#     '
-    WRITE(33,'(/a)')  '#                     g                           g_eff'
+    WRITE(33,'(/a)')  '#   x          fac2'
+    WRITE(33,'(1x,f6.2,g13.5)') &
+         (x(ixyz),fac(ixyz,NY/2,NZ/2),ixyz=1,NX)
+    WRITE(33,'(/a)')  '#     '
+    WRITE(33,'(/a)')  '#           g             g_eff'
     WRITE(33,'(1x,f6.2,2g13.5)') &
          (x(ixyz),g(ixyz,NY/2,NZ/2),g_eff(ixyz,NY/2,NZ/2),ixyz=1,NX)         
     CLOSE(33) 
