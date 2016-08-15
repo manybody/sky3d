@@ -320,12 +320,13 @@ CONTAINS
     REAL(db) :: eigen_h(nlin),norm
     COMPLEX(db) :: unitary_h(nlin,nlin),unitary_rho(nlin,nlin),unitary(nlin,nlin),overlaps(nlin)
     COMPLEX(db), ALLOCATABLE :: ps1(:,:,:,:,:)
-    COMPLEX(db) :: ps2(nx,ny,nz,2),pstemp(nlin),pstemp1(nlin),cmplxone=CMPLX(1.0,0.0),cmplxzero=CMPLX(0.0,0.0)
-    COMPLEX(db) :: hmatr_lin(nlin+1,nlin),rhomatr_lin(nlin+1,nlin)
+    COMPLEX(db) :: ps2(nx,ny,nz,2),pstemp(nlin),pstemp1(nlin)
+    COMPLEX(db) :: cmplxone=CMPLX(1.0,0.0),cmplxzero=CMPLX(0.0,0.0)
+    COMPLEX(db) :: rhomatr_lin(nlin+1,nlin)
     COMPLEX(db) :: cwork(2*nlin*nlin),work(nlin)
     REAL(db)    :: rwork(2*nlin*nlin+5*nlin+1)
     INTEGER     :: iwork(5*nlin+3)
-    EXTERNAL    :: zgemv
+    EXTERNAL    :: zgemv,zheevd,zgemm
     INTERFACE
        SUBROUTINE zhbevd( jobz, uplo, n, kd, ab, ldab, w, z, ldz, work, &
             lwork, rwork, lrwork, iwork, liwork, info )
@@ -341,9 +342,8 @@ CONTAINS
     END INTERFACE
     ! Step 1: copy matrix into symmetric storage mode, then diagonalize
     noffset=npmin(iq)-1
-    hmatr_lin=0.0d0
+    unitary_h=0.0d0
     rhomatr_lin=0.0d0
-    CALL system_clock(c1,crate)
     !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,nst2) &
     !$OMP SCHEDULE(STATIC)
     DO i=nlin/2+1,nlin
@@ -355,7 +355,7 @@ CONTAINS
              nst2=noffset+i
              nst=noffset+j
           END IF
-          hmatr_lin(1+nst2-nst,nst-noffset)=&
+          unitary_h(nst2-noffset,nst-noffset)=&
                0.5D0*(CONJG(hmatr(nst,nst2))+hmatr(nst2,nst))
           rhomatr_lin(nst-noffset,nst2-noffset)=overlap(psi(:,:,:,:,nst),psi(:,:,:,:,nst2))
           IF(nst==nst2) THEN
@@ -366,10 +366,8 @@ CONTAINS
        ENDDO
     ENDDO
     !$OMP END PARALLEL DO
-    CALL ZHBEVD('V','L',nlin,nlin,hmatr_lin,nlin+1,eigen_h,unitary_h,nlin, &
-         cwork,nlin*nlin*2,rwork,2*nlin*nlin+5*nlin+1,       &
-         iwork,5*nlin+3,infoconv)
-    CALL system_clock(c2)
+    CALL zheevd('V','L',nlin,unitary_h,nlin,eigen_h,cwork,nlin*nlin*2,rwork,&
+                2*nlin*nlin+5*nlin+1,iwork,5*nlin+3,infoconv)
     ! Gram-Schmidt
     unitary_rho=0.0d0
     unitary_rho(1,1)=sqrt(1.0d0/rhomatr_lin(1,1))
@@ -384,7 +382,9 @@ CONTAINS
        unitary_rho(:,nst)=unitary_rho(:,nst)/norm
     END DO
     !  Step 2: transform states, replace original ones
-    unitary=MATMUL(unitary_rho,unitary_h)
+!    unitary=MATMUL(unitary_rho,unitary_h)
+    CALL zgemm('N','N',nlin,nlin,nlin,cmplxone,&
+               unitary_rho,nlin,unitary_h,nlin,cmplxzero,unitary,nlin)
     noffset=npmin(iq)-1
     !$OMP PARALLEL DO DEFAULT(SHARED) COLLAPSE(2) PRIVATE(pstemp,pstemp1)&
     !$OMP SCHEDULE(STATIC) 
