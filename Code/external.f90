@@ -10,7 +10,7 @@ MODULE External
   INTEGER :: ipulse=0
   INTEGER,PRIVATE :: isoext=0
   REAL(db),PRIVATE,ALLOCATABLE,DIMENSION(:,:,:,:) :: extfield
-  REAL(db) :: amplq0=0.D0,amplx=0.D0,amply=0.D0,amplz=0.D0,&
+  REAL(db) :: amplq0=0.D0,amplx=0.D0,amply=0.D0,amplz=0.D0,amplrod=0.0D0,&
                       radext=100.D0,widext=1.D0,tau0,taut,omega=0.D0
   LOGICAL,PRIVATE :: textfield_periodic=.true.
   SAVE
@@ -18,7 +18,7 @@ CONTAINS
   !***********************************************************************
   SUBROUTINE getin_external
     NAMELIST/extern/ amplq0,amplx,amply,amplz,radext,widext,isoext,&
-                     ipulse,omega,tau0,taut,textfield_periodic
+                     ipulse,omega,tau0,taut,textfield_periodic,amplrod
     READ(5,extern)
   END SUBROUTINE getin_external
   SUBROUTINE init_external
@@ -69,7 +69,8 @@ CONTAINS
                      -SIN(x(ix)*PI/xlim)**2-SIN(y(iy)*PI/ylim)**2) &
                     +amplx*SIN(x(ix)*2D0*PI/xlim) &
                     +amply*SIN(y(iy)*2D0*PI/ylim) &
-                    +amplz*SIN(z(iz)*2D0*PI/zlim) 
+                    +amplz*SIN(z(iz)*2D0*PI/zlim) &
+                    +amplrod*x(ix)*SIN(2.0d0*z(iz)*PI/(REAL(nz)*dz))
              ELSE                              ! damped version
                facr=(amplq0 *(2.D0*z(iz)**2-x(ix)**2-y(iy)**2) &
                      +amplx*x(ix)+amply*x(iy)+amplz*x(iz)) &
@@ -130,9 +131,22 @@ CONTAINS
   !***********************************************************************
   SUBROUTINE print_extfield()
     USE Densities, ONLY: rho
+    INTEGER :: ix,iy,iz
+    REAL(db):: xcm(nz),xcmnorm(nz)
     OPEN(UNIT=scratch,file=extfieldfile,POSITION='APPEND')  
-    WRITE(scratch,'(F12.3,4(1pg15.7))') time,wxyz*SUM(rho*extfield),&
+    IF(abs(amplrod)<1D-20) THEN
+      WRITE(scratch,'(F12.3,4(1pg15.7))') time,wxyz*SUM(rho*extfield),&
          SUM(rho),SUM(rho**2)
+    ELSE
+      xcm=0.0d0
+      xcmnorm=0.0d0
+      DO ix=1,nx; DO iz=1,nz
+        xcm(iz)=xcm(iz)+x(ix)*sum(rho(ix,:,iz,:))
+        xcmnorm(iz)=xcmnorm(iz)+sum(rho(ix,:,iz,:))
+      END DO; END DO
+      xcm=xcm/xcmnorm
+      WRITE(scratch,*) time,wxyz*SUM(rho*extfield),xcm
+    END IF
     CLOSE(UNIT=scratch)
   END SUBROUTINE print_extfield
   !***********************************************************************
