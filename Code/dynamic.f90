@@ -79,7 +79,7 @@ CONTAINS
        CALL start_protocol(monopolesfile, &
             '#    Time      rms_n     rms_p   rms_tot   rms_n-rms_p')
        CALL start_protocol(dipolesfile, &
-            '# Iter    c.m. x-y-z                                  Isovector&
+            '#   Time    c.m. x-y-z                                  Isovector&
             &dipoles x-y-z')
        CALL start_protocol(quadrupolesfile, &
             '#     Time     Q(n)          Q(p)         Q(n+p)        x²(n)         &
@@ -254,7 +254,7 @@ CONTAINS
     CALL moments
     IF(printnow.AND.wflag) THEN
        OPEN(unit=scratch,file=dipolesfile,POSITION='APPEND')  
-       WRITE(scratch,'(1x,i5,6(1pg14.4))') iter,cmtot,cm(:,2)-cm(:,1)
+       WRITE(scratch,'(1x,f10.2,6(1pg14.4))') time,cmtot,cm(:,2)-cm(:,1)
        CLOSE(unit=scratch)
        OPEN(unit=scratch,file=momentafile, POSITION='APPEND')  
        WRITE(scratch,'(1x,f10.2,6(1pg14.6))') time,pcm(:,1)+pcm(:,2),&
