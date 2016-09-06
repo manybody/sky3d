@@ -73,7 +73,7 @@ CONTAINS
        ! now multiply with strength to obtain local pair-potential
        IF(ipair==6) THEN
          IF(pair_reg) THEN
-           work=g_eff(v0act*(1D0-(rho(:,:,:,1)+rho(:,:,:,2))/p%rho0pr),iqq)*work
+           work=g_eff(v0act,iqq)*work*(1D0-(rho(:,:,:,1)+rho(:,:,:,2))/p%rho0pr)
          ELSE
            work=v0act*work*(1D0-(rho(:,:,:,1)+rho(:,:,:,2))/p%rho0pr)
          END IF
@@ -271,58 +271,19 @@ CONTAINS
   ! Calc. pairing regulator
   !***********************************************************************
   FUNCTION g_eff(g,iq)
-    USE Meanfield, ONLY :  bmass,upot
-    USE Grids    , ONLY :  x,y,z
-    USE Forces   , ONLY :  h2ma
-    USE Levels   , ONLY :  sp_energy
-    INTEGER             :: ixyz,ix,iy,iz
-    INTEGER,INTENT(IN)  :: iq
-    REAL(db)            :: fac(nx,ny,nz),g_eff(nx,ny,nz)
-    REAL(db),INTENT(IN) :: g(nx,ny,nz)
-    COMPLEX(db)         :: k_cut(nx,ny,nz),k_f(nx,ny,nz) !without factor!!!!!!!!!!!!
-    !
-    k_f(:,:,:)=sqrt(CMPLX(eferm(iq)-upot(:,:,:,iq),0.0d0,db))
-    k_cut(:,:,:)=sqrt(CMPLX(sp_energy(npsi(iq))-upot(:,:,:,iq),0.0d0,db))
-    IF(MINVAL(REAL(k_cut))<1d-1) WRITE(*,*) ' ***WARNING*** Cutoff is too small for iq= ',&
-                                             iq, MINVAL(REAL(k_cut)), MINLOC(REAL(k_cut))
-    DO ix=1,nx; DO iy=1,ny; DO iz=1,nz
-      IF(REAL(k_cut(ix,iy,iz))<1d-1) k_cut(ix,iy,iz)=CMPLX(1d-1,0.0d0)
-      IF(AIMAG(k_f(ix,iy,iz))>1D-20) THEN
-        fac(ix,iy,iz)=AIMAG(k_f(ix,iy,iz))/REAL(k_cut(ix,iy,iz))
-        fac(ix,iy,iz)=1.0d0+fac(ix,iy,iz)*atan(fac(ix,iy,iz))
-      ELSE
-        fac(ix,iy,iz)=(REAL(k_cut(ix,iy,iz))+REAL(k_f(ix,iy,iz)))/&
-                         (REAL(k_cut(ix,iy,iz))-REAL(k_f(ix,iy,iz)))
-        fac(ix,iy,iz)=1.0d0-REAL(k_f(ix,iy,iz))/(2.0*REAL(k_cut(ix,iy,iz)))*log(fac(ix,iy,iz))
-      END IF
-    END DO; END DO; END DO
-    IF(iq==1) THEN
-      OPEN(33,file='pair_neut.res',status='replace')
-    ELSE
-      OPEN(33,file='pair_prot.res',status='replace') 
-    END IF   
-    WRITE(33,'(/a,2f8.4)')  '#        eferm= ',eferm
-    WRITE(33,'(/a)')  '#   x          k_f'
-    WRITE(33,'(1x,f6.2,2g13.5)') &
-         (x(ixyz),k_f(ixyz,NY/2,NZ/2),ixyz=1,NX)
-    WRITE(33,'(/a,2f8.4)')  '#        e_cut= ',sp_energy(npsi(:))
-    WRITE(33,'(/a)')  '#   x          k_cut'
-    WRITE(33,'(1x,f6.2,2g13.5)') &
-         (x(ixyz),k_cut(ixyz,NY/2,NZ/2),ixyz=1,NX)
-    WRITE(33,'(/a)')  '#     '
-    WRITE(33,'(/a)')  '#   x          fac1'
-    WRITE(33,'(1x,f6.2,g13.5)') &
-         (x(ixyz),fac(ixyz,NY/2,NZ/2),ixyz=1,NX)
-    fac(:,:,:)=fac(:,:,:)*REAL(k_cut(:,:,:))/(4.0d0*pi**2*bmass(:,:,:,iq)**(3.0d0/2.0d0))
-    g_eff(:,:,:)=-1.0d0/(-1.0d0/g(:,:,:)-fac(:,:,:))!be careful!! g should be negative in the formulas!!
-    WRITE(33,'(/a)')  '#     '
-    WRITE(33,'(/a)')  '#   x          fac2'
-    WRITE(33,'(1x,f6.2,g13.5)') &
-         (x(ixyz),fac(ixyz,NY/2,NZ/2),ixyz=1,NX)
-    WRITE(33,'(/a)')  '#     '
-    WRITE(33,'(/a)')  '#           g             g_eff'
-    WRITE(33,'(1x,f6.2,2g13.5)') &
-         (x(ixyz),g(ixyz,NY/2,NZ/2),g_eff(ixyz,NY/2,NZ/2),ixyz=1,NX)         
-    CLOSE(33) 
+    USE Levels    , ONLY :  sp_energy
+    REAL(db),INTENT(IN) :: g
+    INTEGER ,INTENT(IN) :: iq
+    REAL(db)            :: g_eff
+    REAL(db)            :: e_l,e_u
+!    
+    e_l=sp_energy(npmin(iq))
+    e_u=sp_energy(npsi(iq))
+    WRITE(*,*)iq,e_u-e_l
+!    IF(e_u>0.1d0) THEN
+!      g_eff=g/log(2.0d0*sqrt(-e_l*e_u)/avdeltv2(iq))
+!    ELSE
+      g_eff=g/log((e_u-e_l)/avdeltv2(iq))
+!    END IF
   END FUNCTION g_eff
 END MODULE Pairs
