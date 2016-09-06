@@ -95,7 +95,7 @@ CONTAINS
   !*************************************************************************
   SUBROUTINE statichf
     LOGICAL, PARAMETER   :: taddnew=.TRUE. ! mix old and new densities
-    INTEGER              :: iq,nst,firstiter,c0,c1,c2,crate,i,number_threads
+    INTEGER              :: iq,nst,firstiter,number_threads
     REAL(db)             :: sumflu,denerg
     REAL(db) , PARAMETER :: addnew=0.2D0,addco=1.0D0-addnew  
     INTEGER,  EXTERNAL   :: omp_get_num_threads 
@@ -315,35 +315,20 @@ CONTAINS
     USE Trivial, ONLY: overlap,rpsnorm
     INTEGER,INTENT(IN) :: iq,nlin
     INTEGER :: nst,nst2,noffset,i,j,ix,iy,iz,is
-    INTEGER :: c0,c1,c2,crate
     INTEGER :: infoconv
-    REAL(db) :: eigen_h(nlin),norm
-    COMPLEX(db) :: unitary_h(nlin,nlin),unitary_rho(nlin,nlin),unitary(nlin,nlin),overlaps(nlin)
-    COMPLEX(db), ALLOCATABLE :: ps1(:,:,:,:,:)
-    COMPLEX(db) :: ps2(nx,ny,nz,2),pstemp(nlin),pstemp1(nlin),cmplxone=CMPLX(1.0,0.0),cmplxzero=CMPLX(0.0,0.0)
-    COMPLEX(db) :: hmatr_lin(nlin+1,nlin),rhomatr_lin(nlin+1,nlin)
-    COMPLEX(db) :: cwork(2*nlin*nlin),work(nlin)
+    REAL(db) :: eigen_h(nlin)
+    COMPLEX(db) :: unitary_h(nlin,nlin),unitary_rho(nlin,nlin),unitary(nlin,nlin)
+    COMPLEX(db) :: pstemp(nlin),pstemp1(nlin)
+    COMPLEX(db) :: cmplxone=CMPLX(1.0,0.0),cmplxzero=CMPLX(0.0,0.0)
+    COMPLEX(db) :: rhomatr_lin(nlin,nlin)
+    COMPLEX(db) :: cwork(2*nlin*nlin)
     REAL(db)    :: rwork(2*nlin*nlin+5*nlin+1)
     INTEGER     :: iwork(5*nlin+3)
-    EXTERNAL    :: zgemv
-    INTERFACE
-       SUBROUTINE zhbevd( jobz, uplo, n, kd, ab, ldab, w, z, ldz, work, &
-            lwork, rwork, lrwork, iwork, liwork, info )
-         USE Params, ONLY: db
-         CHARACTER(1) :: jobz, uplo
-         INTEGER :: info, kd, ldab, ldz, liwork, lrwork, lwork, n, iwork(*)
-         DOUBLE PRECISION ::  rwork( * ), w( * )
-         COMPLEX(8) :: ab( ldab, * ), work( * ), z( ldz, * )
-         INTENT(IN) :: jobz,uplo,n,kd,ldab,ldz,lwork,lrwork,liwork
-         INTENT(INOUT) :: ab
-         INTENT(OUT) :: w,z,work,rwork,iwork,info
-       END SUBROUTINE zhbevd
-    END INTERFACE
+    EXTERNAL    :: zgemv,zheevd,zgemm,zheev
     ! Step 1: copy matrix into symmetric storage mode, then diagonalize
     noffset=npmin(iq)-1
-    hmatr_lin=0.0d0
+    unitary_h=0.0d0
     rhomatr_lin=0.0d0
-    CALL system_clock(c1,crate)
     !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,nst2) &
     !$OMP SCHEDULE(STATIC)
     DO i=nlin/2+1,nlin
@@ -355,7 +340,7 @@ CONTAINS
              nst2=noffset+i
              nst=noffset+j
           END IF
-          hmatr_lin(1+nst2-nst,nst-noffset)=&
+          unitary_h(nst2-noffset,nst-noffset)=&
                0.5D0*(CONJG(hmatr(nst,nst2))+hmatr(nst2,nst))
           rhomatr_lin(nst-noffset,nst2-noffset)=overlap(psi(:,:,:,:,nst),psi(:,:,:,:,nst2))
           IF(nst==nst2) THEN
@@ -366,25 +351,21 @@ CONTAINS
        ENDDO
     ENDDO
     !$OMP END PARALLEL DO
-    CALL ZHBEVD('V','L',nlin,nlin,hmatr_lin,nlin+1,eigen_h,unitary_h,nlin, &
-         cwork,nlin*nlin*2,rwork,2*nlin*nlin+5*nlin+1,       &
-         iwork,5*nlin+3,infoconv)
-    CALL system_clock(c2)
-    ! Gram-Schmidt
-    unitary_rho=0.0d0
-    unitary_rho(1,1)=sqrt(1.0d0/rhomatr_lin(1,1))
-    DO nst=2,nlin
-       unitary_rho(nst,nst)=1.0d0
-       overlaps=0.0d0
-       DO i=1,nst-1
-          overlaps(i)=SUM(CONJG(unitary_rho(1:i,i))*rhomatr_lin(1:i,nst))
-          unitary_rho(1:nst-1,nst)=unitary_rho(1:nst-1,nst)-unitary_rho(1:nst-1,i)*overlaps(i)
-       END DO
-       norm=sqrt(rhomatr_lin(nst,nst)-sum(REAL(overlaps(1:nst-1))**2+AIMAG(overlaps(1:nst-1))**2))
-       unitary_rho(:,nst)=unitary_rho(:,nst)/norm
+! Diagonalization
+    CALL zheevd('V','L',nlin,unitary_h,nlin,eigen_h,cwork,nlin*nlin*2,rwork,&
+                2*nlin*nlin+5*nlin+1,iwork,5*nlin+3,infoconv)
+! Loewdin Orthonormalization
+    CALL zheevd('V','L',nlin,rhomatr_lin,nlin,eigen_h,cwork,nlin*nlin*2,rwork,&
+                2*nlin*nlin+5*nlin+1,iwork,5*nlin+3,infoconv)
+    eigen_h=1.0d0/sqrt(eigen_h)
+    DO i=1,nlin
+      rhomatr_lin(:,i)=rhomatr_lin(:,i)*sqrt(eigen_h(i))
     END DO
-    !  Step 2: transform states, replace original ones
-    unitary=MATMUL(unitary_rho,unitary_h)
+    CALL zgemm('N','C',nlin,nlin,nlin,cmplxone,rhomatr_lin,nlin,rhomatr_lin,nlin,&
+               cmplxzero,unitary_rho,nlin)  
+! Recombination
+    CALL zgemm('N','N',nlin,nlin,nlin,cmplxone,&
+               unitary_rho,nlin,unitary_h,nlin,cmplxzero,unitary,nlin)
     noffset=npmin(iq)-1
     !$OMP PARALLEL DO DEFAULT(SHARED) COLLAPSE(2) PRIVATE(pstemp,pstemp1)&
     !$OMP SCHEDULE(STATIC) 
@@ -401,9 +382,6 @@ CONTAINS
        END DO
     END DO
     !$OMP END PARALLEL DO
-    DO i=npmin(iq),npsi(iq)
-       psi(:,:,:,:,i)=psi(:,:,:,:,i)/sqrt(rpsnorm(psi(:,:,:,:,i)))
-    END DO
   END SUBROUTINE diagstep
   !*************************************************************************
   SUBROUTINE sinfo(printing)
