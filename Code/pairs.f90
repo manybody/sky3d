@@ -1,14 +1,14 @@
 MODULE Pairs
-  USE Params, ONLY: db,iter,printnow,wflag
-  USE Forces, ONLY: ipair,p
+  USE Params, ONLY: db,iter,printnow,wflag,hbc
+  USE Forces, ONLY: ipair,p,pair_reg,delta_fit
   USE Grids, ONLY: nx,ny,nz,wxyz
   USE Densities, ONLY:rho
   USE Levels
   IMPLICIT NONE
   PRIVATE
-  PUBLIC :: pair,epair,avdelt,avg,eferm
+  PUBLIC :: pair,epair,avdelt,avg,eferm,avdeltv2
   INTEGER :: iq
-  REAL(db),SAVE :: eferm(2),epair(2),avdelt(2),avg(2)  
+  REAL(db),SAVE :: eferm(2),epair(2),avdelt(2),avdeltv2(2),avg(2)  
   REAL(db),SAVE,ALLOCATABLE :: deltaf(:)
 CONTAINS
   !***********************************************************************
@@ -31,10 +31,10 @@ CONTAINS
     ENDDO
     ! print pairing information
     IF(printnow.AND.wflag) THEN  
-       WRITE(*,'(/7x,a)') '   e_ferm      e_pair     aver_gap    aver_force '
+       WRITE(*,'(/7x,a)') '   e_ferm      e_pair     <uv delta>   <v2 delta>    aver_force '
        DO iq=1,2  
-          WRITE(*,'(a,i2,a,4(1pg12.4))') 'iq=',iq,': ',eferm(iq) , &
-               epair(iq) ,avdelt(iq),avg(iq)
+          WRITE(*,'(a,i2,a,5(1pg12.4))') 'iq=',iq,': ',eferm(iq) , &
+               epair(iq) ,avdelt(iq), avdeltv2(iq),avg(iq)
        ENDDO
     ENDIF
   END SUBROUTINE pair
@@ -72,7 +72,11 @@ CONTAINS
        ENDIF
        ! now multiply with strength to obtain local pair-potential
        IF(ipair==6) THEN
-          work=v0act*work*(1D0-(rho(:,:,:,1)+rho(:,:,:,2))/p%rho0pr)
+         IF(pair_reg) THEN
+           work=g_eff(v0act,iqq)*work*(1D0-(rho(:,:,:,1)+rho(:,:,:,2))/p%rho0pr)
+         ELSE
+           work=v0act*work*(1D0-(rho(:,:,:,1)+rho(:,:,:,2))/p%rho0pr)
+         END IF
        ELSE
           work=v0act*work  
        END IF
@@ -95,7 +99,7 @@ CONTAINS
     REAL(db),INTENT(IN) :: particle_number
     REAL(db),PARAMETER :: xsmall=1.d-20
     INTEGER :: it,na
-    REAL(db) :: sumuv,sumduv,sumepa,edif,equasi,v2,vol
+    REAL(db) :: sumuv,sumduv,sumepa,edif,equasi,v2,vol,sumv2,sumdv2
     ! start with non-pairing value of Fermi energy
     it=npmin(iq)+NINT(particle_number)-1  
     eferm(iq)=0.5D0*(sp_energy(it)+sp_energy(it+1))  
@@ -107,6 +111,8 @@ CONTAINS
     sumuv=0.0D0  
     sumduv=0.0D0 
     sumepa=0.0D0
+    sumv2=0.0D0
+    sumdv2=0.0D0
     DO na=npmin(iq),npsi(iq)
        edif=sp_energy(na)-eferm(iq)  
        equasi=SQRT(edif*edif+deltaf(na)**2)  
@@ -114,12 +120,32 @@ CONTAINS
        vol=0.5D0*SQRT(MAX(v2-v2*v2,xsmall))  
        sumuv=vol+sumuv  
        sumduv=vol*deltaf(na)+sumduv  
+       sumv2=sumv2+v2
+       sumdv2=sumdv2+deltaf(na)*v2
        sumepa=0.5D0*deltaf(na)**2/equasi+sumepa  
     ENDDO
     sumuv=MAX(sumuv,xsmall)  
-    avdelt(iq)=sumduv/sumuv  
+    avdelt(iq)=sumduv/sumuv
+    avdeltv2(iq)=sumdv2/sumv2  
     epair(iq)=sumduv  
     avg(iq)=epair(iq)/sumuv**2  
+!    IF(iq==1) WRITE(*,*) avdelt(1),delta_fit(iq)+1d-2,delta_fit(iq)-1d-2
+    IF(delta_fit(iq)>1.0d-5.AND.avdeltv2(iq)>delta_fit(iq)+1d-3.AND.iq==1) THEN
+      p%v0neut=p%v0neut-MAX(ABS(avdeltv2(iq)-delta_fit(iq)),0.1d-1)
+      WRITE(*,*) ' V0_neut= ',p%v0neut
+    END IF
+    IF(delta_fit(iq)>1.0d-5.AND.avdeltv2(iq)<delta_fit(iq)-1d-3.AND.iq==1) THEN
+      p%v0neut=p%v0neut+MAX(ABS(avdeltv2(iq)-delta_fit(iq)),0.1d-1)
+      WRITE(*,*) ' V0_neut= ',p%v0neut
+    END IF
+    IF(delta_fit(iq)>1.0d-5.AND.avdeltv2(iq)>delta_fit(iq)+1d-3.AND.iq==2) THEN
+      p%v0prot=p%v0prot-MAX(ABS(avdeltv2(iq)-delta_fit(iq)),0.1d-1)
+      WRITE(*,*) ' V0_prot= ',p%v0prot
+    END IF
+    IF(delta_fit(iq)>1.0d-5.AND.avdeltv2(iq)<delta_fit(iq)-1d-3.AND.iq==2) THEN
+      p%v0prot=p%v0prot+MAX(ABS(avdeltv2(iq)-delta_fit(iq)),0.1d-1)
+      WRITE(*,*) ' V0_prot= ',p%v0prot
+    END IF
   END SUBROUTINE pairdn
   !***********************************************************************
   ! Search the solution for efermi where the particle number is correct
@@ -241,4 +267,18 @@ CONTAINS
        bcs_partnum=bcs_partnum+wocc(k)
     ENDDO
   END SUBROUTINE bcs_occupation
+  !***********************************************************************
+  ! Calc. pairing regulator
+  !***********************************************************************
+  FUNCTION g_eff(g,iq)
+    USE Levels    , ONLY :  sp_energy
+    REAL(db),INTENT(IN) :: g
+    INTEGER ,INTENT(IN) :: iq
+    REAL(db)            :: g_eff
+    REAL(db)            :: e_l,e_u
+!    
+    e_l=sp_energy(npmin(iq))
+    e_u=sp_energy(npsi(iq))
+    g_eff=g/log((e_u-e_l)/avdeltv2(iq))
+  END FUNCTION g_eff
 END MODULE Pairs

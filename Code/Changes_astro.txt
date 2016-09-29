@@ -53,14 +53,14 @@ with a protocol of changes for the astro branch:
                      
 *********TABC*********
  - new parameters tabc_{x,y,z} determine the setup for TABC:
-  tabc{x,y,z} = 0     : only periodic boundary conditions for {x,y,z}
-  tabc{x,y,z} = n > 0 : calculate n twists in {x,y,z} direction between -pi 
+  tabc_{x,y,z} = 0     : only periodic boundary conditions for {x,y,z}
+  tabc_{x,y,z} = n > 0 : calculate n twists in {x,y,z} direction between -pi 
                         and +pi. The twists are symmetric to zero and 
                         equidistant.
-  tabc{x,y,z} = n < 0 : calculate n twists in {x,y,z} direction between 0 
+  tabc_{x,y,z} = n < 0 : calculate n twists in {x,y,z} direction between 0 
                         and +pi. Here the trapezoidal rule is used.
   NOTE: If there is only one twist in a direction, there are three different 
-        possibilities: tabc{x,y,z} = -1, 0 or 1 results in 0.5*pi, bang{x,y,z}
+        possibilities: tabc_{x,y,z} = -1, 0 or 1 results in 0.5*pi, bang{x,y,z}
         and 0, respectively
  
 - The number of launched processes must be equal to the total number of set 
@@ -72,3 +72,7 @@ with a protocol of changes for the astro branch:
      mpirun -n #OfTwists --outfile-pattern=out.%r ~/YourPath/sky3d.tabc &
   depending on you implementation of MPI in order to have separate output 
   files.
+
+*********Pairing regularization*********
+Pairing regularization implemented as described in ---PRC 73 044319---
+Variable pair_reg in namelist 'forces' serves as a switch. Default is .FLASE.  
