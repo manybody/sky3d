@@ -279,11 +279,6 @@ CONTAINS
 !    
     e_l=sp_energy(npmin(iq))
     e_u=sp_energy(npsi(iq))
-    WRITE(*,*)iq,e_u-e_l
-!    IF(e_u>0.1d0) THEN
-!      g_eff=g/log(2.0d0*sqrt(-e_l*e_u)/avdeltv2(iq))
-!    ELSE
-      g_eff=g/log((e_u-e_l)/avdeltv2(iq))
-!    END IF
+    g_eff=g/log((e_u-e_l)/avdeltv2(iq))
   END FUNCTION g_eff
 END MODULE Pairs
