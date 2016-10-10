@@ -276,9 +276,9 @@ CONTAINS
     INTEGER ,INTENT(IN) :: iq
     REAL(db)            :: g_eff
     REAL(db)            :: e_l,e_u
-!    
     e_l=sp_energy(npmin(iq))
     e_u=sp_energy(npsi(iq))
+    IF (avdeltv2(iq)<0.001) avdeltv2(iq)=1.0d0
     g_eff=g/log((e_u-e_l)/avdeltv2(iq))
   END FUNCTION g_eff
 END MODULE Pairs
