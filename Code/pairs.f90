@@ -1,6 +1,6 @@
 MODULE Pairs
   USE Params, ONLY: db,iter,printnow,wflag,hbc
-  USE Forces, ONLY: ipair,p,pair_reg,delta_fit
+  USE Forces, ONLY: ipair,p,pair_reg,delta_fit,pair_cutoff
   USE Grids, ONLY: nx,ny,nz,wxyz
   USE Densities, ONLY:rho
   USE Levels
@@ -28,6 +28,9 @@ CONTAINS
           particle_number=mass_number-charge_number
        ENDIF
        CALL pairdn(particle_number)
+       IF(pair_cutoff(iq)>0.0d0.AND.sp_energy(npsi(iq))-eferm(iq)<pair_cutoff(iq)) &
+       WRITE(*,*) '**Warning: Not enough particles for requested cutoff. Actual cutoff is: ',&
+                  sp_energy(npsi(iq))-eferm(iq), 'iq= ',iq
     ENDDO
     ! print pairing information
     IF(printnow.AND.wflag) THEN  
@@ -262,9 +265,13 @@ CONTAINS
     bcs_partnum=0.0  
     DO k=npmin(iq),npsi(iq)  
        edif=sp_energy(k)-efermi  
-       wocc(k)=0.5D0 *(1.0D0-edif/SQRT(edif**2+deltaf(k)**2))  
-       wocc(k)=MIN(MAX(wocc(k),smal),1.D0-smal)  
-       bcs_partnum=bcs_partnum+wocc(k)
+       IF(pair_cutoff(iq)>0.0d0.AND.edif>pair_cutoff(iq)) THEN
+         wocc(k)=smal
+       ELSE
+         wocc(k)=0.5D0 *(1.0D0-edif/SQRT(edif**2+deltaf(k)**2))  
+         wocc(k)=MIN(MAX(wocc(k),smal),1.D0-smal)  
+         bcs_partnum=bcs_partnum+wocc(k)
+       END IF
     ENDDO
   END SUBROUTINE bcs_occupation
   !***********************************************************************
@@ -274,11 +281,17 @@ CONTAINS
     USE Levels    , ONLY :  sp_energy
     REAL(db),INTENT(IN) :: g
     INTEGER ,INTENT(IN) :: iq
-    REAL(db)            :: g_eff
+    REAL(db)            :: g_eff,delta
     REAL(db)            :: e_l,e_u
     e_l=sp_energy(npmin(iq))
-    e_u=sp_energy(npsi(iq))
+    IF(pair_cutoff(iq)>0.0d0)THEN
+      e_u=MIN(sp_energy(npsi(iq)),eferm(iq)+pair_cutoff(iq))
+    ELSE
+      e_u=sp_energy(npsi(iq))
+    END IF
     IF (avdeltv2(iq)<0.001) avdeltv2(iq)=1.0d0
-    g_eff=g/log((e_u-e_l)/avdeltv2(iq))
+    delta=MIN(2.0d0,MAX(0.5,avdeltv2(iq)))
+    g_eff=g/log((e_u-e_l)/delta)
+    WRITE(*,*)iq,g_eff,g,e_l,e_u,delta,log((e_u-e_l)/delta)
   END FUNCTION g_eff
 END MODULE Pairs
