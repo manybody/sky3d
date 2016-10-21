@@ -352,8 +352,16 @@ CONTAINS
     ENDDO
     !$OMP END PARALLEL DO
 ! Diagonalization
+    IF(tdiag) THEN
     CALL zheevd('V','L',nlin,unitary_h,nlin,eigen_h,cwork,nlin*nlin*2,rwork,&
                 2*nlin*nlin+5*nlin+1,iwork,5*nlin+3,infoconv)
+    ELSE
+      WRITE(*,*) 'no diag'
+      unitary_h=0.0d0
+      DO nst=1,nlin
+        unitary_h(nst,nst)=1.0d0
+      END DO
+    END IF
 ! Loewdin Orthonormalization
     CALL zheevd('V','L',nlin,rhomatr_lin,nlin,eigen_h,cwork,nlin*nlin*2,rwork,&
                 2*nlin*nlin+5*nlin+1,iwork,5*nlin+3,infoconv)
