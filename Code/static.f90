@@ -6,10 +6,10 @@ MODULE Static
   USE Grids
   USE Moment
   USE Energies
+  USE Parallel
   USE Inout, ONLY: write_wavefunctions, write_densities, plot_density, &
        sp_properties,start_protocol
   USE Pairs, ONLY: pair,epair,avdelt,avdeltv2,avg,eferm
-  USE Parallel, ONLY:ttabc, tabc_av
   IMPLICIT NONE
   LOGICAL :: tdiag=.FALSE.
   LOGICAL :: tlarge=.FALSE.
@@ -53,6 +53,9 @@ CONTAINS
   END SUBROUTINE getin_static
   !*************************************************************************
   SUBROUTINE init_static
+  !***********************************************************************
+  !begins protocols, inits damping and calculates zpe correction
+  !***********************************************************************
     IF(wflag) THEN
        WRITE(*,*)
        WRITE(*,*) '***** Parameters for static calculation *****'
@@ -94,21 +97,28 @@ CONTAINS
   END SUBROUTINE init_static
   !*************************************************************************
   SUBROUTINE statichf
+    USE Linalg, ONLY: init_linalg
     LOGICAL, PARAMETER   :: taddnew=.TRUE. ! mix old and new densities
     INTEGER              :: iq,nst,firstiter,number_threads
     REAL(db)             :: sumflu,denerg
     REAL(db) , PARAMETER :: addnew=0.2D0,addco=1.0D0-addnew  
     INTEGER,  EXTERNAL   :: omp_get_num_threads 
-    !****************************************************   
+    !***********************************************************************
+    !
+    !performs static iterations
+    !
+    !***********************************************************************
+    !  
+    !***********************************************************************
     ! Step 1: initialization
-    !****************************************************  
+    !*********************************************************************** 
     number_threads=1
     !$OMP PARALLEL
     !$ number_threads=OMP_GET_NUM_THREADS()
     !$OMP END PARALLEL
     IF(wflag)WRITE(*,*)'number of threads= ',number_threads
     IF(wflag)WRITE(*,*)
-    ALLOCATE(hmatr(nstmax,nstmax))
+    CALL init_linalg
     IF(trestart) THEN
        firstiter=iter+1
     ELSE
@@ -119,8 +129,10 @@ CONTAINS
        sp_efluct2=0.D0
        sp_norm=0.0D0  
        sumflu=0.D0
-       WRITE(*,'(A25)',advance="no") 'Initial schmid... '
-       CALL schmid
+       WRITE(*,'(A29)',advance="no") 'Initial orthogonalization... '
+       DO iq=1,2
+         CALL diagstep(iq,.FALSE.)
+       END DO
        WRITE(*,*)'DONE'
     END IF
     !****************************************************  
@@ -132,10 +144,11 @@ CONTAINS
     sdens=0.0D0
     sodens=0.0D0
     WRITE(*,'(A25)',advance="no")'Initial add_density... '
-    DO nst=1,nstmax
-       CALL add_density(isospin(nst),wocc(nst),psi(:,:,:,:,nst), &
-            rho,tau,current,sdens,sodens)  
+    DO nst=1,nstloc
+       CALL add_density(isospin(globalindex(nst)),wocc(globalindex(nst)),&
+                        psi(:,:,:,:,nst),rho,tau,current,sdens,sodens)  
     ENDDO
+    IF(tmpi) CALL collect_densities!sum densities over all nodes 
     WRITE(*,*) 'DONE'
     WRITE(*,'(A25)',advance="no")'Initial skyrme... '
     CALL skyrme(iter<=outerpot,outertype)
@@ -147,22 +160,35 @@ CONTAINS
     sumflu=0.0D0  
     WRITE(*,'(A25)',advance="no")'Initial grstep... '
     !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,denerg) &
-    !$OMP SCHEDULE(STATIC) REDUCTION(+: sumflu , delesum)
+    !$OMP SCHEDULE(DYNAMIC) REDUCTION(+: sumflu , delesum)
     DO nst=1,nstmax
-       CALL grstep(nst,isospin(nst),sp_energy(nst),denerg, &
-            psi(:,:,:,:,nst))
-       sumflu=sumflu+wocc(nst)*sp_efluct1(nst)  
-       delesum=delesum+wocc(nst)*denerg  
+      IF(node(nst)/=mpi_myproc) THEN
+        sp_energy(nst)=0.0d0
+        sp_efluct1(nst)=0.0d0
+        sp_efluct2(nst)=0.0d0
+        CYCLE
+      ELSE!perform the first gradient iteration step
+       CALL grstep(nst,isospin(nst),sp_energy(nst),denerg,psi(:,:,:,:,localindex(nst)))
+        sumflu=sumflu+wocc(nst)*sp_efluct1(nst)  
+        delesum=delesum+wocc(nst)*denerg  
+      END IF
     ENDDO
     !$OMP END PARALLEL DO
+    IF(tmpi) CALL collect_energies(delesum,sumflu)!collect fluctuations and change in energy 
     WRITE(*,*) 'DONE'
     ! pairing and orthogonalization
-    IF(ipair/=0) CALL pair
-    WRITE(*,'(A25)',advance="no") 'Initial schmid... '
-    CALL schmid
+    IF(ipair/=0) THEN
+      IF(tmpi) STOP 'PAIRING does NOT work yet with MPI'! to be fixed...
+      CALL pair
+    END IF
+    WRITE(*,'(A25)',advance="no") 'Initial ortho2... '
+       DO iq=1,2
+         CALL diagstep(iq,.FALSE.)
+       END DO
     WRITE(*,*) 'DONE'
     ! produce and print detailed information
     CALL sp_properties
+    IF(tmpi) CALL collect_sp_properties!collect all single particle properties from all nodes
     CALL sinfo(.TRUE.)
     !set x0dmp to 3* its value to get faster convergence
     IF(tvaryx_0) x0dmp=3.0d0*x0dmp
@@ -177,24 +203,35 @@ CONTAINS
        delesum=0.0D0  
        sumflu=0.0D0
        !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,denerg) &
-       !$OMP SCHEDULE(STATIC) REDUCTION(+: sumflu , delesum)
+       !$OMP SCHEDULE(DYNAMIC) REDUCTION(+: sumflu , delesum)
        DO nst=1,nstmax
-          CALL grstep(nst,isospin(nst),sp_energy(nst),denerg, &
-               psi(:,:,:,:,nst))
-          sumflu=sumflu+wocc(nst)*sp_efluct1(nst)  
-          delesum=delesum+wocc(nst)*denerg  
+         IF(node(nst)/=mpi_myproc) THEN
+           sp_energy(nst)=0.0d0
+           sp_efluct1(nst)=0.0d0
+           sp_efluct2(nst)=0.0d0
+           CYCLE
+         ELSE!perform gradient step and save h|psi> in hampsi
+           CALL grstep(nst,isospin(nst),sp_energy(nst),denerg, &
+                psi(:,:,:,:,localindex(nst)))
+           sumflu=sumflu+wocc(nst)*sp_efluct1(nst)  
+           delesum=delesum+wocc(nst)*denerg  
+         END IF
        ENDDO
        !$OMP END PARALLEL DO
+      IF(tmpi) CALL collect_energies(delesum,sumflu)!collect fluctuation and change in energy
        !****************************************************
        ! Step 6: diagonalize and orthonormalize
        !****************************************************
        DO iq=1,2
-          CALL diagstep(iq,npsi(iq)-npmin(iq)+1)
+          CALL diagstep(iq,tdiag)
        ENDDO
        !****************************************************
        ! Step 7: do pairing
        !****************************************************
-       IF(ipair/=0) CALL pair
+       IF(ipair/=0) THEN
+         IF(tmpi) STOP 'PAIRING does NOT work yet with MPI'
+         CALL pair
+       END IF
        !****************************************************
        ! Step 8: get new densities and fields with relaxation
        !****************************************************
@@ -209,11 +246,12 @@ CONTAINS
        sodens=0.0D0
        !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst) SCHEDULE(STATIC) &
        !$OMP REDUCTION(+:rho, tau, current, sdens, sodens)
-       DO nst=1,nstmax
-          CALL add_density(isospin(nst),wocc(nst),psi(:,:,:,:,nst), &
-               rho,tau,current,sdens,sodens)  
+       DO nst=1,nstloc
+         CALL add_density(isospin(globalindex(nst)),wocc(globalindex(nst)),&
+                          psi(:,:,:,:,nst),rho,tau,current,sdens,sodens)  
        ENDDO
        !$OMP END PARALLEL DO
+       IF(tmpi) CALL collect_densities!collect densities from all nodes
        IF(taddnew) THEN
           rho=addnew*rho+addco*upot
           tau=addnew*tau+addco*bmass
@@ -221,9 +259,10 @@ CONTAINS
        CALL skyrme(iter<=outerpot,outertype)
        ! calculate and print information
        CALL sp_properties
-       CALL sinfo(mprint>0.AND.MOD(iter,mprint)==0)
+       IF(tmpi) CALL collect_sp_properties!collect single particle properties
+       CALL sinfo(mprint>0.AND.MOD(iter,mprint)==0.AND.wflag)
        !****************************************************
-       ! Step 9: check for convergence, saving wave functions, update stepsize
+       ! Step 9: check for convergence, saving wave functions
        !****************************************************
        IF(sumflu/nstmax<serr.AND.iter>1.AND..NOT.ttabc) THEN
           CALL write_wavefunctions
@@ -232,6 +271,9 @@ CONTAINS
        IF(MOD(iter,mrest)==0) THEN  
           CALL write_wavefunctions
        ENDIF
+       !***********************************************************************
+       ! Step 10: calculate new step size
+       !***********************************************************************
        IF(tvaryx_0) THEN
           IF(ehf<ehfprev .OR. efluct1<(efluct1prev*(1.0d0-1.0d-5)) &
                .OR. efluct2<(efluct2prev*(1.0d0-1.0d-5))) THEN
@@ -245,7 +287,6 @@ CONTAINS
           ehfprev=ehf
        END IF
     END DO Iteration
-    DEALLOCATE(hmatr)
   END SUBROUTINE statichf
   !*************************************************************************
   SUBROUTINE grstep(nst,iq,spe,denerg,psin)
@@ -264,28 +305,31 @@ CONTAINS
     INTENT(INOUT) :: spe,psin
     REAL(db) :: x0act,esf,enrold,xnorm,xnormb,exph2,varh2
     COMPLEX(db) :: ps1(nx,ny,nz,2),ps2(nx,ny,nz,2)
-    INTEGER :: nst2
-    ! Step 1:(h-esf) on psin yields ps1.                        *
-    esf=spe 
+    !***********************************************************************
+    ! Step 1:(h-esf) on psin yields ps1.
+    !***********************************************************************
+    esf=spe
     CALL hpsi(iq,esf,psin,ps1)
-    ! Step 2: calculate matrix elements
+    !***********************************************************************
+    ! Step 2: store ps1 in hampsi
+    !***********************************************************************
     xnorm=rpsnorm(psin)
-    xnormb=overlap(psin,ps1)
-    DO nst2=1,nstmax
-       IF(tdiag.AND.isospin(nst2)==isospin(nst))   &
-            hmatr(nst2,nst)=overlap(psi(:,:,:,:,nst2),ps1)
-    ENDDO
-    IF(tdiag) hmatr(nst,nst)=hmatr(nst,nst)+spe
+    xnormb=REAL(overlap(psin,ps1))
+    hampsi(:,:,:,:,localindex(nst))=ps1!store h|psi> in hampsi
+    !***********************************************************************
     ! Step 3: calculate fluctuation, i.e. <h*h> and |h|**2
-    IF(mprint>0.AND.MOD(iter,mprint)==0) THEN  
+    !***********************************************************************
+    IF(mprint>0.AND.MOD(iter,mprint)==0) THEN
        CALL hpsi(iq,esf,ps1,ps2)
-       exph2=overlap(psin,ps2)
+       exph2=REAL(overlap(psin,ps2))
        varh2=rpsnorm(ps1)
        sp_efluct1(nst)=SQRT(ABS(exph2/xnorm-(xnormb/xnorm)**2))  
        sp_efluct2(nst)=SQRT(ABS(varh2/xnorm-(xnormb/xnorm)**2))  
     ENDIF
+    !***********************************************************************
     ! Step 4: the damping step
-    IF(e0dmp>0.0D0) THEN  
+    !***********************************************************************
+    IF(e0dmp>0.0D0) THEN
        ps1=ps1 - xnormb*psin
        x0act=x0dmp
        IF(TFFT) THEN
@@ -300,96 +344,118 @@ CONTAINS
     ELSE  
        psin=(1.0+x0dmp*xnormb)*psin-x0dmp*ps1
     ENDIF
+    !***********************************************************************
     ! Step 5: energy convergence criterion
-    enrold=spe  
+    !***********************************************************************
+    enrold=spe
     spe=xnormb+esf  
     denerg=(enrold-spe)/ABS(spe)  
   END SUBROUTINE grstep
   !*************************************************************************
-  SUBROUTINE diagstep(iq,nlin)
+  SUBROUTINE diagstep(iq,diagonalize)
     !***********************************************************************
     !                                                                      *
     !     diagstep= diagonalize Hamiltonian matrix of active shells      *
+    !               and do orthonomalization                             *
     !                                                                      *
     !***********************************************************************
     USE Trivial, ONLY: overlap,rpsnorm
-    INTEGER,INTENT(IN) :: iq,nlin
-    INTEGER :: nst,nst2,noffset,i,j,ix,iy,iz,is
-    INTEGER :: infoconv
-    REAL(db) :: eigen_h(nlin)
-    COMPLEX(db) :: unitary_h(nlin,nlin),unitary_rho(nlin,nlin),unitary(nlin,nlin)
-    COMPLEX(db) :: pstemp(nlin),pstemp1(nlin)
-    COMPLEX(db) :: cmplxone=CMPLX(1.0,0.0),cmplxzero=CMPLX(0.0,0.0)
-    COMPLEX(db) :: rhomatr_lin(nlin,nlin)
-    COMPLEX(db) :: cwork(2*nlin*nlin)
-    REAL(db)    :: rwork(2*nlin*nlin+5*nlin+1)
-    INTEGER     :: iwork(5*nlin+3)
-    EXTERNAL    :: zgemv,zheevd,zgemm,zheev
-    ! Step 1: copy matrix into symmetric storage mode, then diagonalize
+    USE Linalg,  ONLY: eigenvecs,loewdin,comb_orthodiag,recombine
+    
+    INTEGER,INTENT(IN)      :: iq
+    LOGICAL,INTENT(IN)      :: diagonalize
+    INTEGER                 :: nst,nst2,noffset,i,ix,iy,iz,is,infoconv
+    COMPLEX(db), POINTER    :: psi_x(:,:,:,:,:),psi_y(:,:,:,:,:),hampsi_x(:,:,:,:,:)
+    COMPLEX(db),ALLOCATABLE :: unitary(:,:),hmatr_lin(:,:),unitary_h(:,:), rhomatr_lin(:,:),&
+                               rhomatr_lin_eigen(:,:), unitary_rho(:,:)
+    EXTERNAL                :: zgemv,zheevd,zgemm,zheev
+    !***********************************************************************
+    ! Step 1: Copy |psi> and h|psi> to 2d storage mode
+    !***********************************************************************
     noffset=npmin(iq)-1
+    ALLOCATE(unitary(nstloc_x(iq),nstloc_y(iq)),           hmatr_lin(nstloc_x(iq),nstloc_y(iq)),&
+             unitary_h(nstloc_x(iq),nstloc_y(iq)),         rhomatr_lin(nstloc_x(iq),nstloc_y(iq)),&
+             rhomatr_lin_eigen(nstloc_x(iq),nstloc_y(iq)), unitary_rho(nstloc_x(iq),nstloc_y(iq)))
     unitary_h=0.0d0
+    hmatr_lin=0.0d0
     rhomatr_lin=0.0d0
-    !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,nst2) &
-    !$OMP SCHEDULE(STATIC)
-    DO i=nlin/2+1,nlin
-       DO j=1,2*(nlin/2)+1
-          IF(j>i) THEN
-             nst2=noffset+2*(nlin/2)-i+1
-             nst=noffset+2*(nlin/2)+2-j
-          ELSE
-             nst2=noffset+i
-             nst=noffset+j
-          END IF
-          unitary_h(nst2-noffset,nst-noffset)=&
-               0.5D0*(CONJG(hmatr(nst,nst2))+hmatr(nst2,nst))
-          rhomatr_lin(nst-noffset,nst2-noffset)=overlap(psi(:,:,:,:,nst),psi(:,:,:,:,nst2))
-          IF(nst==nst2) THEN
-             sp_norm(nst)=rhomatr_lin(nst-noffset,nst2-noffset)
-          ELSE
-             rhomatr_lin(nst2-noffset,nst-noffset)=CONJG(rhomatr_lin(nst-noffset,nst2-noffset))
-          END IF
-       ENDDO
-    ENDDO
-    !$OMP END PARALLEL DO
-! Diagonalization
-    IF(tdiag) THEN
-    CALL zheevd('V','L',nlin,unitary_h,nlin,eigen_h,cwork,nlin*nlin*2,rwork,&
-                2*nlin*nlin+5*nlin+1,iwork,5*nlin+3,infoconv)
+    IF(tmpi) THEN
+      ALLOCATE(psi_x(nx,ny,nz,2,nstloc_x(iq)),psi_y(nx,ny,nz,2,nstloc_y(iq)),&
+               hampsi_x(nx,ny,nz,2,nstloc_x(iq)))
+      CALL mpi_wf_1d2x(psi,psi_x,iq)
+      CALL mpi_wf_1d2x(hampsi,hampsi_x,iq)
+      CALL mpi_wf_x2y(psi_x,psi_y,iq)
     ELSE
-      WRITE(*,*) 'no diag'
-      unitary_h=0.0d0
-      DO nst=1,nlin
-        unitary_h(nst,nst)=1.0d0
-      END DO
+      psi_x     => psi(:,:,:,:,npmin(iq):npsi(iq))
+      psi_y     => psi(:,:,:,:,npmin(iq):npsi(iq))
+      hampsi_x  => hampsi(:,:,:,:,npmin(iq):npsi(iq))
     END IF
-! Loewdin Orthonormalization
-    CALL zheevd('V','L',nlin,rhomatr_lin,nlin,eigen_h,cwork,nlin*nlin*2,rwork,&
-                2*nlin*nlin+5*nlin+1,iwork,5*nlin+3,infoconv)
-    eigen_h=1.0d0/sqrt(eigen_h)
-    DO i=1,nlin
-      rhomatr_lin(:,i)=rhomatr_lin(:,i)*sqrt(eigen_h(i))
-    END DO
-    CALL zgemm('N','C',nlin,nlin,nlin,cmplxone,rhomatr_lin,nlin,rhomatr_lin,nlin,&
-               cmplxzero,unitary_rho,nlin)  
-! Recombination
-    CALL zgemm('N','N',nlin,nlin,nlin,cmplxone,&
-               unitary_rho,nlin,unitary_h,nlin,cmplxzero,unitary,nlin)
-    noffset=npmin(iq)-1
-    !$OMP PARALLEL DO DEFAULT(SHARED) COLLAPSE(2) PRIVATE(pstemp,pstemp1)&
-    !$OMP SCHEDULE(STATIC) 
-    DO ix=1,nx
-       DO iy=1,ny
-          DO iz=1,nz
-             DO is=1,2
-                pstemp=psi(ix,iy,iz,is,npmin(iq):npsi(iq))
-                CALL zgemv('T',nlin,nlin,cmplxone,unitary,nlin,&
-                     pstemp,1,cmplxzero,pstemp1,1)
-                psi(ix,iy,iz,is,npmin(iq):npsi(iq))=pstemp1
-             END DO
-          END DO
-       END DO
-    END DO
+    !***********************************************************************
+    ! Step 2: Calculate lower tringular of h-matrix and overlaps.
+    !***********************************************************************
+    !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,nst2,ix,iy,is,iz) SCHEDULE(DYNAMIC)
+    DO nst=1,nstloc_x(iq)
+      DO is = 1,2
+        DO iz = 1,nz
+          DO nst2=1,nstloc_y(iq)
+            ix=globalindex_x(nst,iq)
+            iy=globalindex_y(nst2,iq)
+            IF(ix>iy) THEN 
+              IF(diagonalize) THEN
+                hmatr_lin(nst,nst2)=hmatr_lin(nst,nst2)+&
+                                    CONJG(overlap(psi_y(:,:,iz:iz,is:is,nst2),hampsi_x(:,:,iz:iz,is:is,nst)))
+              ELSE
+                unitary_h(nst,nst2)=CMPLX(0.0d0,0.0d0)
+              END IF
+              rhomatr_lin(nst,nst2)=rhomatr_lin(nst,nst2)+&
+                                    overlap(psi_x(:,:,iz:iz,is:is,nst),psi_y(:,:,iz:iz,is:is,nst2))
+            ENDIF
+            IF(ix==iy) THEN
+              rhomatr_lin(nst,nst2)=rhomatr_lin(nst,nst2)+&
+                                    overlap(psi_x(:,:,iz:iz,is:is,nst),psi_y(:,:,iz:iz,is:is,nst2))
+              sp_norm(ix)=REAL(rhomatr_lin(nst,nst2))
+              IF(diagonalize) THEN
+                hmatr_lin(nst,nst2)=sp_energy(ix)!account for hampsi=(h-spe)|psi>
+              ELSE
+                unitary_h(nst,nst2)=CMPLX(1.0d0,0.0d0)
+              END IF
+            END IF
+          ENDDO    !for nst2
+        ENDDO    !for b
+      ENDDO    !for z
+    ENDDO    !for nst
     !$OMP END PARALLEL DO
+    !***********************************************************************
+    ! Step 3: Calculate eigenvectors of h if wanted
+    !***********************************************************************
+    IF(diagonalize) THEN
+      CALL eigenvecs(hmatr_lin,unitary_h,iq=iq)
+    END IF
+    !***********************************************************************
+    ! Step 4: Calculate matrix for Loewdin
+    !***********************************************************************
+    CALL loewdin(rhomatr_lin,unitary_rho,iq)
+    !***********************************************************************
+    ! Step 5: Combine h and diagonalization matrix and transpose them
+    !***********************************************************************
+    CALL comb_orthodiag(unitary_h,unitary_rho,unitary,iq)
+    !***********************************************************************
+    ! Step 6: Recombine |psi> and write them into 1d storage mode
+    !***********************************************************************
+    !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(ix,iy,iz,is) SCHEDULE(STATIC) 
+    DO ix=1,nx; DO iy=1,ny; DO iz=1,nz; DO is=1,2
+      CALL recombine(unitary,psi_y(ix,iy,iz,is,:),psi_x(ix,iy,iz,is,:),iq)
+    END DO; END DO; END DO; END DO
+    !$OMP END PARALLEL DO
+    !
+    DEALLOCATE(unitary,hmatr_lin,unitary_h,rhomatr_lin,&
+               rhomatr_lin_eigen,unitary_rho)
+    IF(tmpi) THEN
+      CALL collect_wf_1d_x(psi,psi_x,iq)
+      DEALLOCATE(psi_x,psi_y,hampsi_x)
+    ELSE
+      NULLIFY(psi_x,psi_y,hampsi_x)
+    END IF
   END SUBROUTINE diagstep
   !*************************************************************************
   SUBROUTINE sinfo(printing)
@@ -487,9 +553,14 @@ CONTAINS
   END SUBROUTINE sinfo
   !*************************************************************************
   SUBROUTINE harmosc
-    USE Trivial, ONLY: rpsnorm
+    USE Trivial, ONLY: rpsnorm,overlap
     REAL(db) :: xx,yy,zz,xx2,zz2,y2,anorm,temp
     INTEGER  :: nst,iq,is,ix,iy,iz,nps,i,j,k,ka,nshell(3,nstmax)
+    COMPLEX(db) :: psitemp(nx,ny,nz,2)
+    IF(wflag)WRITE(*,*) "Harmonic oscillators widths (x-y-z):"
+    IF(wflag)WRITE(*,"(3F12.4)") radinx,radiny,radinz
+    psitemp=0.0d0
+    psi=0.0d0
     wocc=0.D0
     wocc(1:nneut)=1.D0
     wocc(npmin(2):npmin(2)+nprot-1)=1.D0
@@ -498,76 +569,82 @@ CONTAINS
     !*************************************************************************
     nst=0  
     DO iq=1,2  
-       IF(iq==1) THEN
-          nps=npsi(1)
-       ELSE
-          nps=npsi(2)
-       ENDIF
-       ka_loop: DO ka=0,nps  
-          DO k=0,nps  
-             DO j=0,nps  
-                DO i=0,nps  
-                   IF(ka==i+j+k) THEN  
-                      DO is=1,2
-                         nst=nst+1  
-                         IF(nst>nps) EXIT ka_loop
-                         nshell(1,nst)=i  
-                         nshell(2,nst)=j  
-                         nshell(3,nst)=k  
-                      ENDDO
-                   ENDIF
+      IF(iq==1) THEN
+        nps=npsi(1)
+      ELSE
+        nps=npsi(2)
+      ENDIF
+      ka_loop: DO ka=0,nps  
+        DO k=0,ka  
+          DO j=0,ka  
+            DO i=0,ka  
+              IF(ka==i+j+k) THEN  
+                DO is=1,2
+                  nst=nst+1  
+                  IF(nst>nps) EXIT ka_loop
+                  nshell(1,nst)=i  
+                  nshell(2,nst)=j  
+                  nshell(3,nst)=k 
                 ENDDO
-             ENDDO
+              ENDIF
+            ENDDO
           ENDDO
-       ENDDO ka_loop
-       nst=nst-1
+        ENDDO
+      ENDDO ka_loop
+      nst=nst-1
     END DO
     DO iq=1,2
-       nst=npmin(iq)
-       DO iz=1,nz  
-          zz2=(z(iz)/radinz)**2
-          DO ix=1,nx  
-             xx2=(x(ix)/radinx)**2  
-             DO iy=1,ny  
-                y2=(y(iy)/radiny)**2  
-                temp=xx2+y2+zz2
-                psi(ix,iy,iz,1,nst)=EXP(-(temp))  
-             ENDDO
+      nst=npmin(iq)
+      DO iz=1,nz  
+        zz2=(z(iz)/radinz)**2
+        DO ix=1,nx  
+          xx2=(x(ix)/radinx)**2  
+          DO iy=1,ny  
+            y2=(y(iy)/radiny)**2  
+            temp=xx2+y2+zz2
+            IF(node(nst)==mpi_myproc) psi(ix,iy,iz,1,localindex(nst))=EXP(-(temp))  
+            psitemp(ix,iy,iz,1)=EXP(-(temp))  
           ENDDO
-       ENDDO
-       anorm=rpsnorm(psi(:,:,:,:,nst))
-       psi(:,:,:,:,nst)=psi(:,:,:,:,nst)/SQRT(anorm)
-       !*************************************************************************
-       ! Higher states: lowest * polynomial
-       !*************************************************************************
-       DO nst=npmin(iq)+1,npsi(iq)  
-          is=MOD(nst-npmin(iq),2)+1  
-          DO iz=1,nz  
-             IF(nshell(3,nst)/=0) THEN  
-                zz=z(iz)**nshell(3,nst)  
-             ELSE  
-                zz=1.0D0  
-             ENDIF
-             DO iy=1,ny  
-                IF(nshell(2,nst)/=0) THEN  
-                   yy=y(iy)**nshell(2,nst)  
-                ELSE  
-                   yy=1.0D0  
-                ENDIF
-                DO ix=1,nx  
-                   IF(nshell(1,nst)/=0) THEN  
-                      xx=x(ix)**nshell(1,nst)  
-                   ELSE  
-                      xx=1.0D0  
-                   ENDIF
-                   psi(ix,iy,iz,is,nst)=psi(ix,iy,iz,1,npmin(iq))*xx*yy*zz
-                ENDDO
-             ENDDO
+        ENDDO
+      ENDDO
+      IF(node(nst)==mpi_myproc) THEN
+        anorm=rpsnorm(psi(:,:,:,:,localindex(nst)))
+        psi(:,:,:,:,localindex(nst))=psi(:,:,:,:,localindex(nst))/SQRT(anorm)
+      END IF
+        anorm=rpsnorm(psitemp(:,:,:,:))
+        psitemp(:,:,:,:)=psitemp(:,:,:,:)/SQRT(anorm)
+      !*************************************************************************
+      ! Higher states: lowest * polynomial
+      !*************************************************************************
+      DO nst=npmin(iq)+1,npsi(iq)
+       IF (node(nst)==mpi_myproc) THEN
+        is=MOD(nst-npmin(iq),2)+1  
+        DO iz=1,nz  
+          IF(nshell(3,nst)/=0) THEN  
+            zz=z(iz)**nshell(3,nst)  
+          ELSE  
+            zz=1.0D0  
+          ENDIF
+          DO iy=1,ny  
+            IF(nshell(2,nst)/=0) THEN  
+              yy=y(iy)**nshell(2,nst)  
+            ELSE  
+              yy=1.0D0  
+            ENDIF
+            DO ix=1,nx  
+              IF(nshell(1,nst)/=0) THEN  
+                xx=x(ix)**nshell(1,nst)  
+              ELSE  
+                xx=1.0D0  
+              ENDIF
+                psi(ix,iy,iz,is,localindex(nst))=psitemp(ix,iy,iz,1)*xx*yy*zz
+            ENDDO
           ENDDO
-       END DO
+        ENDDO
+       psi(:,:,:,:,localindex(nst))=psi(:,:,:,:,localindex(nst))/sqrt(rpsnorm(psi(:,:,:,:,localindex(nst))))
+       END IF
+      END DO
     END DO
-    WRITE(*,*) "Harmonic oscillators widths (x-y-z):"
-    WRITE(*,"(3F12.4)") radinx,radiny,radinz
-    WRITE(*,*) '***** Harmonic oscillator initialization complete *****'
+    IF(wflag)WRITE(*,*) '***** Harmonic oscillator initialization complete *****'
   END SUBROUTINE harmosc
 END MODULE Static

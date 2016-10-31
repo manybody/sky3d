@@ -10,6 +10,8 @@ MODULE Params
   REAL(db),PARAMETER :: pi=3.14159265358979D0
   REAL(db),PARAMETER :: hbc=197.32164D0
   REAL(db),PARAMETER :: e2=1.43989D0
+  COMPLEX(db)        :: cmplxone=CMPLX(1.0,0.0),cmplxzero=CMPLX(0.0,0.0)
+  REAL(db) :: r0=1.2D0
   !**********************************************************************
   !  names of files and units to be used                                *
   !**********************************************************************
@@ -48,5 +50,4 @@ MODULE Params
   INTEGER,PARAMETER ::  mnof=4   ! maximum number of fragments
   INTEGER :: nof                 ! real number of fragments
   INTEGER :: tabc_nprocs=1,tabc_myid=0
-  REAL(db) :: r0=1.2D0
 END MODULE Params

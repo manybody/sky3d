@@ -1,18 +1,22 @@
 MODULE Parallel
   USE Params, ONLY: wflag,db
-  USE Levels, ONLY: nstmax,npsi,nstloc
+  USE Levels, ONLY: nstmax,npsi,nstloc,npmin
   USE Grids, ONLY: nx,ny,nz
   IMPLICIT NONE
   SAVE
-  LOGICAL,PARAMETER :: tmpi=.FALSE.,ttabc=.FALSE.
-  INTEGER, ALLOCATABLE :: node(:),localindex(:),globalindex(:)
-  INTEGER :: mpi_nprocs,mpi_ierror,mpi_myproc, &
-       processor_name,proc_namelen
-  INTEGER :: mpi_comm_world,mpi_sum,mpi_double_precision
+  LOGICAL,PARAMETER    :: tmpi=.FALSE.,ttabc=.FALSE.
+  INTEGER, ALLOCATABLE :: node(:),localindex(:),globalindex(:),node_x(:),node_y(:),&
+                          localindex_x(:),localindex_y(:),globalindex_x(:,:),globalindex_y(:,:)
+  INTEGER              :: mpi_nprocs,mpi_ierror,mpi_myproc, &
+                          processor_name,proc_namelen,nstloc_x(2),nstloc_y(2)
+  INTEGER              :: mpi_comm_world,mpi_sum,mpi_double_precision
 CONTAINS     !  all dummy subroutines to run on a sequential machine
   !************************************************************************
   SUBROUTINE alloc_nodes
-    ALLOCATE(node(nstmax),localindex(nstmax),globalindex(nstmax))
+    ALLOCATE(node(nstmax),localindex(nstmax),globalindex(nstmax),&
+             localindex_x(nstmax),localindex_y(nstmax),&
+             globalindex_x(nstmax,2),globalindex_y(nstmax,2),&
+             node_x(nstmax),node_y(nstmax))
   END SUBROUTINE alloc_nodes
   !************************************************************************
   SUBROUTINE init_all_mpi
@@ -81,13 +85,26 @@ CONTAINS     !  all dummy subroutines to run on a sequential machine
   END SUBROUTINE mpi_barrier
   !************************************************************************
   SUBROUTINE associate_nodes
-    INTEGER :: i
+    INTEGER :: i,is,noffset
     node=0
+    node_x=0
+    node_y=0
     nstloc=nstmax
     FORALL(i=1:nstmax) 
        globalindex(i)=i
        localindex(i)=i
     END FORALL
+    DO is=1,2
+      noffset=npmin(is)-1
+      nstloc_x(is)=npsi(is)-npmin(is)+1
+      nstloc_y(is)=npsi(is)-npmin(is)+1
+      DO i=npmin(is),npsi(is)
+        localindex_x(i) = i-noffset
+        localindex_y(i) = i-noffset
+        globalindex_x(localindex_x(i),is)=i
+        globalindex_y(localindex_y(i),is)=i
+      END DO
+    END DO
   END SUBROUTINE associate_nodes
   !************************************************************************
   SUBROUTINE mpi_allreduce(rho,tmp_rho,length,        &
@@ -108,6 +125,12 @@ CONTAINS     !  all dummy subroutines to run on a sequential machine
     STOP ' parallel calls inhibited '
     RETURN
   END SUBROUTINE collect_sp_properties
+  !************************************************************************
+  SUBROUTINE collect_energies(delesum,sumflu)
+    REAL(db), INTENT(IN) :: delesum,sumflu
+    STOP ' parallel calls inhibited '
+    RETURN
+  END SUBROUTINE collect_energies
   !************************************************************************
   SUBROUTINE finish_mpi
   END SUBROUTINE finish_mpi

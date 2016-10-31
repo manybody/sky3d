@@ -131,7 +131,7 @@ CONTAINS
   !***********************************************************************
   SUBROUTINE print_extfield()
     USE Densities, ONLY: rho
-    INTEGER :: ix,iy,iz
+    INTEGER :: ix,iz
     REAL(db):: xcm(nz),xcmnorm(nz)
     OPEN(UNIT=scratch,file=extfieldfile,POSITION='APPEND')  
     IF(abs(amplrod)<1D-20) THEN

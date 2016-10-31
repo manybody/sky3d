@@ -28,7 +28,7 @@ CONTAINS
     ! non-derivative terms
     !***********************************************************************
     lrho(:,:,:,iq)=lrho(:,:,:,iq)+weight* &
-         (psin(:,:,:,1)*CONJG(psin(:,:,:,1))+ &
+         REAL(psin(:,:,:,1)*CONJG(psin(:,:,:,1))+ &
          psin(:,:,:,2)*CONJG(psin(:,:,:,2)))
     FORALL(iz=1:nz,iy=1:ny,ix=1:nx)
        lsdens(ix,iy,iz,1,iq)=lsdens(ix,iy,iz,1,iq)+2.D0*weight &
@@ -48,7 +48,7 @@ CONTAINS
        CALL cmulx(der1x,psin,ps1,0)  
     ENDIF
     ltau(:,:,:,iq)=ltau(:,:,:,iq)+weight* &
-         (ps1(:,:,:,1)*CONJG(ps1(:,:,:,1))+ps1(:,:,:,2)*CONJG(ps1(:,:,:,2)))
+         REAL(ps1(:,:,:,1)*CONJG(ps1(:,:,:,1))+ps1(:,:,:,2)*CONJG(ps1(:,:,:,2)))
     lcurrent(:,:,:,1,iq)=lcurrent(:,:,:,1,iq)+weight* &
          AIMAG(ps1(:,:,:,1)*CONJG(psin(:,:,:,1))+ &
          ps1(:,:,:,2)*CONJG(psin(:,:,:,2)))
@@ -69,7 +69,7 @@ CONTAINS
        CALL cmuly(der1y,psin,ps1,0)  
     ENDIF
     ltau(:,:,:,iq)=ltau(:,:,:,iq)+weight* &
-         (ps1(:,:,:,1)*CONJG(ps1(:,:,:,1))+ps1(:,:,:,2)*CONJG(ps1(:,:,:,2)))
+         REAL(ps1(:,:,:,1)*CONJG(ps1(:,:,:,1))+ps1(:,:,:,2)*CONJG(ps1(:,:,:,2)))
     lcurrent(:,:,:,2,iq)=lcurrent(:,:,:,2,iq)+weight* &
          AIMAG(ps1(:,:,:,1)*CONJG(psin(:,:,:,1))+ &
          ps1(:,:,:,2)*CONJG(psin(:,:,:,2)))
@@ -90,7 +90,7 @@ CONTAINS
        CALL cmulz(der1z,psin,ps1,0)  
     ENDIF
     ltau(:,:,:,iq)=ltau(:,:,:,iq)+weight* &
-         (ps1(:,:,:,1)*CONJG(ps1(:,:,:,1))+ps1(:,:,:,2)*CONJG(ps1(:,:,:,2)))
+         REAL(ps1(:,:,:,1)*CONJG(ps1(:,:,:,1))+ps1(:,:,:,2)*CONJG(ps1(:,:,:,2)))
     lcurrent(:,:,:,3,iq)=lcurrent(:,:,:,3,iq)+weight* &
          AIMAG(ps1(:,:,:,1)*CONJG(psin(:,:,:,1))+ &
          ps1(:,:,:,2)*CONJG(psin(:,:,:,2)))

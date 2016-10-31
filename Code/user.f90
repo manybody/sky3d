@@ -7,10 +7,9 @@ MODULE User
 CONTAINS
   SUBROUTINE init_user
   IMPLICIT NONE
-  INTEGER  :: nst, nst1, iq, is, ix, iy, iz 
+  INTEGER  :: nst, iq
   !
-  INTEGER :: i,j,k,l,ii,jj,kk
-  INTEGER :: kr(3,npsi(2)),ktemp(3,npsi(2))
+  INTEGER :: i,j,l,ii,jj,kk
   INTEGER :: kf(3,npsi(2)),temp_k(3)
   LOGICAL :: check
   INTEGER :: ki(3,8*7**3),ki_t(3,7**3)
@@ -92,7 +91,7 @@ CONTAINS
   END DO
   END SUBROUTINE init_user
   !
-REAL FUNCTION epw(kx,ky,kz) RESULT(e)
+REAL(db) FUNCTION epw(kx,ky,kz) RESULT(e)
   USE FORCES, ONLY: nucleon_mass
   INTEGER,INTENT(IN) :: kx,ky,kz
   REAL(db) :: dx,dy,dz
@@ -114,17 +113,17 @@ SUBROUTINE background(nst,kx,ky,kz,s)
   IF(nst>=npmin(2) .AND. (nst<npmin(2)+nprot)) wocc(nst)=1.0d0
   DO iz = 1,nz  
      facz=REAL(iz-1)*((2.D0*pi*REAL(kz)+bangz)/FLOAT(nz))
-     fz=CMPLX(COS(facz),SIN(facz))
+     fz=CMPLX(COS(facz),SIN(facz),db)
      DO iy=1,ny
         facy=REAL(iy-1)*((2.D0*pi*REAL(ky)+bangy)/FLOAT(ny))
-        fy=CMPLX(COS(facy),SIN(facy))
+        fy=CMPLX(COS(facy),SIN(facy),db)
         DO ix=1,nx
            facx=REAL(ix-1)*((2.D0*pi*REAL(kx)+bangx)/FLOAT(nx))
            IF(s>0) THEN
-              psi(ix,iy,iz,1,nst)=fz*fy*CMPLX(COS(facx),SIN(facx))
+              psi(ix,iy,iz,1,nst)=fz*fy*CMPLX(COS(facx),SIN(facx),db)
               psi(ix,iy,iz,2,nst)=0.D0
            ELSE
-              psi(ix,iy,iz,2,nst)=fz*fy*CMPLX(COS(facx),SIN(facx))
+              psi(ix,iy,iz,2,nst)=fz*fy*CMPLX(COS(facx),SIN(facx),db)
               psi(ix,iy,iz,1,nst)=0.D0
            END IF
         ENDDO

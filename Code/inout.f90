@@ -128,7 +128,7 @@ CONTAINS
     ibor(1:121:10)='+'
     dimx=x(nx)-x(1); dimz=z(nz)-z(1)
     dxp=xperi/ixsc; dzp=xperi/izsc
-    nhor=dimx/dxp+1; nver=dimz/dzp+1
+    nhor=INT(dimx/dxp+1); nver=INT(dimz/dzp+1)
     nver=MIN(nver,121)
     ntkx=(nhor+ixsc-1)/ixsc; ntkz=(nver+izsc-1)/izsc
     WRITE(*,'(/,A,F12.4,A)') ' Contour 5=',density_scale,' n/fm**3'
@@ -246,12 +246,12 @@ CONTAINS
                    xpar=xpar+REAL(pst(ix,iy,iz,is))*REAL(pst(ixx,iyy,izz,is)) &
                         +AIMAG(pst(ix,iy,iz,is))*AIMAG(pst(ixx,iyy,izz,is))
                 END DO
-                ss(1)=ss(1) + CONJG(pst(ix,iy,iz,1))*pst(ix,iy,iz,2) &
-                     + CONJG(pst(ix,iy,iz,2))*pst(ix,iy,iz,1)
-                ss(2)=ss(2) + CONJG(pst(ix,iy,iz,1))*pst(ix,iy,iz,2)*CMPLX(0.D0,-1.D0,db) &
-                     + CONJG(pst(ix,iy,iz,2))*pst(ix,iy,iz,1)*CMPLX(0.D0,1.D0,db)
-                ss(3)=ss(3) + CONJG(pst(ix,iy,iz,1))*pst(ix,iy,iz,1) &
-                     - CONJG(pst(ix,iy,iz,2))*pst(ix,iy,iz,2)
+                ss(1)=ss(1) + REAL(CONJG(pst(ix,iy,iz,1))*pst(ix,iy,iz,2)) &
+                     + REAL(CONJG(pst(ix,iy,iz,2))*pst(ix,iy,iz,1))
+                ss(2)=ss(2) + REAL(CONJG(pst(ix,iy,iz,1))*pst(ix,iy,iz,2)*CMPLX(0.D0,-1.D0,db)) &
+                     + REAL(CONJG(pst(ix,iy,iz,2))*pst(ix,iy,iz,1)*CMPLX(0.D0,1.D0,db))
+                ss(3)=ss(3) + REAL(CONJG(pst(ix,iy,iz,1))*pst(ix,iy,iz,1)) &
+                     - REAL(CONJG(pst(ix,iy,iz,2))*pst(ix,iy,iz,2))
              ENDDO
           ENDDO
        END DO

@@ -13,7 +13,7 @@ PROGRAM tdhf3d
   USE Coulomb, ONLY: coulinit
   USE User
   IMPLICIT NONE
-  INTEGER :: imode,nofsave
+  INTEGER :: imode,nofsave=0
   !***********************************************************************
   NAMELIST /files/ wffile,converfile,monopolesfile,dipolesfile, &
        momentafile,energiesfile,quadrupolesfile,spinfile,extfieldfile,&
@@ -111,6 +111,7 @@ PROGRAM tdhf3d
   ! Step 7: allocate wave functions
   !********************************************************************
   CALL alloc_nodes
+  IF(tmpi.AND.tstatic) CALL init_mpi_2d
   CALL associate_nodes
   CALL alloc_levels
   !********************************************************************
@@ -136,16 +137,15 @@ PROGRAM tdhf3d
   ! Step 10: static or dynamic  calculation performed
   !********************************************************************
   IF(tstatic) THEN
-     IF(tmpi .AND. wflag) STOP ' static should not run parallel'
      CALL init_static
      CALL statichf
   ELSE
-     !*************************************************************************
-     ! Dynamic branch
-     !*************************************************************************
-     IF(tmpi) CALL mpi_barrier (mpi_comm_world, mpi_ierror)
-     IF(trestart) nof=nofsave ! restore 2-body status so analysis is done
-     CALL dynamichf
+  !*************************************************************************
+  ! Dynamic branch
+  !*************************************************************************
+    IF(tmpi) CALL mpi_barrier (mpi_comm_world, mpi_ierror)
+    IF(trestart) nof=nofsave ! restore 2-body status so analysis is done
+    CALL dynamichf
   ENDIF
 !  CALL init_user
   CALL finish_mpi

@@ -67,7 +67,7 @@ CONTAINS
   PURE FUNCTION rpsnorm(ps) RESULT(r)
     COMPLEX(db),INTENT(IN) :: ps(:,:,:,:)
     REAL(db) :: r
-    r=wxyz*SUM(CONJG(ps)*ps)
+    r=wxyz*SUM(REAL(CONJG(ps)*ps))
   END FUNCTION rpsnorm
   !***********************************************************************
   ! Calculate overlap of two wave functions

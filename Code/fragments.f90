@@ -29,7 +29,7 @@ CONTAINS
     CHARACTER(8) :: forcename
     NAMELIST /fragments/ filename,fcent,fboost,ecm,b,fix_boost
     IF(trestart) THEN
-       filename(1)=wffile
+       filename(1)=wffile(1:64)
        fcent(:,1)=0.D0
        fboost(:,1)=0.D0
        fix_boost=.TRUE.

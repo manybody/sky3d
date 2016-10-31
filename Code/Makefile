@@ -11,18 +11,23 @@ ifort ifort_seq ifort_omp                    : export COMPILER_SKY = ifort
 #
 # ----- define compiler flags and linker flags-------------------------------
 #
-seq mpi tabc tabc_seq     : export COMPILERFLAGS_SKY = -O3 -msse4.2 -mfpmath=sse -ffast-math -finline-functions -funroll-loops
+seq mpi tabc tabc_seq     : export COMPILERFLAGS_SKY = -O3 -msse4.2 -mfpmath=sse -ffast-math -finline-functions -funroll-loops -Wall
 omp tabc_omp mpi-omp      : export COMPILERFLAGS_SKY = -O3 -fopenmp -msse4.2 -mfpmath=sse -ffast-math -finline-functions -funroll-loops
 seq_debug mpi_debug debug : export COMPILERFLAGS_SKY = -g -fbacktrace
 omp_debug                 : export COMPILERFLAGS_SKY = -g -fbacktrace -fopenmp
 ifort ifort_seq           : export COMPILERFLAGS_SKY = -axsse4.2 -msse4.2 -O3 -ip -no-prec-div -align all -mcmodel=large -shared-intel
 ifort_omp                 : export COMPILERFLAGS_SKY = -axsse4.2 -msse4.2 -O3 -ip -no-prec-div -align all -mcmodel=large -shared-intel -openmp
 #
-# ----- which object file to use for building--------------------------------
+# ----- which communication object file to use for building------------------
 #
 seq omp seq_debug omp_debug debug ifort ifort_seq ifort_omp : export PARALLEL_SKY = sequential.o
 mpi mpi_debug mpi-omp                                       : export PARALLEL_SKY = parallel.o
 tabc tabc_seq tabc_omp                                      : export PARALLEL_SKY = tabc.o
+#
+# ----- which linear algebra object file to use for building-----------------
+#
+seq omp seq_debug omp_debug debug ifort ifort_seq ifort_omp tabc tabc_seq tabc_omp : export LINALG_SKY = linalg_lapack.o
+mpi mpi_debug mpi-omp                                                              : export LINALG_SKY = linalg_scalapack.o
 #
 # ----- executables----------------------------------------------------------
 #
@@ -54,7 +59,7 @@ clean-exec:
 OBJS   = params.o grids.o levels.o fourier.o forces.o $(PARALLEL_SKY) \
 	inout.o coulomb.o trivial.o densities.o fragments.o twobody.o \
 	energies.o static.o meanfield.o dynamic.o pairs.o moment.o \
-	main3d.o user.o external.o abso_bc.o
+	main3d.o user.o external.o abso_bc.o $(LINALG_SKY)
 #
 LINKERFLAGS_SKY    =  $(COMPILERFLAGS_SKY)
 #
@@ -70,6 +75,10 @@ $(EXEC_SKY):$(OBJS)
 #
 
 user.o : user.f90 params.o grids.o levels.o
+
+linalg_lapack.o : linalg_lapack.f90 params.o grids.o levels.o sequential.o
+
+linalg_scalapack.o : linalg_scalapack.f90 params.o grids.o levels.o sequential.o
 
 external.o : external.f90 params.o $(PARALLEL_SKY) grids.o levels.o meanfield.o
 
@@ -115,7 +124,7 @@ meanfield.o : meanfield.f90 params.o densities.o forces.o grids.o coulomb.o \
 pairs.o : pairs.f90 forces.o grids.o levels.o densities.o
 
 static.o : static.f90 params.o densities.o grids.o \
-	levels.o moment.o energies.o inout.o pairs.o meanfield.o
+	levels.o moment.o energies.o inout.o pairs.o meanfield.o $(LINALG_SKY)
 
 dynamic.o : dynamic.f90 params.o densities.o grids.o trivial.o \
 	levels.o moment.o energies.o inout.o meanfield.o $(PARALLEL_SKY) \
