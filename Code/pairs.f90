@@ -282,15 +282,23 @@ CONTAINS
     REAL(db),INTENT(IN) :: g
     INTEGER ,INTENT(IN) :: iq
     REAL(db)            :: g_eff,delta
-    REAL(db)            :: e_l,e_u
+    REAL(db)            :: e_l,e_u,efermapprox,particle_number
+    INTEGER             :: it
     e_l=sp_energy(npmin(iq))
     IF(pair_cutoff(iq)>0.0d0)THEN
-      e_u=MIN(sp_energy(npsi(iq)),eferm(iq)+pair_cutoff(iq))
+      IF(iq==2) THEN
+        particle_number=charge_number
+      ELSE  
+        particle_number=mass_number-charge_number
+      ENDIF
+      it=npmin(iq)+NINT(particle_number)-1  
+      efermapprox=0.5D0*(sp_energy(it)+sp_energy(it+1))  
+      e_u=MIN(sp_energy(npsi(iq)),efermapprox+pair_cutoff(iq))
     ELSE
       e_u=sp_energy(npsi(iq))
     END IF
     IF (avdeltv2(iq)<0.001) avdeltv2(iq)=1.0d0
-    delta=MIN(2.0d0,MAX(0.5,avdeltv2(iq)))
+    delta=12.0d0/sqrt(mass_number)
     g_eff=g/log((e_u-e_l)/delta)
     WRITE(*,*)iq,g_eff,g,e_l,e_u,delta,log((e_u-e_l)/delta)
   END FUNCTION g_eff
