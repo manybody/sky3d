@@ -9,9 +9,14 @@ seq omp seq_debug omp_debug debug            : export COMPILER_SKY = gfortran
 mpi mpi_debug tabc tabc_seq tabc_omp mpi-omp : export COMPILER_SKY = mpif90
 ifort ifort_seq ifort_omp                    : export COMPILER_SKY = ifort
 #
+# ----- define libraries-----------------------------------------------------
+#
+seq omp debug seq_debug omp_debug tabc tabc_seq tabc_omp ifort ifort_seq ifort_omp : export LIBS_SKY = -lfftw3 -llapack -lblas
+mpi mpi_debug mpi-omp                                                              : export LIBS_SKY = -lfftw3 -lscalapack -llapack -lblas
+#
 # ----- define compiler flags and linker flags-------------------------------
 #
-seq mpi tabc tabc_seq     : export COMPILERFLAGS_SKY = -O3 -msse4.2 -mfpmath=sse -ffast-math -finline-functions -funroll-loops -Wall
+seq mpi tabc tabc_seq     : export COMPILERFLAGS_SKY = -O3 -msse4.2 -mfpmath=sse -ffast-math -finline-functions -funroll-loops
 omp tabc_omp mpi-omp      : export COMPILERFLAGS_SKY = -O3 -fopenmp -msse4.2 -mfpmath=sse -ffast-math -finline-functions -funroll-loops
 seq_debug mpi_debug debug : export COMPILERFLAGS_SKY = -g -fbacktrace
 omp_debug                 : export COMPILERFLAGS_SKY = -g -fbacktrace -fopenmp
@@ -71,14 +76,14 @@ SHELL = /bin/sh
 makeit : $(EXEC_SKY)
 
 $(EXEC_SKY):$(OBJS)
-	$(COMPILER_SKY) $(LINKERFLAGS_SKY) -o $@  $(OBJS) -lfftw3 -llapack -lblas
+	$(COMPILER_SKY) $(LINKERFLAGS_SKY) -o $@  $(OBJS) $(LIBS_SKY) 
 #
 
 user.o : user.f90 params.o grids.o levels.o
 
-linalg_lapack.o : linalg_lapack.f90 params.o grids.o levels.o sequential.o
+linalg_lapack.o : linalg_lapack.f90 params.o grids.o levels.o $(PARALLEL_SKY)
 
-linalg_scalapack.o : linalg_scalapack.f90 params.o grids.o levels.o sequential.o
+linalg_scalapack.o : linalg_scalapack.f90 params.o grids.o levels.o $(PARALLEL_SKY)
 
 external.o : external.f90 params.o $(PARALLEL_SKY) grids.o levels.o meanfield.o
 

@@ -9,7 +9,7 @@ PROGRAM tdhf3d
   USE Fragments
   USE Parallel
   USE Dynamic, ONLY: getin_dynamic,dynamichf
-  USE Static, ONLY: getin_static,init_static,statichf,harmosc
+  USE Static, ONLY: getin_static,init_static,statichf,harmosc,planewaves
   USE Coulomb, ONLY: coulinit
   USE User
   IMPLICIT NONE
@@ -38,7 +38,6 @@ PROGRAM tdhf3d
   CALL mpi_init_filename
   tstatic=imode==1
   tdynamic=imode==2
-  IF(tmpi.AND.tstatic) STOP 'MPI not implemented for static mode'
   IF(.NOT.(tstatic.OR.tdynamic)) THEN
      IF(wflag) WRITE(*,*) 'Illegal value for imode:',imode
      STOP
@@ -125,6 +124,8 @@ PROGRAM tdhf3d
      END IF
   ELSEIF(nof==0) THEN    
      CALL harmosc
+  ELSEIF(nof==-1) THEN
+     CALL planewaves
   ELSE
      CALL init_user
   END IF
