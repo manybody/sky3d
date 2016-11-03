@@ -14,16 +14,17 @@ MODULE Static
   LOGICAL :: tdiag=.FALSE.
   LOGICAL :: tlarge=.FALSE.
   LOGICAL :: tvaryx_0=.FALSE.
+  LOGICAL :: ttime=.FALSE.
   INTEGER :: maxiter,outerpot=0
   REAL(db) :: radinx,radiny,radinz, &
-       serr,delesum,x0dmp=0.2D0,e0dmp=100.D0,x0dmpmin=0.2d0,ttime(10,20)=0.0d0
+       serr,delesum,x0dmp=0.2D0,e0dmp=100.D0,x0dmpmin=0.2d0
   CHARACTER(1) :: outertype='N'
 CONTAINS
   !*************************************************************************
   SUBROUTINE getin_static
     NAMELIST/static/ tdiag,tlarge,maxiter, &
          radinx,radiny,radinz,serr,x0dmp,e0dmp,nneut,nprot,npsi,tvaryx_0,&
-         outerpot,outertype
+         outerpot,outertype,ttime
     npsi=0
     READ(5,static)
     IF(nof<=0) THEN
@@ -201,12 +202,14 @@ CONTAINS
     ! step 4: start static iteration loop
     !****************************************************  
     Iteration: DO iter=firstiter,maxiter
+       CALL mpi_start_timer(1)
        IF(wflag)WRITE(*,'(a,i6)') ' Static Iteration No.',iter
        !****************************************************  
        ! Step 5: gradient step
        !****************************************************  
        delesum=0.0D0  
        sumflu=0.0D0
+       IF(ttime.AND.tmpi) CALL mpi_start_timer(2)
        !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,denerg) &
        !$OMP SCHEDULE(DYNAMIC) REDUCTION(+: sumflu , delesum)
        DO nst=1,nstmax
@@ -224,6 +227,7 @@ CONTAINS
        ENDDO
        !$OMP END PARALLEL DO
        IF(tmpi) CALL collect_energies(delesum,sumflu)!collect fluctuation and change in energy
+       IF(ttime.AND.tmpi) CALL mpi_stop_timer(2,'grstep: ')
        !****************************************************
        ! Step 6: diagonalize and orthonormalize
        !****************************************************
@@ -250,6 +254,7 @@ CONTAINS
        current=0.0D0
        sdens=0.0D0
        sodens=0.0D0
+       IF(ttime.AND.tmpi) CALL mpi_start_timer(2)
        !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst) SCHEDULE(STATIC) &
        !$OMP REDUCTION(+:rho, tau, current, sdens, sodens)
        DO nst=1,nstloc
@@ -262,8 +267,12 @@ CONTAINS
           rho=addnew*rho+addco*upot
           tau=addnew*tau+addco*bmass
        ENDIF
+       IF(ttime.AND.tmpi) CALL mpi_stop_timer(2,'add density: ')
+       IF(ttime.AND.tmpi) CALL mpi_start_timer(2)
        CALL skyrme(iter<=outerpot,outertype)
+       IF(ttime.AND.tmpi) CALL mpi_stop_timer(2,'skyrme: ')
        ! calculate and print information
+       IF(ttime.AND.tmpi)CALL mpi_start_timer(2)
        CALL sp_properties
        IF(tmpi) THEN
          DO nst=1,nstmax
@@ -271,6 +280,7 @@ CONTAINS
          END DO
        CALL collect_sp_properties!collect single particle properties
        END IF
+       IF(ttime.AND.tmpi) CALL mpi_stop_timer(2,'sp properties: ')
        CALL sinfo(mprint>0.AND.MOD(iter,mprint)==0.AND.wflag)
        !****************************************************
        ! Step 9: check for convergence, saving wave functions
@@ -390,6 +400,7 @@ CONTAINS
     unitary_h=0.0d0
     hmatr_lin=0.0d0
     rhomatr_lin=0.0d0
+    IF(tmpi.AND.ttime) CALL mpi_start_timer(2)
     IF(tmpi) THEN
       ALLOCATE(psi_x(nx,ny,nz,2,nstloc_x(iq)),psi_y(nx,ny,nz,2,nstloc_y(iq)),&
                hampsi_x(nx,ny,nz,2,nstloc_x(iq)))
@@ -401,9 +412,11 @@ CONTAINS
       psi_y     => psi(:,:,:,:,npmin(iq):npsi(iq))
       hampsi_x  => hampsi(:,:,:,:,npmin(iq):npsi(iq))
     END IF
+    IF(tmpi.AND.ttime) CALL mpi_stop_timer(2,'Comm 1d->2d: ')
     !***********************************************************************
     ! Step 2: Calculate lower tringular of h-matrix and overlaps.
     !***********************************************************************
+    IF(tmpi.AND.ttime) CALL mpi_start_timer(2)
     !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,nst2,ix,iy,is,iz) SCHEDULE(DYNAMIC)
     DO nst=1,nstloc_x(iq)
       DO is = 1,2
@@ -425,7 +438,6 @@ CONTAINS
               rhomatr_lin(nst,nst2)=rhomatr_lin(nst,nst2)+&
                                     overlap(psi_x(:,:,iz:iz,is:is,nst),psi_y(:,:,iz:iz,is:is,nst2))
               sp_norm(ix)=REAL(rhomatr_lin(nst,nst2))
-!              IF(is==2.AND.iz==nz) WRITE(*,*)ix,sp_norm(ix)
               IF(diagonalize) THEN
                 hmatr_lin(nst,nst2)=sp_energy(ix)!account for hampsi=(h-spe)|psi>
               ELSE
@@ -437,47 +449,48 @@ CONTAINS
       ENDDO    !for z
     ENDDO    !for nst
     !$OMP END PARALLEL DO
+    IF(tmpi.AND.ttime) CALL mpi_stop_timer(2,'Calc matrix: ')
     !***********************************************************************
     ! Step 3: Calculate eigenvectors of h if wanted
     !***********************************************************************
+    IF(tmpi.AND.ttime) CALL mpi_start_timer(2)
     IF(diagonalize) THEN
       CALL eigenvecs(hmatr_lin,unitary_h,iq=iq)
     END IF
+    IF(tmpi.AND.ttime) CALL mpi_stop_timer(2,'Diag matrix: ')
     !***********************************************************************
     ! Step 4: Calculate matrix for Loewdin
     !***********************************************************************
+    IF(tmpi.AND.ttime) CALL mpi_start_timer(2)
     CALL loewdin(rhomatr_lin,unitary_rho,iq)
-!    DO nst=1,nstloc_x(iq)
-!      DO nst2=1,nstloc_y(iq)
-!        WRITE(*,*)globalindex_x(nst,iq),globalindex_y(nst2,iq),unitary_rho(nst,nst2)
-!      END DO
-!    END DO
-!    STOP
+    IF(tmpi.AND.ttime) CALL mpi_stop_timer(2,'Ortho matrix: ')
     !***********************************************************************
     ! Step 5: Combine h and diagonalization matrix and transpose them
     !***********************************************************************
+    IF(tmpi.AND.ttime) CALL mpi_start_timer(2)
     CALL comb_orthodiag(unitary_h,unitary_rho,unitary,iq)
+    IF(tmpi.AND.ttime) CALL mpi_stop_timer(2,'Combine: ')
     !***********************************************************************
     ! Step 6: Recombine |psi> and write them into 1d storage mode
     !***********************************************************************
+    IF(tmpi.AND.ttime) CALL mpi_start_timer(2)
     !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(ix,iy,iz,is) SCHEDULE(STATIC) 
     DO ix=1,nx; DO iy=1,ny; DO iz=1,nz; DO is=1,2
       CALL recombine(unitary,psi_y(ix,iy,iz,is,:),psi_x(ix,iy,iz,is,:),iq)
     END DO; END DO; END DO; END DO
     !$OMP END PARALLEL DO
     !
+    IF(tmpi.AND.ttime) CALL mpi_stop_timer(2,'recombine: ')
     DEALLOCATE(unitary,hmatr_lin,unitary_h,rhomatr_lin,&
                rhomatr_lin_eigen,unitary_rho)
+    IF(tmpi.AND.ttime) CALL mpi_start_timer(2)
     IF(tmpi) THEN
       CALL collect_wf_1d_x(psi,psi_x,iq)
-!    WRITE(*,*)
-!    DO nst=1,nstloc
-!      WRITE(*,*)globalindex(nst),overlap(psi(:,:,:,:,nst),psi(:,:,:,:,nst))
-!    END DO
       DEALLOCATE(psi_x,psi_y,hampsi_x)
     ELSE
       NULLIFY(psi_x,psi_y,hampsi_x)
     END IF
+    IF(tmpi.AND.ttime) CALL mpi_stop_timer(2,'Comm 2d->1d: ')
   END SUBROUTINE diagstep
   !*************************************************************************
   SUBROUTINE sinfo(printing)

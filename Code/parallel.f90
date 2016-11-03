@@ -17,6 +17,7 @@ MODULE Parallel
   INTEGER              :: comm2d_x,comm2d_y,mpi_size_x,mpi_size_y,mpi_rank_x,mpi_rank_y
   INTEGER              :: NPROCS,NPROW,NPCOL,MYPROW,MYPCOL,CONTXT,IAM
   INTEGER, EXTERNAL    :: NUMROC,INDXL2G,INDXG2L,INDXG2P
+  REAL(db)             :: timer(20)
 CONTAINS
   !***********************************************************************
   SUBROUTINE alloc_nodes
@@ -341,4 +342,19 @@ CONTAINS
     INTEGER :: ierr    
     CALL mpi_finalize(ierr)
   END SUBROUTINE finish_mpi
+!***********************************************************************
+  SUBROUTINE mpi_start_timer(index)
+    INTEGER,INTENT(IN) :: index
+    INTEGER :: ierr
+    CALL mpi_barrier (mpi_comm_world,ierr)
+    timer(index)=mpi_wtime()
+  END SUBROUTINE mpi_start_timer
+!***********************************************************************
+  SUBROUTINE mpi_stop_timer(index,textline)
+    INTEGER,INTENT(IN) :: index
+    CHARACTER(*),INTENT(IN) :: textline
+    INTEGER :: ierr
+    CALL mpi_barrier (mpi_comm_world,ierr)
+    IF(wflag)WRITE(*,'(A20,F10.4)')textline,mpi_wtime()-timer(index)
+  END SUBROUTINE mpi_stop_timer
 END MODULE Parallel

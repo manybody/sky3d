@@ -202,6 +202,8 @@ CONTAINS
     xx=x-cmtot(1)
     yy=y-cmtot(2)
     zz=z-cmtot(3)
+    !$OMP PARALLEL DO DEFAULT(SHARED) SCHEDULE(DYNAMIC)&
+    !$OMP PRIVATE(nst,ix,iy,iz,is,ixx,iyy,izz,pst,psx,psy,psz,psw,ps2,rp,ip,cc,ss,kin,xpar)
     DO nst=1,nstmax
        IF(node(nst)/=mpi_myproc) CYCLE
        pst=psi(:,:,:,:,localindex(nst))
@@ -211,7 +213,6 @@ CONTAINS
         psw=psw+ps2  
         CALL cdervz(psi(:,:,:,:,localindex(nst)),psz,ps2)  
         psw=psw+ps2  
-        !laplace() derivatives do not work with TABC yet
        ELSE  
           CALL cmulx(der1x,pst,psx,0)  
           CALL cmuly(der1y,pst,psy,0)  
@@ -260,6 +261,7 @@ CONTAINS
        sp_kinetic(nst)=wxyz*f%h2m(isospin(nst))*kin
        sp_parity(nst)=wxyz*xpar
     END DO
+    !$OMP END PARALLEL DO
     DEALLOCATE(pst,psx,psy,psz,psw)
   END SUBROUTINE sp_properties
   !************************************************************
