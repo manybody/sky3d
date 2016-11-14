@@ -1,0 +1,5 @@
+ls -1 *.loc > _templist
+$(dirname $0)/Tdhf2Silo < _templist
+rm _templist
+mkdir Localization
+mv *.silo Localization

@@ -202,7 +202,7 @@ CONTAINS
     ! step 4: start static iteration loop
     !****************************************************  
     Iteration: DO iter=firstiter,maxiter
-       CALL mpi_start_timer(1)
+    IF(ttime.AND.tmpi) CALL mpi_start_timer(1)
        IF(wflag)WRITE(*,'(a,i6)') ' Static Iteration No.',iter
        !****************************************************  
        ! Step 5: gradient step
@@ -494,6 +494,7 @@ CONTAINS
   END SUBROUTINE diagstep
   !*************************************************************************
   SUBROUTINE sinfo(printing)
+    USE  User
     INTEGER :: il
     LOGICAL :: printing
     REAL(db):: tabc_energy, tabc_ekin, tabc_ecoul, tabc_eskyrme
@@ -569,6 +570,7 @@ CONTAINS
           IF(MOD(iter,mplot)==0) THEN
              !CALL plot_density
              CALL write_densities
+             CALL localize
           ENDIF
        ENDIF
        IF(.NOT.wflag) RETURN

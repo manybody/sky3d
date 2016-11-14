@@ -79,64 +79,65 @@ $(EXEC_SKY):$(OBJS)
 	$(COMPILER_SKY) $(LINKERFLAGS_SKY) -o $@  $(OBJS) $(LIBS_SKY) 
 #
 
-user.o : user.f90 params.o grids.o levels.o
+user.o : user.f90 params.o grids.o levels.o Makefile
 
-linalg_lapack.o : linalg_lapack.f90 params.o grids.o levels.o $(PARALLEL_SKY)
+linalg_lapack.o : linalg_lapack.f90 params.o grids.o levels.o $(PARALLEL_SKY) Makefile
 
-linalg_scalapack.o : linalg_scalapack.f90 params.o grids.o levels.o $(PARALLEL_SKY)
+linalg_scalapack.o : linalg_scalapack.f90 params.o grids.o levels.o $(PARALLEL_SKY) Makefile
 
-external.o : external.f90 params.o $(PARALLEL_SKY) grids.o levels.o meanfield.o
+external.o : external.f90 params.o $(PARALLEL_SKY) grids.o levels.o meanfield.o Makefile
 
-coulomb.o : coulomb.f90 params.o grids.o densities.o
+coulomb.o : coulomb.f90 params.o grids.o densities.o Makefile
 
 inout.o : inout.f90 params.o $(PARALLEL_SKY) grids.o moment.o densities.o \
-	levels.o  coulomb.o forces.o meanfield.o forces.o
+	levels.o  coulomb.o forces.o meanfield.o forces.o Makefile
 
-trivial.o : trivial.f90 params.o grids.o
+trivial.o : trivial.f90 params.o grids.o Makefile
 
-forces.o : forces.f90 forces.data params.o 
+forces.o : forces.f90 forces.data params.o  Makefile
 
-fourier.o : fourier.f90 params.o grids.o
+fourier.o : fourier.f90 params.o grids.o Makefile
 
-params.o : params.f90
+params.o : params.f90 Makefile
 
-moment.o : moment.f90 params.o grids.o densities.o
+moment.o : moment.f90 params.o grids.o densities.o Makefile
 
-sequential.o: sequential.f90 levels.o params.o grids.o densities.o
+sequential.o: sequential.f90 levels.o params.o grids.o densities.o Makefile
 
-parallel.o: parallel.f90 levels.o params.o grids.o densities.o
+parallel.o: parallel.f90 levels.o params.o grids.o densities.o Makefile
 
-levels.o : levels.f90 params.o grids.o forces.o fourier.o trivial.o
+levels.o : levels.f90 params.o grids.o forces.o fourier.o trivial.o Makefile
 
-grids.o : grids.f90 params.o forces.o
+grids.o : grids.f90 params.o forces.o Makefile
 
-densities.o : densities.f90 params.o grids.o levels.o trivial.o 
+densities.o : densities.f90 params.o grids.o levels.o trivial.o  Makefile
 
 fragments.o : fragments.f90 params.o grids.o forces.o levels.o twobody.o \
-	$(PARALLEL_SKY)
+	$(PARALLEL_SKY) Makefile
 
 abso_bc.o : abso_bc.f90 params.o grids.o forces.o levels.o meanfield.o \
 	fragments.o $(PARALLEL_SKY)  Makefile
 
-twobody.o : twobody.f90 params.o grids.o densities.o moment.o forces.o
+twobody.o : twobody.f90 params.o grids.o densities.o moment.o forces.o Makefile
 
 energies.o :   energies.f90 params.o forces.o densities.o levels.o grids.o \
-	trivial.o pairs.o
+	trivial.o pairs.o Makefile
 
 meanfield.o : meanfield.f90 params.o densities.o forces.o grids.o coulomb.o \
-	trivial.o levels.o
+	trivial.o levels.o Makefile
 
-pairs.o : pairs.f90 forces.o grids.o levels.o densities.o
+pairs.o : pairs.f90 forces.o grids.o levels.o densities.o Makefile
 
 static.o : static.f90 params.o densities.o grids.o \
-	levels.o moment.o energies.o inout.o pairs.o meanfield.o $(LINALG_SKY)
+	levels.o moment.o energies.o inout.o pairs.o meanfield.o $(LINALG_SKY) \
+	user.o Makefile
 
 dynamic.o : dynamic.f90 params.o densities.o grids.o trivial.o \
 	levels.o moment.o energies.o inout.o meanfield.o $(PARALLEL_SKY) \
-	twobody.o external.o abso_bc.o
+	twobody.o external.o abso_bc.o Makefile
 
 main3d.o : main3d.f90 params.o fourier.o forces.o densities.o meanfield.o \
-    levels.o grids.o fragments.o $(PARALLEL_SKY) dynamic.o static.o coulomb.o user.o
+    levels.o grids.o fragments.o $(PARALLEL_SKY) dynamic.o static.o coulomb.o user.o Makefile
 
 .SUFFIXES:  .f90 .f .o 
 

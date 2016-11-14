@@ -229,6 +229,7 @@ CONTAINS
   END SUBROUTINE tstep
   !***********************************************************************
   SUBROUTINE tinfo
+    USE User , ONLY : localize
     REAL(db), DIMENSION(2) :: ecoll     ! storage for collective-flow energy
     INTEGER :: il
     REAL(db):: tabc_energy, tabc_ekin, tabc_ecoul, tabc_eskyrme, tabc_ext
@@ -345,6 +346,7 @@ CONTAINS
        IF(wflag.AND.MOD(iter,mplot)==0) THEN
           CALL plot_density
           CALL write_densities
+          CALL localize
        ENDIF
     ENDIF
     ! Step 7: print other output
