@@ -76,3 +76,8 @@ with a protocol of changes for the astro branch:
 *********Pairing regularization*********
 Pairing regularization implemented as described in ---PRC 73 044319---
 Variable pair_reg in namelist 'forces' serves as a switch. Default is .FLASE.  
+
+*********Initialization*****************
+nof=0  : Harmonic ascillator initialization.
+nof=-1 : Plane wave initialization.
+nof>0  : Initialization with fragments.

@@ -24,13 +24,13 @@ CONTAINS
   !***********************************************************************
   SUBROUTINE skyrme(outpot,outertype)
     USE Trivial, ONLY: rmulx,rmuly,rmulz
-    LOGICAL,INTENT(IN) :: outpot
-    CHARACTER(1),INTENT(IN) :: outertype
-
-    REAL(db),PARAMETER :: epsilon=1.0d-25  
-    REAL(db) :: rotspp,rotspn
-    REAL(db),ALLOCATABLE :: workden(:,:,:,:),workvec(:,:,:,:,:)
-    INTEGER :: ix,iy,iz,ic,iq,icomp
+    LOGICAL,INTENT(IN)        :: outpot
+    CHARACTER(1),INTENT(IN)   :: outertype
+    REAL(db),PARAMETER        :: epsilon=1.0d-25  
+    REAL(db)                  :: rotspp,rotspn
+    REAL(db),ALLOCATABLE      :: workden(:,:,:,:),workvec(:,:,:,:,:)
+    REAL(db),ALLOCATABLE,SAVE :: random_k(:,:)
+    INTEGER                   :: ix,iy,iz,ic,iq,icomp
     ALLOCATE(workden(nx,ny,nz,2),workvec(nx,ny,nz,3,2))
     !  Step 1: 3-body contribution to upot.
     DO iq=1,2  
@@ -138,6 +138,20 @@ CONTAINS
 !   external guiding potential
     IF (outpot) THEN
       SELECT CASE(outertype)
+      CASE('A')
+        IF(.NOT.ALLOCATED(random_k)) THEN
+          ALLOCATE(random_k(3,2))
+          CALL init_random_seed()
+          CALL RANDOM_NUMBER(random_k)
+          random_k=(random_k-0.5d0)*2
+          WRITE(*,*) 'Random potential:',random_k
+        END IF
+        FORALL(iq=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
+          upot(ix,iy,iz,iq)=random_k(1,1)*cos(REAL(ix)/nx*2*pi)+random_k(1,2)*sin(REAL(ix)/nx*2*pi)&
+                           +random_k(2,1)*cos(REAL(iy)/ny*2*pi)+random_k(2,2)*sin(REAL(iy)/ny*2*pi)&
+                           +random_k(3,1)*cos(REAL(iz)/nz*2*pi)+random_k(3,2)*sin(REAL(iz)/nz*2*pi)
+        END FORALL
+        WRITE(*,*) 'Random guiding potential'
       CASE('P')
         FORALL(iq=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
           upot(ix,iy,iz,iq)=30*(cos(REAL(ix)/nx*2*pi)+cos(REAL(iy)/ny*2*pi)+cos(REAL(iz)/nz*2*pi))
@@ -146,9 +160,29 @@ CONTAINS
       CASE('G')
         FORALL(iq=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
               upot(ix,iy,iz,iq)=30*(cos(REAL(ix)/nx*2*pi)*sin(REAL(iy)/ny*2*pi)+&
-              cos(REAL(iy)/ny*2*pi)*sin(REAL(iz)/nz*2*pi)+cos(REAL(iz)/nz*2*pi)*sin(REAL(ix)/nx*2*pi))-30
+              cos(REAL(iy)/ny*2*pi)*sin(REAL(iz)/nz*2*pi)+cos(REAL(iz)/nz*2*pi)*sin(REAL(ix)/nx*2*pi))
         END FORALL
         WRITE(*,*) 'Gyroid guiding potential'
+      CASE('B')
+        FORALL(iq=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
+              upot(ix,iy,iz,iq)=30*abs(cos(REAL(ix)/nx*2*pi)*sin(REAL(iy)/ny*2*pi)+&
+              cos(REAL(iy)/ny*2*pi)*sin(REAL(iz)/nz*2*pi)+cos(REAL(iz)/nz*2*pi)*sin(REAL(ix)/nx*2*pi))
+        END FORALL
+        WRITE(*,*) 'Double Gyroid guiding potential'
+      CASE('C')
+        FORALL(iq=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
+              upot(ix,iy,iz,iq)=-30*abs(cos(REAL(ix)/nx*2*pi)*sin(REAL(iy)/ny*2*pi)+&
+              cos(REAL(iy)/ny*2*pi)*sin(REAL(iz)/nz*2*pi)+cos(REAL(iz)/nz*2*pi)*sin(REAL(ix)/nx*2*pi))
+        END FORALL
+        WRITE(*,*) 'Reverse Double Gyroid guiding potential'
+      CASE('D')
+        FORALL(iq=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
+              upot(ix,iy,iz,iq)=30*(cos(REAL(ix)/nx*2.0*pi)*cos(REAL(iy)/ny*2.0*pi)*cos(REAL(iz)/nz*2.0*pi)+&
+                                    cos(REAL(ix)/nx*2.0*pi)*sin(REAL(iy)/ny*2.0*pi)*sin(REAL(iz)/nz*2.0*pi)+&
+                                    sin(REAL(ix)/nx*2.0*pi)*cos(REAL(iy)/ny*2.0*pi)*sin(REAL(iz)/nz*2.0*pi)+&
+                                    sin(REAL(ix)/nx*2.0*pi)*sin(REAL(iy)/ny*2.0*pi)*cos(REAL(iz)/nz*2.0*pi))
+        END FORALL
+        WRITE(*,*) 'Diamond guiding potential'
       CASE('S')
         FORALL(iq=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
          upot(ix,iy,iz,iq)=50*(cos(REAL(ix)/nx*2*pi))
@@ -301,4 +335,19 @@ CONTAINS
     DEALLOCATE(pswk,pswk2)
   END SUBROUTINE hpsi
   !***********************************************************************
+  SUBROUTINE init_random_seed()
+
+      INTEGER :: i, n, clock
+      INTEGER, DIMENSION(:), ALLOCATABLE :: seed
+
+      CALL RANDOM_SEED(size = n)
+      ALLOCATE(seed(n))
+
+      CALL SYSTEM_CLOCK(COUNT=clock)
+
+      seed = clock + 37 * (/ (i - 1, i = 1, n) /)
+      CALL RANDOM_SEED(PUT = seed)
+
+      DEALLOCATE(seed)
+  END SUBROUTINE
 END Module Meanfield
