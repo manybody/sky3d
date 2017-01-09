@@ -239,7 +239,15 @@ CONTAINS
     !***********************************************************************
     REAL(db),INTENT(INOUT) :: delesum,sumflu
     REAL(db) :: tmpgat(nstmax),tmpgat3(3,nstmax)
+    INTEGER  :: nst
     CALL mpi_barrier (mpi_comm_world,mpi_ierror)
+    DO nst=1,nstmax
+      IF(node(nst)/=mpi_myproc) THEN
+        sp_energy(nst)=0.0d0
+        sp_efluct1(nst)=0.0d0
+        sp_efluct2(nst)=0.0d0
+      END IF
+    ENDDO
     CALL mpi_allreduce(sp_energy,tmpgat,nstmax,mpi_double_precision,mpi_sum,  &
          mpi_comm_world,mpi_ierror)
     sp_energy=tmpgat

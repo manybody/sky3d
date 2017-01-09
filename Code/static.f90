@@ -161,18 +161,11 @@ CONTAINS
     sumflu=0.0D0  
     IF(wflag)WRITE(*,'(A25)',advance="no")'Initial grstep... '
     !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,denerg) &
-    !$OMP SCHEDULE(DYNAMIC) REDUCTION(+: sumflu , delesum)
-    DO nst=1,nstmax
-      IF(node(nst)/=mpi_myproc) THEN
-        sp_energy(nst)=0.0d0
-        sp_efluct1(nst)=0.0d0
-        sp_efluct2(nst)=0.0d0
-        CYCLE
-      ELSE!perform the first gradient iteration step
-       CALL grstep(nst,isospin(nst),sp_energy(nst),denerg,psi(:,:,:,:,localindex(nst)))
-        sumflu=sumflu+wocc(nst)*sp_efluct1(nst)  
-        delesum=delesum+wocc(nst)*denerg  
-      END IF
+    !$OMP SCHEDULE(STATIC) REDUCTION(+: sumflu , delesum)
+    DO nst=1,nstloc
+      CALL grstep(globalindex(nst),isospin(globalindex(nst)),sp_energy(globalindex(nst)),denerg,psi(:,:,:,:,nst))
+      sumflu=sumflu+wocc(globalindex(nst))*sp_efluct1(globalindex(nst))  
+      delesum=delesum+wocc(globalindex(nst))*denerg  
     ENDDO
     !$OMP END PARALLEL DO
     IF(tmpi) CALL collect_energies(delesum,sumflu)!collect fluctuations and change in energy 
@@ -202,7 +195,7 @@ CONTAINS
     ! step 4: start static iteration loop
     !****************************************************  
     Iteration: DO iter=firstiter,maxiter
-       CALL mpi_start_timer(1)
+       IF(tmpi) CALL mpi_start_timer(1)
        IF(wflag)WRITE(*,'(a,i6)') ' Static Iteration No.',iter
        !****************************************************  
        ! Step 5: gradient step
@@ -211,19 +204,11 @@ CONTAINS
        sumflu=0.0D0
        IF(ttime.AND.tmpi) CALL mpi_start_timer(2)
        !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,denerg) &
-       !$OMP SCHEDULE(DYNAMIC) REDUCTION(+: sumflu , delesum)
-       DO nst=1,nstmax
-         IF(node(nst)/=mpi_myproc) THEN
-           sp_energy(nst)=0.0d0
-           sp_efluct1(nst)=0.0d0
-           sp_efluct2(nst)=0.0d0
-           CYCLE
-         ELSE!perform gradient step and save h|psi> in hampsi
-           CALL grstep(nst,isospin(nst),sp_energy(nst),denerg, &
-                psi(:,:,:,:,localindex(nst)))
-           sumflu=sumflu+wocc(nst)*sp_efluct1(nst)  
-           delesum=delesum+wocc(nst)*denerg  
-         END IF
+       !$OMP SCHEDULE(STATIC) REDUCTION(+: sumflu , delesum)
+       DO nst=1,nstloc
+         CALL grstep(globalindex(nst),isospin(globalindex(nst)),sp_energy(globalindex(nst)),denerg,psi(:,:,:,:,nst))
+         sumflu=sumflu+wocc(globalindex(nst))*sp_efluct1(globalindex(nst))  
+         delesum=delesum+wocc(globalindex(nst))*denerg  
        ENDDO
        !$OMP END PARALLEL DO
        IF(tmpi) CALL collect_energies(delesum,sumflu)!collect fluctuation and change in energy
@@ -417,7 +402,7 @@ CONTAINS
     ! Step 2: Calculate lower tringular of h-matrix and overlaps.
     !***********************************************************************
     IF(tmpi.AND.ttime) CALL mpi_start_timer(2)
-    !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,nst2,ix,iy,is,iz) SCHEDULE(DYNAMIC)
+    !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,nst2,ix,iy,is,iz) SCHEDULE(STATIC)
     DO nst=1,nstloc_x(iq)
       DO is = 1,2
         DO iz = 1,nz
