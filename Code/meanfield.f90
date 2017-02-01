@@ -1,3 +1,27 @@
+!------------------------------------------------------------------------------
+! MODULE: Meanfield
+!------------------------------------------------------------------------------
+! DESCRIPTION: 
+!> @brief
+!!This module calculates all the ingredients needed for the
+!!energy functional and for applying the single-particle Hamiltonian to
+!!a wave function.
+!>
+!>@details
+!!The work is done by two subroutines: \c skyrme for the calculation
+!!of all the fields, which can be scalar or vector and
+!!isospin-dependent. \c hpsi then is the routine applying the
+!!single-particle Hamiltonian to one single-particle wave function.
+!!
+!!Note the division of labor between \c skyrme and
+!!\c add_density of module \c Densities: everything that
+!!constructs fields - densities and current densities - from the
+!!single-particle wave functions is done in \c add_density, which is
+!!called in a loop over the states, while \c skyrme does the further
+!!manipulations to complete the fields entering the single-particle
+!!Hamiltonian by combining the densities and their derivatives. It does
+!!not need access to the wave functions.
+!------------------------------------------------------------------------------
 Module Meanfield
   USE Params, ONLY: db,tcoul
   USE Densities
@@ -5,11 +29,28 @@ Module Meanfield
   USE Grids, ONLY: nx,ny,nz,der1x,der2x,der1y,der2y,der1z,der2z
   USE Coulomb, ONLY: poisson,wcoul
   IMPLICIT NONE
-  REAL(db),ALLOCATABLE,DIMENSION(:,:,:,:) :: upot,bmass,divaq
-  REAL(db),ALLOCATABLE,DIMENSION(:,:,:,:,:) :: aq,spot,wlspot,dbmass
+  REAL(db),ALLOCATABLE,DIMENSION(:,:,:,:)   :: upot   !<this is the local part of the mean field 
+  !!\f$ U_q \f$. It is a scalar field with isospin index.
+  REAL(db),ALLOCATABLE,DIMENSION(:,:,:,:)   :: bmass  !<this is the effective mass \f$ B_q \f$.
+  !!It is a scalar, isospin-dependent field.
+  REAL(db),ALLOCATABLE,DIMENSION(:,:,:,:)   :: divaq  !<this is the divergence of \c aq,
+  !!i.e., \f$ \nabla\cdot\vec A_q \f$. Its is a scalar, isospin-dependent field.
+  REAL(db),ALLOCATABLE,DIMENSION(:,:,:,:,:) :: aq     !<This is the vector filed \f$ \vec A_q \f$. 
+  !!It is a vector, isospin-dependent field.  
+  REAL(db),ALLOCATABLE,DIMENSION(:,:,:,:,:) :: spot   !<the field \f$ \vec{S}_q \f$.
+  !!It is a vector, isospin-dependent field.
+  REAL(db),ALLOCATABLE,DIMENSION(:,:,:,:,:) :: wlspot !<the field \f$ \vec W_q \f$. 
+  !!It is a vector, isospin-dependent field.
+  REAL(db),ALLOCATABLE,DIMENSION(:,:,:,:,:) :: dbmass !<contains the gradient of \c bmass.
+  !!It is a vector, isospin-dependent field.
   PRIVATE :: divaq,aq,wlspot,dbmass
 CONTAINS
-  !***********************************************************************
+!---------------------------------------------------------------------------  
+! DESCRIPTION: alloc_fields
+!> @brief
+!!This subroutine has the simple task of allocating all the fields that
+!!are local to the module \c Meanfield.
+!--------------------------------------------------------------------------- 
   SUBROUTINE alloc_fields
     ALLOCATE(upot(nx,ny,nz,2),bmass(nx,ny,nz,2),divaq(nx,ny,nz,2), &
          aq(nx,ny,nz,3,2),spot(nx,ny,nz,3,2),wlspot(nx,ny,nz,3,2), &
@@ -21,7 +62,65 @@ CONTAINS
     divaq=0.D0
     dbmass=0.D0
   END SUBROUTINE alloc_fields
-  !***********************************************************************
+!---------------------------------------------------------------------------  
+! DESCRIPTION: skyrme
+!> @brief
+!!In this subroutine the various fields are calculated from the
+!!densities that were previously generated in module \c Densities.
+!>
+!> @details
+!!The expressions divide up the
+!!contributions into an isospin-summed part with \f$ b \f$-coefficients
+!!followed by the isospin-dependent one with \f$ b' \f$-coefficients. As it
+!!would be a waste of space to store the summed densities and currents,
+!!the expressions are divided up more conveniently. If we denote the
+!!isospin index \f$ q \f$ by \c iq and the index for the opposite isospin
+!!\f$ q' \f$ by \c ic (as \c iq can take the values 1 or 2, it can
+!!conveniently be calculated as <tt> 3-iq </tt>), this can be written for
+!!example as
+!!
+!!\f$ b_1\rho-b_1'\rho_q\longrightarrow b_1(\rho_q+\rho_{q'})-b_1'\rho_q \f$
+!!\f$ \longrightarrow \f$ <tt>(b1-b1p)*rho(:,:,:,iq)+b1*rho(:,:,:,ic)</tt>
+!!This decomposition is used in all applicable cases.
+!!
+!!For intermediate results the fields \c workden (scalar) and \c workvec 
+!!(vector) are used.
+!!
+!!Now the subroutine proceeds in the following steps:
+!!  -# all the parts in \c upot involving an \f$ \alpha \f$-dependent power of the
+!!     density are collected. Note that in order to avoid having to
+!!     calculate different powers, \f$ \rho^\alpha \f$ is factored out. The
+!!     division by the total density uses the small number \c epsilon to
+!!     avoid division by zero.
+!!  -# the divergence of \f$ \vec J \f$ (\c sodens) is
+!!     calculated for both isospins in \c workden and the contributions
+!!     are added to \c upot.
+!!  -# the Coulomb potential is calculated using
+!!     subroutine \c poisson  (see module \c Coulomb). It and the
+!!     Slater exchange correction (only if the \c ex parameter in the
+!!     force is nonzero) are added to \c upot for protons, <tt> iq=2 </tt>.
+!!  -# the Laplacian is applied to the densities and
+!!     the result stored in \c workden. Then the remaining terms are constructed.  
+!!     Note that the  \c iq -loop is combined with the following steps.
+!!  -# the effective mass is calculated.
+!!  -# the gradient of the density is calculated and the
+!!     spin-orbit vector \f$ \vec W_q \f$ is constructed in \c wlspot.
+!!  -# the curl of the spin density vector is calculated
+!!     and stored in \c workvec.
+!!  -# the vector \f$ \vec A_q \f$ is calculated from the current density 
+!!     and the curl of the spin density.
+!!  -# the curl of the current density is calculated and stored in \c spot.
+!!  -# now the two isospin contributions in \c spot
+!!     are combined in the proper way.
+!!     This way of handling it avoids the introduction of an additional
+!!     work vector for \f$ \nabla\times\vec\jmath_q \f$.
+!!  -# the divergence of \f$ \vec A_q \f$ is calculated and stored in \c divaq.
+!!  -# finally, the gradient of the effective mass term
+!!     \f$ B_q \f$ is calculated and stored in the vector variable \c dbmass.
+!!  .
+!!This concludes the calculation of all scalar and vector fields needed
+!!for the application of the Skyrme force. 
+!--------------------------------------------------------------------------- 
   SUBROUTINE skyrme 
     USE Trivial, ONLY: rmulx,rmuly,rmulz
     REAL(db),PARAMETER :: epsilon=1.0d-25  
@@ -133,7 +232,89 @@ CONTAINS
     ENDDO
     DEALLOCATE(workden,workvec)
   END SUBROUTINE skyrme
-  !***********************************************************************
+!---------------------------------------------------------------------------  
+! DESCRIPTION: hpsi
+!> @brief
+!!This subroutine applies the single-particle Hamiltonian to a
+!!single-particle wave function \c pinn to produce an output wave
+!!function \c pout. The argument \c iq indicates the isospin for
+!!the wave function and \c eshift is an energy shift which is zero in
+!!the dynamic calculation but crucial to the static algorithm (see 
+!!\c grstep in module \c Static).
+!>
+!> @details
+!!For an understanding of this module the role of the following local
+!!variables is crucial.  They are
+!!  - \c is: this is used in the loops over spin to indicate the
+!!    spin component: <tt> is=1 </tt> for spin up and <tt> is=2 </tt> for spin down.
+!!  - \c ic: denotes the index for the opposite spin; it is
+!!    calculated as <tt> ic=3-is </tt>. Note the similar handling of
+!!    the two isospin projections using \c iq and \c icomp in
+!!    subroutine \c skyrme.
+!!  - \c sigis: this variable denotes the sign of the spin
+!!    projection. It is calculated as <tt> sigis=3-2*is </tt> and thus is \c +1
+!!    for spin up (<tt> is=1 </tt>) and \c - for spin down (<tt> is=2 </tt>).
+!!
+!!The general structure of the subroutine is as follows: first the part
+!!of the Hamiltonian not involving derivatives is applied, followed by the
+!!terms involving derivatives in order \f$ x \f$, \f$ y \f$, $z$.
+!!Since the structure of the Hamiltonian involves only first or second
+!!derivatives in one spatial direction in each term, the derivatives can
+!!be calculated for one direction and then the working space can be
+!!reused for the next one.
+!!
+!!The expressions for the different spatial derivatives are quite
+!!analogous, so that only the $x$-direction will be discussed at length
+!!below.
+!!
+!!The expressions is repeated here:
+!!\f[
+!!  \hat h=U_q(\vec r)-\nabla\cdot\left[B_q(\vec r)\nabla\right]
+!!  +\I\vec W_q\cdot(\vec\sigma\times\nabla)
+!!  +\vec S_q\cdot\vec\sigma
+!!  -\frac{\I}{2} \left[(\nabla\cdot\vec A_q)+2\vec A_q\cdot\nabla\right].
+!!\f]
+!! 
+!!  -# the non-derivative parts not involving spin. These
+!!     arise from \f$ U_q \f$ and \f$ -\tfrac{\I}{2}\,\nabla\cdot\vec A_q \f$, which
+!!     are combined into a complex expression. The energy shift \c eshift is also included.
+!!  -# the spin current coupling is constructed by simply
+!!     using the explicit definition of the Pauli matrices and multiplying
+!!     the resulting matrix onto the spinor wave function.
+!!  -# the first and second derivative in the \f$ x \f$-direction are evaluated 
+!!     and stored in the arrays \c pswk and \c pswk2. The last term in the Hamiltonian 
+!!     gives rise to the two contributions
+!!     \f[ -\frac{\partial B_q}{\partial x}\frac{\partial}{\partial x}-B_q 
+!!     \frac{\partial^2}{\partial x^2}, \f] 
+!!     of which the second is evaluated
+!!     straightforwardly, while the first one is combined with the spin-orbit
+!!     contribution. The part of \f$ \I\vec W_q\cdot(\vec\sigma\times\nabla) \f$
+!!     that contains an \f$ x \f$-derivative is
+!!     \f[ (\I W_y\sigma_z-\I W_z\sigma_y)\frac{\partial}{\partial x}=
+!!     \begin{pmatrix} \I W_y&-W_z\\ W_z&-\I W_y
+!!     \end{pmatrix}\frac{\partial}{\partial x} \f]
+!!     This is programmed employing the variable \c sigis to account for
+!!     the different signs in the rows of the matrix.
+!!  -# for the derivatives in the $y$-direction the
+!!     procedure is similar; the spin-orbit part is now
+!!     \f[ (\I W_z\sigma_x-\I W_x\sigma_z)\frac{\partial}{\partial y}=
+!!     \begin{pmatrix} -\I W_x&\I W_z\\ \I W_z&\I W_x
+!!     \end{pmatrix}\frac{\partial}{\partial y} \f]
+!!  -# for the derivatives in the \f$ z \f$-direction the
+!!     procedure is again similar; the spin-orbit part is now
+!!     \f[ (\I W_x\sigma_y-\I W_y\sigma_x)\frac{\partial}{\partial z}=
+!!     \begin{pmatrix} 0&W_x-\I W_y\\ -W_x-\I W_y & 0
+!!     \end{pmatrix}\frac{\partial}{\partial z} \f]
+!>
+!> @param[in] iq
+!> INTEGER, takes the isospin.
+!> @param[in] eshift
+!> REAL(db), takes the energy shift.
+!> @param[in,out] pinn
+!> COMPLEX(db), array, takes the wave function the Hamiltonian is supposed to be applied to.
+!> @param[out] pout
+!> COMPLEX(db), array, returns the Hamiltonian applied to the wave function.
+!--------------------------------------------------------------------------- 
   SUBROUTINE hpsi(iq,eshift,pinn,pout)
     USE Trivial, ONLY: cmulx, cmuly, cmulz
     USE Levels, ONLY: cdervx,cdervy,cdervz

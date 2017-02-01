@@ -1,3 +1,28 @@
+!------------------------------------------------------------------------------
+! MODULE: Modulename
+!------------------------------------------------------------------------------
+! DESCRIPTION: 
+!> @brief
+!!This module computes the total energy and the various contributions to
+!!it in two ways. The first method evaluates the density functional, 
+!!by direct integration to compute the <em> integrated
+!!energy</em> \c ehfint. The second method uses the sum of
+!!single-particle energies plus the rearrangement energies, \f$ E_{3,\rm
+!!corr} \f$ for the density dependent part and \f$ E_{C,\rm corr} \f$ for
+!!Coulomb exchange.
+!>
+!>@details 
+!!The two ways of calculating the energy are assigned to the subroutines
+!!\c integ_energy, which also calculates the rearrangement energies,
+!!and \c sum_energy. Note that since \c integ_energy is always
+!!called briefly before \c sum_energy, the rearrangement energies
+!!are correctly available.
+!!
+!!In addition subroutine \c sum_energies also calculates the summed
+!!spin, orbital, and total angular momenta.
+!!
+!!TODO: SHOULD WE ADD THE EQUATIONS FOR THE ENERGIES HERE?
+!------------------------------------------------------------------------------
 MODULE Energies
   USE Params, ONLY: db,tcoul
   USE Forces
@@ -7,27 +32,70 @@ MODULE Energies
   IMPLICIT NONE
   SAVE
   ! total energies calculated in subroutine "energy" and "hfenergy"
-  REAL(db) :: ehft      ! kinetic energy
-  REAL(db) :: ehf0      ! t0 contribution
-  REAL(db) :: ehf1      ! b1 contribution (current part)
-  REAL(db) :: ehf2      ! b2 contribution (Laplacian part)
-  REAL(db) :: ehf3      ! t3 contribution
-  REAL(db) :: ehfls     ! spin-orbit contribution (time even)
-  REAL(db) :: ehflsodd  ! spin-orbit contribution (odd-odd)
-  REAL(db) :: ehfc      ! Coulomb contribution
-  REAL(db) :: ecorc     ! Slater & Koopman exchange
-  REAL(db) :: ehfint    ! integrated total energy
-  REAL(db) :: efluct1   ! energyfluctuation h**2
-  REAL(db) :: efluct1prev
-  REAL(db) :: efluct2   ! fluctuation h*efluct
-  REAL(db) :: efluct2prev
-  REAL(db) :: tke       ! kinetic energy summed
-  REAL(db) :: ehf       ! Hartree-Fock energy from s.p. levels
-  REAL(db) :: ehfprev
-  REAL(db) :: e3corr    ! rearrangement energy
-  REAL(db) :: orbital(3),spin(3),total_angmom(3)
+  REAL(db) :: ehft            !< kinetic energy
+  REAL(db) :: ehf0            !< t0 contribution
+  REAL(db) :: ehf1            !< b1 contribution (current part)
+  REAL(db) :: ehf2            !< b2 contribution (Laplacian part)
+  REAL(db) :: ehf3            !< t3 contribution which models density dependence
+  REAL(db) :: ehfls           !< spin-orbit contribution (time even)
+  REAL(db) :: ehflsodd        !< spin-orbit contribution (odd-odd)
+  REAL(db) :: ehfc            !< Coulomb contribution
+  REAL(db) :: ecorc           !< Slater & Koopman exchange
+  REAL(db) :: ehfint          !< integrated total energy
+  REAL(db) :: efluct1         !< energyfluctuation \f$ \hat{h}^2 \f$
+  REAL(db) :: efluct1prev     !< energyfluctuation \f$ \hat{h}^2 \f$ of previous iteration
+  REAL(db) :: efluct2         !< fluctuation \f$ \hat{h}\cdot {\tt efluct}\f$
+  REAL(db) :: efluct2prev     !< fluctuation \f$ \hat{h}\cdot {\tt efluct}\f$ of previous iteration
+  REAL(db) :: tke             !< kinetic energy summed
+  REAL(db) :: ehf             !< Hartree-Fock energy from s.p. levels
+  REAL(db) :: ehfprev         !< Hartree-Fock energy from s.p. levels of previous iteration
+  REAL(db) :: e3corr          !< rearrangement energy
+  REAL(db) :: orbital(3)      !< the three components of the total orbital
+                              !!angular momentum in units of \f$ \hbar \f$.
+  REAL(db) :: spin(3)         !< the three components of the total spin in
+                              !!units of \f$ \hbar \f$.
+  REAL(db) :: total_angmom(3) !< the three components of the total
+                              !!angular momentum in units of \f$ \hbar \f$.
 CONTAINS
-  !***************************************************************************
+!---------------------------------------------------------------------------  
+! DESCRIPTION: integ_energy
+!> @brief
+!!The purpose of this subroutine is to calculate the integrated energy.
+!>
+!> @details
+!!This is implemented pretty straightforwardly. The only
+!!programming technique worth noting is that intermediate variables such
+!!as \c rhot for the total density are used to avoid repeating the
+!!lengthy index lists. Compilers will eliminate these by optimization.
+!!
+!!In principle the integration loops in the subroutine could be
+!!combined, but some space is saved by using the array \c worka for
+!!different purposes in different loops.
+!!
+!!The calculation proceeds in the following steps:
+!!  - <b> Step 1:</b> the Laplacian of the densities is calculated in
+!!    \c worka, then the integrals for 
+!!    \c ehf0,\c ehf2, and \c ehf3 are performed.
+!!    After the loop the result for \c ehf3 is also used to calculate
+!!    \c e3corr.
+!!  - <b> Step 2:</b> the integral for \c ehf1 is evaluated
+!!    using \c worka for the \f$ \vec\jmath_q{}^2 \f$ term.
+!!  - <b> Step 3:</b> the spin-orbit contribution of 
+!!    \c ehfls is calculated using \c worka as storage for
+!!    \f$ \nabla\cdot\vec J_q \f$.
+!!  - <b> Step 4:</b> the Coulomb energy \c ehfc is evaluated 
+!!    with the Slater correction taken into account if the
+!!    force's \c ex is nonzero. At the same time the Coulomb correction
+!!    for the summed energy is calculated
+!!    and stored in \c ecorc. It will be used in
+!!    the subroutine \c sum_energy.
+!!  - <b> Step 5: </b> the kinetic energy is integrated for 
+!!    \c ehft. Note that only at this point the correct prefactor
+!!    \f$ \hbar^2/2m \f$ is added; the use of \c tau in other expressions
+!!    assumes its absence.
+!!  - <b> Step 6: </b> Finally all terms are added to produce the total
+!!  energy, \c efundet, from which the pairing energies are subtracted.
+!--------------------------------------------------------------------------- 
   SUBROUTINE integ_energy
     USE Trivial, ONLY: rmulx,rmuly,rmulz
     USE Grids, ONLY: wxyz,der1x,der2x,der1y,der2y,der1z,der2z
@@ -122,7 +190,27 @@ CONTAINS
     ! Step 6: form total energy
     ehfint=ehft+ehf0+ehf1+ehf2+ehf3+ehfls+ehfc-epair(1)-epair(2)
   END SUBROUTINE integ_energy
-  !***************************************************************************
+!---------------------------------------------------------------------------  
+! DESCRIPTION: sum_energy
+!> @brief
+!!This subroutine mainly computes the Koopman sum, but also
+!!sums up a number of other single-particle properties. 
+!>
+!> @details
+!!For systematics, the latter should be done in a different
+!!place, but at present is left here.
+!!
+!!The summation of the total energy uses \c spenerg to compute 
+!!\f[ \sum_k (\epsilon_k-\tfrac1{2}v_k)=\tfrac1{2}\sum_k(2t_k+v_k)=
+!!\tfrac1{2}\sum_k(t_k+\epsilon_k). \f]
+!!The last sum is calculated, the rearrangement corrections 
+!!are added and the pairing energies subtracted.
+!!
+!!The subroutine then sums up the single-particle energy fluctuation
+!!\c sp_efluct1 and \c sp_efluct2, dividing them by the nucleon
+!!number.  Finally the orbital and spin angular
+!!momentum components are summed to form the total ones. 
+!--------------------------------------------------------------------------- 
   SUBROUTINE sum_energy
     USE Moment, ONLY: pnrtot
     INTEGER :: i

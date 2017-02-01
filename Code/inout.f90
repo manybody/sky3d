@@ -1,6 +1,35 @@
+!------------------------------------------------------------------------------
+! MODULE: Modulename
+!------------------------------------------------------------------------------
+! DESCRIPTION: 
+!> @brief
+!!This module contains the procedures for binary input and output 
+!!of the larger fields. 
+!>
+!>@details 
+!!There are two variants, both of which are written
+!!at regular intervals: the wave function file \c wffile and the
+!!files containing the densities and currents. Since the former is
+!!extremely space-consuming, each output normally overwrites the
+!!previous one. These files are intended to be used for a restart, as
+!!initialization input (static solution for one fragment) for another
+!!run, or for a final analysis of the wave functions.
+!!
+!!The densities, on the other hand, are written on a series of file <tt>
+!!nnnnnn.tdd</tt>, where \c nnnnnn is the number of the time step or
+!!iteration. This is useful for later graphical or other types of
+!!analysis.
+!!
+!!\b Note: where the variable name \c wffile is used inside file
+!!names in the following, it should not be taken literally but is
+!!replaced by the character string it contains.
+!!
+!!In addition the routine for printer plots, \c plot_density, is
+!!included in this module, as well as the subroutines \c sp_properties
+!!and \c start_protocol, which do not completely
+!!match the purpose of this module but are placed here for convenience.
+!------------------------------------------------------------------------------
 MODULE Inout
-  ! This module contains routines related to producing output files
-  ! containing wave functions, densities, etc.
   USE Params
   USE Parallel, ONLY: node,localindex,mpi_myproc
   USE Grids
@@ -13,7 +42,53 @@ MODULE Inout
   IMPLICIT NONE
   PRIVATE :: write_one_density,write_vec_density
 CONTAINS
-  !**************************************************************************
+!---------------------------------------------------------------------------  
+! DESCRIPTION: write_wavefunctions
+!> @brief
+!!This subroutine writes the wave functions to the disk and has two modes of
+!!operation depending on whether the code runs on distributed-memory
+!!systems in \c MPI mode or on a shared-memory or single-processor
+!!machine. 
+!>
+!> @details
+!!In both cases it first determines the number of filled
+!!single-particle states <tt> number(iq)</tt>, which need not be the same as
+!!either the number of particles or the number of states, since pairing
+!!may lead to partial occupation and in addition there can be empty
+!!states.
+!!
+!!  - <b> Sequential operation:</b>
+!!    this case is recognized recognized by <tt> mpi_nprocs==1</tt>. Open 
+!!    \c wffile, then write four records  containing general information.
+!!    - <em>Record 1:</em> <tt> iter, nstmax, nneut, nprot, number, npsi, 
+!!      charge_number, mass_number, cm.</tt>
+!!    - <em>Record 2:</em> <tt> nx, ny, nz, dx, dy, dz, wxyz.</tt>
+!!    - <em>Record 3:</em> <tt> x, y, z.</tt>
+!!    - <em>Record 4:</em> <tt> wocc, sp\_energy, sp_parity,
+!!      sp_norm, sp_kinetic, sp_efluct1.</tt>
+!!    .
+!!    These are followed by one record containing information for the \c
+!!    MPI case, which is included here only for compatibility:
+!!    \c node, \c localindex.  This is then followed by a series of
+!!    \c nstloc records (in the sequential case, \c nstloc equals
+!!    \c nstmax), containing the array of <tt> nx*ny*nz*2</tt> wave
+!!    function values for each single-particle state (including spin).
+!!
+!!  - <b> MPI operation:</b> in this case processor #0 writes the same
+!!    general data as in the sequential case onto file \c wffile, which
+!!    is then closed. The purpose of record 5 in this case is to record
+!!    for each wave function (in global index space) which node it is in
+!!    and what the index on that node is. Since each node produces a
+!!    separate output file with only its wave functions, this allows reading
+!!    any wave function correctly from the set of files.
+!!
+!!    Each processor thus only writes the wave function data for its
+!!    locally stored set of \c nstloc wave functions onto files with
+!!    the names composed (in variable \c rsf}) of the number of the
+!!    processor and \c wffile in the form \c nnn.wffile. For
+!!    example, if \c wffile has the value 'Ca40', these files will be
+!!    \c 000.Ca40, \c 001.Ca40, \c 002.Ca40, etc. up to the number of processors.
+!--------------------------------------------------------------------------- 
   SUBROUTINE write_wavefunctions
     USE Parallel, ONLY: mpi_myproc,mpi_nprocs,nstloc,node,localindex
     INTEGER :: nst,iq,number(2)
@@ -46,7 +121,58 @@ CONTAINS
     ENDDO
     CLOSE(UNIT=scratch2,STATUS='KEEP')
   END SUBROUTINE write_wavefunctions
-  !**************************************************************************
+!---------------------------------------------------------------------------  
+! DESCRIPTION: write_densities
+!> @brief
+!!This subroutine produces a file \c iter.tdd with density and
+!!current data for the present time step or iteration with number \c iter. 
+!!In the file name \c iter is given in 6 decimal digits. 
+!>
+!> @details
+!!The record structure is as follows:
+!!
+!!  - <em>Record 1:</em> this contains the variables <tt> iter, time, nx, 
+!!    ny, and nz to define the dimensions of the fields.</tt>
+!!  - <em>Record 2:</em> contains the variables <tt> dx, dy, dz, wxyz, x, 
+!!    y, and z </tt> to allow proper labelling of axes in plots, etc.
+!!  - <em>Further records:</em> for each field to be written, a record is
+!!    produced with the following information:
+!!    -# Name of the field with up to 10 characters
+!!    -# Logical value \c scalar to indicate whether it is a scalar
+!!       (\c .FALSE.) or a vector field (\c .TRUE.).
+!!    -# Logical value \c write_isospin to indicate whether the
+!!       field is summed over protons and neutrons ((\c .FALSE. or not
+!!       (\c .TRUE.). In the latter case the field has a last index
+!!       running from 1 to 2 for neutrons and protons, respectively.  <b>
+!!       This selection applies to all fields equally (except the Coulomb
+!!       potential)</b>.
+!!    .
+!!    After this identification record, the corresponding field itself is
+!!    written. 
+!!    The dimension varies in the following way: 
+!!<table>
+!!<caption id="multi_row">Dimensions of arrays</caption>
+!!<tr><th>scalar<th>write_isospin<th>dimension
+!!<tr><td>.FALSE.<td>.FALSE.<td>(nx,ny,nz)
+!!<tr><td>.FALSE.<td>.TRUE.<td>(nx,ny,nz,2)
+!!<tr><td>.TRUE.<td>.FALSE.<td>(nx,ny,nz,3)
+!!<tr><td>.TRUE.<td>.TRUE.<td>(nx,ny,nz,3,2)
+!!</table>
+!!The <b> selection of fields to be output </b> is handled through variable
+!!\c writeselect consisting of \c nselect characters. Each field
+!!is selected by a one-character code, where both lower and upper case
+!!are acceptable. At present the choices are:
+!!  -<b>R</b>: density \c rho (scalar). Name \c Rho.
+!!  -<b>T</b>: kinetic energy density \c tau (scalar). Name \c Tau
+!!  -<b>U</b>: local mean field \c upot. Name \c Upot.
+!!  -<b>W</b>: Coulomb potential \c wcoul (scalar). This has to be
+!!   handled specially, since it has no isospin index. Name \c Wcoul.
+!!  -<b>C</b>: current density \c current (vector). Name \c Current.
+!!  -<b>S</b>: spin density \c sdens (vector). Name \c Spindens.
+!!  -<b>O</b>: spin-orbit density \c sodens. Name \c s-o-Dens.
+!!
+!!This system is set up to be easily modified for writing additional fields.
+!--------------------------------------------------------------------------- 
   SUBROUTINE write_densities
     CHARACTER(10) :: filename
     CHARACTER(1) :: c
@@ -79,7 +205,17 @@ CONTAINS
     END DO
     CLOSE(UNIT=scratch)
   END SUBROUTINE write_densities
-  !**************************************************************************
+!---------------------------------------------------------------------------  
+! DESCRIPTION: write_one_density
+!> @brief
+!!This subroutines does the actual output for \c write_densities in
+!!the case of a scalar field. Its functioning should be clear from the
+!!description above.
+!> @param[in] name
+!> INTEGER, takes the name of the density.
+!> @param[in] values
+!> REAL(db), takes the density.
+!--------------------------------------------------------------------------- 
   SUBROUTINE write_one_density(name,values)
     CHARACTER(*),INTENT(IN) :: name
     REAL(db),INTENT(IN) :: values(nx,ny,nz,2)
@@ -94,7 +230,17 @@ CONTAINS
        WRITE(scratch) a
     END IF
   END SUBROUTINE write_one_density
-  !**************************************************************************
+!---------------------------------------------------------------------------  
+! DESCRIPTION: write_vec_density
+!> @brief
+!!This also does the actual output for subroutines \c write_densities 
+!!for the case of a vector field. Its functioning should be clear from the
+!!description above.
+!> @param[in] name
+!> INTEGER, takes the name of the density.
+!> @param[in] values
+!> REAL(db), takes the vector density.
+!--------------------------------------------------------------------------- 
   SUBROUTINE write_vec_density(name,values)
     CHARACTER(*),INTENT(IN) :: name
     REAL(db),INTENT(IN) :: values(nx,ny,nz,3,2)
@@ -109,7 +255,19 @@ CONTAINS
        WRITE(scratch) a
     END IF
   END SUBROUTINE write_vec_density
-  !**************************************************************************
+!---------------------------------------------------------------------------  
+! DESCRIPTION: plot_density
+!> @brief
+!!Produces a simple printer plot of the density distribution in the
+!!reaction plane. This is not supposed to replace better plotting codes,
+!!but simply allows a quick glance at what is happening in the code,
+!!even while it is running.
+!>
+!> @details
+!!It is based on a very old routine found at ORNL and was translated
+!!into modern Fortran. It uses helper function \c bplina for
+!!interpolation.  
+!--------------------------------------------------------------------------- 
   SUBROUTINE plot_density
     REAL(db),PARAMETER :: density_scale=0.14D0
     INTEGER,PARAMETER :: ixsc=10,izsc=6
@@ -162,9 +320,27 @@ CONTAINS
     END IF
     WRITE(*,'(A,12(F6.2,4X),F6.2)') '  x= ',(xco(i),i=1,ntkx)
   END SUBROUTINE plot_density
-  !**************************************************************************
+!---------------------------------------------------------------------------  
+! DESCRIPTION: bplina
+!> @brief
+!!Does a bilinear interpolation of fun(nx,nz), on xar(n) and zar(m)
+!>
+!> @param[in] n
+!> INTEGER, takes the number of grid points in x-direction.
+!> @param[in] m
+!> INTEGER, takes the number of grid points in z-direction.
+!> @param[in] xar
+!> REAL(db), array, takes coordinates in x direction.
+!> @param[in] zar
+!> REAL(db), array, takes coordinates in z direction.
+!> @param[in] fun
+!> REAL(db), array, takes the function.
+!> @param[in] xcu
+!> REAL(db), takes the x-value at which the interpolation is performed
+!> @param[in] zcu
+!> REAL(db), takes the z-value at which the interpolation is performed  
+!--------------------------------------------------------------------------- 
   PURE FUNCTION bplina(n,m,xar,zar,fun,xcu,zcu) RESULT(ff)
-    ! to do a bilinear inter. of fun(nx,nz), on xar(nx) and zar(nz) 
     INTEGER,INTENT(IN) :: n,m
     REAL(db),INTENT(IN) :: xar(n),zar(m),fun(n,m),xcu,zcu
     REAL(db) :: ff,dxf,dzf
@@ -186,7 +362,33 @@ CONTAINS
     ff=dxf*(fun(icu+1,jcu+1)*dzf+fun(icu+1,jcu)*(1.0D0-dzf)) &
          + (1.D0-dxf)*(fun(icu,jcu+1)*dzf+fun(icu,jcu)*(1.0D0-dzf))
   END FUNCTION bplina
-  !**************************************************************************
+!---------------------------------------------------------------------------  
+! DESCRIPTION: sp_properties
+!> @brief
+!!In this routine the kinetic energy, orbital and spin angular momenta
+!!expectation values, \c sp_kinetic, \c sp_orbital} and
+!!\c sp_spin of the single-particle states are calculated. The
+!!latter are both three-dimensional vectors.
+!>
+!> @details
+!!Note that the single-particle energy \c sp_energy itself is not
+!!calculated here but in the main static and dynamic routines, since it
+!!is obtained by applying the single-particle Hamiltonian, which is
+!!done more conveniently there.
+!!
+!!The procedure is quite simple: in a loop over wave functions the
+!!active one is copied into \c pst for convenience. Then its three
+!!directional derivatives \c psx, \c psy, and \c psz and
+!!Laplacian \c psw are calculated. In the big loop over the grid they
+!!are combined to the desired matrix elements; the only technical point
+!!to remark is that since the result must be real, efficiency can be
+!!achieved by formulating the complex products in an explicit way. Then
+!!\c kin contains the kinetic energy (without the \f$ \hbar^2/2m \f$), 
+!!\c cc the orbital and \c ss then spin matrix elements.
+!!
+!!Finally only the volume element, the factor of one half for the
+!!spin ad the prefactor of the kinetic energy are added. 
+!--------------------------------------------------------------------------- 
   SUBROUTINE sp_properties
     USE Trivial, ONLY: cmulx,cmuly,cmulz
     INTEGER :: nst,ix,iy,iz,is,ixx,iyy,izz
@@ -260,7 +462,19 @@ CONTAINS
     END DO
     DEALLOCATE(pst,psx,psy,psz,psw)
   END SUBROUTINE sp_properties
-  !************************************************************
+!---------------------------------------------------------------------------  
+! DESCRIPTION: Routinename
+!> @brief
+!!This is given a file name and a character
+!!string for a header line to start the file contents. It is used for
+!!the <tt>*.res</tt> files.  If the file already exists, nothing is done,
+!!since this probably a restart job and output should just be added at
+!!the end of the file. 
+!> @param[in] filename
+!> CHARACTER, array, takes the filename.
+!> @param[in] header
+!> CHARACTER, array, takes the intended header for the file.
+!--------------------------------------------------------------------------- 
   SUBROUTINE start_protocol(filename,header)
     ! if the protocol file exists, do nothing, since later writes will be
     ! appended. Otherwise write the title and header lines into the new file

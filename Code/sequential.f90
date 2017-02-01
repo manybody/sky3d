@@ -1,3 +1,11 @@
+!------------------------------------------------------------------------------
+! MODULE: Parallel
+!------------------------------------------------------------------------------
+! DESCRIPTION: 
+!> @brief
+!!contains the same routines as in file \c parallel.f90, but with mostly empty 
+!!functions to enable sequential running. 
+!------------------------------------------------------------------------------
 MODULE Parallel
   USE Params, ONLY: wflag,db
   USE Levels, ONLY: nstmax,npsi,nstloc
@@ -21,30 +29,35 @@ CONTAINS     !  all dummy subroutines to run on a sequential machine
     wflag=.TRUE.
   END SUBROUTINE init_all_mpi
   !************************************************************************
+  !> dummy function for the MPI routine
   SUBROUTINE mpi_init(ierror)
     INTEGER :: ierror
     STOP ' MPI_INIT: parallel calls inhibited '
     RETURN
   END SUBROUTINE mpi_init
   !************************************************************************
+  !> dummy function for the MPI routine
   SUBROUTINE mpi_comm_size(comm_world,nprocs,ierror)
     INTEGER :: ierror, nprocs, comm_world
     STOP ' MPI_COMM_SIZE: parallel calls inhibited '
     RETURN
   END SUBROUTINE mpi_comm_size
   !************************************************************************
+  !> dummy function for the MPI routine
   SUBROUTINE mpi_comm_rank(comm_world,myproc,ierror)
     INTEGER :: ierror, myproc, comm_world
     STOP ' parallel calls inhibited '
     RETURN
   END SUBROUTINE mpi_comm_rank
   !************************************************************************
+  !> dummy function for the MPI routine
   SUBROUTINE mpi_get_processor_name(processor_name,proc_namelen,ierror)
     INTEGER :: ierror, processor_name, proc_namelen
     STOP ' parallel calls inhibited '
     RETURN
   END SUBROUTINE mpi_get_processor_name
   !************************************************************************
+  !> dummy function for the MPI routine
   SUBROUTINE mpi_barrier (comm_world, ierror)
     INTEGER :: ierror, comm_world
     STOP ' parallel calls inhibited '
@@ -61,6 +74,7 @@ CONTAINS     !  all dummy subroutines to run on a sequential machine
     END FORALL
   END SUBROUTINE associate_nodes
   !************************************************************************
+  !> dummy function for the MPI routine
   SUBROUTINE mpi_allreduce(rho,tmp_rho,length,        &
        i_double_precision,sum,  &
        comm_world,ierror)

@@ -1,3 +1,58 @@
+!------------------------------------------------------------------------------
+! Programm: tdhf3d
+!------------------------------------------------------------------------------
+! DESCRIPTION: 
+!> @brief
+!!This is the main program that organizes the reading of the input and
+!!funnels the calculation into the correct subroutines.
+!>
+!>@details
+!!It consists of a number of simple steps. They are:
+!! -# initialize \c MPI in case of an \c MPI parallel job.
+!!    Start reading from standard input  beginning with 
+!!    namelist files for any changes in the file names.
+!! -# read the definition of the force to be used and set
+!!    it up.
+!! -# read namelist main, which contains the
+!!    overall controlling parameters. The choice of \c imode is used to
+!!    set up \c tstatic and \c tdynamic as logical variables. In
+!!    addition, if this is a restart, the number of fragments is set to
+!!    one. The properties of this one fragment are then filled in in
+!!    subroutine \c getin_fragments.
+!! -# read the grid definition.  With the dimensions known, all grid-based
+!!    arrays (but not the wave functions) can be allocated and the
+!!    initialization of the \c FFTW system can be done.
+!! -# the appropriate namelist is read for the static or
+!!    dynamic case, defining some parameters in those modules.
+!! -# determine wave function numbers. The way this is
+!!    done depends on the choice of \c nof. For positive \c nof, the
+!!    fragment files are consulted to find out the properties of each and
+!!    add up the numbers. For \c nof=0 the numbers are taken from
+!!    namelist \c static, which was read before. If \c nof<0, they
+!!    are also given in namelist \c static, but the wave functions will
+!!    be replaced by user-calculated ones.
+!! -# now that the numbers are known, the wave function
+!!    distribution over nodes is computed or set to trivial for a
+!!    sequential calculation, and the the arrays related with wave
+!!    functions are allocated.
+!! -# the initial values of the wave functions are
+!!    calculated. For \c nof>0 the wave functions are read from the
+!!    fragment files and inserted into the proper positions. For \c nof=0 the routine
+!!    \c harmosc in module \c Static is called to calculate
+!!    harmonic-oscillator wave function, and for \c nof<0 the routine
+!!    \c init_user does an arbitrary user initialization.
+!! -# the mean-field arrays are zeroed and the Coulomb
+!!    solver is initialized.
+!! -# the calculation branches into either static or dynamic mode.
+!!
+!!    In the static calculation, \c init_static just prints some
+!!    information and sets up damping  and
+!!    \c statichf does the real calculation.
+!!
+!!    In the dynamic case, the subroutine \c dynamichf does all the
+!!    work.
+!! -# finally the \c MPI system is terminated.
+!------------------------------------------------------------------------------
 PROGRAM tdhf3d  
   USE Params
   USE Fourier
