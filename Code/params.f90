@@ -10,7 +10,7 @@ MODULE Params
   REAL(db),PARAMETER :: pi=3.14159265358979D0
   REAL(db),PARAMETER :: hbc=197.32164D0
   REAL(db),PARAMETER :: e2=1.43989D0
-  COMPLEX(db)        :: cmplxone=CMPLX(1.0,0.0),cmplxzero=CMPLX(0.0,0.0)
+  COMPLEX(db)        :: cmplxone=CMPLX(1.0d0,0.0d0),cmplxzero=CMPLX(0.0d0,0.0d0)
   REAL(db) :: r0=1.2D0
   !**********************************************************************
   !  names of files and units to be used                                *

@@ -402,38 +402,57 @@ CONTAINS
     ! Step 2: Calculate lower tringular of h-matrix and overlaps.
     !***********************************************************************
     IF(tmpi.AND.ttime) CALL mpi_start_timer(2)
-    !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,nst2,ix,iy,is,iz) SCHEDULE(STATIC)
+!    !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,nst2,ix,iy,is,iz) SCHEDULE(STATIC)
+!    DO nst=1,nstloc_x(iq)
+!      DO is = 1,2
+!        DO iz = 1,nz
+!          DO nst2=1,nstloc_y(iq)
+!            ix=globalindex_x(nst,iq)
+!            iy=globalindex_y(nst2,iq)
+!            IF(ix>iy) THEN 
+!              IF(diagonalize) THEN
+!                hmatr_lin(nst,nst2)=hmatr_lin(nst,nst2)+&
+!                                    CONJG(overlap(psi_y(:,:,iz:iz,is:is,nst2),hampsi_x(:,:,iz:iz,is:is,nst)))
+!              ELSE
+!                unitary_h(nst,nst2)=CMPLX(0.0d0,0.0d0)
+!              END IF
+!              rhomatr_lin(nst,nst2)=rhomatr_lin(nst,nst2)+&
+!                                    overlap(psi_x(:,:,iz:iz,is:is,nst),psi_y(:,:,iz:iz,is:is,nst2))
+!            ENDIF
+!            IF(ix==iy) THEN
+!              rhomatr_lin(nst,nst2)=rhomatr_lin(nst,nst2)+&
+!                                    overlap(psi_x(:,:,iz:iz,is:is,nst),psi_y(:,:,iz:iz,is:is,nst2))
+!              sp_norm(ix)=REAL(rhomatr_lin(nst,nst2))
+!              IF(diagonalize) THEN
+!                hmatr_lin(nst,nst2)=sp_energy(ix)!account for hampsi=(h-spe)|psi>
+!              ELSE
+!                unitary_h(nst,nst2)=CMPLX(1.0d0,0.0d0)
+!              END IF
+!            END IF
+!          ENDDO    !for nst2
+!        ENDDO    !for b
+!      ENDDO    !for z
+!    ENDDO    !for nst
+!    !$OMP END PARALLEL DO
+    unitary_h=0.0d0
+    CALL ZGEMM('C','N',nstloc_x(iq),nstloc_y(iq),nx*ny*nz*2,cmplxone,psi_x,&
+               nx*ny*nz*2,psi_y,nx*ny*nz*2,cmplxzero,rhomatr_lin,nstloc_x(iq))
+    CALL ZGEMM('C','N',nstloc_x(iq),nstloc_y(iq),nx*ny*nz*2,cmplxone,hampsi_x,&
+               nx*ny*nz*2,psi_y,nx*ny*nz*2,cmplxzero,hmatr_lin,nstloc_x(iq)) 
     DO nst=1,nstloc_x(iq)
-      DO is = 1,2
-        DO iz = 1,nz
-          DO nst2=1,nstloc_y(iq)
-            ix=globalindex_x(nst,iq)
-            iy=globalindex_y(nst2,iq)
-            IF(ix>iy) THEN 
-              IF(diagonalize) THEN
-                hmatr_lin(nst,nst2)=hmatr_lin(nst,nst2)+&
-                                    CONJG(overlap(psi_y(:,:,iz:iz,is:is,nst2),hampsi_x(:,:,iz:iz,is:is,nst)))
-              ELSE
-                unitary_h(nst,nst2)=CMPLX(0.0d0,0.0d0)
-              END IF
-              rhomatr_lin(nst,nst2)=rhomatr_lin(nst,nst2)+&
-                                    overlap(psi_x(:,:,iz:iz,is:is,nst),psi_y(:,:,iz:iz,is:is,nst2))
-            ENDIF
-            IF(ix==iy) THEN
-              rhomatr_lin(nst,nst2)=rhomatr_lin(nst,nst2)+&
-                                    overlap(psi_x(:,:,iz:iz,is:is,nst),psi_y(:,:,iz:iz,is:is,nst2))
-              sp_norm(ix)=REAL(rhomatr_lin(nst,nst2))
-              IF(diagonalize) THEN
-                hmatr_lin(nst,nst2)=sp_energy(ix)!account for hampsi=(h-spe)|psi>
-              ELSE
-                unitary_h(nst,nst2)=CMPLX(1.0d0,0.0d0)
-              END IF
-            END IF
-          ENDDO    !for nst2
-        ENDDO    !for b
-      ENDDO    !for z
+      DO nst2=1,nstloc_y(iq)
+        ix=globalindex_x(nst,iq)
+        iy=globalindex_y(nst2,iq)
+        IF(ix==iy) THEN
+          sp_norm(ix)=REAL(rhomatr_lin(nst,nst2))
+          IF(diagonalize) THEN
+            hmatr_lin(nst,nst2)=sp_energy(ix)!account for hampsi=(h-spe)|psi>
+          ELSE
+            unitary_h(nst,nst2)=CMPLX(1.0d0,0.0d0)
+          END IF
+        END IF
+      ENDDO    !for nst2
     ENDDO    !for nst
-    !$OMP END PARALLEL DO
     IF(tmpi.AND.ttime) CALL mpi_stop_timer(2,'Calc matrix: ')
     !***********************************************************************
     ! Step 3: Calculate eigenvectors of h if wanted
