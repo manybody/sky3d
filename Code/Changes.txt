@@ -42,7 +42,23 @@ Step 2.0:
 - Local arrays in subroutine made allocatable arrays.
 
 
+Step 3.0:
 
+-all files: Added comments for documentation with doxygen
+
+-static.f90: Exchanged Lapack routine ZHBEVD with ZHEEVD
+
+-Makefile: combined all Makefiles into one. The tartgets are:
+
+seq: produces the sequential code with gfortran.(default)
+mpi: produces MPI parallelized code (flags are fit for gfortran).
+omp: produces OpenMP parallelized code with gfortran.
+debug, seq_debug: sequential code with debug flags with gfortran.
+omp_debug: OpenMP with debug flags with gfortran.
+mpi_debug:MPI with debug flags. 
+mpi-omp: produces code with hybrid OpenMP+MPI parallelization(flags are fit for gfortran). 
+ifort ifort_seq: sequential code with ifort.
+ifort_omp: OpenMP parallelized code with ifort.
 
 
   

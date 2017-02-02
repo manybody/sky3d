@@ -472,23 +472,19 @@ CONTAINS
 ! DESCRIPTION: diagstep
 !> @brief
 !!This subroutine performs a diagonalization of the single-particle
-!!Hamiltonian using the LAPACK routine \c ZHBEVD. This is of course
+!!Hamiltonian using the LAPACK routine \c ZHEEVD. This is of course
 !!done separately for protons and neutrons indexed by \c iq. The
 !!matrix \c hmatr is produced in \c grstep.
 !>
 !> @details
-!!The details here depend on the requirements of this routine, which is
-!!written in Fortran-77 and so has a complicated calling sequence with
-!!many arguments used for intermediate storage.
-!!
-!!We therefore do not give excessive detail here but summarize the main
+!!We do not give excessive detail here but summarize the main
 !!points, which should be easy to analyze. The steps are:
 !!
-!!  - <b>Step 1</b>: the matrix is copied into lower-diagonal form into
-!!    array hmatr_lin. The \c ZHBEVD is called, which leaves as
+!!  - <b>Step 1</b>: the matrix is copied into
+!!    array \c unitary. The \c ZHEEVD is called, which leaves as
 !!    main results the vector of eigenvalues \c eigen and the unitary
 !!    matrix \c unitary describing the transformation from the
-!!    original states to the diagonalized ones. The latter matrix is also
+!!    original states to the diagonalized ones. The latter matrix is
 !!    stored in lower-diagonal form.
 !!  - <b>Step 2: transform states</b>: the matrix \c unitary is used
 !!    to form the appropriate linear combinations of the original
@@ -514,36 +510,30 @@ CONTAINS
     INTEGER :: nst,nst2,noffset
     INTEGER :: infoconv
     REAL(db) :: eigen(nstmax)
-    COMPLEX(db) :: unitary(nstmax,nstmax)
+    COMPLEX(db) :: unitary(nlin,nlin)
     COMPLEX(db), ALLOCATABLE :: psiw(:,:,:,:)          ! work space
     COMPLEX(db), ALLOCATABLE :: ps1(:,:,:,:,:)
-    COMPLEX(db) :: hmatr_lin(nlin+1,nlin)
     COMPLEX(db) :: cwork(2*nlin*nlin)
     REAL(db)    :: rwork(2*nlin*nlin+5*nlin+1)
     INTEGER     :: iwork(5*nlin+3)
     INTERFACE
-       SUBROUTINE zhbevd( jobz, uplo, n, kd, ab, ldab, w, z, ldz, work, &
+       SUBROUTINE zheevd( jobz, uplo, n, a, lda, w, work, &
             lwork, rwork, lrwork, iwork, liwork, info )
          USE Params, ONLY: db
          CHARACTER(1) :: jobz, uplo
-         INTEGER :: info, kd, ldab, ldz, liwork, lrwork, lwork, n, iwork(*)
+         INTEGER :: info, ldab, liwork, lrwork, lwork, n, iwork(*)
          DOUBLE PRECISION ::  rwork( * ), w( * )
-         COMPLEX(8) :: ab( ldab, * ), work( * ), z( ldz, * )
-         INTENT(IN) :: jobz,uplo,n,kd,ldab,ldz,lwork,lrwork,liwork
-         INTENT(INOUT) :: ab
-         INTENT(OUT) :: w,z,work,rwork,iwork,info
-       END SUBROUTINE zhbevd
+         COMPLEX(8) :: a( lda, * ), work( * )
+         INTENT(IN) :: jobz,uplo,n,lda,lwork,lrwork,liwork
+         INTENT(INOUT) :: a
+         INTENT(OUT) :: w,work,rwork,iwork,info
+       END SUBROUTINE zheevd
     END INTERFACE
-    ! Step 1: copy matrix into symmetric storage mode, then diagonalize
+    ! Step 1: copy matrix, then diagonalize
     noffset=npmin(iq)-1
-    DO nst=npmin(iq),npsi(iq)
-       DO nst2=nst,npsi(iq)
-          hmatr_lin(1+nst2-nst,nst-noffset)=&
-               0.5D0*(CONJG(hmatr(nst,nst2))+hmatr(nst2,nst))
-       ENDDO
-    ENDDO
-    CALL ZHBEVD('V','L',nlin,nlin,hmatr_lin,nlin+1,eigen,unitary,nstmax, &
-         cwork,nlin*nlin*2,rwork,2*nlin*nlin+5*nlin+1,       &
+    unitary=hmatr(npmin(iq):npsi(iq),npmin(iq):npsi(iq))
+    CALL ZHEEVD('V','L',nlin,unitary,nlin,eigen, &
+         cwork,nlin*nlin*2,rwork,2*nlin*nlin+5*nlin+1, &
          iwork,5*nlin+3,infoconv)
     !  Step 2: transform states, replace original ones
     IF(tlarge) THEN
