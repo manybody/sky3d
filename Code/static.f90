@@ -438,7 +438,7 @@ CONTAINS
     CALL ZGEMM('C','N',nstloc_x(iq),nstloc_y(iq),nx*ny*nz*2,cmplxone,psi_x,&
                nx*ny*nz*2,psi_y,nx*ny*nz*2,cmplxzero,rhomatr_lin,nstloc_x(iq))
     !$OMP SECTION
-    CALL mpi_wf_1d2x(hampsi,hampsi_x,iq)
+    IF(tmpi) CALL mpi_wf_1d2x(hampsi,hampsi_x,iq)
     !$OMP END PARALLEL SECTIONS
     CALL ZGEMM('C','N',nstloc_x(iq),nstloc_y(iq),nx*ny*nz*2,cmplxone,hampsi_x,&
                nx*ny*nz*2,psi_y,nx*ny*nz*2,cmplxzero,hmatr_lin,nstloc_x(iq)) 
