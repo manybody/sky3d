@@ -390,18 +390,16 @@ CONTAINS
       ALLOCATE(psi_x(nx,ny,nz,2,nstloc_x(iq)),psi_y(nx,ny,nz,2,nstloc_y(iq)),&
                hampsi_x(nx,ny,nz,2,nstloc_x(iq)))
       CALL mpi_wf_1d2x(psi,psi_x,iq)
-      CALL mpi_wf_1d2x(hampsi,hampsi_x,iq)
+!      CALL mpi_wf_1d2x(hampsi,hampsi_x,iq)
       CALL mpi_wf_x2y(psi_x,psi_y,iq)
     ELSE
       psi_x     => psi(:,:,:,:,npmin(iq):npsi(iq))
       psi_y     => psi(:,:,:,:,npmin(iq):npsi(iq))
       hampsi_x  => hampsi(:,:,:,:,npmin(iq):npsi(iq))
     END IF
-    IF(tmpi.AND.ttime) CALL mpi_stop_timer(2,'Comm 1d->2d: ')
     !***********************************************************************
     ! Step 2: Calculate lower tringular of h-matrix and overlaps.
     !***********************************************************************
-    IF(tmpi.AND.ttime) CALL mpi_start_timer(2)
 !    !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,nst2,ix,iy,is,iz) SCHEDULE(STATIC)
 !    DO nst=1,nstloc_x(iq)
 !      DO is = 1,2
@@ -435,8 +433,13 @@ CONTAINS
 !    ENDDO    !for nst
 !    !$OMP END PARALLEL DO
     unitary_h=0.0d0
+    !$OMP PARALLEL SECTIONS
+    !$OMP SECTION
     CALL ZGEMM('C','N',nstloc_x(iq),nstloc_y(iq),nx*ny*nz*2,cmplxone,psi_x,&
                nx*ny*nz*2,psi_y,nx*ny*nz*2,cmplxzero,rhomatr_lin,nstloc_x(iq))
+    !$OMP SECTION
+    CALL mpi_wf_1d2x(hampsi,hampsi_x,iq)
+    !$OMP END PARALLEL SECTIONS
     CALL ZGEMM('C','N',nstloc_x(iq),nstloc_y(iq),nx*ny*nz*2,cmplxone,hampsi_x,&
                nx*ny*nz*2,psi_y,nx*ny*nz*2,cmplxzero,hmatr_lin,nstloc_x(iq)) 
     DO nst=1,nstloc_x(iq)
@@ -453,7 +456,7 @@ CONTAINS
         END IF
       ENDDO    !for nst2
     ENDDO    !for nst
-    IF(tmpi.AND.ttime) CALL mpi_stop_timer(2,'Calc matrix: ')
+    IF(tmpi.AND.ttime) CALL mpi_stop_timer(2,'CalcMatrix+Comm1d->2d: ')
     !***********************************************************************
     ! Step 3: Calculate eigenvectors of h if wanted
     !***********************************************************************
