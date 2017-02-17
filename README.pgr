@@ -1,0 +1,38 @@
+This version from 16. February 2017 contains a first
+implementation of constraint iteration. 
+
+The scheme is briefly explained in 'constrait-iteration.pdf'
+in the directory 'Doc'.
+
+The majority of changes is collected in the new file
+'constraint.f90'. A few calls to this are implemented in
+'static.f90'. These lines are easily found by searching
+for the pattern 'constraint'. 
+
+Note that we have also corrected the definition of the 
+dimensionless quadrupole momenta 'beta20', 'beta22' in
+'moment.f90' by introducing the appropriate scaling factor
+for r.m.s. radii, see the variable 'r0rms'.
+
+
+Sample input and output is given in 'test_constraint.tgz' in the
+directory 'Test'. The input file 'for005' reads:
+ &files wffile='O16' /
+ &force name='SV-bas', pairing='NONE' /
+ &main mprint=10,mplot=10000,
+  mrest=100,writeselect='rs',
+  imode=1,tfft=T,nof=0 /
+ &grid nx=24,ny=24,nz=24,dx=1.0,dy=1.0,dz=1.0,
+        periodic=F /
+ &static nprot=8, nneut=8,
+  radinx=3.0,radiny=3.0,radinz=3.0,
+  x0dmp=0.20,e0dmp=100.0,tdiag=T,tlarge=F,
+  maxiter=1000,serr=1.e-8 /
+ &constraint alpha20_wanted=0.1,damprad=12D0,dampgamma=1D0,
+    qepsconstr=0.2D0 /
+
+
+The last entry 'constraint' is new and activates the
+constraint calculations. If this line is absent, the code
+switches automatically to the old version of unconstrained
+calculations.

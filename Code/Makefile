@@ -49,7 +49,7 @@ tabc_omp            : export EXEC_SKY = sky3d.tabc_omp
 #
 seq omp mpi debug seq_debug mpi_debug omp_debug mpi-omp tabc tabc_seq tabc_omp ifort ifort_seq ifort_omp:
 	@$(MAKE) -f $(firstword $(MAKEFILE_LIST)) makeit
-	
+
 clean:
 	rm -f *.o *.mod
 
@@ -64,7 +64,7 @@ clean-exec:
 OBJS   = params.o grids.o levels.o fourier.o forces.o $(PARALLEL_SKY) \
 	inout.o coulomb.o trivial.o densities.o fragments.o twobody.o \
 	energies.o static.o meanfield.o dynamic.o pairs.o moment.o \
-	main3d.o user.o external.o abso_bc.o $(LINALG_SKY)
+	main3d.o user.o external.o abso_bc.o constraint.o $(LINALG_SKY)
 #
 LINKERFLAGS_SKY    =  $(COMPILERFLAGS_SKY)
 #
@@ -129,7 +129,11 @@ meanfield.o : meanfield.f90 params.o densities.o forces.o grids.o coulomb.o \
 pairs.o : pairs.f90 forces.o grids.o levels.o densities.o
 
 static.o : static.f90 params.o densities.o grids.o \
-	levels.o moment.o energies.o inout.o pairs.o meanfield.o $(LINALG_SKY)
+	levels.o moment.o energies.o inout.o pairs.o \
+        constraint.o meanfield.o $(LINALG_SKY)
+
+constraint.o : constraint.f90 params.o densities.o grids.o \
+	levels.o
 
 dynamic.o : dynamic.f90 params.o densities.o grids.o trivial.o \
 	levels.o moment.o energies.o inout.o meanfield.o $(PARALLEL_SKY) \

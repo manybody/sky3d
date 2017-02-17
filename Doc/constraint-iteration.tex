@@ -1,0 +1,189 @@
+
+% skyax.tex: complements the Fortran code 'skyax.f'  
+%
+%
+\documentstyle[12pt]{article}
+
+\textwidth 16cm
+\textheight 20.5cm
+\topmargin  -1.5cm
+\oddsidemargin -0cm
+\evensidemargin -0cm
+\parindent 0cm
+\parskip 33pt
+%\pagestyle{empty}
+
+
+
+\newcommand{\st}{^+}
+\newcommand{\ue}{^{\mbox{}}}
+\newcommand{\dfrac}[2]{{\displaystyle\frac{#1}{#2}}}
+\newcommand{\sfrac}[2]{{\textstyle\frac{#1}{#2}}}
+\newcommand{\home}{\hbar\omega}
+\newcommand{\be}{\begin{equation}}
+\newcommand{\ee}{\end{equation}}
+\newcommand{\eel}[1]{\label{#1} \end{equation} \marginpar{#1} }
+\newcommand{\bea}{\begin{eqnarray}}
+\newcommand{\eea}{\end{eqnarray}}
+\newcommand{\cJ}{{\cal J}}
+\newcommand{\ncJ}{\nabla {\cal J}}
+\newcommand{\sna}{\sigma \cdot \nabla}
+\newcommand{\psa}{\psi_\alpha}
+\newcommand{\psap}{\psi_\alpha^{(+)}}
+\newcommand{\psam}{\psi_\alpha^{(-)}}
+\newcommand{\psapm}{\psi_\alpha^{(\pm)}}
+\newcommand{\mmp}{m_\alpha^{(+)}}
+\newcommand{\mmm}{m_\alpha^{(-)}}
+\newcommand{\up}[1]{^{\mbox{\small(#1)}}}
+\newcommand{\comm}[1]{\\{\sl Comment: #1}}
+
+
+\setlength{\unitlength}{1cm}
+
+
+
+
+\begin{document}
+
+%\renewcommand{\baselinestretch}{1.8}
+\renewcommand{\topfraction}{0.8}
+\renewcommand{\textfraction}{0.2}
+\renewcommand{\floatpagefraction}{0.8}
+\renewcommand{\arraystretch}{1.5}
+
+
+
+\title{Iteration scheme with constraints}
+\author{P.-G. Reinhard}
+\date{7. November 2007}
+\maketitle
+
+Here, we summarize the constraint iteration scheme published first in
+{``Density as a constraint and the separation of internal excitation
+  energy in {TDHF}''}, {R.Y. Cusson et al}, {Z. Phys. A }, {\bf 320}
+(1985) 475 and which has been succesfully been used in several
+applications since. (Note that there are similarities to the ``augmented
+Lagrangian'' method which have not yet been fully worked out.)
+
+
+The constrained problem is:
+\be
+    E = \mbox{stationary}
+    \qquad , \qquad
+    \langle Q \rangle = Q_0
+\ee
+Variation yields the EoM
+\be
+    \frac{\partial E}{\partial \varphi^*} = h \varphi = \varepsilon \varphi
+    \qquad \mbox{together with} \qquad
+    h \perp Q
+\ee
+This is solved by adding a constraining force to the functional, i.e.
+\be
+    \frac{\partial (E-\lambda \langle Q \rangle)}{\partial \varphi^*}
+    =
+    (h-\lambda) \varphi = \varepsilon \varphi
+\ee
+Thus far the theoretical foundations.
+
+The practical iteration goes as follows:
+\begin{description}
+ \item{{\bf Start:}} Given a stage with
+       \begin{center}
+       \begin{tabular}{ll}
+       wavefunction & $\Phi^{(n)}$ \\
+       Lagrange parameter & $\lambda^{(n)}$ \\
+       actual Q-momentum &
+          $Q^{(n)} = \langle\Phi^{(n)}|Q|\Phi^{(n)}\rangle$
+       \end{tabular}
+       \end{center}
+ \item{{\bf $h$-step:}} Do one normal wavefunction iteration
+       \be
+        |\tilde{\Phi}\rangle
+        =
+        {\cal O} \left(1-{\cal D}[h-\lambda^{(n)}Q]\right)
+           |\Phi^{(n)}\rangle
+       \label{hstep}
+       \ee
+       where ${\cal O}$ means orthonormalization and ${\cal D}$
+       damping.
+       This yields a new value for the deformation
+       $$
+         \tilde{Q} = \langle\tilde{\Phi}|Q|\tilde{\Phi}\rangle
+       $$
+\item{$Q$-correction:} It is very probable that $\tilde{Q}\neq Q_0$.
+       Correct for this by
+       \be
+        |\Phi^{(n+1)}\rangle
+        =
+        {\cal O} \left(1-\gamma Q\right) |\tilde{\Phi}\rangle
+       \label{Qstep}
+       \ee
+       The stepsize is
+       \be
+         \gamma = \frac{\tilde{Q}-Q_0}{2\langle Q_{ph}^2\rangle}
+       \label{Qsize}
+       \ee
+       which is adjusted such that
+       $$
+         Q^{(n+1)} \approx \tilde{Q} - 2\gamma \langle Q_{ph}^2\rangle
+         = Q_0
+       $$
+\item{{\bf Update $\lambda$:}} The fact that
+       $$
+         \tilde{Q} \neq Q^{(n)}
+       $$
+       hints that the $\lambda^{(n)}$ did not yet correctly project
+       out the $Q$-component in $h$. We correct
+       \be
+         \lambda^{(n+1)} = \lambda^{(n)} + \delta \lambda
+         \qquad , \qquad
+          \delta \lambda =
+          \frac{\langle Q_{ph} \left(h - \lambda^{(n)} Q\right)\rangle}
+               {\langle Q_{ph}^2\rangle}
+       \label{lstep}
+       \ee
+       This update aims at fulfilling
+       $$
+        \langle Q_{ph} \left(h - (\lambda^{(n)} + \delta \lambda)Q\right)
+        \rangle = 0
+       $$
+\end{description}
+Thus far the "ideal" prescription. Reality has always its own problems.
+First, we have linearized throughout and this is not justified in the
+early stages of the iteration. Second, the information on
+$\langle Q_{ph}^2\rangle$ is rather expensive in large spaces.
+And third, the $\langle Q_{ph} \left(h - \lambda^{(n)} Q\right)\rangle$
+adds another even more expensive bit. It does not pay to perform these
+expensive expressions if we have an uncertainty to start with. The
+uncertainties may very well drive the iteration unstable and we have
+to introduce stabilizing measres anyway. Those measures are usually
+to complement the steps by some numerical parameters which slow the
+step done but, at the same time, stabilize him. Once we have those
+parameters in the scheme, we may very well also approximate the costly
+matrix elements. Thus we use instead of eq.~(\ref{Qsize}) for
+the size of the corrective step the approximation
+\be
+  \gamma = c_0 \frac{\tilde{Q}-Q_0}{2\langle Q^2\rangle}
+\ee
+where $c_0$ is an extra parameter to stabilize the
+correction and where we have taken the simpler straightforward
+$\langle Q^2\rangle = \int dr \rho(r) Q(r)^2$ for the variance of $Q$.
+Note that this reduces the step the more the larger $\langle Q \rangle$
+is. The step for $\lambda$ can be approximated by using the
+difference $\tilde{Q}-Q^{(n)}$. This yields
+\be
+    \delta \lambda = \epsilon_q \frac{E_0}{x_0}
+    \frac{\tilde{Q}-Q^{(n)}}{2\langle Q_{ph}^2\rangle}
+\ee
+where, again a numerical parameter, $\epsilon_q$, has been added
+for extra stabilization of the update formula.
+
+
+
+
+
+
+
+
+\end{document}

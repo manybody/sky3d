@@ -14,7 +14,7 @@ CONTAINS
   SUBROUTINE moments
     USE Densities, ONLY: rho,current
     INTEGER :: ix,iy,iz,iq
-    REAL(db) :: xx(3),x2(3),vol,radius
+    REAL(db) :: xx(3),x2(3),vol,radius,r0rms
     REAL(db) :: qmat(3,3,2),qmtot(3,3)
     pnr=0.D0
     cm=0.D0
@@ -81,7 +81,8 @@ CONTAINS
     CALL q2diag(qmat(:,:,2),q20(2),q22(2),'Protons  ')
     CALL q2diag(qmtot,q20tot,q22tot,'Total    ')
     q20T1 = -q20(1)/nneut+q20(2)/nprot
-    radius=r0*pnrtot**(1.D0/3.D0)
+    r0rms = r0*SQRT(0.6)           ! convert from box to r.m.s. radius
+    radius=r0rms*pnrtot**(1.D0/3.D0)
     beta20tot=q20tot*(4.0D0*PI/(5.0D0*radius**2*pnrtot))
     beta22tot=q22tot*(4.0D0*PI/(5.0D0*radius**2*pnrtot))
     beta=SQRT(beta20tot**2+2.0*beta22tot**2)

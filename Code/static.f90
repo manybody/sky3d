@@ -7,6 +7,7 @@ MODULE Static
   USE Moment
   USE Energies
   USE Parallel
+  USE Constraint, ONLY: tconstraint,before_constraint,init_constraint,tune_constraint,add_constraint
   USE Inout, ONLY: write_wavefunctions, write_densities, plot_density, &
        sp_properties,start_protocol
   USE Pairs, ONLY: pair,epair,avdelt,avdeltv2,avg,eferm
@@ -51,6 +52,7 @@ CONTAINS
        mass_number=nneut+nprot  
        x0dmpmin=x0dmp
     END IF
+    CALL init_constraint()
   END SUBROUTINE getin_static
   !*************************************************************************
   SUBROUTINE init_static
@@ -99,6 +101,7 @@ CONTAINS
   !*************************************************************************
   SUBROUTINE statichf
     USE Linalg, ONLY: init_linalg
+!    USE Constraint                   
     LOGICAL, PARAMETER   :: taddnew=.TRUE. ! mix old and new densities
     INTEGER              :: iq,nst,firstiter,number_threads
     REAL(db)             :: sumflu,denerg
@@ -151,6 +154,7 @@ CONTAINS
     ENDDO
     IF(tmpi) CALL collect_densities!sum densities over all nodes 
     IF(wflag)WRITE(*,*) 'DONE'
+!
     IF(wflag)WRITE(*,'(A25)',advance="no")'Initial skyrme... '
     CALL skyrme(iter<=outerpot,outertype)
     IF(wflag)WRITE(*,*) 'DONE'
@@ -196,6 +200,8 @@ CONTAINS
     !****************************************************  
     Iteration: DO iter=firstiter,maxiter
        IF(tmpi) CALL mpi_start_timer(1)
+!      compute expectation value of constraint before step
+       IF(tconstraint) CALL before_constraint(rho) 
        IF(wflag)WRITE(*,'(a,i6)') ' Static Iteration No.',iter
        !****************************************************  
        ! Step 5: gradient step
@@ -248,13 +254,17 @@ CONTAINS
        ENDDO
        !$OMP END PARALLEL DO
        IF(tmpi) CALL collect_densities!collect densities from all nodes
+!      optionally constraint step
+       IF(tconstraint) CALL tune_constraint(e0dmp,x0dmp) 
        IF(taddnew) THEN
           rho=addnew*rho+addco*upot
           tau=addnew*tau+addco*bmass
        ENDIF
+!       
        IF(ttime.AND.tmpi) CALL mpi_stop_timer(2,'add density: ')
        IF(ttime.AND.tmpi) CALL mpi_start_timer(2)
        CALL skyrme(iter<=outerpot,outertype)
+       IF(tconstraint) CALL add_constraint(upot) 
        IF(ttime.AND.tmpi) CALL mpi_stop_timer(2,'skyrme: ')
        ! calculate and print information
        IF(ttime.AND.tmpi)CALL mpi_start_timer(2)
