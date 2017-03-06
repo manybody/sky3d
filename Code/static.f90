@@ -569,8 +569,8 @@ CONTAINS
        IF(mplot/=0) THEN  
           IF(MOD(iter,mplot)==0) THEN
              !CALL plot_density
-             CALL write_densities
              CALL localize
+             CALL write_densities
           ENDIF
        ENDIF
        IF(.NOT.wflag) RETURN

@@ -5,13 +5,13 @@ MODULE Densities
   USE Trivial, ONLY: cmulx,cmuly,cmulz
   IMPLICIT NONE
   SAVE
-  REAL(db),ALLOCATABLE,DIMENSION(:,:,:,:) :: rho,tau
+  REAL(db),ALLOCATABLE,DIMENSION(:,:,:,:) :: rho,tau,localization(:,:,:,:)
   REAL(db),ALLOCATABLE,DIMENSION(:,:,:,:,:) :: current,sdens,sodens
 CONTAINS
   !***********************************************************************
   SUBROUTINE alloc_densities
     ALLOCATE(rho(nx,ny,nz,2),tau(nx,ny,nz,2),current(nx,ny,nz,3,2), &
-         sdens(nx,ny,nz,3,2),sodens(nx,ny,nz,3,2))
+         sdens(nx,ny,nz,3,2),sodens(nx,ny,nz,3,2),localization(nx,ny,nz,2))
   END SUBROUTINE alloc_densities
   !***********************************************************************
   SUBROUTINE add_density(iq,weight,psin,lrho,ltau,lcurrent,lsdens,lsodens)  

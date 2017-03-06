@@ -6,7 +6,7 @@ MODULE Inout
   USE Grids
   USE Forces, ONLY:f
   USE Moment, ONLY: cm,cmtot
-  USE Densities, ONLY: rho,tau,current,sdens,sodens
+  USE Densities, ONLY: rho,tau,current,sdens,sodens,localization
   USE Meanfield, ONLY: upot
   USE Coulomb, ONLY: wcoul
   USE Levels
@@ -66,6 +66,9 @@ CONTAINS
           CALL write_one_density('Tau',tabc_dens(tau))
        CASE('u','U')
           CALL write_one_density('Upot',tabc_dens(upot))
+       CASE('l','L')
+          IF(write_isospin==.FALSE.) STOP 'Please set <write_isospin=T> for localization plots'
+          CALL write_one_density('Loc',tabc_dens(localization))
        CASE('w','W')
           WRITE(scratch) 'Wcoul     ',.FALSE.,.FALSE.
           WRITE(scratch) wcoul
