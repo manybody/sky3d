@@ -371,7 +371,7 @@ CONTAINS
     INTEGER,INTENT(IN)      :: iq
     LOGICAL,INTENT(IN)      :: diagonalize
     INTEGER                 :: nst,nst2,noffset,i,ix,iy,iz,is,infoconv
-    COMPLEX(db), POINTER    :: psi_x(:,:,:,:,:),psi_y(:,:,:,:,:),hampsi_x(:,:,:,:,:)
+    COMPLEX(db), POINTER    :: psi_x(:,:),psi_y(:,:),hampsi_x(:,:)
     COMPLEX(db),ALLOCATABLE :: unitary(:,:),hmatr_lin(:,:),unitary_h(:,:), rhomatr_lin(:,:),&
                                rhomatr_lin_eigen(:,:), unitary_rho(:,:)
     EXTERNAL                :: zgemv,zheevd,zgemm,zheev
@@ -387,15 +387,15 @@ CONTAINS
     rhomatr_lin=0.0d0
     IF(tmpi.AND.ttime) CALL mpi_start_timer(2)
     IF(tmpi) THEN
-      ALLOCATE(psi_x(nx,ny,nz,2,nstloc_x(iq)),psi_y(nx,ny,nz,2,nstloc_y(iq)),&
-               hampsi_x(nx,ny,nz,2,nstloc_x(iq)))
+      ALLOCATE(psi_x(nx*ny*nz*2,nstloc_x(iq)),psi_y(nx*ny*nz*2,nstloc_y(iq)),&
+               hampsi_x(nx*ny*nz*2,nstloc_x(iq)))
       CALL mpi_wf_1d2x(psi,psi_x,iq)
 !      CALL mpi_wf_1d2x(hampsi,hampsi_x,iq)
       CALL mpi_wf_x2y(psi_x,psi_y,iq)
     ELSE
-      psi_x     => psi(:,:,:,:,npmin(iq):npsi(iq))
-      psi_y     => psi(:,:,:,:,npmin(iq):npsi(iq))
-      hampsi_x  => hampsi(:,:,:,:,npmin(iq):npsi(iq))
+      psi_x(1:2*nx*ny*nz,1:nstloc_x(iq))     => psi(:,:,:,:,npmin(iq):npsi(iq))
+      psi_y(1:2*nx*ny*nz,1:nstloc_y(iq))     => psi(:,:,:,:,npmin(iq):npsi(iq))
+      hampsi_x(1:2*nx*ny*nz,1:nstloc_x(iq))  => hampsi(:,:,:,:,npmin(iq):npsi(iq))
     END IF
     !***********************************************************************
     ! Step 2: Calculate lower tringular of h-matrix and overlaps.
@@ -481,11 +481,14 @@ CONTAINS
     ! Step 6: Recombine |psi> and write them into 1d storage mode
     !***********************************************************************
     IF(tmpi.AND.ttime) CALL mpi_start_timer(2)
-    !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(ix,iy,iz,is) SCHEDULE(STATIC) 
-    DO ix=1,nx; DO iy=1,ny; DO iz=1,nz; DO is=1,2
-      CALL recombine(unitary,psi_y(ix,iy,iz,is,:),psi_x(ix,iy,iz,is,:),iq)
-    END DO; END DO; END DO; END DO
+    !$OMP PARALLEL DO DEFAULT(SHARED) SCHEDULE(STATIC) 
+    DO i=1,nx*ny*nz*2
+      CALL recombine(unitary,psi_y(i,:),psi_x(i,:),iq)
+    END DO
     !$OMP END PARALLEL DO
+!    DO i=1,nstloc_y(iq)
+!      WRITE(*,*)iq,i,SUM(REAL(psi_y(:,i))**2+AIMAG(psi_y(:,i))**2),SUM(REAL(psi_y(:,i))+AIMAG(psi_y(:,i)))
+!    END DO
     !
     IF(tmpi.AND.ttime) CALL mpi_stop_timer(2,'recombine: ')
     DEALLOCATE(unitary,hmatr_lin,unitary_h,rhomatr_lin,&

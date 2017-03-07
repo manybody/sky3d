@@ -263,7 +263,7 @@ CONTAINS
   SUBROUTINE mpi_wf_1d2x(psi,psi_x,iq)
     USE Trivial
     COMPLEX(db),INTENT(IN)    :: psi(:,:,:,:,:)
-    COMPLEX(db),INTENT(OUT)   :: psi_x(:,:,:,:,:)
+    COMPLEX(db),INTENT(OUT)   :: psi_x(:,:)
     INTEGER,    INTENT(IN)    :: iq
     INTEGER                   :: nst,ierr,is
     IF(.NOT.ALLOCATED(recvcounts)) THEN
@@ -291,8 +291,8 @@ CONTAINS
   END SUBROUTINE mpi_wf_1d2x
 !***********************************************************************
   SUBROUTINE mpi_wf_x2y(psi_x,psi_y,iq)
-    COMPLEX(db),INTENT(IN)    :: psi_x(:,:,:,:,:)
-    COMPLEX(db),INTENT(OUT)   :: psi_y(:,:,:,:,:)
+    COMPLEX(db),INTENT(IN)    :: psi_x(:,:)
+    COMPLEX(db),INTENT(OUT)   :: psi_y(:,:)
     INTEGER,    INTENT(IN)    :: iq
     INTEGER                   :: nst,ierr,is,lastnode,ip,first,last
     INTEGER,ALLOCATABLE,SAVE  :: rootnode(:,:),firstwf(:,:),nwf(:,:)
@@ -324,9 +324,9 @@ CONTAINS
       first=firstwf(ip,iq)
       last=firstwf(ip,iq)+nwf(ip,iq)-1
       IF(rootnode(ip,iq)==mpi_rank_x) &
-        psi_y(:,:,:,:,first:last)=&
-          psi_x(:,:,:,:,localindex_x(globalindex_y(first,iq)):localindex_x(globalindex_y(last,iq)))
-      CALL mpi_bcast(psi_y(:,:,:,:,first:last),size(psi_y(:,:,:,:,first:last)),mpi_double_complex,&
+        psi_y(:,first:last)=&
+          psi_x(:,localindex_x(globalindex_y(first,iq)):localindex_x(globalindex_y(last,iq)))
+      CALL mpi_bcast(psi_y(:,first:last),size(psi_y(:,first:last)),mpi_double_complex,&
                      rootnode(ip,iq),comm2d_x,ierr)
       ip=ip+1
     END DO
@@ -339,7 +339,7 @@ CONTAINS
   !*********************************************************************************
     USE Trivial
     INTEGER,INTENT(IN) :: iq
-    COMPLEX(db),INTENT(INOUT) :: psi_x(:,:,:,:,:)
+    COMPLEX(db),INTENT(INOUT) :: psi_x(:,:)
     COMPLEX(db),INTENT(OUT)   :: psi(:,:,:,:,:)
     INTEGER :: ierr
      CALL mpi_reduce_scatter(psi_x,psi(:,:,:,:,first(iq)),recvcounts(:,iq),mpi_double_complex,&

@@ -60,8 +60,8 @@ MODULE LINALG
   !************************************************************
   SUBROUTINE recombine(matrix,psi_in,psi_out,iq)
     INTEGER,    INTENT(IN)  :: iq
-    COMPLEX(db),INTENT(IN)  :: psi_in(:),psi_out(:)
-    COMPLEX(db),INTENT(OUT) :: matrix(:,:)     
+    COMPLEX(db),INTENT(IN)  :: psi_in(:),matrix(:,:)
+    COMPLEX(db),INTENT(OUT) :: psi_out(:)     
     CALL zgemv('N',nlin(iq),nlin(iq),cmplxone,matrix,nlin(iq),psi_in,1,cmplxzero,&
                psi_out,1)
   END SUBROUTINE
