@@ -5,7 +5,7 @@ MODULE Parallel
   IMPLICIT NONE
   INCLUDE 'mpif.h'
   SAVE
-  INTEGER, PARAMETER   :: NB=2,MB=2
+  INTEGER, PARAMETER   :: NB=32,MB=32,NB_psi = 32
   LOGICAL, PARAMETER   :: tmpi=.TRUE.,ttabc=.FALSE.
   INTEGER, ALLOCATABLE :: node(:),localindex(:),globalindex(:),&
                           node_x(:),node_y(:),localindex_x(:),localindex_y(:),&
@@ -138,13 +138,18 @@ CONTAINS
     ncount=0
     globalindex=0
     node=0
+!    DO iq=1,2
+!      DO nst=1,nstloc_x(iq)
+!        IF(INT(REAL(nst-1)/nstloc_x(iq)*mpi_size_y)==mpi_rank_y) &
+!          node(globalindex_x(nst,iq))=mpi_myproc
+!      END DO
+!    END DO
+!    CALL mpi_allreduce(MPI_IN_PLACE,node,nstmax,mpi_integer,mpi_sum,mpi_comm_world,mpi_ierror)
     DO iq=1,2
-      DO nst=1,nstloc_x(iq)
-        IF(INT(REAL(nst-1)/nstloc_x(iq)*mpi_size_y)==mpi_rank_y) &
-          node(globalindex_x(nst,iq))=mpi_myproc
+      DO nst=npmin(iq),npsi(iq)
+        node(nst)=MOD((nst-npmin(iq))/nb_psi,mpi_nprocs)
       END DO
     END DO
-    CALL mpi_allreduce(MPI_IN_PLACE,node,nstmax,mpi_integer,mpi_sum,mpi_comm_world,mpi_ierror)
     nstloc=0
     DO nst=1,nstmax
        IF(node(nst)==mpi_myproc) THEN

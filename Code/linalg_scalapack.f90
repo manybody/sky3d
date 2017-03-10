@@ -1,12 +1,12 @@
 MODULE LINALG
   USE Params, ONLY: db,cmplxzero,cmplxone
   USE Levels
-  USE Parallel, ONLY: nb,mb,contxt,nstloc_x,nstloc_y,globalindex_x,globalindex_y
+  USE Parallel, ONLY: nb,mb,contxt,nstloc_x,nstloc_y,globalindex_x,globalindex_y,nb_psi
 !
   IMPLICIT NONE
   INTEGER                 :: nlin(2)
-  INTEGER                 :: desca(2,10),descz(2,10),descc(2,10),&
-                             work_t_size(2),iwork_t_size(2),rwork_t_size(2)
+  INTEGER                 :: desca(2,10),descz(2,10),descc(2,10),desc_t(2,10)&
+                            , work_t_size(2),iwork_t_size(2),rwork_t_size(2)
 !
   REAL(db)   ,ALLOCATABLE :: rwork_t(:),evals(:)  
   COMPLEX(db),ALLOCATABLE :: work_t(:),matr_lin(:,:),unitary(:,:)
@@ -24,6 +24,8 @@ MODULE LINALG
                     NB,MB,0,0,CONTXT,nstloc_x(iq),infoconv)
       CALL DESCINIT(DESCC(iq,1:10),npsi(iq)-npmin(iq)+1,npsi(iq)-npmin(iq)+1,&
                     NB,MB,0,0,CONTXT,nstloc_x(iq),infoconv)
+      CALL DESCINIT(DESC_T(iq,1:10),nx*ny*nz*2,npsi(iq)-npmin(iq)+1,nx*ny*nz*2,&
+                      nb_psi,0,0,CONTXT,nx*ny*nz*2,infoconv)
       work_t_size(iq)  = -1
       iwork_t_size(iq) = -1
       rwork_t_size(iq) = -1
@@ -88,5 +90,6 @@ MODULE LINALG
     COMPLEX(db),INTENT(OUT) :: psi_out(:)     
     CALL zgemv('N',nstloc_x(iq),nstloc_y(iq),cmplxone,matrix,nstloc_x(iq),psi_in,1,cmplxzero,&
                psi_out,1)
+     
   END SUBROUTINE
 END MODULE LINALG
