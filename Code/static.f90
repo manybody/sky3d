@@ -377,7 +377,6 @@ CONTAINS
     COMPLEX(db),ALLOCATABLE :: buf(:,:,:),buf2(:,:,:)
     INTEGER                 :: big_dim,number_threads,tid,blocksize,blksz,it,jt,kt,tt
     COMPLEX(db)             :: sum,sum2
-    EXTERNAL                :: zgemv,zheevd,zgemm,zheev
     INTEGER,EXTERNAL        :: omp_get_num_threads,omp_get_thread_num
     !***********************************************************************
     ! Step 1: Copy |psi> and h|psi> to 2d storage mode
@@ -388,18 +387,13 @@ CONTAINS
              rhomatr_lin_eigen(nstloc_x(iq),nstloc_y(iq)), unitary_rho(nstloc_x(iq),nstloc_y(iq)))
     big_dim = nx*ny*nz*2
     ALLOCATE(buf(nstloc_x(iq),nstloc_y(iq),24),buf2(nstloc_x(iq),nstloc_y(iq),24))
-
-
     unitary_h=0.0d0
     hmatr_lin=0.0d0
     rhomatr_lin=0.0d0
     IF(tmpi.AND.ttime) CALL mpi_start_timer(2)
     CALL calc_matrix(psi(:,:,:,:,npmin_loc(iq):npsi_loc(iq)),psi(:,:,:,:,npmin_loc(iq):npsi_loc(iq)),rhomatr_lin,iq)
+    IF(diagonalize)&
     CALL calc_matrix(psi(:,:,:,:,npmin_loc(iq):npsi_loc(iq)),hampsi(:,:,:,:,npmin_loc(iq):npsi_loc(iq)),hmatr_lin,iq)
-!    DO nst=npmin_loc(iq),npsi_loc(iq)
-!    WRITE(*,*)nst,rpsnorm(psi(:,:,:,:,nst))
-!    END DO
-!    WRITE(*,*)rhomatr_lin
     !***********************************************************************
     ! Step 2: Calculate lower tringular of h-matrix and overlaps.
     !***********************************************************************
@@ -444,17 +438,11 @@ CONTAINS
     ! Step 6: Recombine |psi> and write them into 1d storage mode
     !***********************************************************************
     IF(tmpi.AND.ttime) CALL mpi_start_timer(2)
-!    WRITE(*,*)unitary
     CALL recombine(psi(:,:,:,:,npmin_loc(iq):npsi_loc(iq)),unitary,hampsi(:,:,:,:,npmin_loc(iq):npsi_loc(iq)),iq)
-!    WRITE(*,*)psi(:,ny/2,nz/2,1,1)
-!    WRITE(*,*)hampsi(:,ny/2,nz/2,1,1)
     psi(:,:,:,:,npmin_loc(iq):npsi_loc(iq))=hampsi(:,:,:,:,npmin_loc(iq):npsi_loc(iq))
-    !
     IF(tmpi.AND.ttime) CALL mpi_stop_timer(2,'recombine: ')
     DEALLOCATE(unitary,hmatr_lin,unitary_h,rhomatr_lin,&
                rhomatr_lin_eigen,unitary_rho)
-    IF(tmpi.AND.ttime) CALL mpi_start_timer(2)
-    IF(tmpi.AND.ttime) CALL mpi_stop_timer(2,'Comm 2d->1d: ')
   END SUBROUTINE diagstep
   !*************************************************************************
   SUBROUTINE sinfo(printing)

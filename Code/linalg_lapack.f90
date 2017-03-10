@@ -21,7 +21,7 @@ MODULE LINALG
     COMPLEX(db), INTENT(OUT):: matrix(:,:)
     CALL ZGEMM('C','N',npsi(iq)-npmin(iq)+1,npsi(iq)-npmin(iq)+1,nx*ny*nz*2,cmplxone,psi_1,nx*ny*nz*2,&
            psi_2,nx*ny*nz*2,cmplxzero,matrix,npsi(iq)-npmin(iq)+1)
-           matrix=matrix*wxyz
+    matrix=matrix*wxyz
   END SUBROUTINE calc_matrix
   !************************************************************
   SUBROUTINE eigenvecs(matr_in,evecs,evals_out,iq)

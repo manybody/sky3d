@@ -1,7 +1,8 @@
 MODULE LINALG
-  USE Params, ONLY: db,cmplxzero,cmplxone
+  USE Params,   ONLY: db,cmplxzero,cmplxone
   USE Levels
   USE Parallel, ONLY: nb,mb,contxt,nstloc_x,nstloc_y,globalindex_x,globalindex_y,nb_psi
+  USE Grids,    ONLY: wxyz
 !
   IMPLICIT NONE
   INTEGER                 :: nlin(2)
@@ -47,6 +48,7 @@ MODULE LINALG
     COMPLEX(db), INTENT(OUT):: matrix(:,:)
     CALL PZGEMM('C','N',npsi(iq)-npmin(iq)+1,npsi(iq)-npmin(iq)+1,nx*ny*nz*2,cmplxone,psi_1,1,1,&
            desc_t(iq,1:10),psi_2,1,1,desc_t(iq,1:10),cmplxzero,matrix,1,1,desca(iq,1:10))
+    matrix=matrix*wxyz
   END SUBROUTINE calc_matrix
   !************************************************************
   SUBROUTINE eigenvecs(matr_in,evecs,evals_out,iq)
