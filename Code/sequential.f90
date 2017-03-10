@@ -8,7 +8,7 @@ MODULE Parallel
   INTEGER, ALLOCATABLE :: node(:),localindex(:),globalindex(:),node_x(:),node_y(:),&
                           localindex_x(:),localindex_y(:),globalindex_x(:,:),globalindex_y(:,:)
   INTEGER              :: mpi_nprocs,mpi_ierror,mpi_myproc, &
-                          processor_name,proc_namelen,nstloc_x(2),nstloc_y(2)
+                          processor_name,proc_namelen,nstloc_x(2),nstloc_y(2),npmin_loc(2),npsi_loc(2)
   INTEGER              :: mpi_comm_world,mpi_sum,mpi_double_precision
 CONTAINS     !  all dummy subroutines to run on a sequential machine
   !************************************************************************
@@ -94,6 +94,8 @@ CONTAINS     !  all dummy subroutines to run on a sequential machine
        globalindex(i)=i
        localindex(i)=i
     END FORALL
+    npmin_loc=npmin
+    npsi_loc=npsi
     DO is=1,2
       noffset=npmin(is)-1
       nstloc_x(is)=npsi(is)-npmin(is)+1

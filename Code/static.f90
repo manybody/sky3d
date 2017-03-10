@@ -366,7 +366,7 @@ CONTAINS
     !                                                                      *
     !***********************************************************************
     USE Trivial, ONLY: overlap,rpsnorm
-    USE Linalg,  ONLY: eigenvecs,loewdin,comb_orthodiag,recombine,desc_t,desca
+    USE Linalg,  ONLY: eigenvecs,loewdin,comb_orthodiag,recombine,calc_matrix
     
     INTEGER,INTENT(IN)      :: iq
     LOGICAL,INTENT(IN)      :: diagonalize
@@ -394,13 +394,12 @@ CONTAINS
     hmatr_lin=0.0d0
     rhomatr_lin=0.0d0
     IF(tmpi.AND.ttime) CALL mpi_start_timer(2)
-
-    CALL PZGEMM('C','N',npsi(iq)-npmin(iq)+1,npsi(iq)-npmin(iq)+1,big_dim,cmplxone,psi,1,1,&
-           desc_t(iq,1:10),psi,1,1,desc_t(iq,1:10),cmplxone,rhomatr_lin,1,1,desca(iq,1:10))
-    
-    CALL PZGEMM('C','N',npsi(iq)-npmin(iq)+1,npsi(iq)-npmin(iq)+1,big_dim,cmplxone,psi,1,1,&
-           desc_t(iq,1:10),hampsi,1,1,desc_t(iq,1:10),cmplxone,hmatr_lin,1,1,desca(iq,1:10))
-
+    CALL calc_matrix(psi(:,:,:,:,npmin_loc(iq):npsi_loc(iq)),psi(:,:,:,:,npmin_loc(iq):npsi_loc(iq)),rhomatr_lin,iq)
+    CALL calc_matrix(psi(:,:,:,:,npmin_loc(iq):npsi_loc(iq)),hampsi(:,:,:,:,npmin_loc(iq):npsi_loc(iq)),hmatr_lin,iq)
+!    DO nst=npmin_loc(iq),npsi_loc(iq)
+!    WRITE(*,*)nst,rpsnorm(psi(:,:,:,:,nst))
+!    END DO
+!    WRITE(*,*)rhomatr_lin
     !***********************************************************************
     ! Step 2: Calculate lower tringular of h-matrix and overlaps.
     !***********************************************************************
@@ -420,7 +419,7 @@ CONTAINS
         END IF
       ENDDO    !for nst2
     ENDDO    !for nst
-    IF(tmpi.AND.ttime) CALL mpi_stop_timer(2,'CalcMatrix+Comm1d->2d: ')
+    IF(tmpi.AND.ttime) CALL mpi_stop_timer(2,'CalcMatrix: ')
     !***********************************************************************
     ! Step 3: Calculate eigenvectors of h if wanted
     !***********************************************************************
@@ -445,28 +444,16 @@ CONTAINS
     ! Step 6: Recombine |psi> and write them into 1d storage mode
     !***********************************************************************
     IF(tmpi.AND.ttime) CALL mpi_start_timer(2)
-!    !$OMP PARALLEL DO DEFAULT(SHARED) SCHEDULE(STATIC) 
-!    DO i=1,nx*ny*nz*2
-!      CALL recombine(unitary,psi_y(i,:),psi_x(i,:),iq)
-!    END DO
-!    !$OMP END PARALLEL DO
-!    DO i=1,nstloc_y(iq)
-!      WRITE(*,*)iq,i,SUM(REAL(psi_y(:,i))**2+AIMAG(psi_y(:,i))**2),SUM(REAL(psi_y(:,i))+AIMAG(psi_y(:,i)))
-!    END DO
+!    WRITE(*,*)unitary
+    CALL recombine(psi(:,:,:,:,npmin_loc(iq):npsi_loc(iq)),unitary,hampsi(:,:,:,:,npmin_loc(iq):npsi_loc(iq)),iq)
+!    WRITE(*,*)psi(:,ny/2,nz/2,1,1)
+!    WRITE(*,*)hampsi(:,ny/2,nz/2,1,1)
+    psi(:,:,:,:,npmin_loc(iq):npsi_loc(iq))=hampsi(:,:,:,:,npmin_loc(iq):npsi_loc(iq))
     !
-    CALL PZGEMM('N','T',big_dim,npsi(iq)-npmin(iq)+1,npsi(iq)-npmin(iq)+1,cmplxone,psi,1,1,desc_t(iq,1:10),&
-           unitary,1,1,desca(iq,1:10),cmplxone,hampsi,1,1,desc_t(iq,1:10))
-    psi = hampsi
     IF(tmpi.AND.ttime) CALL mpi_stop_timer(2,'recombine: ')
     DEALLOCATE(unitary,hmatr_lin,unitary_h,rhomatr_lin,&
                rhomatr_lin_eigen,unitary_rho)
     IF(tmpi.AND.ttime) CALL mpi_start_timer(2)
-    IF(tmpi) THEN
-!      CALL collect_wf_1d_x(psi,psi_x,iq)
-!      DEALLOCATE(psi_x,psi_y,hampsi_x)
-    ELSE
-!      NULLIFY(psi_x,psi_y,hampsi_x)
-    END IF
     IF(tmpi.AND.ttime) CALL mpi_stop_timer(2,'Comm 2d->1d: ')
   END SUBROUTINE diagstep
   !*************************************************************************

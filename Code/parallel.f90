@@ -13,7 +13,8 @@ MODULE Parallel
   INTEGER, ALLOCATABLE :: recvcounts(:,:),displs(:,:)
   INTEGER, ALLOCATABLE :: node_2dto1d(:,:),node_1dto2d_x(:),node_1dto2d_y(:)
   INTEGER              :: mpi_nprocs,mpi_ierror,mpi_myproc
-  INTEGER              :: comm2d,mpi_dims(2),mpi_mycoords(2),nstloc_x(2),nstloc_y(2),first(2)
+  INTEGER              :: comm2d,mpi_dims(2),mpi_mycoords(2),nstloc_iso(2),nstloc_x(2),&
+                          nstloc_y(2),first(2),npmin_loc(2),npsi_loc(2)
   INTEGER              :: comm2d_x,comm2d_y,mpi_size_x,mpi_size_y,mpi_rank_x,mpi_rank_y
   INTEGER              :: NPROCS,NPROW,NPCOL,MYPROW,MYPCOL,CONTXT,IAM
   INTEGER, EXTERNAL    :: NUMROC,INDXL2G,INDXG2L,INDXG2P
@@ -138,16 +139,10 @@ CONTAINS
     ncount=0
     globalindex=0
     node=0
-!    DO iq=1,2
-!      DO nst=1,nstloc_x(iq)
-!        IF(INT(REAL(nst-1)/nstloc_x(iq)*mpi_size_y)==mpi_rank_y) &
-!          node(globalindex_x(nst,iq))=mpi_myproc
-!      END DO
-!    END DO
-!    CALL mpi_allreduce(MPI_IN_PLACE,node,nstmax,mpi_integer,mpi_sum,mpi_comm_world,mpi_ierror)
     DO iq=1,2
       DO nst=npmin(iq),npsi(iq)
         node(nst)=MOD((nst-npmin(iq))/nb_psi,mpi_nprocs)
+        IF(node(nst)==mpi_myproc) nstloc_iso(iq)=nstloc_iso(iq)+1
       END DO
     END DO
     nstloc=0
@@ -157,6 +152,10 @@ CONTAINS
           globalindex(nstloc)=nst
        ENDIF
     ENDDO
+    npmin_loc(1)=1
+    npmin_loc(2)=nstloc_iso(1)+1
+    npsi_loc(1)=nstloc_iso(1)
+    npsi_loc(2)=nstloc
     DO ip=0,mpi_nprocs-1
       iloc=0
       DO nst=1,nstmax

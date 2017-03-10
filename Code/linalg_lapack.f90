@@ -1,6 +1,7 @@
 MODULE LINALG
   USE Params, ONLY: db,cmplxzero,cmplxone
   USE Levels
+  USE Grids, ONLY: wxyz
 !
   IMPLICIT NONE
   INTEGER :: nlin(2)  
@@ -13,6 +14,15 @@ MODULE LINALG
       nlin(iq)=npsi(iq)-npmin(iq)+1
     END DO
   END SUBROUTINE init_linalg
+  !************************************************************
+  SUBROUTINE calc_matrix(psi_1,psi_2,matrix,iq)
+    INTEGER,    INTENT(IN)  :: iq
+    COMPLEX(db),INTENT(IN)  :: psi_1(:,:,:,:,:),psi_2(:,:,:,:,:)
+    COMPLEX(db), INTENT(OUT):: matrix(:,:)
+    CALL ZGEMM('C','N',npsi(iq)-npmin(iq)+1,npsi(iq)-npmin(iq)+1,nx*ny*nz*2,cmplxone,psi_1,nx*ny*nz*2,&
+           psi_2,nx*ny*nz*2,cmplxzero,matrix,npsi(iq)-npmin(iq)+1)
+           matrix=matrix*wxyz
+  END SUBROUTINE calc_matrix
   !************************************************************
   SUBROUTINE eigenvecs(matr_in,evecs,evals_out,iq)
     INTEGER,     INTENT(IN)           :: iq
@@ -58,11 +68,11 @@ MODULE LINALG
                unitary_1,nlin(iq),unitary_2,nlin(iq),cmplxzero,unitary,nlin(iq))
   END SUBROUTINE
   !************************************************************
-  SUBROUTINE recombine(matrix,psi_in,psi_out,iq)
+  SUBROUTINE recombine(psi_in,matrix,psi_out,iq)
     INTEGER,    INTENT(IN)  :: iq
-    COMPLEX(db),INTENT(IN)  :: psi_in(:),matrix(:,:)
-    COMPLEX(db),INTENT(OUT) :: psi_out(:)     
-    CALL zgemv('N',nlin(iq),nlin(iq),cmplxone,matrix,nlin(iq),psi_in,1,cmplxzero,&
-               psi_out,1)
+    COMPLEX(db),INTENT(IN)  :: psi_in(:,:,:,:,:),matrix(:,:)
+    COMPLEX(db),INTENT(OUT) :: psi_out(:,:,:,:,:)     
+    CALL ZGEMM('N','T',nx*ny*nz*2,npsi(iq)-npmin(iq)+1,npsi(iq)-npmin(iq)+1,cmplxone,psi_in,nx*ny*nz*2,&
+           matrix,npsi(iq)-npmin(iq)+1,cmplxzero,psi_out,nx*ny*nz*2)
   END SUBROUTINE
 END MODULE LINALG
