@@ -4,18 +4,17 @@ MODULE Levels
   USE Fourier
   IMPLICIT NONE
   SAVE
-  INTEGER :: nstmax,nstloc,nneut,nprot,npmin(2),npsi(2)
-  REAL(db) :: charge_number,mass_number
-  COMPLEX(db),POINTER :: psi(:,:,:,:,:)  
-  COMPLEX(db), ALLOCATABLE :: hmatr(:,:)
-  REAL(db), ALLOCATABLE, DIMENSION(:) :: sp_energy,sp_efluct1, &
-       sp_kinetic,sp_norm,sp_efluct2,sp_parity,wocc
+  INTEGER              :: nstmax,nstloc,nneut,nprot,npmin(2),npsi(2)
+  REAL(db)             :: charge_number,mass_number
+  COMPLEX(db),POINTER  :: psi(:,:,:,:,:),hampsi(:,:,:,:,:)
   REAL(db),ALLOCATABLE :: sp_orbital(:,:),sp_spin(:,:)
   INTEGER, ALLOCATABLE :: isospin(:)
+  REAL(db), ALLOCATABLE, DIMENSION(:) :: sp_energy,sp_efluct1, &
+       sp_kinetic,sp_norm,sp_efluct2,sp_parity,wocc
 CONTAINS
   !************************************************************
   SUBROUTINE alloc_levels
-    ALLOCATE(psi(nx,ny,nz,2,nstloc), &
+    ALLOCATE(psi(nx,ny,nz,2,nstloc),hampsi(nx,ny,nz,2,nstloc), &
          sp_energy(nstmax),sp_efluct1(nstmax),sp_kinetic(nstmax),& 
          sp_norm(nstmax),sp_efluct2(nstmax),sp_parity(nstmax), &
          sp_orbital(3,nstmax),sp_spin(3,nstmax),wocc(nstmax), &

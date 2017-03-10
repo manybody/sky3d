@@ -2,148 +2,91 @@ MODULE User
   USE Params
   USE Grids
   USE Levels
-  USE Trivial, ONLY: rpsnorm
+  USE Densities, ONLY: localization
   IMPLICIT NONE
 CONTAINS
   SUBROUTINE init_user
   IMPLICIT NONE
-  INTEGER  :: nst, nst1, iq, is, ix, iy, iz 
-  !
-  INTEGER :: i,j,k,l,ii,jj,kk
-  INTEGER :: kr(3,npsi(2)),ktemp(3,npsi(2))
-  INTEGER :: kf(3,npsi(2)),temp_k(3)
-  LOGICAL :: check
-  INTEGER :: ki(3,8*7**3),ki_t(3,7**3)
-  REAL(db) :: temp_e,temp_energies(8*7**3)
-  WRITE(*,*)
-  WRITE(*,*)'*****init plane waves:*****'
-  psi=(0.d0,0.d0)
-  !***********************************************************************
-  !                                                                      *
-  !                           calculate all k                            *
-  !                                                                      *
-  !***********************************************************************
-    j=0
-    ii=0
-    jj=0
-    kk=0
-    DO i=1,7**3
-      IF (ii==7) THEN
-        ii=0
-        jj=jj+1
-      END IF
-      IF (jj==7) THEN
-        jj=0
-        kk=kk+1
-      END IF
-      ki(1,i)=ii
-      ki(2,i)=jj
-      ki(3,i)=kk
-      ii=ii+1
-    END DO
-    ki_t(:,1:7**3)=ki(:,1:7**3)
-    l=1
-    DO i=1,7**3
-      DO j=1,8
-        ki(:,l)=ki_t(:,i)
-        IF(j==2.OR.j==4.OR.j==6.OR.j==8) THEN 
-          ki(1,l)=-ki_t(1,i)
-        END IF
-        IF(j==3.OR.j==4.OR.j==7.OR.j==8) THEN
-          ki(2,l)=-ki_t(2,i)
-        END IF
-        IF(j==5.OR.j==6.OR.j==7.OR.j==8) THEN
-          ki(3,l)=-ki_t(3,i)
-        END IF
-        temp_energies(l)=epw(ki(1,l),ki(2,l),ki(3,l))
-        l=l+1
-      END DO
-    END DO
-    !insertion_sort
-    DO i=2,8*7**3
-      temp_e=temp_energies(i)
-      temp_k(:)=ki(:,i)
-      j=i
-      DO WHILE (j>1 .AND. temp_energies(j-1)>temp_e)
-        temp_energies(j)=temp_energies(j-1)
-        ki(:,j)=ki(:,j-1)
-        j=j-1
-      END DO
-      temp_energies(j)=temp_e
-      ki(:,j)=temp_k(:)
-    END DO
-    nst = 1
-  DO iq = 1,2  
-    i=1 !counts nobs/2 (spin)
-    j=1 !counts "-"-signs
-    l=1 !counts ki
-    DO WHILE(nst<=npsi(iq))
-      kf(:,i)=ki(:,l)
-      CALL check_kf(kf,i,check)
-      IF(check) THEN 
-        CALL background(nst,kf(1,i),kf(2,i),kf(3,i),1)
-        nst=nst+1
-        CALL background(nst,kf(1,i),kf(2,i),kf(3,i),-1)
-        nst=nst+1
-        i=i+1
-      END IF
-      l=l+1
-    END DO
-  END DO
+    CALL localize()    
   END SUBROUTINE init_user
-  !
-REAL FUNCTION epw(kx,ky,kz) RESULT(e)
-  USE FORCES, ONLY: nucleon_mass
-  INTEGER,INTENT(IN) :: kx,ky,kz
-  REAL(db) :: dx,dy,dz
-  dx=x(2)-x(1)
-  dy=y(2)-y(1)
-  dz=z(2)-z(1)
-  e=(hbc**2)/(2*nucleon_mass)*(((2*pi*kx+bangx)/(nx*dx))**2&
-  +((2*pi*ky+bangy)/(ny*dy))**2+((2*pi*kz+bangz)/(nz*dz))**2)
-END FUNCTION
+  SUBROUTINE localize()
+    !
+    IMPLICIT NONE  
+    !
+    !***********************************************************************
+    !                                                                      *
+    !       localize:                                                      *
+    !        computes the localization criterion from                      *
+    !             Becke and Egdecomb, JCP {\bf 92} (1990) 5397.            *
+    !        The (nabla rho)/2 was accumulated on 'nablarho' in the        *
+    !        'subroutine densit'. It has to be computed exactly in the     *
+    !        same manner as the current to guarantee compensation.         *
+    !        The localization is composed first as                         *
+    !          C = tau*rho - 1/4*(nabla rho)**2 -curr**2  ,                *
+    !        then the 'C' is rescaled into the final criterion             *
+    !            1/(1+C/tau_TF)                                            *
+    !        where 'tau_TF' is the kinetic energy density in               *
+    !        Thomas-Fermi approximation.                                   *
+    !                                                                      *
+    !***********************************************************************
+    !
+    INTEGER      :: ixyz,iq,i,is
+    REAL(db)     :: rhos(nx,ny,nz,2,2),taus(nx,ny,nz,2,2),&
+                    drhos_sq(nx,ny,nz,2,2),currs_sq(nx,ny,nz,2,2),&
+                    drhos(nx,ny,nz,2,2,3),currs(nx,ny,nz,2,2,3),time
+    COMPLEX(db)  :: ps1(nx,ny,nz,2) 
+    CHARACTER(10) :: filename
 
-SUBROUTINE background(nst,kx,ky,kz,s)
-  IMPLICIT NONE
-  INTEGER,INTENT(IN) :: nst,kx,ky,kz,s
-  INTEGER :: ix,iy,iz
-  REAL(db) :: facx,facy,facz,norm
-  COMPLEX(db) :: fy,fz
-  wocc(nst)=0.0d0
-  IF(nst>=npmin(1) .AND. (nst<npmin(1)+nneut)) wocc(nst)=1.0d0
-  IF(nst>=npmin(2) .AND. (nst<npmin(2)+nprot)) wocc(nst)=1.0d0
-  DO iz = 1,nz  
-     facz=REAL(iz-1)*((2.D0*pi*REAL(kz)+bangz)/FLOAT(nz))
-     fz=CMPLX(COS(facz),SIN(facz))
-     DO iy=1,ny
-        facy=REAL(iy-1)*((2.D0*pi*REAL(ky)+bangy)/FLOAT(ny))
-        fy=CMPLX(COS(facy),SIN(facy))
-        DO ix=1,nx
-           facx=REAL(ix-1)*((2.D0*pi*REAL(kx)+bangx)/FLOAT(nx))
-           IF(s>0) THEN
-              psi(ix,iy,iz,1,nst)=fz*fy*CMPLX(COS(facx),SIN(facx))
-              psi(ix,iy,iz,2,nst)=0.D0
-           ELSE
-              psi(ix,iy,iz,2,nst)=fz*fy*CMPLX(COS(facx),SIN(facx))
-              psi(ix,iy,iz,1,nst)=0.D0
-           END IF
-        ENDDO
-     ENDDO
-  ENDDO
-  norm=SQRT(rpsnorm(psi(:,:,:,:,nst)))
-  psi(:,:,:,:,nst)=psi(:,:,:,:,nst)/norm
-  WRITE(*,'(A14,3I2,A7,I2,A12,I4,A8,F9.5,A10,F6.3)')'state with k=(',kx,ky,kz,&
-  '), spin= ',s,' at position',nst,' energy ',epw(kx,ky,kz),' and wocc=',wocc(nst)
-END SUBROUTINE background
-!
-SUBROUTINE check_kf(k,i,check)
-  INTEGER,INTENT(IN) :: k(3,npsi(2)),i
-  LOGICAL,INTENT(OUT) :: check
-  INTEGER :: j
-  check=.TRUE.
-  IF(i==1) RETURN
-  DO j=1,i-1
-    IF(k(1,j)==k(1,i).AND.k(2,j)==k(2,i).AND.k(3,j)==k(3,i)) check=.FALSE.
+  DO is=1,2
+    DO iq=1,2
+      rhos(:,:,:,is,iq)=0.0d0
+      taus(:,:,:,is,iq)=0.0d0
+      drhos_sq(:,:,:,is,iq)=0.0d0
+      drhos(:,:,:,is,iq,:)=0.0d0
+      currs(:,:,:,is,iq,:)=0.0d0
+      DO i=npmin(iq),npsi(iq)
+        rhos(:,:,:,is,iq)=rhos(:,:,:,is,iq)+wocc(i)*(psi(:,:,:,is,i)*CONJG(psi(:,:,:,is,i)))
+        CALL cdervx(psi(:,:,:,:,i),ps1)
+        taus(:,:,:,is,iq)=taus(:,:,:,is,iq)+wocc(i)*ps1(:,:,:,is)*CONJG(ps1(:,:,:,is))
+        drhos(:,:,:,is,iq,1)=drhos(:,:,:,is,iq,1)+wocc(i)*REAL(CONJG(psi(:,:,:,is,i))*ps1(:,:,:,is))
+        currs(:,:,:,is,iq,1)=currs(:,:,:,is,iq,1)+wocc(i)*AIMAG(CONJG(psi(:,:,:,is,i))*ps1(:,:,:,is))
+        CALL cdervy(psi(:,:,:,:,i),ps1)
+        taus(:,:,:,is,iq)=taus(:,:,:,is,iq)+wocc(i)*ps1(:,:,:,is)*CONJG(ps1(:,:,:,is))
+        drhos(:,:,:,is,iq,2)=drhos(:,:,:,is,iq,2)+wocc(i)*REAL(CONJG(psi(:,:,:,is,i))*ps1(:,:,:,is))
+        currs(:,:,:,is,iq,2)=currs(:,:,:,is,iq,2)+wocc(i)*AIMAG(CONJG(psi(:,:,:,is,i))*ps1(:,:,:,is))
+        CALL cdervz(psi(:,:,:,:,i),ps1)
+        taus(:,:,:,is,iq)=taus(:,:,:,is,iq)+wocc(i)*ps1(:,:,:,is)*CONJG(ps1(:,:,:,is))
+        drhos(:,:,:,is,iq,3)=drhos(:,:,:,is,iq,3)+wocc(i)*REAL(CONJG(psi(:,:,:,is,i))*ps1(:,:,:,is))
+        currs(:,:,:,is,iq,3)=currs(:,:,:,is,iq,3)+wocc(i)*AIMAG(CONJG(psi(:,:,:,is,i))*ps1(:,:,:,is))
+      END DO
+      drhos_sq(:,:,:,is,iq)=drhos(:,:,:,is,iq,1)**2+drhos(:,:,:,is,iq,2)**2+drhos(:,:,:,is,iq,3)**2
+      currs_sq(:,:,:,is,iq)=currs(:,:,:,is,iq,1)**2+currs(:,:,:,is,iq,2)**2+currs(:,:,:,is,iq,3)**2
+    END DO
   END DO
-END SUBROUTINE
+  rhos(:,:,:,1,:)=rhos(:,:,:,1,:)+rhos(:,:,:,2,:)
+  taus(:,:,:,1,:)=taus(:,:,:,1,:)+taus(:,:,:,2,:)
+  drhos_sq(:,:,:,1,:)=drhos_sq(:,:,:,1,:)+drhos_sq(:,:,:,2,:)
+  currs_sq(:,:,:,1,:)=currs_sq(:,:,:,1,:)+currs_sq(:,:,:,2,:)
+  localization=1.0d0/(1.0d0+((rhos(:,:,:,1,:)*taus(:,:,:,1,:)-drhos_sq(:,:,:,1,:)-currs_sq(:,:,:,1,:))/&
+               (3.0d0/5.0d0*(6.0d0*pi**2.0d0)**(2.0d0/3.0d0)*rhos(:,:,:,1,:)*2.0d0*(rhos(:,:,:,1,:)/2.0d0)**(5.0d0/3.0d0)))**2)
+    !
+    !  preliminary print along axes
+    ! 
+    OPEN(33,file='localization.res',status='unknown')
+    WRITE(33,'(/a)')  '# localization'
+    WRITE(33,'(/a)')  '#   x    neutrons      protons  '
+    WRITE(33,'(1x,f6.2,4g13.5)') &
+         (x(ixyz),(localization(ixyz,NY/2,NZ/2,iq),iq=1,2),ixyz=1,NX)
+    WRITE(33,*)
+    WRITE(33,'(/a)')  '#   y    neutrons      protons  '
+    WRITE(33,'(1x,f6.2,4g13.5)') &
+         (y(ixyz),(localization(NX/2,ixyz,NZ/2,iq),iq=1,2),ixyz=1,NY)
+    WRITE(33,*)
+    WRITE(33,'(/a)')  '#   z    neutrons      protons  '
+    WRITE(33,'(1x,f6.2,4g13.5)') &
+         (z(ixyz),(localization(NX/2,NY/2,ixyz,iq),iq=1,2),ixyz=1,NZ)
+    CLOSE(33)
+    RETURN
+
+  END SUBROUTINE localize
 END MODULE User

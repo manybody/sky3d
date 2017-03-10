@@ -229,6 +229,7 @@ CONTAINS
   END SUBROUTINE tstep
   !***********************************************************************
   SUBROUTINE tinfo
+    USE User , ONLY : localize
     REAL(db), DIMENSION(2) :: ecoll     ! storage for collective-flow energy
     INTEGER :: il
     REAL(db):: tabc_energy, tabc_ekin, tabc_ecoul, tabc_eskyrme, tabc_ext
@@ -270,9 +271,9 @@ CONTAINS
        DO nst=1,nstloc
           iq=isospin(globalindex(nst))
           CALL hpsi(iq,esf,psi(:,:,:,:,nst),ps1)
-          sp_energy(globalindex(nst))=overlap(psi(:,:,:,:,nst),ps1)
+          sp_energy(globalindex(nst))=REAL(overlap(psi(:,:,:,:,nst),ps1))
           sp_norm(globalindex(nst))=&
-               overlap(psi(:,:,:,:,nst),psi(:,:,:,:,nst))
+               REAL(overlap(psi(:,:,:,:,nst),psi(:,:,:,:,nst)))
        ENDDO
        CALL sp_properties
        IF(tmpi) THEN
@@ -344,6 +345,7 @@ CONTAINS
     IF(mplot/=0) THEN
        IF(wflag.AND.MOD(iter,mplot)==0) THEN
           CALL plot_density
+          CALL localize
           CALL write_densities
        ENDIF
     ENDIF

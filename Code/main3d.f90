@@ -9,11 +9,11 @@ PROGRAM tdhf3d
   USE Fragments
   USE Parallel
   USE Dynamic, ONLY: getin_dynamic,dynamichf
-  USE Static, ONLY: getin_static,init_static,statichf,harmosc
+  USE Static, ONLY: getin_static,init_static,statichf,harmosc,planewaves
   USE Coulomb, ONLY: coulinit
   USE User
   IMPLICIT NONE
-  INTEGER :: imode,nofsave
+  INTEGER :: imode,nofsave=0
   !***********************************************************************
   NAMELIST /files/ wffile,converfile,monopolesfile,dipolesfile, &
        momentafile,energiesfile,quadrupolesfile,spinfile,extfieldfile,&
@@ -38,7 +38,6 @@ PROGRAM tdhf3d
   CALL mpi_init_filename
   tstatic=imode==1
   tdynamic=imode==2
-  IF(tmpi.AND.tstatic) STOP 'MPI not implemented for static mode'
   IF(.NOT.(tstatic.OR.tdynamic)) THEN
      IF(wflag) WRITE(*,*) 'Illegal value for imode:',imode
      STOP
@@ -111,6 +110,7 @@ PROGRAM tdhf3d
   ! Step 7: allocate wave functions
   !********************************************************************
   CALL alloc_nodes
+  IF(tmpi.AND.tstatic) CALL init_mpi_2d
   CALL associate_nodes
   CALL alloc_levels
   !********************************************************************
@@ -124,6 +124,8 @@ PROGRAM tdhf3d
      END IF
   ELSEIF(nof==0) THEN    
      CALL harmosc
+  ELSEIF(nof==-1) THEN
+     CALL planewaves
   ELSE
      CALL init_user
   END IF
@@ -136,16 +138,15 @@ PROGRAM tdhf3d
   ! Step 10: static or dynamic  calculation performed
   !********************************************************************
   IF(tstatic) THEN
-     IF(tmpi .AND. wflag) STOP ' static should not run parallel'
      CALL init_static
      CALL statichf
   ELSE
-     !*************************************************************************
-     ! Dynamic branch
-     !*************************************************************************
-     IF(tmpi) CALL mpi_barrier (mpi_comm_world, mpi_ierror)
-     IF(trestart) nof=nofsave ! restore 2-body status so analysis is done
-     CALL dynamichf
+  !*************************************************************************
+  ! Dynamic branch
+  !*************************************************************************
+    IF(tmpi) CALL mpi_barrier (mpi_comm_world, mpi_ierror)
+    IF(trestart) nof=nofsave ! restore 2-body status so analysis is done
+    CALL dynamichf
   ENDIF
 !  CALL init_user
   CALL finish_mpi

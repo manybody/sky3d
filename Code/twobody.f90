@@ -200,7 +200,7 @@ CONTAINS
        END DO
     END DO
     ! Loop 2
-    nf=0; in_vacuum=.TRUE. 
+    nf=0; n1=0; n2=0; in_vacuum=.TRUE. 
     DO i=1,il
        IF(rhol(i)>vacuum) THEN 
           IF(in_vacuum) THEN 

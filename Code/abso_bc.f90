@@ -23,13 +23,11 @@ MODULE abso_bc
   REAL(db) :: powabs=0.0375D0
 
   REAL(db),PRIVATE,ALLOCATABLE,DIMENSION(:,:,:,:) :: rhoabso
-  REAL(db),PRIVATE :: xango,yango,zango,pp,tt
+  REAL(db),PRIVATE :: xango,yango,zango
   REAL(db),PRIVATE,ALLOCATABLE,DIMENSION(:,:,:) :: absomask,spherloss
   REAL(db),PRIVATE,ALLOCATABLE,DIMENSION(:,:,:,:) :: rhoescmaskorb
-  REAL(db),PRIVATE,ALLOCATABLE,DIMENSION(:,:) :: psitransfer,psicollect
   LOGICAL,PRIVATE,ALLOCATABLE,DIMENSION(:,:,:) :: tgridabso
-  INTEGER,PRIVATE,ALLOCATABLE,DIMENSION(:,:) :: indMP
-  INTEGER,PRIVATE :: numMP,nentries,ix,iy,iz,is,nst,iq
+  INTEGER,PRIVATE :: ix,iy,iz,nst,iq
   INTEGER,PRIVATE :: nta,ita,nabso=0
   REAL(db),PRIVATE :: timea
 CONTAINS
@@ -309,9 +307,6 @@ CONTAINS
     ! print collected information on escaping nucleons
 
     REAL(db),INTENT(IN),DIMENSION(:,:,:,:) :: rhoabsoprint
-
-    CHARACTER (LEN=1) :: inttostring1
-    CHARACTER (LEN=2) :: inttostring2
 
     CHARACTER(LEN=5) :: scratchline
     CHARACTER(LEN=5) :: readstring
