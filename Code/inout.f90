@@ -67,7 +67,7 @@ CONTAINS
        CASE('u','U')
           CALL write_one_density('Upot',tabc_dens(upot))
        CASE('l','L')
-          IF(write_isospin==.FALSE.) STOP 'Please set <write_isospin=T> for localization plots'
+          IF(write_isospin.EQV..FALSE.) STOP 'Please set <write_isospin=T> for localization plots'
           CALL write_one_density('Loc',tabc_dens(localization))
        CASE('w','W')
           WRITE(scratch) 'Wcoul     ',.FALSE.,.FALSE.
