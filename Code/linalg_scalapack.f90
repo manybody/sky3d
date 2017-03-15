@@ -1,12 +1,12 @@
 MODULE LINALG
   USE Params,   ONLY: db,cmplxzero,cmplxone
   USE Levels
-  USE Parallel, ONLY: nb,mb,contxt,nstloc_x,nstloc_y,globalindex_x,globalindex_y,nb_psi
+  USE Parallel, ONLY: nb,mb,contxt,contxt1d,nstloc_x,nstloc_y,globalindex_x,globalindex_y,nb_psi,npsi_loc,npmin_loc
   USE Grids,    ONLY: wxyz
 !
   IMPLICIT NONE
   INTEGER                 :: nlin(2)
-  INTEGER                 :: desca(2,10),descz(2,10),descc(2,10),desc_t(2,10)&
+  INTEGER                 :: desca(2,10),descz(2,10),descc(2,10),desc_t(2,10),desc_to(2,10)&
                             , work_t_size(2),iwork_t_size(2),rwork_t_size(2)
 !
   REAL(db)   ,ALLOCATABLE :: rwork_t(:),evals(:)  
@@ -26,7 +26,9 @@ MODULE LINALG
       CALL DESCINIT(DESCC(iq,1:10),npsi(iq)-npmin(iq)+1,npsi(iq)-npmin(iq)+1,&
                     NB,MB,0,0,CONTXT,nstloc_x(iq),infoconv)
       CALL DESCINIT(DESC_T(iq,1:10),nx*ny*nz*2,npsi(iq)-npmin(iq)+1,nx*ny*nz*2,&
-                      nb_psi,0,0,CONTXT,nx*ny*nz*2,infoconv)
+                      nb_psi,0,0,CONTXT1D,nx*ny*nz*2,infoconv)
+      CALL DESCINIT(DESC_TO(iq,1:10),npsi(iq)-npmin(iq)+1,npsi(iq)-npmin(iq)+1,&
+                    npsi(iq)-npmin(iq)+1,nb_psi,0,0,CONTXT1D,npsi(iq)-npmin(iq)+1,infoconv)
       work_t_size(iq)  = -1
       iwork_t_size(iq) = -1
       rwork_t_size(iq) = -1
@@ -46,8 +48,11 @@ MODULE LINALG
     INTEGER,    INTENT(IN)  :: iq
     COMPLEX(db),INTENT(IN)  :: psi_1(:,:,:,:,:),psi_2(:,:,:,:,:)
     COMPLEX(db), INTENT(OUT):: matrix(:,:)
+    COMPLEX(db)             :: matrix1d(npsi(iq)-npmin(iq)+1,npsi_loc(iq)-npmin_loc(iq)+1)
     CALL PZGEMM('C','N',npsi(iq)-npmin(iq)+1,npsi(iq)-npmin(iq)+1,nx*ny*nz*2,cmplxone,psi_1,1,1,&
-           desc_t(iq,1:10),psi_2,1,1,desc_t(iq,1:10),cmplxzero,matrix,1,1,desca(iq,1:10))
+           desc_t(iq,1:10),psi_2,1,1,desc_t(iq,1:10),cmplxzero,matrix1d,1,1,desc_to(iq,1:10))
+    CALL PZGEMR2D(npsi(iq)-npmin(iq)+1,npsi(iq)-npmin(iq)+1,matrix1d,1,1,desc_to(iq,1:10),matrix,&
+                  1,1,desca(iq,1:10),contxt)
     matrix=matrix*wxyz
   END SUBROUTINE calc_matrix
   !************************************************************
@@ -97,8 +102,11 @@ MODULE LINALG
   SUBROUTINE recombine(psi_in,matrix,psi_out,iq)
     INTEGER,    INTENT(IN)  :: iq
     COMPLEX(db),INTENT(IN)  :: psi_in(:,:,:,:,:),matrix(:,:)
-    COMPLEX(db),INTENT(OUT) :: psi_out(:,:,:,:,:)     
+    COMPLEX(db),INTENT(OUT) :: psi_out(:,:,:,:,:)
+    COMPLEX(db)             :: matrix1d(npsi(iq)-npmin(iq)+1,npsi_loc(iq)-npmin_loc(iq)+1)    
+    CALL PZGEMR2D(npsi(iq)-npmin(iq)+1,npsi(iq)-npmin(iq)+1,matrix,1,1,desca(iq,1:10),matrix1d,&
+                  1,1,desc_to(iq,1:10),contxt1d)
     CALL PZGEMM('N','T',nx*ny*nz*2,npsi(iq)-npmin(iq)+1,npsi(iq)-npmin(iq)+1,cmplxone,psi_in,1,1,desc_t(iq,1:10),&
-           matrix,1,1,desca(iq,1:10),cmplxzero,psi_out,1,1,desc_t(iq,1:10))
+           matrix1d,1,1,desc_to(iq,1:10),cmplxzero,psi_out,1,1,desc_t(iq,1:10))
   END SUBROUTINE
 END MODULE LINALG

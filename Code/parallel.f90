@@ -5,7 +5,7 @@ MODULE Parallel
   IMPLICIT NONE
   INCLUDE 'mpif.h'
   SAVE
-  INTEGER, PARAMETER   :: NB=32,MB=32,NB_psi = 32
+  INTEGER, PARAMETER   :: NB=32,MB=32,NB_psi =32
   LOGICAL, PARAMETER   :: tmpi=.TRUE.,ttabc=.FALSE.
   INTEGER, ALLOCATABLE :: node(:),localindex(:),globalindex(:),&
                           node_x(:),node_y(:),localindex_x(:),localindex_y(:),&
@@ -16,7 +16,7 @@ MODULE Parallel
   INTEGER              :: comm2d,mpi_dims(2),mpi_mycoords(2),nstloc_iso(2),nstloc_x(2),&
                           nstloc_y(2),first(2),npmin_loc(2),npsi_loc(2)
   INTEGER              :: comm2d_x,comm2d_y,mpi_size_x,mpi_size_y,mpi_rank_x,mpi_rank_y
-  INTEGER              :: NPROCS,NPROW,NPCOL,MYPROW,MYPCOL,CONTXT,IAM
+  INTEGER              :: NPROCS,NPROW,NPCOL,MYPROW,MYPCOL,CONTXT,IAM,CONTXT1D
   INTEGER, EXTERNAL    :: NUMROC,INDXL2G,INDXG2L,INDXG2P
   REAL(db)             :: timer(20)
 CONTAINS
@@ -128,6 +128,8 @@ CONTAINS
         CALL BLACS_GET(0,0,CONTXT)
         CALL BLACS_GRIDINIT(CONTXT,'Row',NPROW,NPCOL)
         CALL BLACS_GRIDINFO(CONTXT,NPROW,NPCOL,MYPROW,MYPCOL)
+        CALL BLACS_GET(0,0,CONTXT1D)
+        CALL BLACS_GRIDINIT(CONTXT1D,'Row',1,mpi_nprocs)
         IF(mpi_rank_x/=MYPROW.OR.mpi_rank_y/=MYPCOL) STOP 'BLACS and MPI init is different'
   END SUBROUTINE init_blacs
   !***********************************************************************
