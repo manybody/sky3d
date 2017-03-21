@@ -1,13 +1,15 @@
 MODULE LINALG
   USE Params,   ONLY: db,cmplxzero,cmplxone
   USE Levels
-  USE Parallel, ONLY: nb,mb,contxt,contxt1d,nstloc_x,nstloc_y,globalindex_x,globalindex_y,nb_psi,npsi_loc,npmin_loc
+  USE Parallel, ONLY: nb,mb,contxt,contxt1d,nstloc_x,nstloc_y,globalindex_x,&
+                      globalindex_y,nb_psi,npsi_loc,npmin_loc,psiloc_x,psiloc_y
   USE Grids,    ONLY: wxyz
 !
   IMPLICIT NONE
   INTEGER                 :: nlin(2)
-  INTEGER                 :: desca(2,10),descz(2,10),descc(2,10),desc_t(2,10),desc_to(2,10)&
-                            , work_t_size(2),iwork_t_size(2),rwork_t_size(2)
+  INTEGER                 :: desca(2,10),descz(2,10),descc(2,10),desc_to(2,10),&
+                             desc_psi1d(2,10),desc_psi2d(2,10),&
+                             work_t_size(2),iwork_t_size(2),rwork_t_size(2)
 !
   REAL(db)   ,ALLOCATABLE :: rwork_t(:),evals(:)  
   COMPLEX(db),ALLOCATABLE :: work_t(:),matr_lin(:,:),unitary(:,:)
@@ -25,10 +27,12 @@ MODULE LINALG
                     NB,MB,0,0,CONTXT,nstloc_x(iq),infoconv)
       CALL DESCINIT(DESCC(iq,1:10),npsi(iq)-npmin(iq)+1,npsi(iq)-npmin(iq)+1,&
                     NB,MB,0,0,CONTXT,nstloc_x(iq),infoconv)
-      CALL DESCINIT(DESC_T(iq,1:10),nx*ny*nz*2,npsi(iq)-npmin(iq)+1,nx*ny*nz*2,&
+      CALL DESCINIT(DESC_psi1D(iq,1:10),nx*ny*nz*2,npsi(iq)-npmin(iq)+1,nx*ny*nz*2,&
                       nb_psi,0,0,CONTXT1D,nx*ny*nz*2,infoconv)
       CALL DESCINIT(DESC_TO(iq,1:10),npsi(iq)-npmin(iq)+1,npsi(iq)-npmin(iq)+1,&
                     npsi(iq)-npmin(iq)+1,nb_psi,0,0,CONTXT1D,npsi(iq)-npmin(iq)+1,infoconv)
+      CALL DESCINIT(DESC_psi2D(iq,1:10),nx*ny*nz*2,npsi(iq)-npmin(iq)+1,&
+                    NB,MB,0,0,CONTXT,psiloc_x(iq),infoconv)
       work_t_size(iq)  = -1
       iwork_t_size(iq) = -1
       rwork_t_size(iq) = -1
@@ -44,16 +48,35 @@ MODULE LINALG
     END DO
   END SUBROUTINE init_linalg
   !************************************************************
+  SUBROUTINE wf_1dto2d(psi_1d,psi_2d,iq)
+    COMPLEX(db), INTENT(IN)  :: psi_1d(:,:,:,:,:)
+    COMPLEX(db), INTENT(OUT) :: psi_2d(:,:)
+    CALL PZGEMR2D(nx*ny*nz*2,npsi(iq)-npmin(iq)+1,psi_1d,1,1,desc_psi1d(iq,1:10),psi_2d,&
+                  1,1,desc_psi2d(iq,1:10),contxt)
+  END SUBROUTINE
+  !************************************************************
+  SUBROUTINE wf_2dto1d(psi_2d,psi_1d,iq)
+    COMPLEX(db), INTENT(OUT)  :: psi_1d(:,:,:,:,:)
+    COMPLEX(db), INTENT(IN)   :: psi_2d(:,:)
+    CALL PZGEMR2D(nx*ny*nz*2,npsi(iq)-npmin(iq)+1,psi_2d,1,1,desc_psi2d(iq,1:10),psi_1d,&
+                  1,1,desc_psi1d(iq,1:10),contxt)
+  END SUBROUTINE
+  !************************************************************
   SUBROUTINE calc_matrix(psi_1,psi_2,matrix,iq)
     INTEGER,    INTENT(IN)  :: iq
     COMPLEX(db),INTENT(IN)  :: psi_1(:,:,:,:,:),psi_2(:,:,:,:,:)
     COMPLEX(db), INTENT(OUT):: matrix(:,:)
-    COMPLEX(db)             :: matrix1d(npsi(iq)-npmin(iq)+1,npsi_loc(iq)-npmin_loc(iq)+1)
-    CALL PZGEMM('C','N',npsi(iq)-npmin(iq)+1,npsi(iq)-npmin(iq)+1,nx*ny*nz*2,cmplxone,psi_1,1,1,&
-           desc_t(iq,1:10),psi_2,1,1,desc_t(iq,1:10),cmplxzero,matrix1d,1,1,desc_to(iq,1:10))
-    CALL PZGEMR2D(npsi(iq)-npmin(iq)+1,npsi(iq)-npmin(iq)+1,matrix1d,1,1,desc_to(iq,1:10),matrix,&
-                  1,1,desca(iq,1:10),contxt)
+    INTEGER                 :: dim_x,dim_y
+    COMPLEX(db),ALLOCATABLE :: psi_1_2d(:,:),psi_2_2d(:,:)
+    ALLOCATE(psi_1_2d(psiloc_x(iq),psiloc_y(iq)),psi_2_2d(psiloc_x(iq),psiloc_y(iq)))    
+    CALL PZGEMR2D(nx*ny*nz*2,npsi(iq)-npmin(iq)+1,psi_1,1,1,desc_psi1d(iq,1:10),psi_1_2d,&
+                  1,1,desc_psi2d(iq,1:10),contxt)
+    CALL PZGEMR2D(nx*ny*nz*2,npsi(iq)-npmin(iq)+1,psi_2,1,1,desc_psi1d(iq,1:10),psi_2_2d,&
+                  1,1,desc_psi2d(iq,1:10),contxt)
+    CALL PZGEMM('C','N',npsi(iq)-npmin(iq)+1,npsi(iq)-npmin(iq)+1,nx*ny*nz*2,cmplxone,psi_1_2d,1,1,&
+           desc_psi2d(iq,1:10),psi_2_2d,1,1,desc_psi2d(iq,1:10),cmplxzero,matrix,1,1,desca(iq,1:10))
     matrix=matrix*wxyz
+    DEALLOCATE(psi_1_2d,psi_2_2d)
   END SUBROUTINE calc_matrix
   !************************************************************
   SUBROUTINE eigenvecs(matr_in,evecs,evals_out,iq)
@@ -103,10 +126,13 @@ MODULE LINALG
     INTEGER,    INTENT(IN)  :: iq
     COMPLEX(db),INTENT(IN)  :: psi_in(:,:,:,:,:),matrix(:,:)
     COMPLEX(db),INTENT(OUT) :: psi_out(:,:,:,:,:)
-    COMPLEX(db)             :: matrix1d(npsi(iq)-npmin(iq)+1,npsi_loc(iq)-npmin_loc(iq)+1)    
-    CALL PZGEMR2D(npsi(iq)-npmin(iq)+1,npsi(iq)-npmin(iq)+1,matrix,1,1,desca(iq,1:10),matrix1d,&
-                  1,1,desc_to(iq,1:10),contxt1d)
-    CALL PZGEMM('N','T',nx*ny*nz*2,npsi(iq)-npmin(iq)+1,npsi(iq)-npmin(iq)+1,cmplxone,psi_in,1,1,desc_t(iq,1:10),&
-           matrix1d,1,1,desc_to(iq,1:10),cmplxzero,psi_out,1,1,desc_t(iq,1:10))
+    COMPLEX(db),ALLOCATABLE :: psi_in_2d(:,:),psi_out_2d(:,:)
+    ALLOCATE(psi_in_2d(psiloc_x(iq),psiloc_y(iq)),psi_out_2d(psiloc_x(iq),psiloc_y(iq)))    
+    CALL PZGEMR2D(nx*ny*nz*2,npsi(iq)-npmin(iq)+1,psi_in,1,1,desc_psi1d(iq,1:10),psi_in_2d,&
+                  1,1,desc_psi2d(iq,1:10),contxt)
+    CALL PZGEMM('N','T',nx*ny*nz*2,npsi(iq)-npmin(iq)+1,npsi(iq)-npmin(iq)+1,cmplxone,psi_in_2d,1,1,desc_psi2d(iq,1:10),&
+           matrix,1,1,desca(iq,1:10),cmplxzero,psi_out_2d,1,1,desc_psi2d(iq,1:10))
+    CALL PZGEMR2D(nx*ny*nz*2,npsi(iq)-npmin(iq)+1,psi_out_2d,1,1,desc_psi2d(iq,1:10),psi_out,&
+                  1,1,desc_psi1d(iq,1:10),contxt)
   END SUBROUTINE
 END MODULE LINALG

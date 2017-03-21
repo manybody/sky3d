@@ -5,7 +5,7 @@ MODULE Parallel
   IMPLICIT NONE
   INCLUDE 'mpif.h'
   SAVE
-  INTEGER, PARAMETER   :: NB=32,MB=32,NB_psi =32
+  INTEGER, PARAMETER   :: NB=2,MB=2,NB_psi =2
   LOGICAL, PARAMETER   :: tmpi=.TRUE.,ttabc=.FALSE.
   INTEGER, ALLOCATABLE :: node(:),localindex(:),globalindex(:),&
                           node_x(:),node_y(:),localindex_x(:),localindex_y(:),&
@@ -14,7 +14,7 @@ MODULE Parallel
   INTEGER, ALLOCATABLE :: node_2dto1d(:,:),node_1dto2d_x(:),node_1dto2d_y(:)
   INTEGER              :: mpi_nprocs,mpi_ierror,mpi_myproc
   INTEGER              :: comm2d,mpi_dims(2),mpi_mycoords(2),nstloc_iso(2),nstloc_x(2),&
-                          nstloc_y(2),first(2),npmin_loc(2),npsi_loc(2)
+                          nstloc_y(2),first(2),npmin_loc(2),npsi_loc(2),psiloc_x(2),psiloc_y(2)
   INTEGER              :: comm2d_x,comm2d_y,mpi_size_x,mpi_size_y,mpi_rank_x,mpi_rank_y
   INTEGER              :: NPROCS,NPROW,NPCOL,MYPROW,MYPCOL,CONTXT,IAM,CONTXT1D
   INTEGER, EXTERNAL    :: NUMROC,INDXL2G,INDXG2L,INDXG2P
@@ -97,6 +97,8 @@ CONTAINS
     DO is=1,2
       nstloc_x(is) = NUMROC(npsi(is)-npmin(is)+1,NB,MYPROW,0,NPROW)
       nstloc_y(is) = NUMROC(npsi(is)-npmin(is)+1,MB,MYPCOL,0,NPCOL)
+      psiloc_x(is) = NUMROC(nx*ny*nz*2,NB,MYPROW,0,NPROW)
+      psiloc_y(is) = nstloc_y(is)
     END DO
 
     ALLOCATE(node_x(nstmax),node_y(nstmax),globalindex_x(nstmax,2),globalindex_y(nstmax,2))
