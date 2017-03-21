@@ -51,6 +51,7 @@ MODULE LINALG
   SUBROUTINE wf_1dto2d(psi_1d,psi_2d,iq)
     COMPLEX(db), INTENT(IN)  :: psi_1d(:,:,:,:,:)
     COMPLEX(db), INTENT(OUT) :: psi_2d(:,:)
+    INTEGER,     INTENT(IN)  :: iq
     CALL PZGEMR2D(nx*ny*nz*2,npsi(iq)-npmin(iq)+1,psi_1d,1,1,desc_psi1d(iq,1:10),psi_2d,&
                   1,1,desc_psi2d(iq,1:10),contxt)
   END SUBROUTINE
@@ -58,25 +59,18 @@ MODULE LINALG
   SUBROUTINE wf_2dto1d(psi_2d,psi_1d,iq)
     COMPLEX(db), INTENT(OUT)  :: psi_1d(:,:,:,:,:)
     COMPLEX(db), INTENT(IN)   :: psi_2d(:,:)
+    INTEGER,     INTENT(IN)   :: iq
     CALL PZGEMR2D(nx*ny*nz*2,npsi(iq)-npmin(iq)+1,psi_2d,1,1,desc_psi2d(iq,1:10),psi_1d,&
                   1,1,desc_psi1d(iq,1:10),contxt)
   END SUBROUTINE
   !************************************************************
   SUBROUTINE calc_matrix(psi_1,psi_2,matrix,iq)
     INTEGER,    INTENT(IN)  :: iq
-    COMPLEX(db),INTENT(IN)  :: psi_1(:,:,:,:,:),psi_2(:,:,:,:,:)
+    COMPLEX(db),INTENT(IN)  :: psi_1(:,:),psi_2(:,:)
     COMPLEX(db), INTENT(OUT):: matrix(:,:)
-    INTEGER                 :: dim_x,dim_y
-    COMPLEX(db),ALLOCATABLE :: psi_1_2d(:,:),psi_2_2d(:,:)
-    ALLOCATE(psi_1_2d(psiloc_x(iq),psiloc_y(iq)),psi_2_2d(psiloc_x(iq),psiloc_y(iq)))    
-    CALL PZGEMR2D(nx*ny*nz*2,npsi(iq)-npmin(iq)+1,psi_1,1,1,desc_psi1d(iq,1:10),psi_1_2d,&
-                  1,1,desc_psi2d(iq,1:10),contxt)
-    CALL PZGEMR2D(nx*ny*nz*2,npsi(iq)-npmin(iq)+1,psi_2,1,1,desc_psi1d(iq,1:10),psi_2_2d,&
-                  1,1,desc_psi2d(iq,1:10),contxt)
-    CALL PZGEMM('C','N',npsi(iq)-npmin(iq)+1,npsi(iq)-npmin(iq)+1,nx*ny*nz*2,cmplxone,psi_1_2d,1,1,&
-           desc_psi2d(iq,1:10),psi_2_2d,1,1,desc_psi2d(iq,1:10),cmplxzero,matrix,1,1,desca(iq,1:10))
+    CALL PZGEMM('C','N',npsi(iq)-npmin(iq)+1,npsi(iq)-npmin(iq)+1,nx*ny*nz*2,cmplxone,psi_1,1,1,&
+           desc_psi2d(iq,1:10),psi_2,1,1,desc_psi2d(iq,1:10),cmplxzero,matrix,1,1,desca(iq,1:10))
     matrix=matrix*wxyz
-    DEALLOCATE(psi_1_2d,psi_2_2d)
   END SUBROUTINE calc_matrix
   !************************************************************
   SUBROUTINE eigenvecs(matr_in,evecs,evals_out,iq)
@@ -124,15 +118,9 @@ MODULE LINALG
   !************************************************************
   SUBROUTINE recombine(psi_in,matrix,psi_out,iq)
     INTEGER,    INTENT(IN)  :: iq
-    COMPLEX(db),INTENT(IN)  :: psi_in(:,:,:,:,:),matrix(:,:)
-    COMPLEX(db),INTENT(OUT) :: psi_out(:,:,:,:,:)
-    COMPLEX(db),ALLOCATABLE :: psi_in_2d(:,:),psi_out_2d(:,:)
-    ALLOCATE(psi_in_2d(psiloc_x(iq),psiloc_y(iq)),psi_out_2d(psiloc_x(iq),psiloc_y(iq)))    
-    CALL PZGEMR2D(nx*ny*nz*2,npsi(iq)-npmin(iq)+1,psi_in,1,1,desc_psi1d(iq,1:10),psi_in_2d,&
-                  1,1,desc_psi2d(iq,1:10),contxt)
-    CALL PZGEMM('N','T',nx*ny*nz*2,npsi(iq)-npmin(iq)+1,npsi(iq)-npmin(iq)+1,cmplxone,psi_in_2d,1,1,desc_psi2d(iq,1:10),&
-           matrix,1,1,desca(iq,1:10),cmplxzero,psi_out_2d,1,1,desc_psi2d(iq,1:10))
-    CALL PZGEMR2D(nx*ny*nz*2,npsi(iq)-npmin(iq)+1,psi_out_2d,1,1,desc_psi2d(iq,1:10),psi_out,&
-                  1,1,desc_psi1d(iq,1:10),contxt)
+    COMPLEX(db),INTENT(IN)  :: psi_in(:,:),matrix(:,:)
+    COMPLEX(db),INTENT(OUT) :: psi_out(:,:)
+    CALL PZGEMM('N','T',nx*ny*nz*2,npsi(iq)-npmin(iq)+1,npsi(iq)-npmin(iq)+1,cmplxone,psi_in,1,1,desc_psi2d(iq,1:10),&
+           matrix,1,1,desca(iq,1:10),cmplxzero,psi_out,1,1,desc_psi2d(iq,1:10))
   END SUBROUTINE
 END MODULE LINALG

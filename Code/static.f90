@@ -366,7 +366,7 @@ CONTAINS
     !                                                                      *
     !***********************************************************************
     USE Trivial, ONLY: overlap,rpsnorm
-    USE Linalg,  ONLY: eigenvecs,loewdin,comb_orthodiag,recombine,calc_matrix
+    USE Linalg,  ONLY: eigenvecs,loewdin,comb_orthodiag,recombine,calc_matrix,wf_1dto2d,wf_2dto1d
     
     INTEGER,INTENT(IN)      :: iq
     LOGICAL,INTENT(IN)      :: diagonalize
@@ -374,7 +374,7 @@ CONTAINS
     COMPLEX(db), POINTER    :: psi_x(:,:),psi_y(:,:),hampsi_x(:,:)
     COMPLEX(db),ALLOCATABLE :: unitary(:,:),hmatr_lin(:,:),unitary_h(:,:), rhomatr_lin(:,:),&
                                rhomatr_lin_eigen(:,:), unitary_rho(:,:)
-    COMPLEX(db),ALLOCATABLE :: buf(:,:,:),buf2(:,:,:)
+    COMPLEX(db),ALLOCATABLE :: psi_2d(:,:),hampsi_2d(:,:)
     INTEGER                 :: big_dim,number_threads,tid,blocksize,blksz,it,jt,kt,tt
     COMPLEX(db)             :: sum,sum2
     INTEGER,EXTERNAL        :: omp_get_num_threads,omp_get_thread_num
@@ -386,14 +386,18 @@ CONTAINS
              unitary_h(nstloc_x(iq),nstloc_y(iq)),         rhomatr_lin(nstloc_x(iq),nstloc_y(iq)),&
              rhomatr_lin_eigen(nstloc_x(iq),nstloc_y(iq)), unitary_rho(nstloc_x(iq),nstloc_y(iq)))
     big_dim = nx*ny*nz*2
-    ALLOCATE(buf(nstloc_x(iq),nstloc_y(iq),24),buf2(nstloc_x(iq),nstloc_y(iq),24))
+    ALLOCATE(psi_2d(psiloc_x(iq),psiloc_y(iq)),hampsi_2d(psiloc_x(iq),psiloc_y(iq)))
     unitary_h=0.0d0
     hmatr_lin=0.0d0
     rhomatr_lin=0.0d0
     IF(tmpi.AND.ttime) CALL mpi_start_timer(2)
-    CALL calc_matrix(psi(:,:,:,:,npmin_loc(iq):npsi_loc(iq)),psi(:,:,:,:,npmin_loc(iq):npsi_loc(iq)),rhomatr_lin,iq)
+    CALL wf_1dto2d(psi(:,:,:,:,npmin_loc(iq):npsi_loc(iq)),psi_2d,iq)
+    IF(diagonalize) CALL wf_1dto2d(hampsi(:,:,:,:,npmin_loc(iq):npsi_loc(iq)),hampsi_2d,iq)
+    IF(tmpi.AND.ttime) CALL mpi_stop_timer(2,'1d to 2d: ')
+    IF(tmpi.AND.ttime) CALL mpi_start_timer(2)
+    CALL calc_matrix(psi_2d,psi_2d,rhomatr_lin,iq)
     IF(diagonalize)&
-    CALL calc_matrix(psi(:,:,:,:,npmin_loc(iq):npsi_loc(iq)),hampsi(:,:,:,:,npmin_loc(iq):npsi_loc(iq)),hmatr_lin,iq)
+    CALL calc_matrix(psi_2d,hampsi_2d,hmatr_lin,iq)
     !***********************************************************************
     ! Step 2: Calculate lower tringular of h-matrix and overlaps.
     !***********************************************************************
@@ -438,11 +442,13 @@ CONTAINS
     ! Step 6: Recombine |psi> and write them into 1d storage mode
     !***********************************************************************
     IF(tmpi.AND.ttime) CALL mpi_start_timer(2)
-    CALL recombine(psi(:,:,:,:,npmin_loc(iq):npsi_loc(iq)),unitary,hampsi(:,:,:,:,npmin_loc(iq):npsi_loc(iq)),iq)
-    psi(:,:,:,:,npmin_loc(iq):npsi_loc(iq))=hampsi(:,:,:,:,npmin_loc(iq):npsi_loc(iq))
+    CALL recombine(psi_2d,unitary,hampsi_2d,iq)
     IF(tmpi.AND.ttime) CALL mpi_stop_timer(2,'recombine: ')
+    IF(tmpi.AND.ttime) CALL mpi_start_timer(2)
+    CALL wf_2dto1d(hampsi_2d,psi(:,:,:,:,npmin_loc(iq):npsi_loc(iq)),iq)
+    IF(tmpi.AND.ttime) CALL mpi_stop_timer(2,'2d to 1d: ')
     DEALLOCATE(unitary,hmatr_lin,unitary_h,rhomatr_lin,&
-               rhomatr_lin_eigen,unitary_rho)
+               rhomatr_lin_eigen,unitary_rho,hampsi_2d,psi_2d)
   END SUBROUTINE diagstep
   !*************************************************************************
   SUBROUTINE sinfo(printing)
