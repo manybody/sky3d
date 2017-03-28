@@ -62,7 +62,7 @@ static.o : static.f90 params.o densities.o grids.o \
 
 dynamic.o : dynamic.f90 params.o densities.o grids.o trivial.o \
 	levels.o moment.o energies.o inout.o meanfield.o sequential.o \
-	twobody.o external.o
+	twobody.o external.o abso_bc.o
 
 main3d.o : main3d.f90 params.o fourier.o forces.o densities.o meanfield.o levels.o grids.o fragments.o sequential.o dynamic.o static.o coulomb.o user.o
 
