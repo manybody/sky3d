@@ -110,8 +110,8 @@ PROGRAM tdhf3d
   ! Step 7: allocate wave functions
   !********************************************************************
   CALL alloc_nodes
-  IF(tmpi.AND.tstatic) CALL init_mpi_2d
   CALL associate_nodes
+  IF(tmpi.AND.tstatic) CALL init_mpi_2d
   CALL alloc_levels
   !********************************************************************
   ! Step 8: initialize wave functions
