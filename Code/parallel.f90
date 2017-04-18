@@ -8,19 +8,27 @@ MODULE Parallel
   INTEGER, PARAMETER   :: NB=2,MB=2,NB_psi =2
   LOGICAL, PARAMETER   :: tmpi=.TRUE.,ttabc=.FALSE.
   INTEGER, ALLOCATABLE :: node(:),localindex(:),globalindex(:)
-  INTEGER, ALLOCATABLE :: recvcounts(:,:),displs(:,:),globalindex_x(:),globalindex_y(:)
+  INTEGER, ALLOCATABLE :: recvcounts(:,:),displs(:,:),globalindex_x(:),globalindex_y(:),&
+                          globalindex_diag_x(:),globalindex_diag_y(:)
   INTEGER              :: mpi_nprocs,mpi_ierror,mpi_myproc,mpi_nprocs_iso(2),my_iso,mpi_myproc_iso
   INTEGER              :: comm2d,comm_iso,mpi_dims(2),mpi_mycoords(2),nstloc_x,&
-                          nstloc_y,psiloc_x,psiloc_y
-  INTEGER              :: comm2d_x,comm2d_y,mpi_size_x,mpi_size_y,mpi_rank_x,mpi_rank_y
-  INTEGER              :: NPROCS,NPROW,NPCOL,MYPROW,MYPCOL,CONTXT,IAM,CONTXT1D
+                          nstloc_y,psiloc_x,psiloc_y,mpi_nprocs_diag(4),my_diag,&
+                          nstloc_diag_x,nstloc_diag_y
+  INTEGER              :: comm2d_x,comm2d_y,mpi_size_x,mpi_size_y,mpi_rank_x,mpi_rank_y,&
+                          nprd,npcd,myprowd,mypcold,contxt_d,contxt_o
+  INTEGER              :: NPROCS,NPROW,NPCOL,MYPROW,MYPCOL,CONTXT,IAM,CONTXT1D,CONTXT_DO
+  
+!  INTEGER              :: CONTXT_DP,CONTXT_OP,CONTXT_DN,CONTXT_ON,NPROW_DP,NPCOL-DP,&
+                          
+   
   INTEGER, EXTERNAL    :: NUMROC,INDXL2G,INDXG2L,INDXG2P
   REAL(db)             :: timer(20)
 CONTAINS
   !***********************************************************************
   SUBROUTINE alloc_nodes
     ALLOCATE(node(nstmax),localindex(nstmax),globalindex(nstmax),&
-             globalindex_x(nstmax),globalindex_y(nstmax))
+             globalindex_x(nstmax),globalindex_y(nstmax),&
+             globalindex_diag_x(nstmax),globalindex_diag_y(nstmax))
   END SUBROUTINE alloc_nodes
   !***********************************************************************
   SUBROUTINE init_all_mpi
@@ -86,6 +94,12 @@ CONTAINS
       nstloc_y = NUMROC(npsi(my_iso)-npmin(my_iso)+1,MB,MYPCOL,0,NPCOL)
       psiloc_x = NUMROC(nx*ny*nz*2,NB,MYPROW,0,NPROW)
       psiloc_y = nstloc_y
+!      WRITE(*,*),'proc = ',mpi_myproc,my_iso,npsi(my_iso),npmin(my_iso),nstloc_x,nstloc_y
+      nstloc_diag_x = NUMROC(npsi(my_iso)-npmin(my_iso)+1,NB,myprowd,0,nprd)
+      nstloc_diag_y = NUMROC(npsi(my_iso)-npmin(my_iso)+1,NB,mypcold,0,npcd)
+!      WRITE(*,*),'proc = ',mpi_myproc,'diag dim = ',nstloc_diag_x,nstloc_diag_y
+   
+
 !
     DO i=1,nstloc_x
       globalindex_x(i)=INDXL2G(i, NB, MYPROW, 0, NPROW )
@@ -97,10 +111,22 @@ CONTAINS
       globalindex_x=globalindex_x+npsi(1)
       globalindex_y=globalindex_y+npsi(1)
     END IF
+
+    DO i=1,nstloc_diag_x
+      globalindex_diag_x(i)=INDXL2G(i, NB, myprowd, 0, nprd )
+    END DO
+    DO i=1,nstloc_diag_y
+      globalindex_diag_y(i)=INDXL2G(i, MB, mypcold, 0, npcd )
+    END DO
+    IF(my_iso==2) THEN
+      globalindex_diag_x=globalindex_diag_x+npsi(1)
+      globalindex_diag_y=globalindex_diag_y+npsi(1)
+    END IF
   END SUBROUTINE init_mpi_2d
 !***************************************************************************
   SUBROUTINE init_blacs
-    INTEGER             :: i,j,k,is,dims(2),CTXTTMP,NPROW1d,NPCOL1d,MYPROW1d,MYPCOL1d
+    INTEGER             :: i,j,k,is,dims(2),CTXTTMP,NPROW1d,NPCOL1d,MYPROW1d,MYPCOL1d,&
+                           diad_dims(2)
     INTEGER,ALLOCATABLE :: IMAP(:,:)
       CALL BLACS_PINFO(IAM,NPROCS)
       IF (NPROCS.LT.1) THEN
@@ -115,21 +141,67 @@ CONTAINS
         ALLOCATE(IMAP(NPROW,NPCOL))
         K=0
         IF(is==2) K=mpi_nprocs_iso(1)
+!        WRITE(*,*),'is = ',is,'K = ',K
         DO I = 1, NPROW
           DO J = 1, NPCOL
             IMAP(I, J) = K
             K = K + 1
           END DO
         END DO
+!        WRITE(*,*),'imap = ',IMAP      
         CALL BLACS_GRIDMAP( CTXTTMP, IMAP, NPROW, NPROW, NPCOL )
         DEALLOCATE(IMAP)
         IF(is==my_iso) CONTXT=CTXTTMP
+
       END DO
+
+!      WRITE(*,*),'proc = ',mpi_myproc,'contxt = ',CONTXT_DO
+
+
       CALL BLACS_GRIDINFO(CONTXT,NPROW,NPCOL,MYPROW,MYPCOL)
       CALL BLACS_GET(CONTXT,10,CONTXT1D)
       CALL BLACS_GRIDINIT(CONTXT1D,'Row',1,mpi_nprocs_iso(my_iso))
       CALL BLACS_GRIDINFO(CONTXT1D,NPROW1d,NPCOL1d,MYPROW1d,MYPCOL1d)
-      IF(mpi_mycoords(1)/=MYPROW.OR.mpi_mycoords(2)/=MYPCOL) STOP 'BLACS and MPI init is different'
+      WRITE(*,*),'proc = ',mpi_myproc,nprow1d,npcol1d,myprow1d,mypcol1d
+      
+      DO is=1,4
+        diad_dims=0
+        CALL mpi_dims_create(mpi_nprocs_diag(is),2,diad_dims,mpi_ierror)
+        nprd=diad_dims(1)
+        npcd=diad_dims(2)
+        CALL BLACS_GET(0,0,CTXTTMP)
+        ALLOCATE(IMAP(nprd,npcd))
+        K=0
+
+        IF(is==2) K = mpi_nprocs_iso(1)/2
+        IF(is==3) K = mpi_nprocs_iso(1)
+        IF(is==4) K = mpi_nprocs_iso(1)+mpi_nprocs_iso(2)/2
+!        WRITE(*,*),'is = ',is,'K = ',K
+        DO I = 1, nprd
+          DO J = 1, npcd
+            IMAP(I, J) = K
+            K = K + 1
+          END DO
+        END DO
+!        WRITE(*,*),'imap = ',IMAP      
+        CALL BLACS_GRIDMAP( CTXTTMP, IMAP, nprd, nprd, npcd )
+        DEALLOCATE(IMAP)
+        IF(is==my_diag) &
+          CONTXT_DO=CTXTTMP
+        IF((my_diag==1.OR.my_diag==2).AND.is==1)CONTXT_D=CTXTTMP
+        IF((my_diag==1.OR.my_diag==2).AND.is==2)CONTXT_O=CTXTTMP
+        IF((my_diag==3.OR.my_diag==4).AND.is==3)CONTXT_D=CTXTTMP
+        IF((my_diag==3.OR.my_diag==4).AND.is==4)CONTXT_O=CTXTTMP
+
+      END DO
+      IF(my_diag==1.OR.my_diag==3)THEN
+        CALL BLACS_GRIDINFO(CONTXT_D,nprd,npcd,myprowd,mypcold)
+      ELSE IF(my_diag==2.OR.my_diag==4)THEN
+        CALL BLACS_GRIDINFO(CONTXT_O,nprd,npcd,myprowd,mypcold)
+      ENDIF
+      WRITE(*,*),'proc = ',mpi_myproc,nprd,npcd,myprowd,mypcold
+
+
       CALL mpi_barrier (mpi_comm_world, mpi_ierror)
   END SUBROUTINE init_blacs
   !***********************************************************************
@@ -147,6 +219,23 @@ CONTAINS
     IF(mpi_myproc>=mpi_nprocs_iso(1)) my_iso=2
     CALL mpi_comm_split(mpi_comm_world,my_iso,mpi_myproc,comm_iso,mpi_ierror)
     CALL mpi_comm_rank(comm_iso,mpi_myproc_iso,mpi_ierror)
+    
+    IF(mpi_myproc < mpi_nprocs_iso(1)/2) my_diag=1
+    IF(mpi_myproc >= mpi_nprocs_iso(1)/2.AND.mpi_myproc < mpi_nprocs_iso(1))my_diag = 2
+      
+    IF(mpi_myproc >= mpi_nprocs_iso(1).AND.mpi_myproc < mpi_nprocs_iso(1)+mpi_nprocs_iso(2)/2)my_diag = 3
+
+    IF(mpi_myproc >= (mpi_nprocs_iso(1)+mpi_nprocs_iso(2)/2)) my_diag = 4
+ 
+    mpi_nprocs_diag(1) = mpi_nprocs_iso(1)/2
+    mpi_nprocs_diag(2) = mpi_nprocs_iso(1)/2
+    mpi_nprocs_diag(3) = mpi_nprocs_iso(2)/2
+    mpi_nprocs_diag(4) = mpi_nprocs_iso(2)/2
+      
+      
+!      WRITE(*,*),'diag procs = ',mpi_nprocs_diag
+    WRITE(*,*),'proc = ',mpi_myproc,'iso = ',my_iso,'my diag = ',my_diag
+
     DO iq=1,2
       DO nst=npmin(iq),npsi(iq)
         node(nst)=MOD((nst-npmin(iq))/nb_psi,mpi_nprocs_iso(iq))
@@ -266,6 +355,6 @@ CONTAINS
     CHARACTER(*),INTENT(IN) :: textline
     INTEGER :: ierr
     CALL mpi_barrier (comm_iso,ierr)
-    IF(mpi_myproc_iso==0)WRITE(*,'(A20,F10.4,A4,I4)')textline,mpi_wtime()-timer(index),' iq=',my_iso
+    IF(mpi_myproc_iso==0)WRITE(*,'(A20,F10.4,A4,I4)')textline,mpi_wtime()-timer(index),' iq = ',my_iso
   END SUBROUTINE mpi_stop_timer_iq
 END MODULE Parallel

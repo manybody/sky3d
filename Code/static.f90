@@ -361,13 +361,16 @@ CONTAINS
     !                                                                      *
     !***********************************************************************
     USE Trivial, ONLY: overlap,rpsnorm
-    USE Linalg,  ONLY: eigenvecs,loewdin,comb_orthodiag,recombine,calc_matrix,wf_1dto2d,wf_2dto1d
+    USE Linalg,  ONLY: eigenvecs,loewdin,comb_orthodiag,recombine,calc_matrix,wf_1dto2d,wf_2dto1d,&
+                       desca,desc_diag,nlin,contxt,desc_d,desc_o
     
     INTEGER,INTENT(IN)      :: iq
     LOGICAL,INTENT(IN)      :: diagonalize
     INTEGER                 :: nst,nst2,noffset,ix,iy
     COMPLEX(db),ALLOCATABLE :: unitary(:,:),hmatr_lin(:,:),unitary_h(:,:), rhomatr_lin(:,:),&
                                rhomatr_lin_eigen(:,:), unitary_rho(:,:)
+    COMPLEX(db),ALLOCATABLE :: unitary_d(:,:),hmatr_lin_d(:,:),unitary_h_d(:,:),rhomatr_lin_d(:,:),&
+                               rhomatr_lin_eigen_d(:,:),unitary_rho_d(:,:)
     COMPLEX(db),ALLOCATABLE :: psi_2d(:,:),hampsi_2d(:,:)
     INTEGER                 :: big_dim
     INTEGER,EXTERNAL        :: omp_get_num_threads,omp_get_thread_num
@@ -378,17 +381,28 @@ CONTAINS
     ALLOCATE(unitary(nstloc_x,nstloc_y),           hmatr_lin(nstloc_x,nstloc_y),&
              unitary_h(nstloc_x,nstloc_y),         rhomatr_lin(nstloc_x,nstloc_y),&
              rhomatr_lin_eigen(nstloc_x,nstloc_y), unitary_rho(nstloc_x,nstloc_y))
+   
+    ALLOCATE(unitary_d(nstloc_diag_x,nstloc_diag_y),hmatr_lin_d(nstloc_diag_x,nstloc_diag_y),&
+             unitary_h_d(nstloc_diag_x,nstloc_diag_y),rhomatr_lin_d(nstloc_diag_x,nstloc_diag_y),&
+             rhomatr_lin_eigen_d(nstloc_diag_x,nstloc_diag_y), unitary_rho_d(nstloc_diag_x,nstloc_diag_y))
+
     big_dim = nx*ny*nz*2
     ALLOCATE(psi_2d(psiloc_x,psiloc_y),hampsi_2d(psiloc_x,psiloc_y))
+!    WRITE(*,*),'psi  = ',shape(psi)
+!    WRITE(*,*),'psi 2d= ',shape(psi_2d)
+!    WRITE(*,*),'rhomat = ',shape(rhomatr_lin)
     unitary_h=0.0d0
     hmatr_lin=0.0d0
     rhomatr_lin=0.0d0
+    unitary_h_d = 0.0d0
     IF(tmpi.AND.ttime) CALL mpi_start_timer_iq(2)
     CALL wf_1dto2d(psi(:,:,:,:,:),psi_2d)
     IF(diagonalize) CALL wf_1dto2d(hampsi(:,:,:,:,:),hampsi_2d)
     IF(tmpi.AND.ttime) CALL mpi_stop_timer_iq(2,'1d to 2d: ')
     IF(tmpi.AND.ttime) CALL mpi_start_timer_iq(2)
     CALL calc_matrix(psi_2d,psi_2d,rhomatr_lin)
+
+
     IF(diagonalize)&
     CALL calc_matrix(psi_2d,hampsi_2d,hmatr_lin)
     !***********************************************************************
@@ -410,21 +424,85 @@ CONTAINS
         END IF
       ENDDO    !for nst2
     ENDDO    !for nst
+       
+
+    DO nst=1,nstloc_diag_x
+      DO nst2=1,nstloc_diag_y
+        ix=globalindex_diag_x(nst)
+        iy=globalindex_diag_y(nst2)
+        IF(ix==iy) THEN
+          IF(.NOT.diagonalize)& 
+            unitary_h_d(nst,nst2)=CMPLX(1.0d0,0.0d0)
+          
+        END IF
+      ENDDO    !for nst2
+    ENDDO    !for nst
     IF(tmpi.AND.ttime) CALL mpi_stop_timer_iq(2,'CalcMatrix: ')
+
+   !**************switch to diag contexts**************
+
+!    IF(my_diag==1.OR.my_diag==2)WRITE(*,*),'proc = ',mpi_myproc,'neut rhomatr = ',rhomatr_lin
+!    IF(my_diag==1.OR.my_diag==2)WRITE(*,*),'proc = ',mpi_myproc,'neut hmatr = ',hmatr_lin
+!    IF(my_diag==1.OR.my_diag==2)WRITE(*,*),'proc = ',mpi_myproc,'hmatr = ',hmatr_lin
+!    WRITE(*,*),'proc = ',mpi_myproc,'hmatr = ',hmatr_lin
+
+!    IF(my_diag==3.OR.my_diag==4)WRITE(*,*),'proc = ',mpi_myproc,'prot rhomatr = ',rhomatr_lin
+    
+    IF(tmpi.AND.ttime) CALL mpi_start_timer_iq(2)
+    CALL PZGEMR2D(nlin,nlin,rhomatr_lin,1,1,desca,rhomatr_lin_d,1,1,desc_o,contxt)
+    CALL PZGEMR2D(nlin,nlin,hmatr_lin,1,1,desca,hmatr_lin_d,1,1,desc_d,contxt)
+    
+    IF(tmpi.AND.ttime) CALL mpi_stop_timer_iq(2,'Diag Ortho Comm: ')
+!    IF(my_diag==1.OR.my_diag==3)WRITE(*,*),'proc = ',mpi_myproc,hmatr_lin_d
+    
+!    IF(my_diag==1)WRITE(*,*),'proc = ',mpi_myproc,hmatr_lin_d
+
+!    IF(my_diag==2)WRITE(*,*),'proc = ',mpi_myproc,'neut rho d = ',rhomatr_lin_d
+!    IF(my_diag==1)WRITE(*,*),'proc = ',mpi_myproc,'neut h d = ',hmatr_lin_d
+!    IF(my_diag==4)WRITE(*,*),'proc = ',mpi_myproc,'prot rho d = ',rhomatr_lin_d
+
     !***********************************************************************
     ! Step 3: Calculate eigenvectors of h if wanted
     !***********************************************************************
     IF(tmpi.AND.ttime) CALL mpi_start_timer_iq(2)
     IF(diagonalize) THEN
-      CALL eigenvecs(hmatr_lin,unitary_h)
+!      CALL eigenvecs(hmatr_lin,unitary_h)
+       if(my_diag==1.OR.my_diag==3)THEN
+         CALL eigenvecs(hmatr_lin_d,unitary_h_d)
+       ENDIF
     END IF
     IF(tmpi.AND.ttime) CALL mpi_stop_timer_iq(2,'Diag matrix: ')
     !***********************************************************************
     ! Step 4: Calculate matrix for Loewdin
     !***********************************************************************
     IF(tmpi.AND.ttime) CALL mpi_start_timer_iq(2)
-    CALL loewdin(rhomatr_lin,unitary_rho)
+!    CALL loewdin(rhomatr_lin,unitary_rho)
+    IF(my_diag==2.OR.my_diag==4)THEN
+      CALL loewdin(rhomatr_lin_d,unitary_rho_d)
+    ENDIF
     IF(tmpi.AND.ttime) CALL mpi_stop_timer_iq(2,'Ortho matrix: ')
+
+
+    !*********************************switch back to 2d contxts
+    
+!    IF(my_diag==2)WRITE(*,*),'proc = ',mpi_myproc,'neut uni rho d = ',unitary_rho_d
+!    IF(my_diag==1)WRITE(*,*),'proc = ',mpi_myproc,'neut uni h d = ',unitary_h_d
+!    IF(my_diag==4)WRITE(*,*),'proc = ',mpi_myproc,'prot rho d = ',rhomatr_lin_d
+
+    IF(tmpi.AND.ttime) CALL mpi_start_timer_iq(2)
+    CALL PZGEMR2D(nlin,nlin,unitary_rho_d,1,1,desc_o,unitary_rho,1,1,desca,contxt)
+    CALL PZGEMR2D(nlin,nlin,unitary_h_d,1,1,desc_d,unitary_h,1,1,desca,contxt)
+
+    IF(tmpi.AND.ttime) CALL mpi_stop_timer_iq(2,'Diag ortho rev comm: ')
+!    IF(my_diag==1.OR.my_diag==2)WRITE(*,*),'proc = ',mpi_myproc,'uni rho = ',unitary_rho
+!    IF(my_diag==1.OR.my_diag==2)WRITE(*,*),'proc = ',mpi_myproc,'uni h = ',unitary_h
+!    IF(my_diag==1.OR.my_diag==2)WRITE(*,*),'proc = ',mpi_myproc,'hmatr = ',hmatr_lin
+!    WRITE(*,*),'proc = ',mpi_myproc,'hmatr = ',hmatr_lin
+
+!    IF(my_diag==3.OR.my_diag==4)WRITE(*,*),'proc = ',mpi_myproc,'prot rhomatr = ',rhomatr_lin
+
+!    IF(mpi_mydiag==2.OR.mpi_myproc==4)WRITE(*,*),'proc = ',mpi_myproc,unitary_rho
+!    IF(mpi_mydiag==1.OR.mpi_myproc==3)WRITE(*,*),'proc = ',mpi_myproc,unitary_h
     !***********************************************************************
     ! Step 5: Combine h and diagonalization matrix and transpose them
     !***********************************************************************
@@ -442,6 +520,9 @@ CONTAINS
     IF(tmpi.AND.ttime) CALL mpi_stop_timer_iq(2,'2d to 1d: ')
     DEALLOCATE(unitary,hmatr_lin,unitary_h,rhomatr_lin,&
                rhomatr_lin_eigen,unitary_rho,hampsi_2d,psi_2d)
+
+    DEALLOCATE(unitary_d,hmatr_lin_d,unitary_h_d,rhomatr_lin_d,&
+               rhomatr_lin_eigen_d,unitary_rho_d)
   END SUBROUTINE diagstep
   !*************************************************************************
   SUBROUTINE sinfo(printing)
