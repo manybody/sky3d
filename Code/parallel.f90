@@ -265,19 +265,58 @@ CONTAINS
   SUBROUTINE collect_densities
     USE Densities, ONLY : rho,tau,current,sodens,sdens
     CALL mpi_barrier (mpi_comm_world, mpi_ierror)
-    CALL mpi_allreduce(MPI_IN_PLACE,rho,2*nx*ny*nz,        &
-         mpi_double_precision,mpi_sum,mpi_comm_world,mpi_ierror)
-    CALL mpi_allreduce(MPI_IN_PLACE,tau,2*nx*ny*nz,        &
-         mpi_double_precision,mpi_sum,mpi_comm_world,mpi_ierror)
-    CALL mpi_allreduce(MPI_IN_PLACE,current,3*2*nx*ny*nz,  &
-         mpi_double_precision,mpi_sum,mpi_comm_world,mpi_ierror)
-    CALL mpi_allreduce(MPI_IN_PLACE,sodens,3*2*nx*ny*nz,  &
-         mpi_double_precision,mpi_sum,mpi_comm_world,mpi_ierror)
-    CALL mpi_allreduce(MPI_IN_PLACE,sdens,3*2*nx*ny*nz,   &
-         mpi_double_precision,mpi_sum,mpi_comm_world,mpi_ierror)
+!    CALL mpi_allreduce(MPI_IN_PLACE,rho,2*nx*ny*nz,        &
+!         mpi_double_precision,mpi_sum,mpi_comm_world,mpi_ierror)
+!    CALL mpi_allreduce(MPI_IN_PLACE,tau,2*nx*ny*nz,        &
+!         mpi_double_precision,mpi_sum,mpi_comm_world,mpi_ierror)
+!    CALL mpi_allreduce(MPI_IN_PLACE,current,3*2*nx*ny*nz,  &
+!         mpi_double_precision,mpi_sum,mpi_comm_world,mpi_ierror)
+!    CALL mpi_allreduce(MPI_IN_PLACE,sodens,3*2*nx*ny*nz,  &
+!         mpi_double_precision,mpi_sum,mpi_comm_world,mpi_ierror)
+!    CALL mpi_allreduce(MPI_IN_PLACE,sdens,3*2*nx*ny*nz,   &
+!         mpi_double_precision,mpi_sum,mpi_comm_world,mpi_ierror)
+    CALL collect_density(rho)
+    CALL collect_density(tau)
+    CALL collect_vecdens(current)
+    CALL collect_vecdens(sodens)
+    CALL collect_vecdens(sdens)
     CALL mpi_barrier (mpi_comm_world,mpi_ierror)
     RETURN
   END SUBROUTINE collect_densities
+  !***********************************************************************
+  SUBROUTINE collect_density(dens)
+    REAL(db), INTENT(INOUT)  :: dens(:,:,:,:)
+    INTEGER                  :: cnt
+    cnt=SIZE(dens)/2
+    IF(mpi_myproc_iso==0) THEN
+      CALL mpi_reduce(MPI_IN_PLACE,dens(:,:,:,my_iso),cnt,&
+                      mpi_double_precision,mpi_sum,0,comm_iso,mpi_ierror)
+    ELSE
+      CALL mpi_reduce(dens(:,:,:,my_iso),dens(:,:,:,my_iso),cnt,&
+                      mpi_double_precision,mpi_sum,0,comm_iso,mpi_ierror)
+    END IF
+    CALL mpi_bcast(dens(:,:,:,1),cnt,mpi_double_precision,&
+                   0,mpi_comm_world,mpi_ierror)
+    CALL mpi_bcast(dens(:,:,:,2),cnt,mpi_double_precision,&
+                   mpi_nprocs_iso(1),mpi_comm_world,mpi_ierror)
+  END SUBROUTINE collect_density
+  !***********************************************************************
+  SUBROUTINE collect_vecdens(dens)
+    REAL(db), INTENT(INOUT)  :: dens(:,:,:,:,:)
+    INTEGER                  :: cnt
+    cnt=SIZE(dens)/2
+    IF(mpi_myproc_iso==0) THEN
+      CALL mpi_reduce(MPI_IN_PLACE,dens(:,:,:,:,my_iso),cnt,&
+                      mpi_double_precision,mpi_sum,0,comm_iso,mpi_ierror)
+    ELSE
+      CALL mpi_reduce(dens(:,:,:,:,my_iso),dens(:,:,:,:,my_iso),cnt,&
+                      mpi_double_precision,mpi_sum,0,comm_iso,mpi_ierror)
+    END IF
+    CALL mpi_bcast(dens(:,:,:,:,1),cnt,mpi_double_precision,&
+                   0,mpi_comm_world,mpi_ierror)
+    CALL mpi_bcast(dens(:,:,:,:,2),cnt,mpi_double_precision,&
+                   mpi_nprocs_iso(1),mpi_comm_world,mpi_ierror)
+  END SUBROUTINE collect_vecdens
   !***********************************************************************
   SUBROUTINE collect_sp_properties
     CALL mpi_barrier (mpi_comm_world,mpi_ierror)
