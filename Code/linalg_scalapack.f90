@@ -13,6 +13,8 @@ MODULE LINALG
                              desc_psi1d(10),desc_psi2d(10),desc_diag(10),desc_ortho(10),&
                              work_t_size,iwork_t_size,rwork_t_size,desc_d(10),desc_o(10)
 !
+  REAL(db)                :: VL,VU
+  INTEGER                 :: IL,IU,M,NZ_t
   REAL(db)   ,ALLOCATABLE :: rwork_t(:),evals(:)  
   COMPLEX(db),ALLOCATABLE :: work_t(:),matr_lin(:,:),unitary(:,:),matr_lin_d(:,:),unitary_d(:,:)
   INTEGER    ,ALLOCATABLE :: iwork_t(:)
@@ -48,20 +50,29 @@ MODULE LINALG
 !    CALL PZHEEVD('V','L',nlin,matr_lin,1,1,DESCA(1:10),evals,&
 !                 unitary,1,1,DESCZ(1:10),work_t,work_t_size,rwork_t,&
 !                 rwork_t_size,iwork_t,iwork_t_size,infoconv)    
+!    IF(my_diag==1.OR.my_diag==3)THEN
+!      CALL PZHEEVD('V','L',nlin,matr_lin_d,1,1,DESC_D(1:10),evals,&
+!                 unitary_d,1,1,DESC_D(1:10),work_t,work_t_size,rwork_t,&
+!                 rwork_t_size,iwork_t,iwork_t_size,infoconv)
+!    ELSE IF(my_diag==2.OR.my_diag==4)THEN
+!      CALL PZHEEVD('V','L',nlin,matr_lin_d,1,1,DESC_O(1:10),evals,&
+!                 unitary_d,1,1,DESC_O(1:10),work_t,work_t_size,rwork_t,&
+!                 rwork_t_size,iwork_t,iwork_t_size,infoconv)
+!    ENDIF
+
     IF(my_diag==1.OR.my_diag==3)THEN
-      CALL PZHEEVD('V','L',nlin,matr_lin_d,1,1,DESC_D(1:10),evals,&
-                 unitary_d,1,1,DESC_D(1:10),work_t,work_t_size,rwork_t,&
+      CALL PZHEEVR('V','A','L',nlin,matr_lin_d,1,1,DESC_D(1:10),VL,VU,IL,IU,&
+                M,NZ_t,evals,unitary_d,1,1,DESC_D(1:10),work_t,work_t_size,rwork_t,&
                  rwork_t_size,iwork_t,iwork_t_size,infoconv)
     ELSE IF(my_diag==2.OR.my_diag==4)THEN
-      CALL PZHEEVD('V','L',nlin,matr_lin_d,1,1,DESC_O(1:10),evals,&
-                 unitary_d,1,1,DESC_O(1:10),work_t,work_t_size,rwork_t,&
+      CALL PZHEEVR('V','A','L',nlin,matr_lin_d,1,1,DESC_O(1:10),VL,VU,IL,IU,&
+                M,NZ_t,evals,unitary_d,1,1,DESC_O(1:10),work_t,work_t_size,rwork_t,&
                  rwork_t_size,iwork_t,iwork_t_size,infoconv)
     ENDIF
-
     work_t_size = INT(ABS(work_t(1)))
     iwork_t_size = INT(ABS(iwork_t(1)))
     rwork_t_size = INT(ABS(rwork_t(1)))
-    WRITE(*,*),'array sizes = ',work_t_size,iwork_t_size,rwork_t_size
+!    WRITE(*,*),'array sizes = ',work_t_size,iwork_t_size,rwork_t_size
     DEALLOCATE(work_t,iwork_t,rwork_t,matr_lin,unitary,evals,matr_lin_d,unitary_d)
 
   END SUBROUTINE init_linalg
@@ -105,11 +116,18 @@ MODULE LINALG
 !    WRITE(*,*),'proc = ',mpi_myproc,matr_in_d
 !    CALL PZHEEVD('V','L',nlin,matr_in,1,1,DESCA(1:10),evals,evecs,1,1,DESCZ(1:10),&
 !                  work_t,work_t_size,rwork_t,rwork_t_size,iwork_t,iwork_t_size,infoconv)
+!    IF(PRESENT(evals_out)) THEN
+!      CALL PZHEEVD('V','L',nlin,matr_in,1,1,DESC_O(1:10),evals,evecs,1,1,DESC_O(1:10),&
+!                  work_t,work_t_size,rwork_t,rwork_t_size,iwork_t,iwork_t_size,infoconv)
+!    ELSE
+!      CALL PZHEEVD('V','L',nlin,matr_in,1,1,DESC_D(1:10),evals,evecs,1,1,DESC_D(1:10),&
+!                  work_t,work_t_size,rwork_t,rwork_t_size,iwork_t,iwork_t_size,infoconv)
+!    ENDIF  
     IF(PRESENT(evals_out)) THEN
-      CALL PZHEEVD('V','L',nlin,matr_in,1,1,DESC_O(1:10),evals,evecs,1,1,DESC_O(1:10),&
+     CALL PZHEEVR('V','A','L',nlin,matr_in,1,1,DESC_O(1:10),VL,VU,IL,IU,M,NZ_t,evals,evecs,1,1,DESC_O(1:10),&
                   work_t,work_t_size,rwork_t,rwork_t_size,iwork_t,iwork_t_size,infoconv)
     ELSE
-      CALL PZHEEVD('V','L',nlin,matr_in,1,1,DESC_D(1:10),evals,evecs,1,1,DESC_D(1:10),&
+      CALL PZHEEVR('V','A','L',nlin,matr_in,1,1,DESC_D(1:10),VL,VU,IL,IU,M,NZ_t,evals,evecs,1,1,DESC_D(1:10),&
                   work_t,work_t_size,rwork_t,rwork_t_size,iwork_t,iwork_t_size,infoconv)
     ENDIF  
 !    CALL PZGEMR2D(nlin,nlin,evecs_d,1,1,desc_diag(1:10),evecs,&
