@@ -36,39 +36,40 @@ CONTAINS
                     drhos(nx,ny,nz,2,2,3),currs(nx,ny,nz,2,2,3),time
     COMPLEX(db)  :: ps1(nx,ny,nz,2) 
     CHARACTER(10) :: filename
-
+  rhos=0.0d0
+  taus=0.0d0
+  drhos_sq=0.0d0
+  drhos=0.0d0
+  currs=0.0d0
   DO is=1,2
     DO iq=1,2
-      rhos(:,:,:,is,iq)=0.0d0
-      taus(:,:,:,is,iq)=0.0d0
-      drhos_sq(:,:,:,is,iq)=0.0d0
-      drhos(:,:,:,is,iq,:)=0.0d0
-      currs(:,:,:,is,iq,:)=0.0d0
       DO i=npmin(iq),npsi(iq)
         rhos(:,:,:,is,iq)=rhos(:,:,:,is,iq)+wocc(i)*(psi(:,:,:,is,i)*CONJG(psi(:,:,:,is,i)))
         CALL cdervx(psi(:,:,:,:,i),ps1)
         taus(:,:,:,is,iq)=taus(:,:,:,is,iq)+wocc(i)*ps1(:,:,:,is)*CONJG(ps1(:,:,:,is))
-        drhos(:,:,:,is,iq,1)=drhos(:,:,:,is,iq,1)+wocc(i)*REAL(CONJG(psi(:,:,:,is,i))*ps1(:,:,:,is))
+        drhos(:,:,:,is,iq,1)=drhos(:,:,:,is,iq,1)+2.0d0*wocc(i)*REAL(CONJG(psi(:,:,:,is,i))*ps1(:,:,:,is))
         currs(:,:,:,is,iq,1)=currs(:,:,:,is,iq,1)+wocc(i)*AIMAG(CONJG(psi(:,:,:,is,i))*ps1(:,:,:,is))
         CALL cdervy(psi(:,:,:,:,i),ps1)
         taus(:,:,:,is,iq)=taus(:,:,:,is,iq)+wocc(i)*ps1(:,:,:,is)*CONJG(ps1(:,:,:,is))
-        drhos(:,:,:,is,iq,2)=drhos(:,:,:,is,iq,2)+wocc(i)*REAL(CONJG(psi(:,:,:,is,i))*ps1(:,:,:,is))
+        drhos(:,:,:,is,iq,2)=drhos(:,:,:,is,iq,2)+2.0d0*wocc(i)*REAL(CONJG(psi(:,:,:,is,i))*ps1(:,:,:,is))
         currs(:,:,:,is,iq,2)=currs(:,:,:,is,iq,2)+wocc(i)*AIMAG(CONJG(psi(:,:,:,is,i))*ps1(:,:,:,is))
         CALL cdervz(psi(:,:,:,:,i),ps1)
         taus(:,:,:,is,iq)=taus(:,:,:,is,iq)+wocc(i)*ps1(:,:,:,is)*CONJG(ps1(:,:,:,is))
-        drhos(:,:,:,is,iq,3)=drhos(:,:,:,is,iq,3)+wocc(i)*REAL(CONJG(psi(:,:,:,is,i))*ps1(:,:,:,is))
+        drhos(:,:,:,is,iq,3)=drhos(:,:,:,is,iq,3)+2.0d0*wocc(i)*REAL(CONJG(psi(:,:,:,is,i))*ps1(:,:,:,is))
         currs(:,:,:,is,iq,3)=currs(:,:,:,is,iq,3)+wocc(i)*AIMAG(CONJG(psi(:,:,:,is,i))*ps1(:,:,:,is))
       END DO
-      drhos_sq(:,:,:,is,iq)=drhos(:,:,:,is,iq,1)**2+drhos(:,:,:,is,iq,2)**2+drhos(:,:,:,is,iq,3)**2
-      currs_sq(:,:,:,is,iq)=currs(:,:,:,is,iq,1)**2+currs(:,:,:,is,iq,2)**2+currs(:,:,:,is,iq,3)**2
     END DO
   END DO
-  rhos(:,:,:,1,:)=rhos(:,:,:,1,:)+rhos(:,:,:,2,:)
-  taus(:,:,:,1,:)=taus(:,:,:,1,:)+taus(:,:,:,2,:)
-  drhos_sq(:,:,:,1,:)=drhos_sq(:,:,:,1,:)+drhos_sq(:,:,:,2,:)
-  currs_sq(:,:,:,1,:)=currs_sq(:,:,:,1,:)+currs_sq(:,:,:,2,:)
-  localization=1.0d0/(1.0d0+((rhos(:,:,:,1,:)*taus(:,:,:,1,:)-drhos_sq(:,:,:,1,:)-currs_sq(:,:,:,1,:))/&
-               (3.0d0/5.0d0*(6.0d0*pi**2.0d0)**(2.0d0/3.0d0)*rhos(:,:,:,1,:)*2.0d0*(rhos(:,:,:,1,:)/2.0d0)**(5.0d0/3.0d0)))**2)
+  rhos(:,:,:,1,:)=(rhos(:,:,:,1,:)+rhos(:,:,:,2,:))/2.0d0
+  taus(:,:,:,1,:)=(taus(:,:,:,1,:)+taus(:,:,:,2,:))/2.0d0
+  drhos(:,:,:,1,:,:)=(drhos(:,:,:,1,:,:)+drhos(:,:,:,2,:,:))/2.0d0
+  currs(:,:,:,1,:,:)=(currs(:,:,:,1,:,:)+currs(:,:,:,2,:,:))/2.0d0
+  drhos_sq(:,:,:,:,:)=drhos(:,:,:,:,:,1)**2+drhos(:,:,:,:,:,2)**2+drhos(:,:,:,:,:,3)**2
+  currs_sq(:,:,:,:,:)=currs(:,:,:,:,:,1)**2+currs(:,:,:,:,:,2)**2+currs(:,:,:,:,:,3)**2
+  !drhos_sq(:,:,:,1,:)=(drhos_sq(:,:,:,1,:)+drhos_sq(:,:,:,2,:))/2.0d0
+  !currs_sq(:,:,:,1,:)=(currs_sq(:,:,:,1,:)+currs_sq(:,:,:,2,:))/2.0d0
+  localization=1.0d0/(1.0d0+((rhos(:,:,:,1,:)*taus(:,:,:,1,:)-0.25d0*drhos_sq(:,:,:,1,:)-currs_sq(:,:,:,1,:))/&
+               (3.0d0/5.0d0*(6.0d0*pi**2.0d0)**(2.0d0/3.0d0)*rhos(:,:,:,1,:)**(8.0d0/3.0d0)))**2.0d0)
     !
     !  preliminary print along axes
     ! 
