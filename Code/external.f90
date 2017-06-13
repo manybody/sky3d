@@ -152,6 +152,7 @@ CONTAINS
   !***********************************************************************
   FUNCTION tabc_extfield()
     REAL(db)            :: tabc_extfield
+    WRITE(*,*)'----------',wxyz,SUM(rho*extfield),tabc_extfield
     tabc_extfield=tabc_av(wxyz*SUM(rho*extfield))
   END FUNCTION tabc_extfield
 END MODULE External

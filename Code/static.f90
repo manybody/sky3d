@@ -17,14 +17,14 @@ MODULE Static
   LOGICAL :: ttime=.FALSE.
   INTEGER :: maxiter,outerpot=0
   REAL(db) :: radinx,radiny,radinz, &
-       serr,delesum,x0dmp=0.2D0,e0dmp=100.D0,x0dmpmin=0.2d0
+       serr,delesum,x0dmp=0.2D0,e0dmp=100.D0,x0dmpmin=0.2d0,outstrength=50.0d0
   CHARACTER(1) :: outertype='N'
 CONTAINS
   !*************************************************************************
   SUBROUTINE getin_static
     NAMELIST/static/ tdiag,tlarge,maxiter, &
          radinx,radiny,radinz,serr,x0dmp,e0dmp,nneut,nprot,npsi,tvaryx_0,&
-         outerpot,outertype,ttime
+         outerpot,outertype,ttime,outstrength
     npsi=0
     READ(5,static)
     IF(nof<=0) THEN
@@ -152,7 +152,7 @@ CONTAINS
     IF(tmpi) CALL collect_densities!sum densities over all nodes 
     IF(wflag)WRITE(*,*) 'DONE'
     IF(wflag)WRITE(*,'(A25)',advance="no")'Initial skyrme... '
-    CALL skyrme(iter<=outerpot,outertype)
+    CALL skyrme(iter<=outerpot,outertype,outstrength)
     IF(wflag)WRITE(*,*) 'DONE'
     !****************************************************  
     ! Step 3: initial gradient step
@@ -269,7 +269,7 @@ CONTAINS
        ENDIF
        IF(ttime.AND.tmpi) CALL mpi_stop_timer(2,'add density: ')
        IF(ttime.AND.tmpi) CALL mpi_start_timer(2)
-       CALL skyrme(iter<=outerpot,outertype)
+       CALL skyrme(iter<=outerpot,outertype,outstrength)
        IF(ttime.AND.tmpi) CALL mpi_stop_timer(2,'skyrme: ')
        ! calculate and print information
        IF(ttime.AND.tmpi)CALL mpi_start_timer(2)

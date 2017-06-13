@@ -66,28 +66,9 @@ CONTAINS
   currs(:,:,:,1,:,:)=(currs(:,:,:,1,:,:)+currs(:,:,:,2,:,:))/2.0d0
   drhos_sq(:,:,:,:,:)=drhos(:,:,:,:,:,1)**2+drhos(:,:,:,:,:,2)**2+drhos(:,:,:,:,:,3)**2
   currs_sq(:,:,:,:,:)=currs(:,:,:,:,:,1)**2+currs(:,:,:,:,:,2)**2+currs(:,:,:,:,:,3)**2
-  !drhos_sq(:,:,:,1,:)=(drhos_sq(:,:,:,1,:)+drhos_sq(:,:,:,2,:))/2.0d0
-  !currs_sq(:,:,:,1,:)=(currs_sq(:,:,:,1,:)+currs_sq(:,:,:,2,:))/2.0d0
   localization=1.0d0/(1.0d0+((rhos(:,:,:,1,:)*taus(:,:,:,1,:)-0.25d0*drhos_sq(:,:,:,1,:)-currs_sq(:,:,:,1,:))/&
                (3.0d0/5.0d0*(6.0d0*pi**2.0d0)**(2.0d0/3.0d0)*rhos(:,:,:,1,:)**(8.0d0/3.0d0)))**2.0d0)
-    !
-    !  preliminary print along axes
-    ! 
-    OPEN(33,file='localization.res',status='unknown')
-    WRITE(33,'(/a)')  '# localization'
-    WRITE(33,'(/a)')  '#   x    neutrons      protons  '
-    WRITE(33,'(1x,f6.2,4g13.5)') &
-         (x(ixyz),(localization(ixyz,NY/2,NZ/2,iq),iq=1,2),ixyz=1,NX)
-    WRITE(33,*)
-    WRITE(33,'(/a)')  '#   y    neutrons      protons  '
-    WRITE(33,'(1x,f6.2,4g13.5)') &
-         (y(ixyz),(localization(NX/2,ixyz,NZ/2,iq),iq=1,2),ixyz=1,NY)
-    WRITE(33,*)
-    WRITE(33,'(/a)')  '#   z    neutrons      protons  '
-    WRITE(33,'(1x,f6.2,4g13.5)') &
-         (z(ixyz),(localization(NX/2,NY/2,ixyz,iq),iq=1,2),ixyz=1,NZ)
-    CLOSE(33)
-    RETURN
+  RETURN
 
   END SUBROUTINE localize
 END MODULE User

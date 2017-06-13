@@ -112,7 +112,7 @@ CONTAINS
     !$OMP END PARALLEL DO
     IF(tmpi) CALL collect_densities
     ! calculate mean fields and external fields
-    CALL skyrme(.FALSE.,'N')
+    CALL skyrme(.FALSE.,'N',0.0d0)
     IF(text_timedep) CALL extfld(0.D0)
     CALL tinfo
     !***********************************************************************
@@ -147,7 +147,7 @@ CONTAINS
        sodens=0.5D0*sodens
        sdens=0.5D0*sdens
        ! compute mean field and add external field
-       CALL skyrme(.FALSE.,'N')
+       CALL skyrme(.FALSE.,'N',0.0d0)
        IF(text_timedep) CALL extfld(time+dt/2.0D0)
        ! Step 3: full time step
        ! reset densities
@@ -190,7 +190,7 @@ CONTAINS
        CALL tinfo
        ! Step 6: finishing up
        ! compute densities, currents, potentials etc.                  *
-       CALL skyrme(.FALSE.,'N')
+       CALL skyrme(.FALSE.,'N',0.0d0)
        IF(text_timedep) CALL extfld(time+dt)
        IF(MOD(iter,mrest)==0) THEN  
           CALL write_wavefunctions
@@ -301,7 +301,7 @@ CONTAINS
           tabc_ekin=tabc_av(tke)
           tabc_ecoul=tabc_av(ehfc)
           tabc_eskyrme=tabc_energy-tabc_ekin-tabc_ecoul
-          tabc_ext=tabc_extfield()
+          IF(texternal) tabc_ext=tabc_extfield()
           IF(tabc_myid==0) THEN
              OPEN(unit=scratch,file=tabcfile,POSITION='APPEND') 
              IF(texternal) THEN

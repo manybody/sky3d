@@ -22,11 +22,11 @@ CONTAINS
     dbmass=0.D0
   END SUBROUTINE alloc_fields
   !***********************************************************************
-  SUBROUTINE skyrme(outpot,outertype)
+  SUBROUTINE skyrme(outpot,outertype,outstrength)
     USE Trivial, ONLY: rmulx,rmuly,rmulz
     LOGICAL,INTENT(IN) :: outpot
     CHARACTER(1),INTENT(IN) :: outertype
-
+    REAL(db),INTENT(IN)     :: outstrength
     REAL(db),PARAMETER :: epsilon=1.0d-25  
     REAL(db) :: rotspp,rotspn
     REAL(db),ALLOCATABLE :: workden(:,:,:,:),workvec(:,:,:,:,:)
@@ -140,25 +140,25 @@ CONTAINS
       SELECT CASE(outertype)
       CASE('P')
         FORALL(iq=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
-          upot(ix,iy,iz,iq)=30*(cos(REAL(ix)/nx*2*pi)+cos(REAL(iy)/ny*2*pi)+cos(REAL(iz)/nz*2*pi))
+          upot(ix,iy,iz,iq)=outstrength*(cos(REAL(ix)/nx*2*pi)+cos(REAL(iy)/ny*2*pi)+cos(REAL(iz)/nz*2*pi))
         END FORALL
         WRITE(*,*) 'P-surface guiding potential'
       CASE('G')
         FORALL(iq=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
-              upot(ix,iy,iz,iq)=30*(cos(REAL(ix)/nx*2*pi)*sin(REAL(iy)/ny*2*pi)+&
+              upot(ix,iy,iz,iq)=outstrength*(cos(REAL(ix)/nx*2*pi)*sin(REAL(iy)/ny*2*pi)+&
               cos(REAL(iy)/ny*2*pi)*sin(REAL(iz)/nz*2*pi)+cos(REAL(iz)/nz*2*pi)*sin(REAL(ix)/nx*2*pi))-30
         END FORALL
         WRITE(*,*) 'Gyroid guiding potential'
       CASE('S')
         FORALL(iq=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
-         upot(ix,iy,iz,iq)=50*(cos(REAL(ix)/nx*2*pi))
+         upot(ix,iy,iz,iq)=outstrength*(cos(REAL(ix)/nx*2*pi))
         END FORALL
         WRITE(*,*) 'Slab guiding potential'
       CASE('R')
         FORALL(iq=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
          upot(ix,iy,iz,iq)=exp(-((x(ix))**2+(y(iy))**2)/(dx*nx/4)**2)
         END FORALL  
-        upot=upot*(-50)/maxval(upot(:,:,:,:))
+        upot=upot*(-outstrength)/maxval(upot(:,:,:,:))
         WRITE(*,*) 'Rod guiding potential'
       CASE('H')
         IF(abs((ny*dy)/(nx*dx)-sqrt(3.0))>0.01) STOP 'Ratio L_y/L_x makes no &
@@ -183,7 +183,7 @@ CONTAINS
                           +exp(-((x(ix)+3*dx*nx/4)**2+(y(iy)-5*dy*ny/4)**2)/(dx*nx/4)**2)&
                           +exp(-((x(ix)-3*dx*nx/4)**2+(y(iy)+5*dy*ny/4)**2)/(dx*nx/4)**2)
         END FORALL  
-        upot=upot*(-50)/maxval(upot(:,:,:,:))
+        upot=upot*(-outstrength)/maxval(upot(:,:,:,:))
         WRITE(*,*) 'Hexagonal rod guiding potential'
       END SELECT
     END IF
