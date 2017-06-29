@@ -5,7 +5,7 @@ MODULE Parallel
   IMPLICIT NONE
   INCLUDE 'mpif.h'
   SAVE
-  INTEGER, PARAMETER   :: NB=2,MB=2,NB_psi =2
+  INTEGER, PARAMETER   :: NB=32,MB=32,NB_psi =2
   LOGICAL, PARAMETER   :: tmpi=.TRUE.,ttabc=.FALSE.
   INTEGER, ALLOCATABLE :: node(:),localindex(:),globalindex(:)
   INTEGER, ALLOCATABLE :: recvcounts(:,:),displs(:,:),globalindex_x(:),globalindex_y(:),&
@@ -199,7 +199,7 @@ CONTAINS
       ELSE IF(my_diag==2.OR.my_diag==4)THEN
         CALL BLACS_GRIDINFO(CONTXT_O,nprd,npcd,myprowd,mypcold)
       ENDIF
-      WRITE(*,*),'proc = ',mpi_myproc,nprd,npcd,myprowd,mypcold
+!      WRITE(*,*),'proc = ',mpi_myproc,nprd,npcd,myprowd,mypcold
 
 
       CALL mpi_barrier (mpi_comm_world, mpi_ierror)
@@ -210,11 +210,30 @@ CONTAINS
     ! calculates 1d wave function distribution over nodes
     !***********************************************************************
     INTEGER :: ncount,nst,ip,iloc,iq,mpi_ierror
+    REAL(db) :: N,Z,sq_N,sq_Z
     ncount=0
     globalindex=0
     node=0
-    mpi_nprocs_iso(1)=NINT(REAL(npsi(1))/REAL(npsi(2))/2.0*mpi_nprocs)*2
-    mpi_nprocs_iso(2)=mpi_nprocs-mpi_nprocs_iso(1)
+    Z=npsi(2)-npsi(1)
+    N = npsi(1)
+    sq_N = N*N
+    sq_Z = Z*Z
+!    mpi_nprocs_iso(1)=NINT(REAL(npsi(1))/REAL(npsi(2))/2.0*mpi_nprocs)*2
+    IF(mpi_nprocs <128) THEN
+
+     mpi_nprocs_iso(1)=NINT(sq_N/(sq_N+sq_Z)/2.0*mpi_nprocs)*2
+     mpi_nprocs_iso(2)=mpi_nprocs-mpi_nprocs_iso(1)
+   ELSEIF(mpi_nprocs >= 128 .AND. mpi_nprocs < 256)THEN
+     mpi_nprocs_iso(1)=NINT(sq_N/(sq_N+sq_Z)/2.0*mpi_nprocs)*2
+     mpi_nprocs_iso(2)=mpi_nprocs-mpi_nprocs_iso(1)
+    ELSEIF(mpi_nprocs >= 256 .AND. mpi_nprocs < 512) THEN
+
+     mpi_nprocs_iso(1)=NINT(sq_N/(sq_N+sq_Z)/16.0*mpi_nprocs)*16
+     mpi_nprocs_iso(2)=mpi_nprocs-mpi_nprocs_iso(1)
+    ELSEIF(mpi_nprocs >=512) THEN
+     mpi_nprocs_iso(1)=NINT(sq_N/(sq_N+sq_Z)/32.0*mpi_nprocs)*32
+     mpi_nprocs_iso(2)=mpi_nprocs-mpi_nprocs_iso(1)
+    ENDIF
     my_iso=1
     IF(mpi_myproc>=mpi_nprocs_iso(1)) my_iso=2
     CALL mpi_comm_split(mpi_comm_world,my_iso,mpi_myproc,comm_iso,mpi_ierror)
@@ -231,10 +250,10 @@ CONTAINS
     mpi_nprocs_diag(2) = mpi_nprocs_iso(1)/2
     mpi_nprocs_diag(3) = mpi_nprocs_iso(2)/2
     mpi_nprocs_diag(4) = mpi_nprocs_iso(2)/2
-      
+     
       
 !      WRITE(*,*),'diag procs = ',mpi_nprocs_diag
-    WRITE(*,*),'proc = ',mpi_myproc,'iso = ',my_iso,'my diag = ',my_diag
+!    WRITE(*,*),'proc = ',mpi_myproc,'iso = ',my_iso,'my diag = ',my_diag
 
     DO iq=1,2
       DO nst=npmin(iq),npsi(iq)
@@ -385,7 +404,8 @@ CONTAINS
   SUBROUTINE mpi_start_timer_iq(index)
     INTEGER,INTENT(IN) :: index
     INTEGER :: ierr
-    CALL mpi_barrier (comm_iso,ierr)
+!    CALL mpi_barrier (comm_iso,ierr)
+    CALL mpi_barrier(mpi_comm_world,ierr)
     timer(index)=mpi_wtime()
   END SUBROUTINE mpi_start_timer_iq
 !***********************************************************************

@@ -199,7 +199,7 @@ CONTAINS
        !****************************************************  
        delesum=0.0D0  
        sumflu=0.0D0
-       IF(ttime.AND.tmpi) CALL mpi_start_timer(2)
+       IF(ttime.AND.tmpi) CALL mpi_start_timer_iq(2)
        !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,denerg) &
        !$OMP SCHEDULE(STATIC) REDUCTION(+: sumflu , delesum)
        DO nst=1,nstloc
@@ -209,7 +209,7 @@ CONTAINS
        ENDDO
        !$OMP END PARALLEL DO
        IF(tmpi) CALL collect_energies(delesum,sumflu)!collect fluctuation and change in energy
-       IF(ttime.AND.tmpi) CALL mpi_stop_timer(2,'grstep: ')
+       IF(ttime.AND.tmpi) CALL mpi_stop_timer_iq(2,'grstep: ')
        !****************************************************
        ! Step 6: diagonalize and orthonormalize
        !****************************************************
@@ -234,7 +234,7 @@ CONTAINS
        current=0.0D0
        sdens=0.0D0
        sodens=0.0D0
-       IF(ttime.AND.tmpi) CALL mpi_start_timer(2)
+       IF(ttime.AND.tmpi) CALL mpi_start_timer_iq(2)
        !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst) SCHEDULE(STATIC) &
        !$OMP REDUCTION(+:rho, tau, current, sdens, sodens)
        DO nst=1,nstloc
@@ -247,12 +247,12 @@ CONTAINS
           rho=addnew*rho+addco*upot
           tau=addnew*tau+addco*bmass
        ENDIF
-       IF(ttime.AND.tmpi) CALL mpi_stop_timer(2,'add density: ')
-       IF(ttime.AND.tmpi) CALL mpi_start_timer(2)
+       IF(ttime.AND.tmpi) CALL mpi_stop_timer_iq(2,'add density: ')
+       IF(ttime.AND.tmpi) CALL mpi_start_timer_iq(2)
        CALL skyrme(iter<=outerpot,outertype)
-       IF(ttime.AND.tmpi) CALL mpi_stop_timer(2,'skyrme: ')
+       IF(ttime.AND.tmpi) CALL mpi_stop_timer_iq(2,'skyrme: ')
        ! calculate and print information
-       IF(ttime.AND.tmpi)CALL mpi_start_timer(2)
+       IF(ttime.AND.tmpi)CALL mpi_start_timer_iq(2)
        CALL sp_properties
        IF(tmpi) THEN
          DO nst=1,nstmax
@@ -260,7 +260,7 @@ CONTAINS
          END DO
        CALL collect_sp_properties!collect single particle properties
        END IF
-       IF(ttime.AND.tmpi) CALL mpi_stop_timer(2,'sp properties: ')
+       IF(ttime.AND.tmpi) CALL mpi_stop_timer_iq(2,'sp properties: ')
        CALL sinfo(mprint>0.AND.MOD(iter,mprint)==0.AND.wflag)
        !****************************************************
        ! Step 9: check for convergence, saving wave functions
