@@ -208,8 +208,8 @@ CONTAINS
          delesum=delesum+wocc(globalindex(nst))*denerg  
        ENDDO
        !$OMP END PARALLEL DO
-       IF(tmpi) CALL collect_energies(delesum,sumflu)!collect fluctuation and change in energy
        IF(ttime.AND.tmpi) CALL mpi_stop_timer_iq(2,'grstep: ')
+       IF(tmpi) CALL collect_energies(delesum,sumflu)!collect fluctuation and change in energy
        !****************************************************
        ! Step 6: diagonalize and orthonormalize
        !****************************************************
@@ -242,12 +242,12 @@ CONTAINS
                           psi(:,:,:,:,nst),rho,tau,current,sdens,sodens)  
        ENDDO
        !$OMP END PARALLEL DO
+       IF(ttime.AND.tmpi) CALL mpi_stop_timer_iq(2,'add density: ')
        IF(tmpi) CALL collect_densities!collect densities from all nodes
        IF(taddnew) THEN
           rho=addnew*rho+addco*upot
           tau=addnew*tau+addco*bmass
        ENDIF
-       IF(ttime.AND.tmpi) CALL mpi_stop_timer_iq(2,'add density: ')
        IF(ttime.AND.tmpi) CALL mpi_start_timer_iq(2)
        CALL skyrme(iter<=outerpot,outertype)
        IF(ttime.AND.tmpi) CALL mpi_stop_timer_iq(2,'skyrme: ')
@@ -258,9 +258,9 @@ CONTAINS
          DO nst=1,nstmax
            IF(node(nst)/=mpi_myproc) sp_energy(nst)=0.0d0
          END DO
+       IF(ttime.AND.tmpi) CALL mpi_stop_timer_iq(2,'sp properties: ')
        CALL collect_sp_properties!collect single particle properties
        END IF
-       IF(ttime.AND.tmpi) CALL mpi_stop_timer_iq(2,'sp properties: ')
        CALL sinfo(mprint>0.AND.MOD(iter,mprint)==0.AND.wflag)
        !****************************************************
        ! Step 9: check for convergence, saving wave functions
