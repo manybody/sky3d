@@ -5,7 +5,7 @@ MODULE Parallel
   IMPLICIT NONE
   INCLUDE 'mpif.h'
   SAVE
-  INTEGER, PARAMETER   :: NB=32,MB=32,NB_psi =2
+  INTEGER, PARAMETER   :: NB=2,MB=2,NB_psi =2
   LOGICAL, PARAMETER   :: tmpi=.TRUE.,ttabc=.FALSE.
   INTEGER, ALLOCATABLE :: node(:),localindex(:),globalindex(:)
   INTEGER, ALLOCATABLE :: recvcounts(:,:),displs(:,:),globalindex_x(:),globalindex_y(:),&

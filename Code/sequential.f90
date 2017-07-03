@@ -7,7 +7,7 @@ MODULE Parallel
   LOGICAL,PARAMETER    :: tmpi=.FALSE.,ttabc=.FALSE.
   INTEGER, ALLOCATABLE :: node(:),localindex(:),globalindex(:),node_x(:),node_y(:),&
                           localindex_x(:),localindex_y(:),globalindex_x(:,:),globalindex_y(:,:)
-  INTEGER              :: mpi_nprocs,mpi_ierror,mpi_myproc, &
+  INTEGER              :: mpi_nprocs,mpi_ierror,mpi_myproc,my_diag, &
                           processor_name,proc_namelen,nstloc_x(2),nstloc_y(2),npmin_loc(2),npsi_loc(2)
   INTEGER              :: mpi_comm_world,mpi_sum,mpi_double_precision
 CONTAINS     !  all dummy subroutines to run on a sequential machine
@@ -24,6 +24,7 @@ CONTAINS     !  all dummy subroutines to run on a sequential machine
     mpi_nprocs=1
     mpi_myproc=0
     wflag=.TRUE.
+    my_diag=0
   END SUBROUTINE init_all_mpi
   !************************************************************************  
   SUBROUTINE mpi_init_filename

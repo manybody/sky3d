@@ -15,6 +15,30 @@ MODULE LINALG
     END DO
   END SUBROUTINE init_linalg
   !************************************************************
+  SUBROUTINE wf_1dto2d(psi_1d,psi_2d)
+    COMPLEX(db), INTENT(IN)  :: psi_1d(:,:,:,:,:)
+    COMPLEX(db), INTENT(OUT) :: psi_2d(:,:)
+    STOP 'Should not be called in sequential version'
+  END SUBROUTINE
+  !************************************************************
+  SUBROUTINE wf_2dto1d(psi_2d,psi_1d)
+    COMPLEX(db), INTENT(OUT)  :: psi_1d(:,:,:,:,:)
+    COMPLEX(db), INTENT(IN)   :: psi_2d(:,:)
+    STOP 'Should not be called in sequential version'
+  END SUBROUTINE
+  !************************************************************
+  SUBROUTINE matrix_split(rhomatr_lin,hmatr_lin,rhomatr_lin_d,hmatr_lin_d)
+    COMPLEX(db), INTENT(OUT)  :: rhomatr_lin_d(:,:),hmatr_lin_d(:,:)
+    COMPLEX(db), INTENT(IN)   :: rhomatr_lin(:,:),hmatr_lin(:,:)
+    STOP 'Should not be called in sequential version'
+  END SUBROUTINE matrix_split
+  !************************************************************
+  SUBROUTINE matrix_gather(unitary_rho,unitary_h,unitary_rho_d,unitary_h_d)
+    COMPLEX(db), INTENT(IN)  :: unitary_rho_d(:,:),unitary_h_d(:,:)
+    COMPLEX(db), INTENT(OUT) :: unitary_rho(:,:),unitary_h(:,:)
+    STOP 'Should not be called in sequential version'
+  END SUBROUTINE matrix_gather
+  !************************************************************
   SUBROUTINE calc_matrix(psi_1,psi_2,matrix,iq)
     INTEGER,    INTENT(IN)  :: iq
     COMPLEX(db),INTENT(IN)  :: psi_1(:,:,:,:,:),psi_2(:,:,:,:,:)

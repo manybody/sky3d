@@ -31,15 +31,8 @@ MODULE LINALG
     CALL DESCINIT(DESC_psi1D(1:10),gridsize,nlin,gridsize,nb_psi,0,0,CONTXT1D,gridsize,infoconv)
     CALL DESCINIT(DESC_TO(1:10),nlin,nlin,nlin,nb_psi,0,0,CONTXT1D,nlin,infoconv)
     CALL DESCINIT(DESC_psi2D(1:10),gridsize,nlin,NB,MB,0,0,CONTXT,psiloc_x,infoconv)
-    
-!    CALL DESCINIT(DESC_DIAG(1:10),nlin,nlin,NB,MB,0,0,CONTXT_DO,nstloc_diag_x,infoconv)
-
-!    IF(my_diag==1.OR.my_diag==3)&
     CALL DESCINIT(DESC_D(1:10),nlin,nlin,NB,MB,0,0,CONTXT_D,nstloc_diag_x,infoconv)
-!    IF(my_diag==2.OR.my_diag==4)&
     CALL DESCINIT(DESC_O(1:10),nlin,nlin,NB,MB,0,0,CONTXT_O,nstloc_diag_x,infoconv)
-!    WRITE(*,*),'proc = ',mpi_myproc,'desc_d = ',desc_d
-!    WRITE(*,*),'proc = ',mpi_myproc,'desc_o = ',desc_o
     work_t_size  = -1
     iwork_t_size = -1
     rwork_t_size = -1
@@ -47,18 +40,6 @@ MODULE LINALG
              unitary(nstloc_x,nstloc_y),evals(nlin))
     ALLOCATE(matr_lin_d(nstloc_diag_x,nstloc_diag_y),unitary_d(nstloc_diag_x,nstloc_diag_y))
 
-!    CALL PZHEEVD('V','L',nlin,matr_lin,1,1,DESCA(1:10),evals,&
-!                 unitary,1,1,DESCZ(1:10),work_t,work_t_size,rwork_t,&
-!                 rwork_t_size,iwork_t,iwork_t_size,infoconv)    
-!    IF(my_diag==1.OR.my_diag==3)THEN
-!      CALL PZHEEVD('V','L',nlin,matr_lin_d,1,1,DESC_D(1:10),evals,&
-!                 unitary_d,1,1,DESC_D(1:10),work_t,work_t_size,rwork_t,&
-!                 rwork_t_size,iwork_t,iwork_t_size,infoconv)
-!    ELSE IF(my_diag==2.OR.my_diag==4)THEN
-!      CALL PZHEEVD('V','L',nlin,matr_lin_d,1,1,DESC_O(1:10),evals,&
-!                 unitary_d,1,1,DESC_O(1:10),work_t,work_t_size,rwork_t,&
-!                 rwork_t_size,iwork_t,iwork_t_size,infoconv)
-!    ENDIF
 
     IF(my_diag==1.OR.my_diag==3)THEN
       CALL PZHEEVR('V','A','L',nlin,matr_lin_d,1,1,DESC_D(1:10),VL,VU,IL,IU,&
@@ -72,7 +53,6 @@ MODULE LINALG
     work_t_size = INT(ABS(work_t(1)))
     iwork_t_size = INT(ABS(iwork_t(1)))
     rwork_t_size = INT(ABS(rwork_t(1)))
-!    WRITE(*,*),'array sizes = ',work_t_size,iwork_t_size,rwork_t_size
     DEALLOCATE(work_t,iwork_t,rwork_t,matr_lin,unitary,evals,matr_lin_d,unitary_d)
 
   END SUBROUTINE init_linalg
@@ -91,6 +71,20 @@ MODULE LINALG
                   1,1,desc_psi1d(1:10),contxt)
   END SUBROUTINE
   !************************************************************
+  SUBROUTINE matrix_split(rhomatr_lin,hmatr_lin,rhomatr_lin_d,hmatr_lin_d)
+    COMPLEX(db), INTENT(OUT)  :: rhomatr_lin_d(:,:),hmatr_lin_d(:,:)
+    COMPLEX(db), INTENT(IN)   :: rhomatr_lin(:,:),hmatr_lin(:,:)
+    CALL PZGEMR2D(nlin,nlin,rhomatr_lin,1,1,desca,rhomatr_lin_d,1,1,desc_o,contxt)
+    CALL PZGEMR2D(nlin,nlin,hmatr_lin,1,1,desca,hmatr_lin_d,1,1,desc_d,contxt)    
+  END SUBROUTINE matrix_split
+  !************************************************************
+  SUBROUTINE matrix_gather(unitary_rho,unitary_h,unitary_rho_d,unitary_h_d)
+    COMPLEX(db), INTENT(IN)  :: unitary_rho_d(:,:),unitary_h_d(:,:)
+    COMPLEX(db), INTENT(OUT) :: unitary_rho(:,:),unitary_h(:,:)
+    CALL PZGEMR2D(nlin,nlin,unitary_rho_d,1,1,desc_o,unitary_rho,1,1,desca,contxt)
+    CALL PZGEMR2D(nlin,nlin,unitary_h_d,1,1,desc_d,unitary_h,1,1,desca,contxt)
+  END SUBROUTINE matrix_gather
+  !************************************************************
   SUBROUTINE calc_matrix(psi_1,psi_2,matrix)
     COMPLEX(db),INTENT(IN)  :: psi_1(:,:),psi_2(:,:)
     COMPLEX(db), INTENT(OUT):: matrix(:,:)
@@ -105,24 +99,8 @@ MODULE LINALG
     REAL(db),    INTENT(OUT),OPTIONAL :: evals_out(:)
     COMPLEX(db), ALLOCATABLE          :: matr_in_d(:,:),evecs_d(:,:)
     INTEGER                           :: infoconv
-    
-!    ALLOCATE(matr_in_d(nstloc_diag_x,nstloc_diag_y),evecs_d(nstloc_diag_x,nstloc_diag_y))
     ALLOCATE(work_t(work_t_size),rwork_t(rwork_t_size),&
              iwork_t(iwork_t_size),evals(nlin))
-!    WRITE(*,*),'desc_diag = ',desc_diag
-!    WRITE(*,*),'proc = ',mpi_myproc,matr_in
-!    CALL PZGEMR2D(nlin,nlin,matr_in,1,1,desca(1:10),matr_in_d,&
-!                  1,1,desc_diag(1:10),contxt)
-!    WRITE(*,*),'proc = ',mpi_myproc,matr_in_d
-!    CALL PZHEEVD('V','L',nlin,matr_in,1,1,DESCA(1:10),evals,evecs,1,1,DESCZ(1:10),&
-!                  work_t,work_t_size,rwork_t,rwork_t_size,iwork_t,iwork_t_size,infoconv)
-!    IF(PRESENT(evals_out)) THEN
-!      CALL PZHEEVD('V','L',nlin,matr_in,1,1,DESC_O(1:10),evals,evecs,1,1,DESC_O(1:10),&
-!                  work_t,work_t_size,rwork_t,rwork_t_size,iwork_t,iwork_t_size,infoconv)
-!    ELSE
-!      CALL PZHEEVD('V','L',nlin,matr_in,1,1,DESC_D(1:10),evals,evecs,1,1,DESC_D(1:10),&
-!                  work_t,work_t_size,rwork_t,rwork_t_size,iwork_t,iwork_t_size,infoconv)
-!    ENDIF  
     IF(PRESENT(evals_out)) THEN
      CALL PZHEEVR('V','A','L',nlin,matr_in,1,1,DESC_O(1:10),VL,VU,IL,IU,M,NZ_t,evals,evecs,1,1,DESC_O(1:10),&
                   work_t,work_t_size,rwork_t,rwork_t_size,iwork_t,iwork_t_size,infoconv)
@@ -130,12 +108,8 @@ MODULE LINALG
       CALL PZHEEVR('V','A','L',nlin,matr_in,1,1,DESC_D(1:10),VL,VU,IL,IU,M,NZ_t,evals,evecs,1,1,DESC_D(1:10),&
                   work_t,work_t_size,rwork_t,rwork_t_size,iwork_t,iwork_t_size,infoconv)
     ENDIF  
-!    CALL PZGEMR2D(nlin,nlin,evecs_d,1,1,desc_diag(1:10),evecs,&
-!                  1,1,desca(1:10),contxt)
-    
     IF (PRESENT(evals_out))evals_out=evals
     DEALLOCATE(evals,work_t,iwork_t,rwork_t)
-!    DEALLOCATE(matr_in_d,evecs_d)
   END SUBROUTINE eigenvecs
   !************************************************************
   SUBROUTINE loewdin(imatr,smatr)
@@ -144,24 +118,15 @@ MODULE LINALG
     COMPLEX(db),ALLOCATABLE :: tmatr(:,:)
     REAL(db)   ,ALLOCATABLE :: eigen_h(:)
     INTEGER                 :: it,jt,iy
-!    ALLOCATE(tmatr(nstloc_x,nstloc_y),eigen_h(nlin))
     ALLOCATE(tmatr(nstloc_diag_x,nstloc_diag_y),eigen_h(nlin))
     CALL eigenvecs(imatr,tmatr,eigen_h)
     eigen_h=1.0d0/sqrt(eigen_h)
-!    DO it = 1,nstloc_x
-!      DO jt = 1,nstloc_y
-!        iy = globalindex_y(jt)-npmin(my_iso)+1
-!        tmatr(it,jt) = tmatr(it,jt)*sqrt(eigen_h(iy))
-!      ENDDO
-!    ENDDO 
     DO it = 1,nstloc_diag_x
       DO jt = 1,nstloc_diag_y
         iy = globalindex_diag_y(jt)-npmin(my_iso)+1
         tmatr(it,jt) = tmatr(it,jt)*sqrt(eigen_h(iy))
       ENDDO
     ENDDO 
-!    CALL PZGEMM('N','C',nlin,nlin,nlin,cmplxone,tmatr,1,1,DESCA(1:10),&
-!                tmatr,1,1,DESCZ(1:10),cmplxzero,smatr,1,1,DESCC(1:10))
     CALL PZGEMM('N','C',nlin,nlin,nlin,cmplxone,tmatr,1,1,DESC_O(1:10),&
                 tmatr,1,1,DESC_O(1:10),cmplxzero,smatr,1,1,DESC_O(1:10))
     DEALLOCATE(tmatr,eigen_h)
