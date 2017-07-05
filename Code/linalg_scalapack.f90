@@ -1,10 +1,9 @@
 MODULE LINALG
   USE Params,   ONLY: db,cmplxzero,cmplxone
   USE Levels
-  USE Parallel, ONLY: nb,mb,contxt,contxt1d,nstloc_x,nstloc_y,globalindex_x,&
-                      globalindex_y,nb_psi,psiloc_x,psiloc_y,my_iso,my_diag,&
-                      nstloc_diag_x,nstloc_diag_y,contxt_do,mpi_myproc,contxt_d,contxt_o,&
-                      globalindex_diag_x,globalindex_diag_y,my_diag
+  USE Parallel, ONLY: nb,mb,contxt,contxt1d,nstloc_x,nstloc_y,nb_psi,psiloc_x,&
+                      psiloc_y,my_iso,my_diag,nstloc_diag_x,nstloc_diag_y,contxt_do,&
+                      mpi_myproc,contxt_d,contxt_o,globalindex_diag_x,globalindex_diag_y,my_diag
   USE Grids,    ONLY: wxyz
 !
   IMPLICIT NONE
@@ -21,7 +20,8 @@ MODULE LINALG
 !
   CONTAINS
   !************************************************************
-  SUBROUTINE init_linalg
+  SUBROUTINE init_linalg(dummy)
+    INTEGER,INTENT(IN) :: dummy
     INTEGER                 :: infoconv
     nlin=npsi(my_iso)-npmin(my_iso)+1
     gridsize=nx*ny*nz*2

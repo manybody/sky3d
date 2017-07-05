@@ -17,8 +17,6 @@ MODULE Parallel
   INTEGER              :: comm2d_x,comm2d_y,mpi_size_x,mpi_size_y,mpi_rank_x,mpi_rank_y,&
                           nprd,npcd,myprowd,mypcold,contxt_d,contxt_o
   INTEGER              :: NPROCS,NPROW,NPCOL,MYPROW,MYPCOL,CONTXT,IAM,CONTXT1D,CONTXT_DO
-  
-!  INTEGER              :: CONTXT_DP,CONTXT_OP,CONTXT_DN,CONTXT_ON,NPROW_DP,NPCOL-DP,&
                           
    
   INTEGER, EXTERNAL    :: NUMROC,INDXL2G,INDXG2L,INDXG2P
@@ -90,17 +88,13 @@ CONTAINS
     CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 !
     CALL init_blacs
-      nstloc_x = NUMROC(npsi(my_iso)-npmin(my_iso)+1,NB,MYPROW,0,NPROW)
-      nstloc_y = NUMROC(npsi(my_iso)-npmin(my_iso)+1,MB,MYPCOL,0,NPCOL)
-      psiloc_x = NUMROC(nx*ny*nz*2,NB,MYPROW,0,NPROW)
-      psiloc_y = nstloc_y
-!      WRITE(*,*),'proc = ',mpi_myproc,my_iso,npsi(my_iso),npmin(my_iso),nstloc_x,nstloc_y
-      nstloc_diag_x = NUMROC(npsi(my_iso)-npmin(my_iso)+1,NB,myprowd,0,nprd)
-      nstloc_diag_y = NUMROC(npsi(my_iso)-npmin(my_iso)+1,NB,mypcold,0,npcd)
-!      WRITE(*,*),'proc = ',mpi_myproc,'diag dim = ',nstloc_diag_x,nstloc_diag_y
-   
+    nstloc_x = NUMROC(npsi(my_iso)-npmin(my_iso)+1,NB,MYPROW,0,NPROW)
+    nstloc_y = NUMROC(npsi(my_iso)-npmin(my_iso)+1,MB,MYPCOL,0,NPCOL)
+    psiloc_x = NUMROC(nx*ny*nz*2,NB,MYPROW,0,NPROW)
+    psiloc_y = nstloc_y
+    nstloc_diag_x = NUMROC(npsi(my_iso)-npmin(my_iso)+1,NB,myprowd,0,nprd)
+    nstloc_diag_y = NUMROC(npsi(my_iso)-npmin(my_iso)+1,NB,mypcold,0,npcd)
 
-!
     DO i=1,nstloc_x
       globalindex_x(i)=INDXL2G(i, NB, MYPROW, 0, NPROW )
     END DO
