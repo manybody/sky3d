@@ -434,6 +434,14 @@ CONTAINS
     ENDDO    !for nst
     IF(tmpi.AND.ttime) CALL mpi_stop_timer_iq(2,'CalcMatrix: ')
    !**************switch to diag contexts**************
+   ! DO nst=1,nstloc_x
+   !   DO nst2=1,nstloc_y
+   !     ix=globalindex_x(nst)
+   !     iy=globalindex_y(nst2)
+   !     WRITE(*,*)ix,iy,hmatr_lin(nst,nst2),rhomatr_lin(nst,nst2)
+   !   END DO
+   ! END DO
+   ! STOP
     IF(tmpi.AND.ttime) CALL mpi_start_timer_iq(2)
     IF(tmpi) THEN
       ALLOCATE(unitary_d(nstloc_diag_x,nstloc_diag_y),     hmatr_lin_d(nstloc_diag_x,nstloc_diag_y),&
@@ -472,7 +480,11 @@ CONTAINS
     ! Step 5: Combine h and diagonalization matrix and transpose them
     !***********************************************************************
     IF(tmpi.AND.ttime) CALL mpi_start_timer_iq(2)
-    CALL comb_orthodiag(unitary_h,unitary_rho,unitary)
+    IF(diagonalize) THEN
+      CALL comb_orthodiag(unitary_h,unitary_rho,unitary)
+    ELSE
+      unitary=unitary_rho
+    END IF
     IF(tmpi.AND.ttime) CALL mpi_stop_timer_iq(2,'Combine: ')
     !***********************************************************************
     ! Step 6: Recombine |psi> and write them into 1d storage mode
