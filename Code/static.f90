@@ -122,7 +122,7 @@ CONTAINS
     !$OMP END PARALLEL
     IF(wflag)WRITE(*,*)'number of threads= ',number_threads
     IF(wflag)WRITE(*,*)
-    CALL init_linalg
+    CALL init_linalg(0)
     IF(trestart) THEN
        firstiter=iter+1
     ELSE
@@ -134,9 +134,13 @@ CONTAINS
        sp_norm=0.0D0  
        sumflu=0.D0
        IF(wflag)WRITE(*,'(A29)',advance="no") 'Initial orthogonalization... '
-       DO iq=1,2
-         CALL diagstep(iq,.FALSE.)
-       END DO
+       IF(tmpi)THEN
+          CALL diagstep(my_iso,.FALSE.)
+       ELSE
+         DO iq=1,2
+           CALL diagstep(iq,.FALSE.)
+          END DO
+       END IF 
        IF(wflag)WRITE(*,*)'DONE'
     END IF
     !****************************************************  
@@ -180,9 +184,13 @@ CONTAINS
       CALL pair
     END IF
     IF(wflag)WRITE(*,'(A25)',advance="no") 'Initial ortho2... '
-       DO iq=1,2
-         CALL diagstep(iq,.FALSE.)
-       END DO
+    IF (my_iso>0) THEN
+      CALL diagstep(my_iso,.FALSE.)
+    ELSE
+      DO iq=1,2
+        CALL diagstep(iq,.FALSE.)    
+      END DO 
+    END IF
     IF(wflag)WRITE(*,*) 'DONE'
     ! produce and print detailed information
     CALL sp_properties
@@ -208,7 +216,7 @@ CONTAINS
        !****************************************************  
        delesum=0.0D0  
        sumflu=0.0D0
-       IF(ttime.AND.tmpi) CALL mpi_start_timer(2)
+       IF(ttime.AND.tmpi) CALL mpi_start_timer_iq(2)
        !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,denerg) &
        !$OMP SCHEDULE(STATIC) REDUCTION(+: sumflu , delesum)
        DO nst=1,nstloc
@@ -217,15 +225,19 @@ CONTAINS
          delesum=delesum+wocc(globalindex(nst))*denerg  
        ENDDO
        !$OMP END PARALLEL DO
+       IF(ttime.AND.tmpi) CALL mpi_stop_timer_iq(2,'grstep: ')
        IF(tmpi) CALL collect_energies(delesum,sumflu)!collect fluctuation and change in energy
-       IF(ttime.AND.tmpi) CALL mpi_stop_timer(2,'grstep: ')
        !****************************************************
        ! Step 6: diagonalize and orthonormalize
        !****************************************************
        sp_norm=0.0d0
-       DO iq=1,2
-          CALL diagstep(iq,tdiag)
-       ENDDO
+       IF (my_iso>0) THEN
+         CALL diagstep(my_iso,tdiag)
+       ELSE
+         DO iq=1,2
+           CALL diagstep(iq,tdiag)    
+         END DO 
+       END IF
        !****************************************************
        ! Step 7: do pairing
        !****************************************************
@@ -245,7 +257,7 @@ CONTAINS
        current=0.0D0
        sdens=0.0D0
        sodens=0.0D0
-       IF(ttime.AND.tmpi) CALL mpi_start_timer(2)
+       IF(ttime.AND.tmpi) CALL mpi_start_timer_iq(2)
        !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst) SCHEDULE(STATIC) &
        !$OMP REDUCTION(+:rho, tau, current, sdens, sodens)
        DO nst=1,nstloc
@@ -253,17 +265,22 @@ CONTAINS
                           psi(:,:,:,:,nst),rho,tau,current,sdens,sodens)  
        ENDDO
        !$OMP END PARALLEL DO
+       IF(ttime.AND.tmpi) CALL mpi_stop_timer_iq(2,'add density: ')
        IF(tmpi) CALL collect_densities!collect densities from all nodes
-       IF(ttime.AND.tmpi) CALL mpi_stop_timer(2,'add density: ')
+       IF(ttime.AND.tmpi) CALL mpi_stop_timer_iq(2,'add density: ')
        !****************************************************
-       ! Step 8a: optionally constraint step
+       ! Step 8a: optional constraint step
        !****************************************************      
        IF(tconstraint) THEN
          IF(ttime.AND.tmpi) CALL mpi_start_timer(2)
          CALL tune_constraint(e0dmp,x0dmp) 
-         DO iq=1,2
-           CALL diagstep(iq,.FALSE.)
-         END DO
+         IF(tmpi)THEN
+           CALL diagstep(my_iso,.FALSE.)
+         ELSE
+           DO iq=1,2
+             CALL diagstep(iq,.FALSE.)
+           END DO
+         END IF 
          rho=0.0D0
          tau=0.0D0
          current=0.0D0
@@ -279,20 +296,25 @@ CONTAINS
           rho=addnew*rho+addco*upot
           tau=addnew*tau+addco*bmass
        ENDIF  
+       !****************************************************
+       ! Step 8b: construct potentials
+       !****************************************************  
        IF(ttime.AND.tmpi) CALL mpi_start_timer(2)
        CALL skyrme(iter<=outerpot,outertype)
        IF(tconstraint) CALL add_constraint(upot) 
-       IF(ttime.AND.tmpi) CALL mpi_stop_timer(2,'skyrme: ')
+       IF(ttime.AND.tmpi) CALL mpi_stop_timer_iq(2,'skyrme: ')
+       !****************************************************
        ! calculate and print information
-       IF(ttime.AND.tmpi)CALL mpi_start_timer(2)
+       !**************************************************** 
+       IF(ttime.AND.tmpi)CALL mpi_start_timer_iq(2)
        CALL sp_properties
        IF(tmpi) THEN
          DO nst=1,nstmax
            IF(node(nst)/=mpi_myproc) sp_energy(nst)=0.0d0
          END DO
+       IF(ttime.AND.tmpi) CALL mpi_stop_timer_iq(2,'sp properties: ')
        CALL collect_sp_properties!collect single particle properties
        END IF
-       IF(ttime.AND.tmpi) CALL mpi_stop_timer(2,'sp properties: ')
        CALL sinfo(mprint>0.AND.MOD(iter,mprint)==0.AND.wflag)
        !****************************************************
        ! Step 9: check for convergence, saving wave functions
@@ -393,86 +415,50 @@ CONTAINS
     !                                                                      *
     !***********************************************************************
     USE Trivial, ONLY: overlap,rpsnorm
-    USE Linalg,  ONLY: eigenvecs,loewdin,comb_orthodiag,recombine
+    USE Linalg,  ONLY: eigenvecs,loewdin,comb_orthodiag,recombine,calc_matrix,wf_1dto2d,wf_2dto1d,&
+                       matrix_split,matrix_gather,init_linalg,nlin
     
-    INTEGER,INTENT(IN)      :: iq
-    LOGICAL,INTENT(IN)      :: diagonalize
-    INTEGER                 :: nst,nst2,noffset,i,ix,iy,iz,is,infoconv
-    COMPLEX(db), POINTER    :: psi_x(:,:,:,:,:),psi_y(:,:,:,:,:),hampsi_x(:,:,:,:,:)
-    COMPLEX(db),ALLOCATABLE :: unitary(:,:),hmatr_lin(:,:),unitary_h(:,:), rhomatr_lin(:,:),&
-                               rhomatr_lin_eigen(:,:), unitary_rho(:,:)
-    EXTERNAL                :: zgemv,zheevd,zgemm,zheev
+    INTEGER,INTENT(IN)             :: iq
+    LOGICAL,INTENT(IN)             :: diagonalize
+    INTEGER                        :: nst,nst2,noffset,ix,iy
+    COMPLEX(db),ALLOCATABLE,TARGET :: unitary(:,:),hmatr_lin(:,:),unitary_h(:,:), rhomatr_lin(:,:),&
+                                      rhomatr_lin_eigen(:,:), unitary_rho(:,:)
+    COMPLEX(db),POINTER            :: unitary_d(:,:),hmatr_lin_d(:,:),unitary_h_d(:,:),rhomatr_lin_d(:,:),&
+                                      unitary_rho_d(:,:),psi_2d(:,:),hampsi_2d(:,:)
+    INTEGER,EXTERNAL               :: omp_get_num_threads,omp_get_thread_num
     !***********************************************************************
     ! Step 1: Copy |psi> and h|psi> to 2d storage mode
     !***********************************************************************
+    IF(.NOT.tmpi) CALL init_linalg(iq)
     noffset=npmin(iq)-1
-    ALLOCATE(unitary(nstloc_x(iq),nstloc_y(iq)),           hmatr_lin(nstloc_x(iq),nstloc_y(iq)),&
-             unitary_h(nstloc_x(iq),nstloc_y(iq)),         rhomatr_lin(nstloc_x(iq),nstloc_y(iq)),&
-             rhomatr_lin_eigen(nstloc_x(iq),nstloc_y(iq)), unitary_rho(nstloc_x(iq),nstloc_y(iq)))
+    ALLOCATE(unitary(nstloc_x,nstloc_y),           hmatr_lin(nstloc_x,nstloc_y),&
+             unitary_h(nstloc_x,nstloc_y),         rhomatr_lin(nstloc_x,nstloc_y),&
+             rhomatr_lin_eigen(nstloc_x,nstloc_y), unitary_rho(nstloc_x,nstloc_y))
     unitary_h=0.0d0
     hmatr_lin=0.0d0
     rhomatr_lin=0.0d0
-    IF(tmpi.AND.ttime) CALL mpi_start_timer(2)
+    IF(tmpi.AND.ttime) CALL mpi_start_timer_iq(2)
     IF(tmpi) THEN
-      ALLOCATE(psi_x(nx,ny,nz,2,nstloc_x(iq)),psi_y(nx,ny,nz,2,nstloc_y(iq)),&
-               hampsi_x(nx,ny,nz,2,nstloc_x(iq)))
-      CALL mpi_wf_1d2x(psi,psi_x,iq)
-!      CALL mpi_wf_1d2x(hampsi,hampsi_x,iq)
-      CALL mpi_wf_x2y(psi_x,psi_y,iq)
+      ALLOCATE(psi_2d(psiloc_x,psiloc_y),hampsi_2d(psiloc_x,psiloc_y))
+      CALL wf_1dto2d(psi(:,:,:,:,:),psi_2d)
+      IF(diagonalize) CALL wf_1dto2d(hampsi(:,:,:,:,:),hampsi_2d)
     ELSE
-      psi_x     => psi(:,:,:,:,npmin(iq):npsi(iq))
-      psi_y     => psi(:,:,:,:,npmin(iq):npsi(iq))
-      hampsi_x  => hampsi(:,:,:,:,npmin(iq):npsi(iq))
+      psi_2d(1:nx*ny*nz*2,1:nlin) => psi(:,:,:,:,npmin(iq):npsi(iq))
+      hampsi_2d(1:nx*ny*nz*2,1:nlin) => hampsi(:,:,:,:,npmin(iq):npsi(iq))
     END IF
+    IF(tmpi.AND.ttime) CALL mpi_stop_timer_iq(2,'1d to 2d: ')
     !***********************************************************************
     ! Step 2: Calculate lower tringular of h-matrix and overlaps.
     !***********************************************************************
-!    !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,nst2,ix,iy,is,iz) SCHEDULE(STATIC)
-!    DO nst=1,nstloc_x(iq)
-!      DO is = 1,2
-!        DO iz = 1,nz
-!          DO nst2=1,nstloc_y(iq)
-!            ix=globalindex_x(nst,iq)
-!            iy=globalindex_y(nst2,iq)
-!            IF(ix>iy) THEN 
-!              IF(diagonalize) THEN
-!                hmatr_lin(nst,nst2)=hmatr_lin(nst,nst2)+&
-!                                    CONJG(overlap(psi_y(:,:,iz:iz,is:is,nst2),hampsi_x(:,:,iz:iz,is:is,nst)))
-!              ELSE
-!                unitary_h(nst,nst2)=CMPLX(0.0d0,0.0d0)
-!              END IF
-!              rhomatr_lin(nst,nst2)=rhomatr_lin(nst,nst2)+&
-!                                    overlap(psi_x(:,:,iz:iz,is:is,nst),psi_y(:,:,iz:iz,is:is,nst2))
-!            ENDIF
-!            IF(ix==iy) THEN
-!              rhomatr_lin(nst,nst2)=rhomatr_lin(nst,nst2)+&
-!                                    overlap(psi_x(:,:,iz:iz,is:is,nst),psi_y(:,:,iz:iz,is:is,nst2))
-!              sp_norm(ix)=REAL(rhomatr_lin(nst,nst2))
-!              IF(diagonalize) THEN
-!                hmatr_lin(nst,nst2)=sp_energy(ix)!account for hampsi=(h-spe)|psi>
-!              ELSE
-!                unitary_h(nst,nst2)=CMPLX(1.0d0,0.0d0)
-!              END IF
-!            END IF
-!          ENDDO    !for nst2
-!        ENDDO    !for b
-!      ENDDO    !for z
-!    ENDDO    !for nst
-!    !$OMP END PARALLEL DO
-    unitary_h=0.0d0
-    !$OMP PARALLEL SECTIONS
-    !$OMP SECTION
-    CALL ZGEMM('C','N',nstloc_x(iq),nstloc_y(iq),nx*ny*nz*2,cmplxone,psi_x,&
-               nx*ny*nz*2,psi_y,nx*ny*nz*2,cmplxzero,rhomatr_lin,nstloc_x(iq))
-    !$OMP SECTION
-    IF(tmpi) CALL mpi_wf_1d2x(hampsi,hampsi_x,iq)
-    !$OMP END PARALLEL SECTIONS
-    CALL ZGEMM('C','N',nstloc_x(iq),nstloc_y(iq),nx*ny*nz*2,cmplxone,hampsi_x,&
-               nx*ny*nz*2,psi_y,nx*ny*nz*2,cmplxzero,hmatr_lin,nstloc_x(iq)) 
-    DO nst=1,nstloc_x(iq)
-      DO nst2=1,nstloc_y(iq)
-        ix=globalindex_x(nst,iq)
-        iy=globalindex_y(nst2,iq)
+    IF(tmpi.AND.ttime) CALL mpi_start_timer_iq(2)
+    CALL calc_matrix(psi_2d,psi_2d,rhomatr_lin)
+    IF(diagonalize)&
+    CALL calc_matrix(psi_2d,hampsi_2d,hmatr_lin)
+    unitary_h=0.0d0                                                                                        
+    DO nst=1,nstloc_x
+      DO nst2=1,nstloc_y
+        ix=globalindex_x(nst)
+        iy=globalindex_y(nst2)
         IF(ix==iy) THEN
           sp_norm(ix)=REAL(rhomatr_lin(nst,nst2))
           IF(diagonalize) THEN
@@ -483,48 +469,82 @@ CONTAINS
         END IF
       ENDDO    !for nst2
     ENDDO    !for nst
-    IF(tmpi.AND.ttime) CALL mpi_stop_timer(2,'CalcMatrix+Comm1d->2d: ')
+    IF(tmpi.AND.ttime) CALL mpi_stop_timer_iq(2,'CalcMatrix: ')
+   !**************switch to diag contexts**************
+   ! DO nst=1,nstloc_x
+   !   DO nst2=1,nstloc_y
+   !     ix=globalindex_x(nst)
+   !     iy=globalindex_y(nst2)
+   !     WRITE(*,*)ix,iy,hmatr_lin(nst,nst2),rhomatr_lin(nst,nst2)
+   !   END DO
+   ! END DO
+   ! STOP
+    IF(tmpi.AND.ttime) CALL mpi_start_timer_iq(2)
+    IF(tmpi) THEN
+      ALLOCATE(unitary_d(nstloc_diag_x,nstloc_diag_y),     hmatr_lin_d(nstloc_diag_x,nstloc_diag_y),&
+               unitary_h_d(nstloc_diag_x,nstloc_diag_y),   rhomatr_lin_d(nstloc_diag_x,nstloc_diag_y),&
+               unitary_rho_d(nstloc_diag_x,nstloc_diag_y))
+      CALL matrix_split(rhomatr_lin,hmatr_lin,rhomatr_lin_d,hmatr_lin_d)
+    ELSE
+      unitary_d(1:nlin,1:nlin)      => unitary(:,:)
+      unitary_rho_d(1:nlin,1:nlin)  => unitary_rho(:,:)
+      unitary_h_d(1:nlin,1:nlin)    => unitary_h(:,:)
+      hmatr_lin_d(1:nlin,1:nlin)    => hmatr_lin(:,:)
+      rhomatr_lin_d(1:nlin,1:nlin)  => rhomatr_lin(:,:)
+    END IF
+    IF(tmpi.AND.ttime) CALL mpi_stop_timer_iq(2,'Diag Ortho Comm: ')
     !***********************************************************************
     ! Step 3: Calculate eigenvectors of h if wanted
     !***********************************************************************
-    IF(tmpi.AND.ttime) CALL mpi_start_timer(2)
-    IF(diagonalize) THEN
-      CALL eigenvecs(hmatr_lin,unitary_h,iq=iq)
+    IF(tmpi.AND.ttime) CALL mpi_start_timer_iq(2)
+    IF(diagonalize.AND. (my_diag==1.OR.my_diag==3.OR.my_diag==0)) THEN
+      CALL eigenvecs(hmatr_lin_d,unitary_h_d)
     END IF
-    IF(tmpi.AND.ttime) CALL mpi_stop_timer(2,'Diag matrix: ')
+    IF(tmpi.AND.ttime) CALL mpi_stop_timer_iq(2,'Diag matrix: ')
     !***********************************************************************
     ! Step 4: Calculate matrix for Loewdin
     !***********************************************************************
-    IF(tmpi.AND.ttime) CALL mpi_start_timer(2)
-    CALL loewdin(rhomatr_lin,unitary_rho,iq)
-    IF(tmpi.AND.ttime) CALL mpi_stop_timer(2,'Ortho matrix: ')
+    IF(tmpi.AND.ttime) CALL mpi_start_timer_iq(2)
+    IF(my_diag==2.OR.my_diag==4.OR.my_diag==0)THEN
+      CALL loewdin(rhomatr_lin_d,unitary_rho_d)
+    ENDIF
+    IF(tmpi.AND.ttime) CALL mpi_stop_timer_iq(2,'Ortho matrix: ')
+    !*********************************switch back to 2d contxts
+    IF(tmpi.AND.ttime) CALL mpi_start_timer_iq(2)
+    IF(tmpi) CALL matrix_gather(unitary_rho,unitary_h,unitary_rho_d,unitary_h_d)
+    IF(tmpi.AND.ttime) CALL mpi_stop_timer_iq(2,'Diag ortho rev comm: ')
     !***********************************************************************
     ! Step 5: Combine h and diagonalization matrix and transpose them
     !***********************************************************************
-    IF(tmpi.AND.ttime) CALL mpi_start_timer(2)
-    CALL comb_orthodiag(unitary_h,unitary_rho,unitary,iq)
-    IF(tmpi.AND.ttime) CALL mpi_stop_timer(2,'Combine: ')
+    IF(tmpi.AND.ttime) CALL mpi_start_timer_iq(2)
+    IF(diagonalize) THEN
+      CALL comb_orthodiag(unitary_h,unitary_rho,unitary)
+    ELSE
+      unitary=unitary_rho
+    END IF
+    IF(tmpi.AND.ttime) CALL mpi_stop_timer_iq(2,'Combine: ')
     !***********************************************************************
     ! Step 6: Recombine |psi> and write them into 1d storage mode
     !***********************************************************************
-    IF(tmpi.AND.ttime) CALL mpi_start_timer(2)
-    !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(ix,iy,iz,is) SCHEDULE(STATIC) 
-    DO ix=1,nx; DO iy=1,ny; DO iz=1,nz; DO is=1,2
-      CALL recombine(unitary,psi_y(ix,iy,iz,is,:),psi_x(ix,iy,iz,is,:),iq)
-    END DO; END DO; END DO; END DO
-    !$OMP END PARALLEL DO
-    !
-    IF(tmpi.AND.ttime) CALL mpi_stop_timer(2,'recombine: ')
+    IF(tmpi.AND.ttime) CALL mpi_start_timer_iq(2)
+    CALL recombine(psi_2d,unitary,hampsi_2d)
+    IF(tmpi.AND.ttime) CALL mpi_stop_timer_iq(2,'recombine: ')
+    IF(tmpi.AND.ttime) CALL mpi_start_timer_iq(2)
+    IF(tmpi)THEN
+      CALL wf_2dto1d(hampsi_2d,psi(:,:,:,:,:))
+    ELSE
+      psi_2d=hampsi_2d
+    END IF
+    IF(tmpi.AND.ttime) CALL mpi_stop_timer_iq(2,'2d to 1d: ')
     DEALLOCATE(unitary,hmatr_lin,unitary_h,rhomatr_lin,&
                rhomatr_lin_eigen,unitary_rho)
-    IF(tmpi.AND.ttime) CALL mpi_start_timer(2)
     IF(tmpi) THEN
-      CALL collect_wf_1d_x(psi,psi_x,iq)
-      DEALLOCATE(psi_x,psi_y,hampsi_x)
+      DEALLOCATE(unitary_d,hmatr_lin_d,unitary_h_d,rhomatr_lin_d,&
+                 unitary_rho_d,hampsi_2d,psi_2d)
     ELSE
-      NULLIFY(psi_x,psi_y,hampsi_x)
+      NULLIFY(unitary_d,hmatr_lin_d,unitary_h_d,rhomatr_lin_d,&
+              unitary_rho_d,hampsi_2d,psi_2d)
     END IF
-    IF(tmpi.AND.ttime) CALL mpi_stop_timer(2,'Comm 2d->1d: ')
   END SUBROUTINE diagstep
   !*************************************************************************
   SUBROUTINE sinfo(printing)

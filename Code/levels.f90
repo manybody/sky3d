@@ -6,7 +6,7 @@ MODULE Levels
   SAVE
   INTEGER              :: nstmax,nstloc,nneut,nprot,npmin(2),npsi(2)
   REAL(db)             :: charge_number,mass_number
-  COMPLEX(db),POINTER  :: psi(:,:,:,:,:),hampsi(:,:,:,:,:)
+  COMPLEX(db),POINTER,CONTIGUOUS  :: psi(:,:,:,:,:),hampsi(:,:,:,:,:)
   REAL(db),ALLOCATABLE :: sp_orbital(:,:),sp_spin(:,:)
   INTEGER, ALLOCATABLE :: isospin(:)
   REAL(db), ALLOCATABLE, DIMENSION(:) :: sp_energy,sp_efluct1, &
