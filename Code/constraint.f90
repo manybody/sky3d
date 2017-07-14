@@ -57,7 +57,7 @@ CONTAINS
     lambda_crank=-0.2D0
     OPEN(803,file='constraint_iter')
     WRITE(803,*) &
-    'Constraint: iter iconstr old-value new-value variance  corrlambda lambda'
+    'iter    iconstr   d_value   new-value    variance   corrlambda   lambda    qcorr'
 
 !    defining constrains, here preliminarily unscaled Cartesian quadrupoles
     iconstr=0
@@ -75,8 +75,6 @@ CONTAINS
              ENDDO
           ENDDO
        ENDDO
-!       IF(tprintcons) WRITE(*,*) 'fac20,field:',&
-!           fac20,SUM(constr_field(iconstr,:,:,:,:))
     END IF
     IF(alpha22_wanted>-1D99) THEN       ! isoscalar triaxial quadrupole Q_22
         iconstr=1+iconstr
@@ -138,6 +136,19 @@ CONTAINS
                                 (2D0*actual_crank2(iconstr)+d0constr)
     END DO    
 
+!   update Lagrange parameters
+    DO iconstr=1,numconstraint
+      corrlambda = -qepsconstr*(MAX(e0act,1D0)/x0act)* &
+               (actual_crank(iconstr)-old_crank(iconstr))/ &
+               (2D0*actual_crank2(iconstr)+d0constr)
+      lambda_crank(iconstr) = lambda_crank(iconstr)+corrlambda
+      WRITE(803,'(2i4,6(1pg13.5))') iter,iconstr, &
+        (actual_crank(iconstr)-old_crank(iconstr)), &
+        actual_crank(iconstr), &
+        actual_crank2(iconstr),corrlambda, &
+        lambda_crank(iconstr),qcorr(iconstr)
+    ENDDO
+
     
 !   correct waverfunctions towards wanted deformation
     ALLOCATE(corrfield(nx,ny,nz,2))
@@ -148,33 +159,6 @@ CONTAINS
        psi(:,:,:,:,nst) = corrfield(:,:,:,:)*psi(:,:,:,:,nst)
     ENDDO
     DEALLOCATE(corrfield)
-    CALL schmid
-    rho=0.0D0
-    tau=0.0D0
-    current=0.0D0
-    sdens=0.0D0
-    sodens=0.0D0
-    DO nst=1,nstloc
-       CALL add_density(isospin(globalindex(nst)),wocc(globalindex(nst)),&
-                        psi(:,:,:,:,nst),rho,tau,current,sdens,sodens)  
-    ENDDO
-
-!   update Lagrange parameters
-    DO iconstr=1,numconstraint
-      corrlambda = -qepsconstr*(MAX(e0act,1D0)/x0act)* &
-               (actual_crank(iconstr)-old_crank(iconstr))/ &
-               (2D0*actual_crank2(iconstr)+d0constr)
-!      corrlambda=-corrlambda
-!      corrlambda = corrlambda/lambda_crank(iconstr)
-!      corrlambda = SIGN(MIN(ABS(corrlambda),2D0*ABS(qepsconstr*lambda_crank(iconstr))),corrlambda)
-      lambda_crank(iconstr) = lambda_crank(iconstr)+corrlambda
-      WRITE(803,'(2i4,6(1pg13.5))') iter,iconstr, &
-        (actual_crank(iconstr)-old_crank(iconstr)), &
-        actual_crank(iconstr), &
-        actual_crank2(iconstr),corrlambda, &
-        lambda_crank(iconstr),qcorr(iconstr)
-    ENDDO
-
   END SUBROUTINE tune_constraint
 
 

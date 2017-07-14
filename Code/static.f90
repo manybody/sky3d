@@ -254,14 +254,31 @@ CONTAINS
        ENDDO
        !$OMP END PARALLEL DO
        IF(tmpi) CALL collect_densities!collect densities from all nodes
-!      optionally constraint step
-       IF(tconstraint) CALL tune_constraint(e0dmp,x0dmp) 
+       IF(ttime.AND.tmpi) CALL mpi_stop_timer(2,'add density: ')
+       !****************************************************
+       ! Step 8a: optionally constraint step
+       !****************************************************      
+       IF(tconstraint) THEN
+         IF(ttime.AND.tmpi) CALL mpi_start_timer(2)
+         CALL tune_constraint(e0dmp,x0dmp) 
+         DO iq=1,2
+           CALL diagstep(iq,.FALSE.)
+         END DO
+         rho=0.0D0
+         tau=0.0D0
+         current=0.0D0
+         sdens=0.0D0
+         sodens=0.0D0
+         DO nst=1,nstloc
+           CALL add_density(isospin(globalindex(nst)),wocc(globalindex(nst)),&
+                          psi(:,:,:,:,nst),rho,tau,current,sdens,sodens)  
+         ENDDO
+         IF(ttime.AND.tmpi) CALL mpi_stop_timer(2,'constraint: ')
+       END IF
        IF(taddnew) THEN
           rho=addnew*rho+addco*upot
           tau=addnew*tau+addco*bmass
-       ENDIF
-!       
-       IF(ttime.AND.tmpi) CALL mpi_stop_timer(2,'add density: ')
+       ENDIF  
        IF(ttime.AND.tmpi) CALL mpi_start_timer(2)
        CALL skyrme(iter<=outerpot,outertype)
        IF(tconstraint) CALL add_constraint(upot) 
