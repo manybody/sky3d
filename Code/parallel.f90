@@ -278,16 +278,6 @@ CONTAINS
   SUBROUTINE collect_densities
     USE Densities, ONLY : rho,tau,current,sodens,sdens
     CALL mpi_barrier (mpi_comm_world, mpi_ierror)
-!    CALL mpi_allreduce(MPI_IN_PLACE,rho,2*nx*ny*nz,        &
-!         mpi_double_precision,mpi_sum,mpi_comm_world,mpi_ierror)
-!    CALL mpi_allreduce(MPI_IN_PLACE,tau,2*nx*ny*nz,        &
-!         mpi_double_precision,mpi_sum,mpi_comm_world,mpi_ierror)
-!    CALL mpi_allreduce(MPI_IN_PLACE,current,3*2*nx*ny*nz,  &
-!         mpi_double_precision,mpi_sum,mpi_comm_world,mpi_ierror)
-!    CALL mpi_allreduce(MPI_IN_PLACE,sodens,3*2*nx*ny*nz,  &
-!         mpi_double_precision,mpi_sum,mpi_comm_world,mpi_ierror)
-!    CALL mpi_allreduce(MPI_IN_PLACE,sdens,3*2*nx*ny*nz,   &
-!         mpi_double_precision,mpi_sum,mpi_comm_world,mpi_ierror)
     CALL collect_density(rho)
     CALL collect_density(tau)
     CALL collect_vecdens(current)
@@ -330,6 +320,12 @@ CONTAINS
     CALL mpi_bcast(dens(:,:,:,:,2),cnt,mpi_double_precision,&
                    mpi_nprocs_iso(1),mpi_comm_world,mpi_ierror)
   END SUBROUTINE collect_vecdens
+  !***********************************************************************
+  SUBROUTINE collect_sp_property(sp_prop)
+    REAL(db),INTENT(INOUT) :: sp_prop(:)
+    CALL mpi_allreduce(MPI_IN_PLACE,sp_prop,nstmax,mpi_double_precision,mpi_sum,  &
+         mpi_comm_world,mpi_ierror)
+  END SUBROUTINE collect_sp_property
   !***********************************************************************
   SUBROUTINE collect_sp_properties
     CALL mpi_barrier (mpi_comm_world,mpi_ierror)

@@ -16,7 +16,7 @@ Module Constraint
   USE Densities
   USE Grids, ONLY: nx,ny,nz,x,y,z,wxyz
   USE Levels, ONLY: nstmax,psi,nstloc,wocc,isospin,mass_number,schmid
-  USE Parallel, ONLY: globalindex
+  USE Parallel, ONLY: globalindex,mpi_myproc
   IMPLICIT NONE
   REAL(db),ALLOCATABLE,DIMENSION(:,:,:,:,:) :: constr_field   !<this is the array of local
   !!constraining fields
@@ -127,6 +127,7 @@ CONTAINS
     REAL(db),ALLOCATABLE,DIMENSION(:,:,:,:) :: corrfield 
     ! compute Q-moments
     ! simplify variance by Q**2 moment, ignore non-diagonal elements
+    WRITE(*,*)'tune_constraint',mpi_myproc
     actual_numb = wxyz*SUM(rho(:,:,:,:))
     DO iconstr=1,numconstraint
       actual_crank(iconstr) = wxyz*SUM(rho(:,:,:,:)*constr_field(iconstr,:,:,:,:))
@@ -155,7 +156,7 @@ CONTAINS
     FORALL(is=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
       corrfield(ix,iy,iz,is) = EXP(-SUM(qcorr(:)*constr_field(:,ix,iy,iz,is)))
     END FORALL
-    DO nst=1,nstmax
+    DO nst=1,nstloc
        psi(:,:,:,:,nst) = corrfield(:,:,:,:)*psi(:,:,:,:,nst)
     ENDDO
     DEALLOCATE(corrfield)

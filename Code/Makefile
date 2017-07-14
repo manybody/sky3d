@@ -126,7 +126,7 @@ energies.o :   energies.f90 params.o forces.o densities.o levels.o grids.o \
 meanfield.o : meanfield.f90 params.o densities.o forces.o grids.o coulomb.o \
 	trivial.o levels.o
 
-pairs.o : pairs.f90 forces.o grids.o levels.o densities.o
+pairs.o : pairs.f90 forces.o grids.o levels.o densities.o $(PARALLEL_SKY)
 
 static.o : static.f90 params.o densities.o grids.o \
 	levels.o moment.o energies.o inout.o pairs.o \

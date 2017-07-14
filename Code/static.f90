@@ -179,10 +179,7 @@ CONTAINS
     IF(tmpi) CALL collect_energies(delesum,sumflu)!collect fluctuations and change in energy 
     IF(wflag)WRITE(*,*) 'DONE'
     ! pairing and orthogonalization
-    IF(ipair/=0) THEN
-      IF(tmpi) STOP 'PAIRING does NOT work yet with MPI'! to be fixed...
-      CALL pair
-    END IF
+    IF(ipair/=0) CALL pair
     IF(wflag)WRITE(*,'(A25)',advance="no") 'Initial ortho2... '
     IF (my_iso>0) THEN
       CALL diagstep(my_iso,.FALSE.)
@@ -241,10 +238,7 @@ CONTAINS
        !****************************************************
        ! Step 7: do pairing
        !****************************************************
-       IF(ipair/=0) THEN
-         IF(tmpi) STOP 'PAIRING does NOT work yet with MPI'
-         CALL pair
-       END IF
+       IF(ipair/=0) CALL pair
        !****************************************************
        ! Step 8: get new densities and fields with relaxation
        !****************************************************
@@ -265,7 +259,6 @@ CONTAINS
                           psi(:,:,:,:,nst),rho,tau,current,sdens,sodens)  
        ENDDO
        !$OMP END PARALLEL DO
-       IF(ttime.AND.tmpi) CALL mpi_stop_timer_iq(2,'add density: ')
        IF(tmpi) CALL collect_densities!collect densities from all nodes
        IF(ttime.AND.tmpi) CALL mpi_stop_timer_iq(2,'add density: ')
        !****************************************************
@@ -286,11 +279,15 @@ CONTAINS
          current=0.0D0
          sdens=0.0D0
          sodens=0.0D0
-         DO nst=1,nstloc
-           CALL add_density(isospin(globalindex(nst)),wocc(globalindex(nst)),&
+       !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst) SCHEDULE(STATIC) &
+       !$OMP REDUCTION(+:rho, tau, current, sdens, sodens)
+       DO nst=1,nstloc
+         CALL add_density(isospin(globalindex(nst)),wocc(globalindex(nst)),&
                           psi(:,:,:,:,nst),rho,tau,current,sdens,sodens)  
-         ENDDO
-         IF(ttime.AND.tmpi) CALL mpi_stop_timer(2,'constraint: ')
+       ENDDO
+       !$OMP END PARALLEL DO
+       IF(tmpi) CALL collect_densities!collect densities from all nodes
+       IF(ttime.AND.tmpi) CALL mpi_stop_timer(2,'constraint: ')
        END IF
        IF(taddnew) THEN
           rho=addnew*rho+addco*upot
@@ -471,14 +468,6 @@ CONTAINS
     ENDDO    !for nst
     IF(tmpi.AND.ttime) CALL mpi_stop_timer_iq(2,'CalcMatrix: ')
    !**************switch to diag contexts**************
-   ! DO nst=1,nstloc_x
-   !   DO nst2=1,nstloc_y
-   !     ix=globalindex_x(nst)
-   !     iy=globalindex_y(nst2)
-   !     WRITE(*,*)ix,iy,hmatr_lin(nst,nst2),rhomatr_lin(nst,nst2)
-   !   END DO
-   ! END DO
-   ! STOP
     IF(tmpi.AND.ttime) CALL mpi_start_timer_iq(2)
     IF(tmpi) THEN
       ALLOCATE(unitary_d(nstloc_diag_x,nstloc_diag_y),     hmatr_lin_d(nstloc_diag_x,nstloc_diag_y),&

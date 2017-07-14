@@ -111,6 +111,18 @@ CONTAINS     !  all dummy subroutines to run on a sequential machine
     RETURN
   END SUBROUTINE collect_densities
   !************************************************************************
+  SUBROUTINE collect_density(dens)
+    REAL(db):: dens(:,:,:,:)
+    STOP ' COLLECT_DENSITY: parallel calls inhibited '
+    RETURN
+  END SUBROUTINE collect_density
+  !************************************************************************
+  SUBROUTINE collect_sp_property(dens)
+    REAL(db):: dens(:)
+    STOP ' COLLECT_SP_PROPERTY: parallel calls inhibited '
+    RETURN
+  END SUBROUTINE collect_sp_property
+  !************************************************************************
   SUBROUTINE collect_sp_properties
     STOP ' COLLECT_SP_PROPERTIES: parallel calls inhibited '
     RETURN

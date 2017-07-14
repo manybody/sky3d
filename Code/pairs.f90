@@ -4,6 +4,7 @@ MODULE Pairs
   USE Grids, ONLY: nx,ny,nz,wxyz
   USE Densities, ONLY:rho
   USE Levels
+  USE Parallel, ONLY:globalindex,collect_density,collect_sp_property,tmpi,wflag
   IMPLICIT NONE
   PRIVATE
   PUBLIC :: pair,epair,avdelt,avg,eferm,avdeltv2
@@ -51,23 +52,31 @@ CONTAINS
     INTEGER :: iqq,nst,is
     REAL(db),PARAMETER :: smallp=0.000001  
     REAL(db) :: v0act
-    REAL(db) :: work(nx,ny,nz)  
+    REAL(db) :: work(nx,ny,nz,2)  
     ! constant gap in early stages of iteration
     IF(iter<=itrsin) THEN  
        deltaf=11.2/SQRT(mass_number)
        RETURN  
     ENDIF
     ! now the detailed gaps:
+    work=0.D0
     DO iqq=1,2  
-       work=0.D0
        ! accumulate new pair-density
-       DO nst=npmin(iqq),npsi(iqq)  
-          DO is=1,2  
-             work=work+SQRT(MAX(wocc(nst)-wocc(nst)**2,smallp))*0.5* &
+       !DO nst=npmin(iqq),npsi(iqq)  
+       DO is=1,2 
+         DO nst=1,nstloc 
+           IF(isospin(globalindex(nst))==iqq)&
+           work(:,:,:,iqq)=work(:,:,:,iqq)+SQRT(MAX(wocc(globalindex(nst))-wocc(globalindex(nst))**2,smallp))*0.5* &
                   (REAL(psi(:,:,:,is,nst))**2+AIMAG(psi(:,:,:,is,nst))**2)
-          ENDDO
+         ENDDO
        ENDDO
+    END DO
+    IF(tmpi) CALL collect_density(work)
+    IF(wflag) WRITE(*,*)1,SUM(work(:,:,:,1))
+    IF(wflag) WRITE(*,*)2,SUM(work(:,:,:,2))
        ! determine pairing strength
+    deltaf=0.0d0
+    DO iqq=1,2
        IF(iqq==2) THEN  
           v0act=p%v0prot  
        ELSE  
@@ -76,23 +85,26 @@ CONTAINS
        ! now multiply with strength to obtain local pair-potential
        IF(ipair==6) THEN
          IF(pair_reg) THEN
-           work=g_eff(v0act,iqq)*work*(1D0-(rho(:,:,:,1)+rho(:,:,:,2))/p%rho0pr)
+           work(:,:,:,iqq)=g_eff(v0act,iqq)*work(:,:,:,iqq)*(1D0-(rho(:,:,:,1)+rho(:,:,:,2))/p%rho0pr)
          ELSE
-           work=v0act*work*(1D0-(rho(:,:,:,1)+rho(:,:,:,2))/p%rho0pr)
+           work(:,:,:,iqq)=v0act*work(:,:,:,iqq)*(1D0-(rho(:,:,:,1)+rho(:,:,:,2))/p%rho0pr)
          END IF
        ELSE
-          work=v0act*work  
+          work(:,:,:,iqq)=v0act*work(:,:,:,iqq)  
        END IF
        ! finally compute the actual gaps as s.p. expectation values with
        ! the pair potential
-       DO nst=npmin(iqq),npsi(iqq)  
-          deltaf(nst)=0.0D0  
-          DO is=1,2  
-             deltaf(nst)=deltaf(nst)+wxyz*SUM(work* &
-                  (REAL(psi(:,:,:,is,nst))**2+AIMAG(psi(:,:,:,is,nst))**2))
-          ENDDO
+       DO nst=1,nstloc
+          IF(isospin(globalindex(nst))==iqq) THEN
+             DO is=1,2  
+                deltaf(globalindex(nst))=deltaf(globalindex(nst))+wxyz*SUM(work(:,:,:,iqq)* &
+                     (REAL(psi(:,:,:,is,nst))**2+AIMAG(psi(:,:,:,is,nst))**2))
+             ENDDO 
+          END IF
        ENDDO
     ENDDO
+    IF(tmpi) CALL collect_sp_property(deltaf)
+    
   END SUBROUTINE pairgap
   !***********************************************************************
   ! Calculate the Fermi energy for isospin iq such that the particle
