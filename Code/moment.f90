@@ -82,7 +82,7 @@ CONTAINS
     CALL q2diag(qmtot,q20tot,q22tot,'Total    ')
     q20T1 = -q20(1)/nneut+q20(2)/nprot
     r0rms = r0*SQRT(0.6)           ! convert from box to r.m.s. radius
-    radius=r0rms*pnrtot**(1.D0/3.D0)
+    radius=rmstot!r0rms*pnrtot**(1.D0/3.D0)
     beta20tot=q20tot*(4.0D0*PI/(5.0D0*radius**2*pnrtot))
     beta22tot=q22tot*(4.0D0*PI/(5.0D0*radius**2*pnrtot))
     beta=SQRT(beta20tot**2+2.0*beta22tot**2)

@@ -49,7 +49,7 @@ CONTAINS
     READ(5,constraint,ERR=99,END=98)
     IF(alpha20_wanted>-1D99) numconstraint=1+numconstraint
     IF(alpha22_wanted>-1D99) numconstraint=1+numconstraint
-    IF(tq_prin_axes) numconstraint=3+numconstraint
+    IF(tq_prin_axes) numconstraint=6+numconstraint
     IF(numconstraint==0) GO TO 98
     ALLOCATE(constr_field(numconstraint,nx,ny,nz,2))
     ALLOCATE(lambda_crank(numconstraint),dlambda_crank(numconstraint),&
@@ -109,6 +109,24 @@ CONTAINS
       FORALL(ix=1:nx,iy=1:ny,iz=1:nz)
         constr_field(iconstr,ix,iy,iz,:) = &
             facdxy*(y(iy)*z(iz))*masking(ix,iy,iz)
+      END FORALL
+      iconstr=1+iconstr
+      goal_crank(iconstr)=0.0d0
+      FORALL(ix=1:nx,iy=1:ny,iz=1:nz)
+        constr_field(iconstr,ix,iy,iz,:) = &
+            facdxy*(x(ix))*masking(ix,iy,iz)
+      END FORALL
+      iconstr=1+iconstr
+      goal_crank(iconstr)=0.0d0
+      FORALL(ix=1:nx,iy=1:ny,iz=1:nz)
+        constr_field(iconstr,ix,iy,iz,:) = &
+            facdxy*(y(iy))*masking(ix,iy,iz)
+      END FORALL
+      iconstr=1+iconstr
+      goal_crank(iconstr)=0.0d0
+      FORALL(ix=1:nx,iy=1:ny,iz=1:nz)
+        constr_field(iconstr,ix,iy,iz,:) = &
+            facdxy*(z(iz))*masking(ix,iy,iz)
       END FORALL
     END IF
     IF(iconstr.NE.numconstraint) &
