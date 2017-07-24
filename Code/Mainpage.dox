@@ -1,0 +1,29 @@
+/*!
+\mainpage The TDHF Code Sky3D
+\section Abstract
+The nuclear mean-field model based on Skyrme forces or related density
+functionals has found widespread application to the description of
+nuclear ground states, collective vibrational excitations, and
+heavy-ion collisions. The code Sky3D solves the static or dynamic
+equations on a three-dimensional Cartesian mesh with isolated or
+periodic boundary conditions and no further symmetry
+assumptions. Pairing can be included in the BCS approximation for the
+static case. The
+code is implemented with a view to allow easy modifications for including
+additional physics or special analysis of the results.
+\author <b>J. A. Maruhn</b> Institut fuer Theoretische Physik, Goethe-Universitaet,
+  Max-von-Laue-Str. 1, 60438 Frankfurt am Main, Germany
+
+\author <b>P.-G. Reinhard</b> Institut fuer Theoretische Physik II, Universitaet
+  Erlangen-Nuernberg, Staudtstrasse 7, 91058 Erlangen, Germany
+
+\author <b>B. Schuetrumpf</b> 
+NSCL, Michigan State University, 640 S Shaw Ln, East Lansing 48824, MI, USA
+
+\author <b>P. D. Stevenson</b> Department of Physics, University of Surrey, Guildford,
+  Surrey, GU2 7XH, United Kingdom
+
+\author <b>A. S. Umar</b>Department of Physics and Astronomy, Vanderbilt University, 
+Nashville, Tennessee 37235, USA
+
+*/

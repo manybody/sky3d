@@ -1,10 +1,15 @@
-! Package containing absorbing boundary conditions and
-! subsequent analysis of observables from electron emission.
-!  One may also consider to perform the cumulation of total
-!  absorbed density within the absorbing loop.
+!------------------------------------------------------------------------------
+! MODULE: abso_bc
+!------------------------------------------------------------------------------
+! DESCRIPTION: 
+!> @brief
+!!Package containing absorbing boundary conditions and
+!!subsequent analysis of observables from electron emission.
+!!One may also consider to perform the cumulation of total
+!!absorbed density within the absorbing loop.
+!------------------------------------------------------------------------------
 MODULE abso_bc
   USE Params
-  !  USE Fragments, ONLY: fmass,fcharge
   USE Grids, ONLY: dx,dy,dz,x,y,z,wxyz
   USE Levels, ONLY: nstmax,psi,npsi,npmin,wocc,isospin,nprot,nneut
   USE Meanfield
@@ -16,36 +21,42 @@ MODULE abso_bc
   !        General variables for the absorbing bounds                    *
   !                                                                      *
   !***********************************************************************
-  INTEGER,PARAMETER :: nocc=1    ! degeneracy of states (outdated)
-  INTEGER :: ispherabso=0,iangabso=0,ipes=0,ifabsorbital=0
-  INTEGER :: nangtheta=0,nangphi=0
-  INTEGER :: jescmaskorb=0,jescmask=10
-  REAL(db) :: powabs=0.0375D0
+  INTEGER,PARAMETER :: nocc=1    !< degeneracy of states (outdated)
+  INTEGER  :: ispherabso=0       !< switch to spherical absorbing  bounds
+  INTEGER  :: iangabso=0
+  INTEGER  :: ipes=0
+  INTEGER  :: ifabsorbital=0     !< switch to orbit-wise accumulation
+  INTEGER  :: nangtheta=0        !< number of reference points for outgoing spectra
+  INTEGER  :: nangphi=0
+  INTEGER  :: jescmaskorb=0
+  INTEGER  :: jescmask=10
+  REAL(db) :: powabs=0.0375D0    !< power of absorbing mask
 
-  REAL(db),PRIVATE,ALLOCATABLE,DIMENSION(:,:,:,:) :: rhoabso
-  REAL(db),PRIVATE :: xango,yango,zango
-  REAL(db),PRIVATE,ALLOCATABLE,DIMENSION(:,:,:) :: absomask,spherloss
-  REAL(db),PRIVATE,ALLOCATABLE,DIMENSION(:,:,:,:) :: rhoescmaskorb
-  LOGICAL,PRIVATE,ALLOCATABLE,DIMENSION(:,:,:) :: tgridabso
-  INTEGER,PRIVATE :: ix,iy,iz,nst,iq
-  INTEGER,PRIVATE :: nta,ita,nabso=0
+  REAL(db),PRIVATE :: xango
+  REAL(db),PRIVATE :: yango
+  REAL(db),PRIVATE :: zango
+  INTEGER,PRIVATE :: ix
+  INTEGER,PRIVATE :: iy
+  INTEGER,PRIVATE :: iz
+  INTEGER,PRIVATE :: nst
+  INTEGER,PRIVATE :: iq
+  INTEGER,PRIVATE :: nta
+  INTEGER,PRIVATE :: ita
+  INTEGER,PRIVATE :: nabso=0     !<number of absorbing grid points in each direction
+  !!0 signals no absorbing bounds
   REAL(db),PRIVATE :: timea
+  REAL(db),PRIVATE,ALLOCATABLE :: rhoabso(:,:,:,:)
+  REAL(db),PRIVATE,ALLOCATABLE :: absomask(:,:,:)
+  REAL(db),PRIVATE,ALLOCATABLE :: spherloss(:,:,:)
+  REAL(db),PRIVATE,ALLOCATABLE :: rhoescmaskorb(:,:,:,:)
+  LOGICAL,PRIVATE,ALLOCATABLE :: tgridabso(:,:,:)
 CONTAINS
-
+!---------------------------------------------------------------------------  
+! DESCRIPTION: absbc
+!> @brief
+!!Apply absorbing bounds, optionally accumulate absorbed density.
+!--------------------------------------------------------------------------- 
   SUBROUTINE absbc(nabsorb,it,nt,time)
-    !
-    !  Apply absorbing bounds, optionally accumulate absorbed density.
-    !  Input/output:
-    !   psi =  set of wavefunctions, via LEVELS
-    !   rho =  densities, via FIELDS
-    !  Input (common to this module):
-    !   nabsorb      = number of absorbing grid points in each direction
-    !                  0 signals no absorbing bounds
-    !   ispherabso   = switch to spherical absorbing  bounds
-    !   ifabsorbital = switch to orbit-wise accumulation
-    !   nangtheta    = number of reference points for outgoing spectra
-    !   powabs       = power of absorbing mask
-
     INTEGER,INTENT(in) :: it,nt,nabsorb
     REAL(db),INTENT(in) :: time
     REAL(db) :: weight
@@ -141,7 +152,11 @@ CONTAINS
 
     RETURN
   END SUBROUTINE absbc
-
+!---------------------------------------------------------------------------  
+! DESCRIPTION: init_absbc
+!> @brief
+!!Initializes absorbing boundary conditions.
+!---------------------------------------------------------------------------
 
   SUBROUTINE init_absbc()
 
@@ -197,10 +212,11 @@ CONTAINS
 
     RETURN  
   END FUNCTION dist_min
-
-
-  !------------------------------------------------------------
-
+!---------------------------------------------------------------------------  
+! DESCRIPTION: init_sphereabso
+!> @brief
+!!Initializes sphericalabsorbing boundary conditions.
+!---------------------------------------------------------------------------
   SUBROUTINE init_spherabso()
 
     !     Initializes mask function for spherical boundary conditions
@@ -239,10 +255,11 @@ CONTAINS
 
     RETURN
   END SUBROUTINE init_spherabso
-
-
-  !-----abso------------------------------------------------------------
-
+!---------------------------------------------------------------------------  
+! DESCRIPTION: init_abso
+!> @brief
+!!Initializes normal absorbing boundary conditions.
+!---------------------------------------------------------------------------
   SUBROUTINE init_abso()
     USE Parallel
 

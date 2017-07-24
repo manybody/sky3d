@@ -1,3 +1,10 @@
+!------------------------------------------------------------------------------
+! MODULE: Linalg
+!------------------------------------------------------------------------------
+! DESCRIPTION: 
+!> @brief
+!!This module contains all routines which are implemented with LAPACK/ScaLAPACK
+!------------------------------------------------------------------------------
 MODULE LINALG
   USE Params,   ONLY: db,cmplxzero,cmplxone
   USE Levels
@@ -7,19 +14,47 @@ MODULE LINALG
   USE Grids,    ONLY: wxyz
 !
   IMPLICIT NONE
-  INTEGER                 :: nlin,gridsize
-  INTEGER                 :: desca(10),descz(10),descc(10),desc_to(10),&
-                             desc_psi1d(10),desc_psi2d(10),desc_diag(10),desc_ortho(10),&
-                             work_t_size,iwork_t_size,rwork_t_size,desc_d(10),desc_o(10)
-!
-  REAL(db)                :: VL,VU
-  INTEGER                 :: IL,IU,M,NZ_t
-  REAL(db)   ,ALLOCATABLE :: rwork_t(:),evals(:)  
-  COMPLEX(db),ALLOCATABLE :: work_t(:),matr_lin(:,:),unitary(:,:),matr_lin_d(:,:),unitary_d(:,:)
-  INTEGER    ,ALLOCATABLE :: iwork_t(:)
+  INTEGER                 :: nlin           !<number of wave functions for local isospin.
+  INTEGER                 :: gridsize       !<gridsize including spin.
+  !>@name Descriptors.
+  !>@{  
+  INTEGER                 :: desca(10)
+  INTEGER                 :: descz(10)
+  INTEGER                 :: descc(10)
+  INTEGER                 :: desc_to(10)
+  INTEGER                 :: desc_psi1d(10)
+  INTEGER                 :: desc_psi2d(10)
+  INTEGER                 :: desc_diag(10)
+  INTEGER                 :: desc_ortho(10)
+  INTEGER                 :: desc_d(10)
+  INTEGER                 :: desc_o(10)
+  !>@}  
+  INTEGER                 :: IL             !<variable
+  INTEGER                 :: IU             !<variable
+  INTEGER                 :: M              !<variable
+  INTEGER                 :: NZ_t           !<variable
+  INTEGER                 :: work_t_size    !<size of work array
+  INTEGER                 :: iwork_t_size   !<size of work array
+  INTEGER                 :: rwork_t_size   !<size of work array
+  INTEGER    ,ALLOCATABLE :: iwork_t(:)     !<work array
+  REAL(db)                :: VL             !<variable
+  REAL(db)                :: VU             !<variable
+  REAL(db)   ,ALLOCATABLE :: rwork_t(:)     !<work array
+  REAL(db)   ,ALLOCATABLE :: evals(:)       !<array for eigen values 
+  COMPLEX(db),ALLOCATABLE :: work_t(:)      !<work array
+  COMPLEX(db),ALLOCATABLE :: matr_lin(:,:)  !<dummy array  
+  COMPLEX(db),ALLOCATABLE :: unitary(:,:)   !<dummy array
+  COMPLEX(db),ALLOCATABLE :: matr_lin_d(:,:)!<dummy array
+  COMPLEX(db),ALLOCATABLE :: unitary_d(:,:) !<dummy array
+
 !
   CONTAINS
-  !************************************************************
+!---------------------------------------------------------------------------  
+! DESCRIPTION: init_linalg
+!> @brief
+!!This subroutine initializes BLACS descriptors for ScaLAPACK routines and 
+!!initializes diagonalization routines.
+!--------------------------------------------------------------------------- 
   SUBROUTINE init_linalg(dummy)
     INTEGER,INTENT(IN) :: dummy
     INTEGER                 :: infoconv
@@ -56,35 +91,55 @@ MODULE LINALG
     DEALLOCATE(work_t,iwork_t,rwork_t,matr_lin,unitary,evals,matr_lin_d,unitary_d)
 
   END SUBROUTINE init_linalg
-  !************************************************************
+!---------------------------------------------------------------------------  
+! DESCRIPTION: wf_1dto2d
+!> @brief
+!!This subroutine transfers wave functions from 1d distribution to 2d distribution.
+!--------------------------------------------------------------------------- 
   SUBROUTINE wf_1dto2d(psi_1d,psi_2d)
     COMPLEX(db), INTENT(IN)  :: psi_1d(:,:,:,:,:)
     COMPLEX(db), INTENT(OUT) :: psi_2d(:,:)
     CALL PZGEMR2D(gridsize,nlin,psi_1d,1,1,desc_psi1d(1:10),psi_2d,&
                   1,1,desc_psi2d(1:10),contxt)
   END SUBROUTINE
-  !************************************************************
+!---------------------------------------------------------------------------  
+! DESCRIPTION: wf_2dto1d
+!> @brief
+!!This subroutine transfers wave functions from 2d distribution to 1d distribution.
+!--------------------------------------------------------------------------- 
   SUBROUTINE wf_2dto1d(psi_2d,psi_1d)
     COMPLEX(db), INTENT(OUT)  :: psi_1d(:,:,:,:,:)
     COMPLEX(db), INTENT(IN)   :: psi_2d(:,:)
     CALL PZGEMR2D(gridsize,nlin,psi_2d,1,1,desc_psi2d(1:10),psi_1d,&
                   1,1,desc_psi1d(1:10),contxt)
   END SUBROUTINE
-  !************************************************************
+!---------------------------------------------------------------------------  
+! DESCRIPTION: matrix_split
+!> @brief
+!!This subroutine transfers matrices to isospin subgroups
+!--------------------------------------------------------------------------- 
   SUBROUTINE matrix_split(rhomatr_lin,hmatr_lin,rhomatr_lin_d,hmatr_lin_d)
     COMPLEX(db), INTENT(OUT)  :: rhomatr_lin_d(:,:),hmatr_lin_d(:,:)
     COMPLEX(db), INTENT(IN)   :: rhomatr_lin(:,:),hmatr_lin(:,:)
     CALL PZGEMR2D(nlin,nlin,rhomatr_lin,1,1,desca,rhomatr_lin_d,1,1,desc_o,contxt)
     CALL PZGEMR2D(nlin,nlin,hmatr_lin,1,1,desca,hmatr_lin_d,1,1,desc_d,contxt)    
   END SUBROUTINE matrix_split
-  !************************************************************
+!---------------------------------------------------------------------------  
+! DESCRIPTION: matrix_gather
+!> @brief
+!!This subroutine transfers matrices from isospin subgroups to full isospin groups.
+!--------------------------------------------------------------------------- 
   SUBROUTINE matrix_gather(unitary_rho,unitary_h,unitary_rho_d,unitary_h_d)
     COMPLEX(db), INTENT(IN)  :: unitary_rho_d(:,:),unitary_h_d(:,:)
     COMPLEX(db), INTENT(OUT) :: unitary_rho(:,:),unitary_h(:,:)
     CALL PZGEMR2D(nlin,nlin,unitary_rho_d,1,1,desc_o,unitary_rho,1,1,desca,contxt)
     CALL PZGEMR2D(nlin,nlin,unitary_h_d,1,1,desc_d,unitary_h,1,1,desca,contxt)
   END SUBROUTINE matrix_gather
-  !************************************************************
+!---------------------------------------------------------------------------  
+! DESCRIPTION: calc_matrix
+!> @brief
+!!This subroutine calculates overlap or Hamiltonian matrices.
+!--------------------------------------------------------------------------- 
   SUBROUTINE calc_matrix(psi_1,psi_2,matrix)
     COMPLEX(db),INTENT(IN)  :: psi_1(:,:),psi_2(:,:)
     COMPLEX(db), INTENT(OUT):: matrix(:,:)
@@ -92,7 +147,11 @@ MODULE LINALG
            desc_psi2d(1:10),psi_2,1,1,desc_psi2d(1:10),cmplxzero,matrix,1,1,desca(1:10))
     matrix=matrix*wxyz
   END SUBROUTINE calc_matrix
-  !************************************************************
+!---------------------------------------------------------------------------  
+! DESCRIPTION: eigenvecs
+!> @brief
+!!This subroutine calculates eigenvectors and optional eigen values.
+!--------------------------------------------------------------------------- 
   SUBROUTINE eigenvecs(matr_in,evecs,evals_out)
     COMPLEX(db), INTENT(IN)           :: matr_in(:,:)
     COMPLEX(db), INTENT(OUT)          :: evecs(:,:)
@@ -111,7 +170,11 @@ MODULE LINALG
     IF (PRESENT(evals_out))evals_out=evals
     DEALLOCATE(evals,work_t,iwork_t,rwork_t)
   END SUBROUTINE eigenvecs
-  !************************************************************
+!---------------------------------------------------------------------------  
+! DESCRIPTION: loewdin
+!> @brief
+!!This subroutine calculates the Loewdin matrix.
+!--------------------------------------------------------------------------- 
   SUBROUTINE loewdin(imatr,smatr)
     COMPLEX(db),INTENT(IN)  :: imatr(:,:)
     COMPLEX(db),INTENT(OUT) :: smatr(:,:)
@@ -131,14 +194,22 @@ MODULE LINALG
                 tmatr,1,1,DESC_O(1:10),cmplxzero,smatr,1,1,DESC_O(1:10))
     DEALLOCATE(tmatr,eigen_h)
   END SUBROUTINE
-  !************************************************************
+!---------------------------------------------------------------------------  
+! DESCRIPTION: comb_orthodiag
+!> @brief
+!!This subroutine combines Loewdin and diagonalization matrices.
+!--------------------------------------------------------------------------- 
   SUBROUTINE comb_orthodiag(unitary_1,unitary_2,unitary)
     COMPLEX(db),INTENT(IN)  :: unitary_1(:,:),unitary_2(:,:)
     COMPLEX(db),INTENT(OUT) :: unitary(:,:)  
     CALL PZGEMM('T','T',nlin,nlin,nlin,cmplxone,unitary_1,1,1,DESCA(1:10),unitary_2,&
                     1,1,DESCZ(1:10),cmplxzero,unitary,1,1,DESCC(1:10))
   END SUBROUTINE
-  !************************************************************
+!---------------------------------------------------------------------------  
+! DESCRIPTION: recombine
+!> @brief
+!!This subroutine performs matrix vector multiplication for .
+!--------------------------------------------------------------------------- 
   SUBROUTINE recombine(psi_in,matrix,psi_out)
     COMPLEX(db),INTENT(IN)  :: psi_in(:,:),matrix(:,:)
     COMPLEX(db),INTENT(OUT) :: psi_out(:,:)

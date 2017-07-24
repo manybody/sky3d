@@ -1,3 +1,29 @@
+!------------------------------------------------------------------------------
+! MODULE: Pairs
+!------------------------------------------------------------------------------
+! DESCRIPTION: 
+!> @brief
+!!The principal part of this module is the subroutine \c pair, which
+!!computes the pairing solution based on the BCS model. It is the only
+!!public part of this module. The other subroutines are helper routines
+!!that directly use the single-particle properties defined in module
+!!\c Levels. The module variable \c iq controls whether the
+!!solution is sought for neutrons (<tt> iq=1 </tt> or protons <tt> iq=2 </tt>
+!!and accordingly the single-particle levels from <tt> npmin(iq) </tt> to
+!!<tt> npsi(iq) </tt> are affected.
+!>
+!>@details
+!!The principal procedure followed is to first calculate the pairing gap
+!!for each single-particle state. This determines the occupation numbers
+!!\c wocc, which of course are used throughout the program.  Then the
+!!Fermi energy for the given isospin is determined such that the correct
+!!particle number results.
+!!
+!!<b> Note that there is a factor of one half in many formulas compared
+!!to what is usually found in textbooks. This is because here the sum
+!!over states \f$ \sum_k\ldots \f$ runs over all states, while in textbooks
+!!the sum is over pairs, giving half of that result.</b>
+!------------------------------------------------------------------------------
 MODULE Pairs
   USE Params, ONLY: db,iter,printnow,wflag,hbc
   USE Forces, ONLY: ipair,p,pair_reg,delta_fit,pair_cutoff
@@ -8,13 +34,39 @@ MODULE Pairs
   IMPLICIT NONE
   PRIVATE
   PUBLIC :: pair,epair,avdelt,avg,eferm,avdeltv2
-  INTEGER :: iq
-  REAL(db),SAVE :: eferm(2),epair(2),avdelt(2),avdeltv2(2),avg(2)  
-  REAL(db),SAVE,ALLOCATABLE :: deltaf(:)
+  INTEGER :: iq                          !<Index labeling the isospin.
+  REAL(db),SAVE :: eferm(2)              !<Fermi energy in MeV for the two isospins.
+  REAL(db),SAVE :: epair(2)              !<Pairing energy in MeV for the two isospins. It is given by
+  !!\f[ E_{\rm pair}=\frac1{2}\sum_k \Delta_k u_k v_k. \f]
+  !!This is a public variable and the sum of the two values is subtracted from the
+  !total energies in module \c Energies.  
+  REAL(db),SAVE :: avdelt(2)             !<Average gap in MeV for the two isospins. It is
+  !!given by \f[ \frac{\sum_k\Delta_ku_kv_k}{\sum_k u_kv_k} \f] where the
+  !!sum is over states with the given isospin.
+  REAL(db),SAVE :: avdeltv2(2)             !<Average gap in MeV for the two isospins with weight
+  !!\f$ v^2 \f$. It is
+  !!given by \f[ \frac{\sum_k\Delta_kv_k^2}{\sum_k u_kv_k} \f] where the
+  !!sum is over states with the given isospin.
+  REAL(db),SAVE :: avg(2)                !<The average pairing force for each isospin, given by
+  !!\f[ \frac{E_{\rm pair}}{\sum_k u_k v_k/2}.\f]
+  REAL(db),SAVE,ALLOCATABLE :: deltaf(:) !<single-particle gap in MeV for each
+  !!single-particle state.
 CONTAINS
-  !***********************************************************************
-  ! Determine pairing solution
-  !***********************************************************************
+!---------------------------------------------------------------------------  
+! DESCRIPTION: pair
+!> @brief
+!!This is the only routine visible from outside the module. It solves
+!!the pairing problem and prints out summary information. The principal
+!!results used in the rest of the code are the BCS occupation numbers
+!!\f$ v_k^2\rightarrow {\tt wocc} \f$ and the pairing energies \c epair.
+!>
+!> @details
+!!The subroutine is structured straightforwardly: it first calculates
+!!the pairing gaps \c deltaf by calling \c pairgap. Then for the
+!!two isospin values \c pairdn is called with the correct particle
+!!number as argument. This does the real work of solving the equations.
+!!Finally summary information is printed.
+!--------------------------------------------------------------------------- 
   SUBROUTINE pair  
     REAL(db) :: particle_number
     ! prepare phase space weight for subroutines
@@ -42,9 +94,38 @@ CONTAINS
        ENDDO
     ENDIF
   END SUBROUTINE pair
-  !***********************************************************************
-  ! Calculate pairing gaps for s.p. levels
-  !***********************************************************************
+!---------------------------------------------------------------------------  
+! DESCRIPTION: pairgap
+!> @brief
+!!This subroutine calculates the pairing gaps \f$ \Delta_k \f$ stored in the
+!!array \c deltaf for all single-particle states.
+!>
+!> @details
+!!First a simplified version is returned if <tt> ipair=1 </tt> or for the
+!!initial <tt> itrsin </tt> (at present set to 10) iterations of a static
+!!calculation. All gaps are set equal to \f$ 11.2\,{\rm MeV}/\sqrt{A} \f$ in
+!!this case.
+!!
+!!In the general case, there is a loop over the two isospin values 
+!!\c iq. The pairing density is obtained by evaluation of
+!!\f[ {\tt work}(\vec r)=\sum_k u_kv_k\left|\phi_k(\vec r)\right|^2 \f]
+!!where the simple conversion
+!!\f[ u_kv_k=v_k\sqrt{1-v_k^2}=\sqrt{v_k^2(1-v_k^2)}=\sqrt{{\tt wocc}-{\tt wocc}^2} \f]
+!!is used.
+!!
+!!The isospin-dependent pairing strength \c v0act is obtained from
+!!the force definition. The pairing field \f$ V_P(\vec r) \f$ is then given by
+!!two different expressions: for \c VDI pairing (<tt> ipair=5 </tt>),
+!!the pairing density is simply multiplied by \c v0act, while for
+!!\c DDDI pairing (<tt> ipair=6</tt>) it is
+!!\f[ V_P(\vec r)={\tt v0act}\cdot{\tt work}\cdot (1-\rho(\vec r))/{\tt rho0pr} \f]
+!!involving the <em> total </em> density \f$ \rho \f$ and the parameter 
+!!\f[ rho0pr \f] from the pairing force definition.
+!!
+!!In the final step the gaps are computed as the expectation values of
+!!the pairing field,
+!!\f[ \Delta_k=\int\D^3r V_P(\vec r)\left|\phi_k(\vec r)\right|^2. \f]
+!--------------------------------------------------------------------------- 
   SUBROUTINE pairgap
     !     computes the pair density
     INTEGER,PARAMETER :: itrsin=10
@@ -106,10 +187,24 @@ CONTAINS
     IF(tmpi) CALL collect_sp_property(deltaf)
     
   END SUBROUTINE pairgap
-  !***********************************************************************
-  ! Calculate the Fermi energy for isospin iq such that the particle
-  ! number condition is fulfilled. 
-  !***********************************************************************
+!---------------------------------------------------------------------------  
+! DESCRIPTION: pairdn
+!> @brief
+!!The subroutine \c pairdn determines the pairing solution by using
+!!\c rbrent to find the correct Fermi energy for the given particle
+!!number. After that a few averaged or integral quantities are
+!!calculated.
+!>
+!> @details
+!!As the starting value for the Fermi energy the one for gap zero is
+!!used, i. e., the average of the first unfilled and last filled
+!!single-particle energies. Then \c rbrent is called to calculate the
+!!correct solution, after which there is a loop for a straightforward
+!!evaluation of the module variables \c epair, \c avdelt,
+!!and \c avg. 
+!> @param[in] particle_number
+!> REAL(db), takes the particle number. 
+!--------------------------------------------------------------------------- 
   SUBROUTINE pairdn(particle_number)
     REAL(db),INTENT(IN) :: particle_number
     REAL(db),PARAMETER :: xsmall=1.d-20
@@ -162,9 +257,22 @@ CONTAINS
       WRITE(*,*) ' V0_prot= ',p%v0prot
     END IF
   END SUBROUTINE pairdn
-  !***********************************************************************
-  ! Search the solution for efermi where the particle number is correct
-  !***********************************************************************
+!---------------------------------------------------------------------------  
+! DESCRIPTION: rbrent
+!> @brief
+!!This subroutine is an adapted version of the <em> Van
+!!  Wijngaarden-Dekker-Brent</em> method for finding the root of a function
+!!(see \cite Pre92aB ). Given the desired particle number as an
+!!argument, it searches for the value of the Fermi energy that makes
+!!this particle number agree with that returned by \c bcs_occupation.
+!>
+!> @details
+!!It is clear that this subroutine is in a very antiquated style of
+!!Fortran; it will be replaced at some time in the future.
+!>
+!> @param[in] particle_number
+!> REAL(db), takes the particle number. 
+!--------------------------------------------------------------------------- 
   FUNCTION rbrent(particle_number) RESULT(res)
     !      data for wijngaarden-dekker-brent method for root
     !
@@ -265,9 +373,27 @@ CONTAINS
        STOP 'No solution found in pairing iterations'  
     ENDIF
   END FUNCTION rbrent
-  !***********************************************************************
-  ! Calc. occupation numbers and particle number for given Fermi energy
-  !***********************************************************************
+!---------------------------------------------------------------------------  
+! DESCRIPTION: bcs_occupation
+!> @brief
+!!For a given Fermi energy \f$ \epsilon_F \f$ passed as argument \c efermi,
+!!this subroutine evaluates the particle number that would result with
+!!such a Fermi energy and returns it as its second argument, \c bcs_partnum. 
+!>
+!> @details
+!!The isospin is controlled by module variable \c iq. First the occupation 
+!!probabilities are calculated using the standard BCS expression
+!!\f[ v_k^2=\frac1{2}\left(1-\frac{\epsilon_k-\epsilon_F}
+!!    {\sqrt{(\epsilon_k-\epsilon_F)^2+\Delta_k^2}}\right). \f]
+!!They are stored in \c wocc. A small correction is added, so
+!!that they are not exactly identical to 1 or0. The particle number
+!!is finally obtained as \f$ N=\sum_k v_k^2 \f$.
+!>
+!> @param[in] efermi
+!> REALD(db), takes the fermi energy.
+!> @param[out] bcs_partnum
+!> REAL(db), returns the oarticle number
+!--------------------------------------------------------------------------- 
   SUBROUTINE bcs_occupation(efermi,bcs_partnum)
     REAL(db),PARAMETER :: smal=1.0d-10  
     REAL(db),INTENT(in) :: efermi
@@ -286,9 +412,16 @@ CONTAINS
        END IF
     ENDDO
   END SUBROUTINE bcs_occupation
-  !***********************************************************************
-  ! Calc. pairing regulator
-  !***********************************************************************
+!---------------------------------------------------------------------------  
+! DESCRIPTION: g_eff
+!> @brief
+!!g_eff is the regulated pairing strength.
+!>
+!> @param[in] g
+!> REALD(db), takes the unregulated pairing strength.
+!> @param[in] iq
+!> REAL(db), takes the isospin.
+!--------------------------------------------------------------------------- 
   FUNCTION g_eff(g,iq)
     USE Levels    , ONLY :  sp_energy
     REAL(db),INTENT(IN) :: g

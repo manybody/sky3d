@@ -15,7 +15,7 @@ Module Constraint
   USE Params, ONLY: db,pi,iter
   USE Densities
   USE Grids, ONLY: nx,ny,nz,x,y,z,wxyz
-  USE Levels, ONLY: nstmax,psi,nstloc,wocc,isospin,mass_number,schmid
+  USE Levels, ONLY: nstmax,psi,nstloc,wocc,isospin,mass_number
   USE Parallel, ONLY: globalindex,mpi_myproc
   IMPLICIT NONE
   REAL(db),ALLOCATABLE,DIMENSION(:,:,:,:,:) :: constr_field   !<this is the array of local
