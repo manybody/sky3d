@@ -19,7 +19,7 @@ MODULE Static
   USE Constraint, ONLY: tconstraint,before_constraint,init_constraint,tune_constraint,add_constraint
   USE Inout, ONLY: write_wavefunctions, write_densities, plot_density, &
        sp_properties,start_protocol
-  USE Pairs, ONLY: pair,epair,avdelt,avdeltv2,avg,eferm
+  USE Pairs, ONLY: pair,epair,avdelt,avdeltv2,avg,eferm,eferm_cutoff,partnum_cutoff,pairwg
   IMPLICIT NONE
   LOGICAL  :: tdiag=.FALSE.    !< if \c true, there is a diagonalization of
   !!the Hamiltonian during the later (after the 20th) static iterations.
@@ -82,6 +82,9 @@ CONTAINS
          outerpot,outertype,ttime
     npsi=0
     READ(5,static)
+
+    IF(.NOT.tdiag) STOP "static code runs only with TDIAG=.TRUE."
+
     IF(nof<=0) THEN
        IF(npsi(1)==0) THEN  
           IF(ipair==0.OR.nof<0) THEN  
@@ -791,12 +794,12 @@ CONTAINS
 !!using \c moment_print.
 !--------------------------------------------------------------------------- 
   SUBROUTINE sinfo(printing)
-    INTEGER :: il
+    INTEGER :: il,iq
     LOGICAL :: printing
     REAL(db):: tabc_energy, tabc_ekin, tabc_ecoul, tabc_eskyrme
     CHARACTER(*),PARAMETER :: &
          header='  #  Par   v**2   var_h1   var_h2    Norm     Ekin    Energy &
-         &    Lx      Ly      Lz     Sx     Sy     Sz  '   
+         &    Lx      Ly      Lz     Sx     Sy     Sz    pairwg'   
     ! calculate static observables for printout                       *
     CALL moments
     CALL integ_energy
@@ -858,9 +861,17 @@ CONTAINS
             WRITE(*,'(a,i2,a,5(1pg12.4))') 'iq=',il,': ',eferm(il) , &
                epair(il) ,avdelt(il),avdeltv2(il),avg(il)
          ENDDO
+         IF(cutoff_factor>0D0) THEN
+           WRITE(*,'(/7x,a)') '  e_ferm_cut    pairing-band   pairing space '
+           DO iq=1,2  
+             WRITE(*,'(a,i2,a,5(1pg12.4))') 'iq=',iq,': ',eferm_cutoff(iq) , &
+               eferm_cutoff(iq)-eferm(iq),partnum_cutoff(iq)
+           ENDDO
+         END IF
          WRITE(*,*)'**********************************************************************&
                   &**************************************'
        END IF
+       CALL flush(6)
        ! output densities
        IF(mplot/=0) THEN  
           IF(MOD(iter,mplot)==0) THEN
@@ -875,12 +886,20 @@ CONTAINS
           IF(il==npmin(2)) THEN
              WRITE(*,'(A)') ' Proton Single Particle States:',header  
           END IF
-          WRITE(*,'(1X,I3,F4.0,F8.5,2F9.5,F9.6,F8.3,F10.3,3F8.3,3F7.3)') &
+          IF(cutoff_factor>0D0) THEN
+            WRITE(*,'(1X,I3,F4.0,F8.5,2F9.5,F9.6,F8.3,F10.3,3F8.3,4F7.3)') &
+               il,sp_parity(il),wocc(il),sp_efluct1(il),sp_efluct2(il), &
+               sp_norm(il),sp_kinetic(il),sp_energy(il), &
+               sp_orbital(:,il),sp_spin(:,il),pairwg(il)
+          ELSE
+            WRITE(*,'(1X,I3,F4.0,F8.5,2F9.5,F9.6,F8.3,F10.3,3F8.3,4F7.3)') &
                il,sp_parity(il),wocc(il),sp_efluct1(il),sp_efluct2(il), &
                sp_norm(il),sp_kinetic(il),sp_energy(il), &
                sp_orbital(:,il),sp_spin(:,il)
+          END IF
        ENDDO
        CALL moment_print
+       CALL flush(6)
     END IF
   END SUBROUTINE sinfo
 !---------------------------------------------------------------------------  

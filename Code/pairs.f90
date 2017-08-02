@@ -26,16 +26,16 @@
 !------------------------------------------------------------------------------
 MODULE Pairs
   USE Params, ONLY: db,iter,printnow,wflag,hbc
-  USE Forces, ONLY: ipair,p,pair_reg,delta_fit,pair_cutoff
+  USE Forces, ONLY: ipair,p,pair_reg,delta_fit,pair_cutoff,cutoff_factor
   USE Grids, ONLY: nx,ny,nz,wxyz
   USE Densities, ONLY:rho
   USE Levels
   USE Parallel, ONLY:globalindex,collect_density,collect_sp_property,tmpi,wflag
   IMPLICIT NONE
   PRIVATE
-  PUBLIC :: pair,epair,avdelt,avg,eferm,avdeltv2
+  PUBLIC :: pair,epair,avdelt,avg,eferm,avdeltv2,eferm_cutoff,partnum_cutoff
   INTEGER :: iq                          !<Index labeling the isospin.
-  REAL(db),SAVE :: eferm(2)              !<Fermi energy in MeV for the two isospins.
+  REAL(db),SAVE :: eferm(2)=(/0D0,0D0/)  !<Fermi energy in MeV for the two isospins.
   REAL(db),SAVE :: epair(2)              !<Pairing energy in MeV for the two isospins. It is given by
   !!\f[ E_{\rm pair}=\frac1{2}\sum_k \Delta_k u_k v_k. \f]
   !!This is a public variable and the sum of the two values is subtracted from the
@@ -51,6 +51,11 @@ MODULE Pairs
   !!\f[ \frac{E_{\rm pair}}{\sum_k u_k v_k/2}.\f]
   REAL(db),SAVE,ALLOCATABLE :: deltaf(:) !<single-particle gap in MeV for each
   !!single-particle state.
+  REAL(db),SAVE,ALLOCATABLE,PUBLIC :: pairwg(:) !<Weights for pairing phase space
+  !!in case of soft cutoff function often denoted \f$ f_n \f$.
+  REAL(db),SAVE :: delesmooth            !<The width of the Fermi distribution defining pairing space.
+  REAL(db),SAVE :: eferm_cutoff(2)=(/0D0,0D0/)   !<The Fermi energy for pairing cutoff.
+  REAL(db),SAVE :: partnum_cutoff(2)     !<Particle number in pairing phase space.
 CONTAINS
 !---------------------------------------------------------------------------  
 ! DESCRIPTION: pair
@@ -71,6 +76,10 @@ CONTAINS
     REAL(db) :: particle_number
     ! prepare phase space weight for subroutines
     IF(.NOT.ALLOCATED(deltaf)) ALLOCATE(deltaf(nstmax))
+    IF(.NOT.ALLOCATED(pairwg)) THEN
+      ALLOCATE(pairwg(nstmax))
+      pairwg=1D0                        ! default if no soft cutoff is invoked
+    END IF
     ! calculate gaps
     CALL pairgap
     ! solve pairing problem for each isospin iq
@@ -92,7 +101,15 @@ CONTAINS
           WRITE(*,'(a,i2,a,5(1pg12.4))') 'iq=',iq,': ',eferm(iq) , &
                epair(iq) ,avdelt(iq), avdeltv2(iq),avg(iq)
        ENDDO
+!       IF(cutoff_factor>0D0) THEN
+       WRITE(*,'(/7x,a)') '  e_ferm_cut    pairing-band   pairing space '
+       DO iq=1,2  
+          WRITE(*,'(a,i2,a,5(1pg12.4))') 'iq=',iq,': ',eferm_cutoff(iq) , &
+               eferm_cutoff(iq)-eferm(iq),partnum_cutoff(iq)
+       ENDDO
+!       END IF
     ENDIF
+    CALL flush(6)
   END SUBROUTINE pair
 !---------------------------------------------------------------------------  
 ! DESCRIPTION: pairgap
@@ -130,7 +147,7 @@ CONTAINS
     !     computes the pair density
     INTEGER,PARAMETER :: itrsin=10
     ! iqq is different from module variable iq
-    INTEGER :: iqq,nst,is
+    INTEGER :: iqq,nst,is,nstind
     REAL(db),PARAMETER :: smallp=0.000001  
     REAL(db) :: v0act
     REAL(db) :: work(nx,ny,nz,2)  
@@ -146,9 +163,11 @@ CONTAINS
        !DO nst=npmin(iqq),npsi(iqq)  
        DO is=1,2 
          DO nst=1,nstloc 
-           IF(isospin(globalindex(nst))==iqq)&
-           work(:,:,:,iqq)=work(:,:,:,iqq)+SQRT(MAX(wocc(globalindex(nst))-wocc(globalindex(nst))**2,smallp))*0.5* &
-                  (REAL(psi(:,:,:,is,nst))**2+AIMAG(psi(:,:,:,is,nst))**2)
+           nstind=globalindex(nst)
+           IF(isospin(nstind)==iqq)&
+            work(:,:,:,iqq)=work(:,:,:,iqq)+ pairwg(nstind)* &
+              SQRT(MAX(wocc(nstind)-wocc(nstind)**2,smallp))*0.5* &
+             (REAL(psi(:,:,:,is,nst))**2+AIMAG(psi(:,:,:,is,nst))**2)
          ENDDO
        ENDDO
     END DO
@@ -176,10 +195,12 @@ CONTAINS
        ! finally compute the actual gaps as s.p. expectation values with
        ! the pair potential
        DO nst=1,nstloc
-          IF(isospin(globalindex(nst))==iqq) THEN
+          nstind=globalindex(nst)
+          IF(isospin(nstind)==iqq) THEN
              DO is=1,2  
-                deltaf(globalindex(nst))=deltaf(globalindex(nst))+wxyz*SUM(work(:,:,:,iqq)* &
-                     (REAL(psi(:,:,:,is,nst))**2+AIMAG(psi(:,:,:,is,nst))**2))
+                deltaf(nstind)=deltaf(nstind)+wxyz*SUM(work(:,:,:,iqq)* &
+                pairwg(nstind)* &
+                (REAL(psi(:,:,:,is,nst))**2+AIMAG(psi(:,:,:,is,nst))**2))
              ENDDO 
           END IF
        ENDDO
@@ -210,13 +231,39 @@ CONTAINS
     REAL(db),PARAMETER :: xsmall=1.d-20
     INTEGER :: it,na
     REAL(db) :: sumuv,sumduv,sumepa,edif,equasi,v2,vol,sumv2,sumdv2
-    ! start with non-pairing value of Fermi energy
-    it=npmin(iq)+NINT(particle_number)-1  
-    eferm(iq)=0.5D0*(sp_energy(it)+sp_energy(it+1))  
-    wocc(npmin(iq):it)=1.D0
-    wocc(it+1:npsi(iq))=0.D0
+
+
+    ! start with non-pairing value of Fermi energy        !!! only first time
+    IF(eferm(iq)==0D0) THEN
+      it=npmin(iq)+NINT(particle_number)-1  
+      eferm(iq)=0.5D0*(sp_energy(it)+sp_energy(it+1))  
+      wocc(npmin(iq):it)=1.D0
+      wocc(it+1:npsi(iq))=0.D0
+    END IF
+
+    ! Determine soft cutoff for pairing space
+    IF(cutoff_factor>0D0) THEN
+      ! In first call, determine guess for Fermi energy of cutoff 
+      partnum_cutoff(iq)=particle_number+&
+                         cutoff_factor*particle_number**0.6666666667D0
+      IF(eferm_cutoff(iq)==0D0) THEN
+        it=npmin(iq)+NINT(partnum_cutoff(iq))-1
+        IF(it+NINT(particle_number/10)>npsi(iq)) STOP "not enough states to cover pairing space"
+        eferm_cutoff(iq)=0.5D0*(sp_energy(it)+sp_energy(it+1))  
+        pairwg(npmin(iq):it)=1.D0
+        pairwg(it+1:npsi(iq))=0.D0
+      END IF
+      delesmooth=(eferm_cutoff(iq)-eferm(iq))/1D1
+      ! determine 'pairgw' within function 'fermi_partnum'
+      eferm_cutoff(iq)=rbrent(partnum_cutoff(iq),fermi_partnum)
+      IF(eferm_cutoff(iq)<eferm(iq)) THEN
+        WRITE(*,*) 'eferm_cutoff(1:2),eferm(1:2)=',eferm_cutoff,eferm
+        STOP "cutoff Fermi energy below pairing Fermi energy"
+      END IF
+    END IF
+
     ! determine true fermi energy for given 'delta' and 'e'
-    eferm(iq)=rbrent(particle_number)
+    eferm(iq)=rbrent(particle_number,bcs_partnum)
     ! finally compute average gap and pairing energy
     sumuv=0.0D0  
     sumduv=0.0D0 
@@ -264,7 +311,7 @@ CONTAINS
 !!  Wijngaarden-Dekker-Brent</em> method for finding the root of a function
 !!(see \cite Pre92aB ). Given the desired particle number as an
 !!argument, it searches for the value of the Fermi energy that makes
-!!this particle number agree with that returned by \c bcs_occupation.
+!!this particle number agree with that returned by \c bcs_partnum.
 !>
 !> @details
 !!It is clear that this subroutine is in a very antiquated style of
@@ -273,7 +320,7 @@ CONTAINS
 !> @param[in] particle_number
 !> REAL(db), takes the particle number. 
 !--------------------------------------------------------------------------- 
-  FUNCTION rbrent(particle_number) RESULT(res)
+  FUNCTION rbrent(particle_number,funk) RESULT(res)
     !      data for wijngaarden-dekker-brent method for root
     !
     REAL(db),INTENT(in) :: particle_number
@@ -283,12 +330,16 @@ CONTAINS
     REAL(db) :: ra,rb,rfa,rfb,rfc,rc,rd,re,rtol1,rxm,rp,rq,rr,rs, &
          rmin1,rmin2
     INTEGER :: ii
+    REAL(db), EXTERNAL :: funk
+!   INTERFACE
+!     REAL(8) FUNCTION funk(x)
+!     REAL(8),INTENT(in) :: x
+!     END FUNCTION funk
+!   END INTERFACE
     ra=ra0  
     rb=rb0
-    CALL bcs_occupation(ra,rfa)
-    rfa=particle_number-rfa
-    CALL bcs_occupation(rb,rfb)
-    rfb=particle_number-rfb
+    rfa=particle_number-funk(ra)
+    rfb=particle_number-funk(rb)
     rfc=rfb  
     rc=rb  
     rd=rb-ra  
@@ -327,7 +378,7 @@ CONTAINS
           rxm=0.5 *(rc-rb)  
           IF((ABS(rxm) <=rtol1).OR.((ABS(rfb)==0.D0))) THEN
              res=rb
-             CALL bcs_occupation(res,rfa)
+             rfa = funk(res)
              RETURN  
           ENDIF
           IF((ABS(re)>=rtol1).OR.(ABS(rfa)>ABS(rfb))) &
@@ -367,18 +418,17 @@ CONTAINS
           ELSE  
              rb=rb+SIGN(rtol1,rxm)  
           ENDIF
-          CALL bcs_occupation(rb,rfb)
-          rfb=particle_number-rfb
+          rfb=particle_number-funk(rb)
        ENDDO iteration
        STOP 'No solution found in pairing iterations'  
     ENDIF
   END FUNCTION rbrent
 !---------------------------------------------------------------------------  
-! DESCRIPTION: bcs_occupation
+! DESCRIPTION: bcs_partnum
 !> @brief
 !!For a given Fermi energy \f$ \epsilon_F \f$ passed as argument \c efermi,
 !!this subroutine evaluates the particle number that would result with
-!!such a Fermi energy and returns it as its second argument, \c bcs_partnum. 
+!!such a Fermi energy and returns it as function value \c bcs_partnum. 
 !>
 !> @details
 !!The isospin is controlled by module variable \c iq. First the occupation 
@@ -392,15 +442,15 @@ CONTAINS
 !> @param[in] efermi
 !> REALD(db), takes the fermi energy.
 !> @param[out] bcs_partnum
-!> REAL(db), returns the oarticle number
+!> REAL(db), returns the particle number
 !--------------------------------------------------------------------------- 
-  SUBROUTINE bcs_occupation(efermi,bcs_partnum)
+  REAL(db) FUNCTION bcs_partnum(efermi)
     REAL(db),PARAMETER :: smal=1.0d-10  
     REAL(db),INTENT(in) :: efermi
-    REAL(db),INTENT(OUT) :: bcs_partnum
+!    REAL(db),INTENT(OUT) :: bcs_partnum
     INTEGER :: k
-    REAL(db) :: edif
-    bcs_partnum=0.0  
+    REAL(db) :: edif,bcs_accum
+    bcs_accum=0D0
     DO k=npmin(iq),npsi(iq)  
        edif=sp_energy(k)-efermi  
        IF(pair_cutoff(iq)>0.0d0.AND.edif>pair_cutoff(iq)) THEN
@@ -408,10 +458,48 @@ CONTAINS
        ELSE
          wocc(k)=0.5D0 *(1.0D0-edif/SQRT(edif**2+deltaf(k)**2))  
          wocc(k)=MIN(MAX(wocc(k),smal),1.D0-smal)  
-         bcs_partnum=bcs_partnum+wocc(k)
+         bcs_accum=bcs_accum+wocc(k)
        END IF
     ENDDO
-  END SUBROUTINE bcs_occupation
+    bcs_partnum=bcs_accum
+  END FUNCTION bcs_partnum
+!---------------------------------------------------------------------------  
+! DESCRIPTION: fermi_partnum
+!> @brief
+!!For a given Fermi energy \f$ \epsilon_F \f$ passed as argument \c efermi,
+!!this subroutine evaluates the particle number that would result for
+!!a Fermi distribution with 
+!!such a Fermi energy and returns it as function value \c fermi_partnum. 
+!>
+!> @details
+!!The isospin is controlled by module variable \c iq. First the occupation 
+!!probabilities are calculated using the standard BCS expression
+!!\f[ v_k^2=\frac1{2}\left(1-\frac{\epsilon_k-\epsilon_F}
+!!    {\sqrt{(\epsilon_k-\epsilon_F)^2+\Delta_k^2}}\right). \f]
+!!They are stored in \c wocc. A small correction is added, so
+!!that they are not exactly identical to 1 or0. The particle number
+!!is finally obtained as \f$ N=\sum_k v_k^2 \f$.
+!>
+!> @param[in] efermi
+!> REALD(db), takes the fermi energy.
+!> @param[out] bcs_partnum
+!> REAL(db), returns the particle number
+!--------------------------------------------------------------------------- 
+  REAL(db) FUNCTION fermi_partnum(efermi)
+    REAL(db),PARAMETER :: smal=1.0d-20  
+    REAL(db),INTENT(in) :: efermi
+!    REAL(db),INTENT(OUT) :: bcs_partnum
+    INTEGER :: k
+    REAL(db) :: edif,fermi_accum
+    fermi_accum=0D0
+    DO k=npmin(iq),npsi(iq)  
+       edif=sp_energy(k)-efermi  
+       pairwg(k)=1D0/(1.0D0+EXP(edif/delesmooth))
+       pairwg(k)=MIN(MAX(pairwg(k),smal),1.D0-smal)  
+       fermi_accum=fermi_accum+pairwg(k)
+    ENDDO
+    fermi_partnum=fermi_accum
+  END FUNCTION fermi_partnum
 !---------------------------------------------------------------------------  
 ! DESCRIPTION: g_eff
 !> @brief
