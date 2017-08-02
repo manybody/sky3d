@@ -21,7 +21,51 @@
 !!In addition subroutine \c sum_energies also calculates the summed
 !!spin, orbital, and total angular momenta.
 !!
-!!TODO: SHOULD WE ADD THE EQUATIONS FOR THE ENERGIES HERE?
+!!The different contribution to the total energy are
+!!  - \f$ T \f$: the total kinetic energy calculated as
+!!    \f[ T=\sum_q \frac{\hbar^2}{2m_q}\int\D^3 r\, \tau_q \f]
+!!    with \f$ \tau_q \f$ the isospin-specific kinetic density.
+!!  - \f$ E_0 \f$: The \f$ b_0 \f$ and \f$ b'_0 \f$-dependent part is
+!!    \f[ E_0=\int \D^3\!r\,\left(\frac{b_0}{2}\rho^2-\frac{b_0'}{2}\sum_q\rho_q^2\right). \f]
+!!  - \f$ E_{1}\f$: kinetic terms containing the coefficients \f$ b_1 \f$ and \f$ b_1' \f$:
+!!    \f[ E_1=\int \D^3\!r\,\left(b_1[\rho\tau-{\vec\jmath\,}{}^2]
+!!        -b_1'\sum_q[\rho_q\tau_q-{\vec\jmath_q}{}^2]\right).\f]
+!!  - \f$ E_{2} \f$: terms containing the coefficients \f$ b_2 \f$ and \f$ b_2' \f$.
+!!    They involve the Laplacians of the densities.
+!!    \f[ E_2=\int \D^3\!r\,\left(-\frac{b_2}{2}\rho\Delta\rho
+!!        +\frac{b_2'}{2}\sum_q\rho_q\Delta\rho_q\right). \f]
+!!  - \f$ E_{3} \f$: The many-body contribution is given by
+!!    \f[ E_{3}=\int \D^3\!r\,\left(\frac{b_3}{3}\rho^{\alpha+2}
+!!        -\frac{b_3'}{3}\rho^\alpha\sum_q\rho_q^2\right). \f]
+!!  - \f$ E_\mathrm{ls} \f$: the spin-orbit energy
+!!    \f[ E_\mathrm{ls}=\int \D^3\!r\,\biggl(
+!!        -b_4[\rho\nabla\cdot\vec J+
+!!        \vec s\cdot(\nabla\times\vec\jmath)]-b_4'\sum_q[\rho_q\nabla\cdot\vec J_q+
+!!        \vec s_q\cdot(\nabla\times\vec\jmath_q)]\biggr) \f]
+!!  - \f$ E_\mathrm{C} \f$: the Coulomb energy. It consists of the
+!!    standard expression for a charge distribution in its own field
+!!    (Hartree term) plus the exchange term in the Slater approximation. The formula is
+!!    \f[ E_\mathrm{C} = \frac{e^2}{2}\int \D^3\!r \D^3\!r'
+!!      \frac{\rho_p(\vec{r})\rho_p(\vec{r'})}{|\vec{r}-\vec{r'}|}
+!!      -\int \D^3\!r\,\frac{3e^2}{4}\left(\frac3{\pi}\right)^{\tfrac1{3}}\rho_p^{4/3} \f]
+!!    where \f$ e \f$ is the elementary charge with \f$ e^2=1.43989 \f$ MeV\f$ \cdot \f$fm.
+!!  - \f$ E_\mathrm{pair} \f$: the pairing energy. It consists of a
+!!    contact pairing interaction involving the pairing densities \f$ \xi_q \f$
+!!    augmented by an optional density dependence. The formula is
+!!    \f[ E_{\rm pair} = \frac{1}{4} \sum_{q\in\{p,n\}}V_\mathrm{pair,q}
+!!    \int \D^3r |\xi_q|^2 \left[1 -\frac{\rho}{\rho_{0,\mathrm{pair}}}\right]\;. \f]     
+!!    It contains a continuous switch, the parameter
+!!    \f$ \rho_{0,\mathrm{pair}} \f$. A pure \f$ \delta \f$-interaction (DI), also
+!!    called volume pairing, is recovered for
+!!    \f$ \rho_{0,\mathrm{pair}}\longrightarrow\infty \f$. The general case is
+!!    the density dependent \f$ \delta \f$-interaction (DDDI). A typical
+!!    value near matter equilibrium density
+!!    \f$ \rho_{0,\mathrm{pair}}=0.16 \f$ fm\f$ ^{-3} \f$ concentrates pairing to
+!!    the surface. The most flexible choice is to consider
+!!    \f$ \rho_{0,\mathrm{pair}} \f$ as an additional free parameter. Actual
+!!    adjustments with this option deliver a form of the pairing
+!!    functional which stays in between the extremes of volume and
+!!    surface pairing.
 !------------------------------------------------------------------------------
 MODULE Energies
   USE Params, ONLY: db,tcoul

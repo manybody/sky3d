@@ -1,7 +1,7 @@
 .PHONY : all html latex
 all : html latex
 latex : html
-	cd latex; make ; cp refman.pdf ../Sky3d_doxygen.pdf; cd ..
+	cd latex; make ; cp refman.pdf ../Sky3D_doxygen.pdf; cd ..
 html :
 	doxygen Doxyfile
 clean : 
