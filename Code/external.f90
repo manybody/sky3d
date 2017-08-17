@@ -216,7 +216,7 @@ CONTAINS
   SUBROUTINE print_extfield()
     USE Densities, ONLY: rho
     OPEN(UNIT=scratch,file=extfieldfile,POSITION='APPEND')  
-    WRITE(scratch,'(F12.3,1pg15.7)') time,wxyz*SUM(rho*extfield)
+    WRITE(scratch,'(F12.3,1pg15.7)') time,wxyz*SUM(rho*extfield)/amplq0
     CLOSE(UNIT=scratch)
   END SUBROUTINE print_extfield
 END MODULE External
