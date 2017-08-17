@@ -4,16 +4,16 @@
 ! DESCRIPTION: 
 !> @brief
 !!This module allows the coupling of the nucleonic wave functions to an
-!!external field. 
+!!external field, usually time-dependent to model excitation mechanisms.
 !>
 !>@details 
-!!This can be done either by adding a time-dependent external (i.e., not
+!!Excitation can be brought in either by adding a time-dependent external (i.e., not
 !!self-consistent) potential to the single-particle Hamiltonian. 
 !!The time-dependence can be of Gaussian form
-!!\f[ f(t)=\exp\left(-(t-\tau_0)^2/\Delta\tau^2\right)\cos(\omega(\tau-\tau_0)) \f]
+!!\f[ f(t)=\exp\left(-(t-\tau_0)^2/\Delta\tau^2\right)\cos(\omega(t-\tau_0)) \f]
 !!or cosine squared form
 !!\f[  f(t)=\cos\left(\frac\pi{2}\left(\frac{t-\tau_0}{\Delta\tau}\right)^2\right)
-!!   \theta\left(\Delta\tau-|t-\tau_0|\right)\cos(\omega(\tau-\tau_0)) \f]
+!!   \theta\left(\Delta\tau-|t-\tau_0|\right)\cos(\omega(t-\tau_0)) \f]
 !!or by
 !!giving an initial "boost" 
 !!\f[ \psi_k(\vec r,s,t\!=\!0)=
@@ -78,21 +78,18 @@ CONTAINS
 !---------------------------------------------------------------------------  
 ! DESCRIPTION: init_external
 !> @brief
-!!It does some consistency checks of the external parameters and initializes the external field. 
+!!It initializes the local external field and does some consistency checks of the field parameters .
 !>
 !> @details
-!!The relative strength for the neutron and proton fields is set equal for
-!!<tt> isoext=0 </tt> but reduced by the corresponding number of particles in
-!!the <tt> isoext=1 </tt>. This avoids a shift of the center of mass in this
-!!case.
+!!The same spatial profile is given to proton and neutron field.
+!!The relative strength is regulated by the isospin <tt> isosext <tt>. It is set equal for
+!!<tt> isoext=0 </tt> and given opposite phases for
+!!the <tt> isoext=1 </tt> by tghe weights \f$ 1/Z \f$ for protons and \f$ -1/N \f$ for neutrons.
 !!
 !!Then the array \c extfield is allocated and the time-independent
-!!spatial potential calculated for both isospin cases and in either the
+!!spatial potential is calculated for both isospin cases and in either the
 !!periodic or damped versions, depending on the value of 
-!!\c textfield_periodic.This is just an illustrative sample field of
-!!type \f$ Q_{zz} \f$; in a real calculation there is no need to provide both
-!!versions.
-!!TODO: This routine is not documented correctly in the "old" pdf manual!!!
+!!\c textfield_periodic. 
 !--------------------------------------------------------------------------- 
   SUBROUTINE init_external
     REAL(db) :: facn,facp,facr,xlim,ylim,zlim
