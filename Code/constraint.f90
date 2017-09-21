@@ -12,7 +12,7 @@
 !!the input.
 !------------------------------------------------------------------------------
 Module Constraint
-  USE Params, ONLY: db,pi,iter
+  USE Params, ONLY: db,pi,iter,wflag
   USE Densities
   USE Grids, ONLY: nx,ny,nz,x,y,z,wxyz
   USE Levels, ONLY: nstmax,psi,nstloc,wocc,isospin,mass_number
@@ -137,7 +137,7 @@ CONTAINS
     RETURN
 
 98  CONTINUE       ! override constraint
-      WRITE(6,*)  'Without constraints'
+    IF(wflag) WRITE(6,*)  'Without constraints'
     RETURN
 
 99 STOP 'error in reading NAMELIST constraint'

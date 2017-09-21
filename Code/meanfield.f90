@@ -247,37 +247,37 @@ CONTAINS
           CALL init_random_seed()
           CALL RANDOM_NUMBER(random_k)
           random_k=(random_k-0.5d0)*2
-          WRITE(*,*) 'Random potential:',random_k
+          IF(wflag)WRITE(*,*) 'Random potential:',random_k
         END IF
         FORALL(iq=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
           upot(ix,iy,iz,iq)=random_k(1,1)*cos(REAL(ix)/nx*2*pi)+random_k(1,2)*sin(REAL(ix)/nx*2*pi)&
                            +random_k(2,1)*cos(REAL(iy)/ny*2*pi)+random_k(2,2)*sin(REAL(iy)/ny*2*pi)&
                            +random_k(3,1)*cos(REAL(iz)/nz*2*pi)+random_k(3,2)*sin(REAL(iz)/nz*2*pi)
         END FORALL
-        WRITE(*,*) 'Random guiding potential'
+        IF(wflag)WRITE(*,*) 'Random guiding potential'
       CASE('P')
         FORALL(iq=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
           upot(ix,iy,iz,iq)=30*(cos(REAL(ix)/nx*2*pi)+cos(REAL(iy)/ny*2*pi)+cos(REAL(iz)/nz*2*pi))
         END FORALL
-        WRITE(*,*) 'P-surface guiding potential'
+        IF(wflag)WRITE(*,*) 'P-surface guiding potential'
       CASE('G')
         FORALL(iq=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
               upot(ix,iy,iz,iq)=30*(cos(REAL(ix)/nx*2*pi)*sin(REAL(iy)/ny*2*pi)+&
               cos(REAL(iy)/ny*2*pi)*sin(REAL(iz)/nz*2*pi)+cos(REAL(iz)/nz*2*pi)*sin(REAL(ix)/nx*2*pi))
         END FORALL
-        WRITE(*,*) 'Gyroid guiding potential'
+        IF(wflag)WRITE(*,*) 'Gyroid guiding potential'
       CASE('B')
         FORALL(iq=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
               upot(ix,iy,iz,iq)=30*abs(cos(REAL(ix)/nx*2*pi)*sin(REAL(iy)/ny*2*pi)+&
               cos(REAL(iy)/ny*2*pi)*sin(REAL(iz)/nz*2*pi)+cos(REAL(iz)/nz*2*pi)*sin(REAL(ix)/nx*2*pi))
         END FORALL
-        WRITE(*,*) 'Double Gyroid guiding potential'
+        IF(wflag)WRITE(*,*) 'Double Gyroid guiding potential'
       CASE('C')
         FORALL(iq=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
               upot(ix,iy,iz,iq)=-30*abs(cos(REAL(ix)/nx*2*pi)*sin(REAL(iy)/ny*2*pi)+&
               cos(REAL(iy)/ny*2*pi)*sin(REAL(iz)/nz*2*pi)+cos(REAL(iz)/nz*2*pi)*sin(REAL(ix)/nx*2*pi))
         END FORALL
-        WRITE(*,*) 'Reverse Double Gyroid guiding potential'
+        IF(wflag)WRITE(*,*) 'Reverse Double Gyroid guiding potential'
       CASE('D')
         FORALL(iq=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
               upot(ix,iy,iz,iq)=30*(cos(REAL(ix)/nx*2.0*pi)*cos(REAL(iy)/ny*2.0*pi)*cos(REAL(iz)/nz*2.0*pi)+&
@@ -285,18 +285,18 @@ CONTAINS
                                     sin(REAL(ix)/nx*2.0*pi)*cos(REAL(iy)/ny*2.0*pi)*sin(REAL(iz)/nz*2.0*pi)+&
                                     sin(REAL(ix)/nx*2.0*pi)*sin(REAL(iy)/ny*2.0*pi)*cos(REAL(iz)/nz*2.0*pi))
         END FORALL
-        WRITE(*,*) 'Diamond guiding potential'
+        IF(wflag)WRITE(*,*) 'Diamond guiding potential'
       CASE('S')
         FORALL(iq=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
          upot(ix,iy,iz,iq)=50*(cos(REAL(ix)/nx*2*pi))
         END FORALL
-        WRITE(*,*) 'Slab guiding potential'
+        IF(wflag)WRITE(*,*) 'Slab guiding potential'
       CASE('R')
         FORALL(iq=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
          upot(ix,iy,iz,iq)=exp(-((x(ix))**2+(y(iy))**2)/(dx*nx/4)**2)
         END FORALL  
         upot=upot*(-50)/maxval(upot(:,:,:,:))
-        WRITE(*,*) 'Rod guiding potential'
+        IF(wflag)WRITE(*,*) 'Rod guiding potential'
       CASE('H')
         IF(abs((ny*dy)/(nx*dx)-sqrt(3.0))>0.01) STOP 'Ratio L_y/L_x makes no &
         &sense for hexagonal'
@@ -321,7 +321,7 @@ CONTAINS
                           +exp(-((x(ix)-3*dx*nx/4)**2+(y(iy)+5*dy*ny/4)**2)/(dx*nx/4)**2)
         END FORALL  
         upot=upot*(-50)/maxval(upot(:,:,:,:))
-        WRITE(*,*) 'Hexagonal rod guiding potential'
+        IF(wflag)WRITE(*,*) 'Hexagonal rod guiding potential'
       END SELECT
     END IF
   END SUBROUTINE skyrme
