@@ -578,13 +578,11 @@ CONTAINS
     !***********************************************************************
     ! Step 3: calculate fluctuation, i.e. <h*h> and |h|**2
     !***********************************************************************
-    IF(mprint>0.AND.MOD(iter,mprint)==0) THEN
-       CALL hpsi(iq,esf,ps1,ps2)
-       exph2=REAL(overlap(psin,ps2))
-       varh2=rpsnorm(ps1)
-       sp_efluct1(nst)=SQRT(ABS(exph2/xnorm-(xnormb/xnorm)**2))  
-       sp_efluct2(nst)=SQRT(ABS(varh2/xnorm-(xnormb/xnorm)**2))  
-    ENDIF
+     CALL hpsi(iq,esf,ps1,ps2)
+     exph2=REAL(overlap(psin,ps2))
+     varh2=rpsnorm(ps1)
+     sp_efluct1(nst)=SQRT(ABS(exph2/xnorm-(xnormb/xnorm)**2))  
+     sp_efluct2(nst)=SQRT(ABS(varh2/xnorm-(xnormb/xnorm)**2))
     !***********************************************************************
     ! Step 4: the damping step
     !***********************************************************************
