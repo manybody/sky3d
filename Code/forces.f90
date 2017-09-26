@@ -143,7 +143,7 @@ CONTAINS
     NAMELIST /force/ name,pairing, &
          ex,zpe,h2m,t0,t1,t2,t3,t4,x0,x1,x2,x3,b4p,power, &
          ipair,v0prot,v0neut,rho0pr,turnoff_zpe,pair_reg,delta_fit,&
-         pair_cutoff,cutoff_factor
+         pair_cutoff,cutoff_factor,ecut_stab
     ! mark force & pairing parameters as undefined
     h2m=-1.0; v0prot=-1.0; v0neut=-1.0; rho0pr=-1.0
     READ(5,force)

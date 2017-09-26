@@ -317,7 +317,7 @@ CONTAINS
     sumuv=MAX(sumuv,xsmall)  
     avdelt(iq)=sumduv/sumuv
     avdeltv2(iq)=sumdv2/sumv2  
-!    epair(iq)=sumduv              !!! PGR: to be checked ???
+    epair(iq)=sumduv              !!! PGR: to be checked ???
     avg(iq)=epair(iq)/sumuv**2  
 !    IF(iq==1) WRITE(*,*) avdelt(1),delta_fit(iq)+1d-2,delta_fit(iq)-1d-2
     IF(delta_fit(iq)>1.0d-5.AND.avdeltv2(iq)>delta_fit(iq)+1d-3.AND.iq==1) THEN
