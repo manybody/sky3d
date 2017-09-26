@@ -61,6 +61,8 @@ MODULE Forces
   REAL(db):: delta_fit(2)=-1.0d0   !<Allows for fitting to pairing gaps
   REAL(db):: pair_cutoff(2)=-1.0d0 !<Selects a hard pairing cutoff
   REAL(db):: cutoff_factor=0D0  !<The relative "margin" of extra particles defining pairing space.
+  REAL(db):: ecut_stab=0D0      ! E_cut for stabilized pairing  !!! PGR
+  !!! PGR: ecut_stab to be included in 'TYPE pairing'
   TYPE(Force) :: f         !< this contains parameters for
   !!the Skyrme force actually used in the present calculation, packed
   !into the derived-type \c Force.

@@ -26,7 +26,7 @@
 !------------------------------------------------------------------------------
 MODULE Pairs
   USE Params, ONLY: db,iter,printnow,wflag,hbc
-  USE Forces, ONLY: ipair,p,pair_reg,delta_fit,pair_cutoff,cutoff_factor
+  USE Forces, ONLY: ipair,p,pair_reg,delta_fit,pair_cutoff,cutoff_factor,ecut_stab
   USE Grids, ONLY: nx,ny,nz,wxyz
   USE Densities, ONLY:rho
   USE Levels
@@ -148,10 +148,12 @@ CONTAINS
     INTEGER,PARAMETER :: itrsin=10
     ! iqq is different from module variable iq
     INTEGER :: iqq,nst,is,nstind
-    REAL(db),PARAMETER :: smallp=0.000001  
-    REAL(db) :: v0act
-    REAL(db) :: work(nx,ny,nz,2)  
+    REAL(db),PARAMETER :: smallp=0.000001D0
+    REAL(db) :: v0act,v2,vol,sumduv,edif
+    REAL(db),ALLOCATABLE :: work(:,:,:,:)  
     ! constant gap in early stages of iteration
+
+    ALLOCATE(work(nx,ny,nz,2))
     IF(iter<=itrsin) THEN  
        deltaf=11.2/SQRT(mass_number)
        RETURN  
@@ -205,6 +207,37 @@ CONTAINS
           END IF
        ENDDO
     ENDDO
+
+    DEALLOCATE(work)
+
+!!! PGR
+    IF(ecut_stab.NE.0D0) THEN
+       ! compute pairing energy from scratch
+       sumduv=0.0D0 
+       DO iqq=1,2
+          DO nst=npmin(iqq),npsi(iqq)
+             edif=sp_energy(nst)-eferm(iqq)  
+             v2=0.5D0-0.5D0*edif/SQRT(edif*edif+deltaf(nst)**2)  
+             vol=0.5D0*SQRT(MAX(v2-v2*v2,1D-20))  
+             sumduv=vol*deltaf(nst)+sumduv  
+          ENDDO
+          epair(iqq)=sumduv  
+       END DO
+       ! now modify gap
+       DO nst=1,nstloc
+          nstind=globalindex(nst)
+          IF(isospin(nstind)==1) THEN
+            deltaf(nstind) = deltaf(nstind)*(1D0+(ecut_stab/epair(1))**2)
+          ELSE
+            deltaf(nstind) = deltaf(nstind)*(1D0+(ecut_stab/epair(2))**2)
+          END IF
+          deltaf(nstind) = min(deltaf(nstind),5D0)       
+       END DO
+
+
+    END IF
+!!! PGR
+
     IF(tmpi) CALL collect_sp_property(deltaf)
     
   END SUBROUTINE pairgap
@@ -284,7 +317,7 @@ CONTAINS
     sumuv=MAX(sumuv,xsmall)  
     avdelt(iq)=sumduv/sumuv
     avdeltv2(iq)=sumdv2/sumv2  
-    epair(iq)=sumduv  
+!    epair(iq)=sumduv              !!! PGR: to be checked ???
     avg(iq)=epair(iq)/sumuv**2  
 !    IF(iq==1) WRITE(*,*) avdelt(1),delta_fit(iq)+1d-2,delta_fit(iq)-1d-2
     IF(delta_fit(iq)>1.0d-5.AND.avdeltv2(iq)>delta_fit(iq)+1d-3.AND.iq==1) THEN
