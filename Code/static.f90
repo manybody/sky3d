@@ -20,6 +20,7 @@ MODULE Static
   USE Inout, ONLY: write_wavefunctions, write_densities, plot_density, &
        sp_properties,start_protocol
   USE Pairs, ONLY: pair,epair,avdelt,avdeltv2,avg,eferm,eferm_cutoff,partnum_cutoff,pairwg
+  USE Formfactor, ONLY: radius_print
   IMPLICIT NONE
   LOGICAL  :: tdiag=.FALSE.    !< if \c true, there is a diagonalization of
   !!the Hamiltonian during the later (after the 20th) static iterations.
@@ -897,6 +898,7 @@ CONTAINS
           END IF
        ENDDO
        CALL moment_print
+       CALL radius_print
        CALL flush(6)
     END IF
   END SUBROUTINE sinfo

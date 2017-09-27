@@ -1,17 +1,18 @@
 !------------------------------------------------------------------------------
-! MODULE: Modulename
+! MODULE: Formfactor
 !------------------------------------------------------------------------------
 ! DESCRIPTION: 
 !> @brief
 !!This module contains routines to compute the spherical charge fomrfactor.
 !------------------------------------------------------------------------------
 MODULE Formfactor
-  USE Params, ONLY: db,pi
-  USE Grids, ONLY: x,y,z,nx,ny,nz,wxyz
+  USE Params, ONLY: db,pi,wflag
+  USE Grids, ONLY: x,y,z,nx,ny,nz,wxyz,der1x,der1y,der1z
   USE Levels, ONLY: nprot,nneut
   USE Densities, ONLY: rho,sodens
-  IMPLICIT REAL(db) (a-h,o-z)
+  USE Trivial, ONLY: rmulx,rmuly,rmulz
 
+  IMPLICIT NONE
   LOGICAL,PARAMETER :: testform=.TRUE.
   LOGICAL,PARAMETER :: trspinorbit=.TRUE.  ! l*s contribution to formfactor
   INTEGER, PARAMETER :: kfrm=200     ! maximum dimension of formfactor fields
@@ -27,6 +28,12 @@ MODULE Formfactor
   REAL(db),ALLOCATABLE :: workden(:,:,:,:)   ! for spin-orbit-density
 
 CONTAINS
+SUBROUTINE radius_print()
+CALL radius()
+IF(wflag)WRITE(*,*)'rms charge radius: ',rmscharge
+IF(wflag)WRITE(*,*)'charge diffraction radius: ',rdmsc
+IF(wflag)WRITE(*,*)'charge surface thickness: ',surfc
+END SUBROUTINE radius_print
 !-----radius -----------------------------------------------------------
 
 SUBROUTINE radius()
@@ -36,8 +43,8 @@ SUBROUTINE radius()
 
 REAL(db), PARAMETER :: delrad=0.3D0    ! assumed spherical grid spacing
 
-REAL(db) :: rleng,delrac,delk,cmwid,q1,qr,apnum,qa,acc
-REAL(db) :: dc,ds,r,c,s,d,acc0,acc2
+REAL(db) :: delrac,delk,cmwid,q1,qr,apnum,qa,acc
+REAL(db) :: dc,ds,r,c,s,d,acc0,acc2,dpi3
 REAL(db) :: rhochr(kfrm)              ! --> make allocatable
 REAL(db) :: foc0(kfrm),fop(kfrm),fon(kfrm),fo(kfrm)   ! auxiliary
 INTEGER :: ikmax,iq,ir
@@ -46,7 +53,7 @@ INTEGER :: ikmax,iq,ir
 
 !     determine grid in spherical Fourier-Bessel space
 
-rleng  = MIN(-x(1),x(nx),-y(1),y(ny),-z(1),z(iz))
+rleng  = MIN(-x(1),x(nx),-y(1),y(ny),-z(1),z(nz))
 ikmax  = rleng/delrad+1
 IF(ikmax > kfrm) STOP ' in RADIUS: KFRM too small'
 delrac = rleng/ikmax
@@ -111,10 +118,10 @@ surfc  = SQRT(ABS(2D0/(q1*q1)*LOG(ABS((SIN(qr)/qr-COS(qr))  &
 
 !    charge density by fourier back-transformation
 
-dpi3   = half/(pi*pi)
+dpi3   = 0.5d0/(pi*pi)
 
 !   r=0.0 separately
-acc = zero
+acc = 0.0d0
 DO iq=2,ikmax
   qa  = delk*iq-delk
   acc = qa*qa*foc(iq)+acc
@@ -125,8 +132,8 @@ rhochr(1) = abs(acc*delk*dpi3)
 r = 0D0
 DO ir=2,ikmax
   r = delrac+r
-  dc = COS(r*delq)
-  ds = SIN(r*delq)
+  dc = COS(r*delk)
+  ds = SIN(r*delk)
   c = 1D0
   s = 0D0
   acc = 0D0
@@ -185,8 +192,8 @@ SUBROUTINE fourf(q1,cmwid,foc0,fop,fon,fo,foc)
 !      foc  :   charge     "   including spin-orbit current
 !
 ! -->  magnetic contributions presently inactive
-
-!      data  zero,one,pi/0.0,1.0,3.1415926/
+REAL(db) :: zero,one,pi
+      data  zero,one,pi/0.0,1.0,3.1415926/
 
 REAL(db), INTENT(IN)                         :: q1
 REAL(db), INTENT(IN OUT)                     :: cmwid
@@ -214,6 +221,8 @@ REAL(db), PARAMETER ::  half=0.5D0
 !     parameters for scalar and vector electric formfactor
 !     (walther, priv.comm., sept. 86)
 !                                  --> convert to parameter statement
+REAL(db) :: sa1,sa2,sa3,sa4,sm1,sm2,sm3,sm4,va1,va2,va3,va4,vm1,vm2,&
+            vm3,vm4,gp1,gp2,gp3,gp4,gm1,gm2,gm3,gm4,xmgne,xmgpr,d4m
 DATA    sa1,    sa2,    sa3,   sa4,   sm1,  sm2,  sm3,  sm4  &
     /2.2907,-0.6777,-0.7923,0.1793, 15.75,26.68,41.01,134.2/
 DATA    va1,    va2,    va3,   va4,   vm1,  vm2,  vm3,  vm4  &
@@ -242,7 +251,8 @@ REAL(db) :: accn       ! Fourier-Bessel transform of neutron density
 REAL(db) :: accsp      ! Fourier-Bessel transform of proton l*s-density
 REAL(db) :: accsn      ! Fourier-Bessel transform of neutron l*s-density
 REAL(db) :: q2,r,r2,accc,rad2,z2,y2,besfac
-REAL(db) :: schsev,schses,schsep,schsen
+REAL(db) :: schsev,schses,schsep,schsen,schsm,schsmn,schsmp
+REAL(db) :: darfac,exphf,qa
 INTEGER :: ix,iy,iz
 
 
@@ -338,9 +348,10 @@ END SUBROUTINE fourf
 
 REAL(db) FUNCTION fbint(qin,formfa)
 
-IMPLICIT REAL(db) (a-h,o-z)
+IMPLICIT NONE
 REAL(db), INTENT(IN)             :: qin
 REAL(db), INTENT(IN)             :: formfa(kfrm)
+REAL(db)                         :: acc2
 !REAL(db), INTENT(IN OUT)         :: delk
 !REAL(db), INTENT(IN)             :: rleng
 !INTEGER, INTENT(IN)                      :: ikmax
@@ -371,6 +382,7 @@ qeff   = qin*rleng
 xfx    = (qeff/pi)
 xfx2   = xfx*xfx
 ixfx   = (xfx+precis)
+!WRITE(*,*)qin,qeff, xfx,xfx2,ixfx
 
 !     the fourier-bessel interpolation runs into problems with round-off
 !     errors if 'qeff' comes too close to a multiple of 'pi'. we switch
@@ -434,7 +446,7 @@ INTEGER,PARAMETER :: itq0mx=3
 REAL(db),PARAMETER ::  endq0=1D-4
 
 REAL(db) :: q1,q2,q3,f1,f2,f3,q3old,ca,c11,c2,c3,q
-INTEGER :: ikmaxm,iscn,iq1,iq2,itq0
+INTEGER :: ikmaxm,iscan,iq1,iq2,itq0
 
 !---------------------------------------------------------------------
 
