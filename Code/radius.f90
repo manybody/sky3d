@@ -7,15 +7,17 @@
 !------------------------------------------------------------------------------
 MODULE Formfactor
   USE Params, ONLY: db,pi,wflag
-  USE Grids, ONLY: x,y,z,nx,ny,nz,wxyz,der1x,der1y,der1z
+  USE Grids, ONLY: x,y,z,nx,ny,nz,wxyz,der1x,der1y,der1z,dx,dy,dz
   USE Levels, ONLY: nprot,nneut
   USE Densities, ONLY: rho,sodens
   USE Trivial, ONLY: rmulx,rmuly,rmulz
+  USE Moment, ONLY: cm,moments
 
   IMPLICIT NONE
   LOGICAL,PARAMETER :: testform=.TRUE.
   LOGICAL,PARAMETER :: trspinorbit=.TRUE.  ! l*s contribution to formfactor
   INTEGER, PARAMETER :: kfrm=200     ! maximum dimension of formfactor fields
+  REAL(db),PARAMETER :: kfactor=4D0  ! enhances resolution in k-space
   REAL(db) :: foc(kfrm)  ! charge formfactor along |k|
                          !                            --> make allocatable
   REAL(db) :: delk       ! step in momentum space
@@ -24,6 +26,7 @@ MODULE Formfactor
   REAL(db) :: rdmsc      ! charge diffraction radius
   REAL(db) :: surfc      ! charge surface thickness
   INTEGER :: ikmax       ! maximum number of k-grid points
+  INTEGER :: irmax       ! maximum number of r-grid points
   REAL(db) :: cmwid      ! width of c.m. unfolding
   REAL(db),ALLOCATABLE :: workden(:,:,:,:)   ! for spin-orbit-density
 
@@ -41,9 +44,9 @@ SUBROUTINE radius()
 !     Compute formfactor and deduced radius-observables
 
 
-REAL(db), PARAMETER :: delrad=0.3D0    ! assumed spherical grid spacing
+REAL(db), PARAMETER :: delrad=0.15D0    ! assumed spherical grid spacing
 
-REAL(db) :: delrac,q1,qr,apnum,qa,acc
+REAL(db) :: delrac,q1,qr,apnum,qa,acc,kmax
 REAL(db) :: dc,ds,r,c,s,d,acc0,acc2,dpi3
 REAL(db) :: rhochr(kfrm)              ! --> make allocatable
 REAL(db) :: foc0(kfrm),fop(kfrm),fon(kfrm),fo(kfrm)   ! auxiliary
@@ -54,12 +57,16 @@ INTEGER  :: iq,ir
 !     determine grid in spherical Fourier-Bessel space
 
 rleng  = MIN(-x(1),x(nx),-y(1),y(ny),-z(1),z(nz))
-ikmax  = rleng/delrad+1
-IF(ikmax > kfrm) STOP ' in RADIUS: KFRM too small'
-delrac = rleng/ikmax
-delk   =  pi/rleng
-IF(testform)  WRITE(*,'(a,i5,3(1pg12.4))') &
-  ' ikmax,rleng,delrac,delk=',ikmax,rleng,delrac,delk
+irmax  = rleng/delrad+1
+IF(irmax > kfrm) STOP ' in RADIUS: IRMAX>KFRM'
+delrac = rleng/irmax
+delk   =  pi/rleng/kfactor  ! kfactor for better interpolation, see also 'fbint'
+kmax=pi/MIN(dx,dy,dz)
+ikmax=kmax/delk+1
+IF(ikmax > kfrm) STOP ' in RADIUS: IKMAX>KFRM'
+
+IF(testform)  WRITE(*,'(a,2i5,3(1pg12.4))') &
+  ' irmax,ikmax,rleng,delrac,delk=',irmax,ikmax,rleng,delrac,delk
 
 !     width parameter for c.m. correction   !!! yet to be corrected
 
@@ -94,11 +101,13 @@ DO iq=1,ikmax
        iq,q1,foc0(iq),fop(iq),fon(iq),fo(iq),foc(iq)
 END DO
 apnum=foc(1)
-IF(testform) WRITE(*,'(a)') ' test FBINT:'
-DO iq=1,4*ikmax
-  q1 = iq*delk*0.25D0
-  WRITE(*,'(f8.4,1pg12.4)')  q1,fbint(q1,foc)
-END DO
+!IF(testform) THEN
+!   WRITE(*,'(a)') ' test FBINT:'
+!   DO iq=1,4*ikmax
+!      q1 = iq*delk*0.25D0
+!      WRITE(*,'(f8.4,1pg12.4)')  q1,fbint(q1,foc)
+!   END DO
+!END IF
 
 IF(trspinorbit) DEALLOCATE(workden)
 
@@ -121,16 +130,16 @@ surfc  = SQRT(ABS(2D0/(q1*q1)*LOG(ABS((SIN(qr)/qr-COS(qr))  &
 dpi3   = 0.5d0/(pi*pi)
 
 !   r=0.0 separately
-acc = 0.0d0
+acc = 0D0
 DO iq=2,ikmax
   qa  = delk*iq-delk
   acc = qa*qa*foc(iq)+acc
 END DO
-rhochr(1) = abs(acc*delk*dpi3)
+rhochr(1) = ABS(acc*delk*dpi3)
 
 !   now all other r
 r = 0D0
-DO ir=2,ikmax
+DO ir=2,irmax
   r = delrac+r
   dc = COS(r*delk)
   ds = SIN(r*delk)
@@ -145,9 +154,16 @@ DO ir=2,ikmax
     c = d
     acc = qa*s*foc(iq)+acc
   END DO
-  rhochr(ir) = abs(acc*delk*dpi3/r)
-
+  rhochr(ir) = (acc*delk*dpi3/r)   ! ABS ?
 END DO
+IF(testform) THEN
+   WRITE(*,'(a)') '# ir r rhochr'
+   r = -delrac
+   DO ir=1,irmax
+      r = delrac+r
+      WRITE(*,'(i4,2(1pg13.5))') ir,r,rhochr(ir)
+   END DO
+END IF
 
 !   r.m.s. radius from back-transformed charge density
 
@@ -161,8 +177,13 @@ DO ir=2,ikmax
 END DO
 rmscharge = SQRT(acc2/acc0)
 
-IF(testform) WRITE(*,'(a,2(1pg13.5))') &
+IF(testform) THEN
+   WRITE(*,'(a,3(1pg13.5))') ' acc0,acc2,charge=', &
+     acc0,acc2,4D0*pi*delrac*acc0
+   WRITE(*,'(a,3(1pg13.5))') &
    ' charge: rms,rdms,sigma=',rmscharge,rdmsc,surfc
+END IF
+
 
 RETURN
 END SUBROUTINE radius
@@ -246,61 +267,67 @@ DATA    gp1,    gp2,    gp3,   gp4,   gm1,  gm2,  gm3,  gm4  &
 DATA xmgne,xmgpr,d4m/.04197,-.06131,.010989/
 
 
-REAL(db) :: accp       ! Fourier-Bessel transform of proton density
-REAL(db) :: accn       ! Fourier-Bessel transform of neutron density
-REAL(db) :: accsp      ! Fourier-Bessel transform of proton l*s-density
-REAL(db) :: accsn      ! Fourier-Bessel transform of neutron l*s-density
-REAL(db) :: q2,r,r2,accc,rad2,z2,y2,besfac
+REAL(db) :: acc(2)     ! Fourier-Bessel transform of proton&neutron density
+REAL(db) :: accs(2)    ! Fourier-Bessel transform of prot.&neut. l*s-density
+REAL(db) :: q2,r,r2,accc,rad2,x2,z2,y2,besfac
 REAL(db) :: schsev,schses,schsep,schsen,schsm,schsmn,schsmp
 REAL(db) :: darfac,exphf,qa
-INTEGER :: ix,iy,iz
+INTEGER :: ix,iy,iz,iq
 
 
 !----------------------------------------------------------------
 
 !     fourier-bessel transformation for proton- and neutron-density
 
-accp=0D0
-accn=0D0
+!OPEN(91,file='testrho')
+CALL moments()
+acc=0D0
 q2 = q1*q1
-DO iz=1,nz  
-   z2=z(iz)**2
-   DO iy=1,ny  
-      y2=y(iy)**2  
-      DO ix=1,nx  
-         rad2 = q2*(x(ix)**2+y2+z2)
-         IF(rad2 < 1D-20) THEN
-           besfac = 1D0
-         ELSE
-           rad2 = SQRT(rad2)
-           besfac = SIN(rad2)/rad2
-         END IF
-         accp = accp+wxyz*rho(ix,iy,iz,2)*besfac
-         accn = accp+wxyz*rho(ix,iy,iz,1)*besfac
-      ENDDO
-   ENDDO
-ENDDO
-
-!     fourier-bessel transformation for spin-orbit-density
-
-accsp=0D0
-accsn=0D0
-IF(trspinorbit) THEN
-   q2 = q1*q1
+DO iq=1,2
    DO iz=1,nz  
-      z2=z(iz)**2
+      z2=(z(iz)-cm(3,iq))**2
       DO iy=1,ny  
-         y2=y(iy)**2  
+         y2=(y(iy)-cm(2,iq))**2  
          DO ix=1,nx  
-            rad2 = q2*(x(ix)**2+y2+z2)
+            x2=(x(ix)-cm(1,iq))**2
+            rad2 = q2*(x2+y2+z2)
             IF(rad2 < 1D-20) THEN
               besfac = 1D0
             ELSE
               rad2 = SQRT(rad2)
               besfac = SIN(rad2)/rad2
             END IF
-            accsp = accsp+wxyz*workden(ix,iy,iz,2)*besfac
-            accsn = accsn+wxyz*workden(ix,iy,iz,1)*besfac
+            acc(iq) = acc(iq)+wxyz*rho(ix,iy,iz,2)*besfac
+!            IF(testform.AND.q1==0D0 .AND.iq==2) &
+!                 WRITE(91,'(3i4,2(1pg13.5))') &
+!                 ix,iy,iz,SQRT(x2+y2+z2),rho(ix,iy,iz,2)
+         ENDDO
+      ENDDO
+   ENDDO
+ENDDO
+!CLOSE(91)
+
+!     fourier-bessel transformation for spin-orbit-density
+
+accs=0D0
+IF(trspinorbit) THEN
+   q2 = q1*q1
+   DO iq=1,2
+      DO iz=1,nz  
+         z2=(z(iz)-cm(3,iq))**2
+         DO iy=1,ny  
+            y2=(y(iy)-cm(2,iq))**2  
+            DO ix=1,nx  
+               x2=(x(ix)-cm(1,iq))**2
+               rad2 = q2*(x2+y2+z2)
+               IF(rad2 < 1D-20) THEN
+                 besfac = 1D0
+               ELSE
+                 rad2 = SQRT(rad2)
+                 besfac = SIN(rad2)/rad2
+               END IF
+               accs(iq) = accs(iq)+wxyz*workden(ix,iy,iz,iq)*besfac
+            ENDDO
          ENDDO
       ENDDO
    ENDDO
@@ -321,7 +348,7 @@ schsm  = ( gp1/(one+qa/gm1)+gp2/(one+qa/gm2)+gp3/(one+qa/gm3) &
 schsmp = schsm*xmgpr - schsep*d4m
 schsmn = schsm*xmgne - schsen*d4m
 
-accc   = accp*schsep+accn*schsen
+accc   = acc(2)*schsep+acc(1)*schsen
 
 !      factor for darwin correction 'darfac'
 !      and the factor for the c.m. correction 'exphf'.
@@ -336,10 +363,10 @@ exphf  = EXP(cmwid*qa)
 !     finally assembling the formfactors
 
 foc0   = exphf*accc
-fop    = exphf*accp
-fon    = exphf*accn
-fo     = exphf*(accp+accn)
-foc    = exphf*(accc*darfac +(schsmp*accsp+schsmn*accsn))
+fop    = exphf*acc(2)
+fon    = exphf*acc(1)
+fo     = exphf*(acc(2)+acc(1))
+foc    = exphf*(accc*darfac +(schsmp*accs(2)+schsmn*accs(1)))
 
 RETURN
 END SUBROUTINE fourf
@@ -378,7 +405,7 @@ INTEGER :: ixfx,ipole,i
 
 IF(ikmax > kfrm) STOP ' too large grid in FBINT '
 
-qeff   = qin*rleng
+qeff   = qin*rleng*kfactor    ! kfactor compensates 1/kfactor in 'delk'
 xfx    = (qeff/pi)
 xfx2   = xfx*xfx
 ixfx   = (xfx+precis)
