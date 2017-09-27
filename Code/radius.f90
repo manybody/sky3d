@@ -43,11 +43,11 @@ SUBROUTINE radius()
 
 REAL(db), PARAMETER :: delrad=0.3D0    ! assumed spherical grid spacing
 
-REAL(db) :: delrac,delk,cmwid,q1,qr,apnum,qa,acc
+REAL(db) :: delrac,q1,qr,apnum,qa,acc
 REAL(db) :: dc,ds,r,c,s,d,acc0,acc2,dpi3
 REAL(db) :: rhochr(kfrm)              ! --> make allocatable
 REAL(db) :: foc0(kfrm),fop(kfrm),fon(kfrm),fo(kfrm)   ! auxiliary
-INTEGER :: ikmax,iq,ir
+INTEGER  :: iq,ir
 
 !----------------------------------------------------------------------
 
@@ -411,16 +411,17 @@ ELSE
   DO i=2,ikmax
     signum = -signum
     acc    = formfa(i)*signum/(1D0-xfx2/REAL((i-1)*(i-1),db)) + acc
+!    WRITE(*,*)formfa(i),xfx2,REAL((i-1)*(i-1),db)
   END DO
   fbint  = (acc+acc)*SIN(qeff)/qeff
 END IF
-
+!WRITE(*,*) qin, fbint, acc, (ABS(xfx-ixfx) < precis),ikmax
 RETURN
 END FUNCTION fbint
 !-----qzero ------------ part of the hartree-fock package ----------------------
 
 REAL(db) FUNCTION qzero(foin,iqstrt)
-IMPLICIT REAL(db) (a-h,o-z)
+IMPLICIT NONE
 
 
 REAL(db), INTENT(IN)             :: foin(kfrm)
@@ -445,7 +446,7 @@ INTEGER, PARAMETER :: kfrm=999
 INTEGER,PARAMETER :: itq0mx=3
 REAL(db),PARAMETER ::  endq0=1D-4
 
-REAL(db) :: q1,q2,q3,f1,f2,f3,q3old,ca,c11,c2,c3,q
+REAL(db) :: q1,q2,q3,f1,f2,f3,q3old,ca,c11,c2,c3,q,qa1,qa2
 INTEGER :: ikmaxm,iscan,iq1,iq2,itq0
 
 !---------------------------------------------------------------------
@@ -465,8 +466,7 @@ q1    = iq1*delk-delk
 q2    = iq2*delk-delk
 f1    = foin(iq1)
 f2    = foin(iq2+1) !GH (+1)
-!      write(7,'(a,2i5,4(1pg12.4))')
-!     &   ' iq1,iq2,q1,q2,f1,f2=',iq1,iq2,q1,q2,f1,f2
+      write(*,'(a,2i5,4(1pg12.4))')' iq1,iq2,q1,q2,f1,f2=',iq1,iq2,q1,q2,f1,f2
 
 !     come closer to 'foin'=0.0 by repeated linear, interpolation.
 
