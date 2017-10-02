@@ -28,6 +28,7 @@ MODULE Energies
   USE Forces
   USE Densities
   USE Levels
+  USE Grids, ONLY: wxyz
   USE Pairs, ONLY: epair
   IMPLICIT NONE
   SAVE
@@ -50,6 +51,7 @@ MODULE Energies
   REAL(db) :: ehf             !< Hartree-Fock energy from s.p. levels
   REAL(db) :: ehfprev         !< Hartree-Fock energy from s.p. levels of previous iteration
   REAL(db) :: e3corr          !< rearrangement energy
+  REAL(db) :: ecmcorr=0D0     !< energy of c.m. correction (a posteriori)
   REAL(db) :: orbital(3)      !< the three components of the total orbital
                               !!angular momentum in units of \f$ \hbar \f$.
   REAL(db) :: spin(3)         !< the three components of the total spin in
@@ -227,7 +229,7 @@ CONTAINS
     ENDIF
     ! Step 5: kinetic energy contribution
     ehft=wxyz*SUM(f%h2m(1)*tau(:,:,:,1)+f%h2m(2)*tau(:,:,:,2))
-    ! Step 6: form total energy
+    ! Step 6: form total energy (without c.m. correction)
     ehfint=ehft+ehf0+ehf1+ehf2+ehf3+ehfls+ehfc-epair(1)-epair(2)
   END SUBROUTINE integ_energy
 !---------------------------------------------------------------------------  
@@ -266,5 +268,99 @@ CONTAINS
     END DO
   END SUBROUTINE sum_energy
   !***************************************************************************
+!---------------------------------------------------------------------------  
+! DESCRIPTION: cm_correction
+!> @brief
+!!This subroutine computes the center-of-mass energy from the 
+!!variance of the momentum operator. 
+!>
+!> @details
+!!The c.m. correction from variance of total momentum is an
+!!approximation to center-of-mass projection. It reads 
+!! \f$ E_\mathrm{cm}=\langle\hat{P}_\mathrm{cm}^2\rangle/(2mA) $\f.
+!!The computation is a bit expensive. The correction is thus 
+!!evaluated only in the few analyzing steps (modulus 'mprint'). 
+!!The concept is developed and tested for static states. An 
+!!extension to dynamical situations is presently "off label" use.
+!!
+  SUBROUTINE cm_correction()
+  USE Parallel, ONLY: globalindex
+    COMPLEX(db),ALLOCATABLE :: ps1(:,:,:,:)  
+    INTEGER :: nst,nst2,iso1,ix,iy,iz
+    REAL(db) :: accvar(2),v2a,uva,v2b
+    COMPLEX(db) :: offdig
+    LOGICAL,PARAMETER :: testprint=.FALSE.
+
+    ALLOCATE(ps1(nx,ny,nz,2))
+    accvar=0D0
+    DO nst=1,nstloc
+       iso1=isospin(globalindex(nst))
+       v2a=wocc(globalindex(nst))
+       uva=SQRT(v2a-v2a*v2a)
+
+       !********************************************************************
+       ! x-derivatives
+       !********************************************************************
+       IF(TFFT) THEN
+          CALL cdervx(psi(:,:,:,:,nst),ps1)  
+       ELSE
+          CALL cmulx(der1x,psi(:,:,:,:,nst),ps1,0)  
+       ENDIF
+       accvar(iso1) = accvar(iso1) + wxyz*SUM(REAL(CONJG(ps1)*ps1,db))*v2a
+       DO nst2=1,nstloc
+          IF(iso1==isospin(globalindex(nst2))) THEN
+             v2b=wocc(globalindex(nst2))
+             offdig=wxyz*SUM(CONJG(psi(:,:,:,:,nst2))*ps1)
+             accvar(iso1) = accvar(iso1) - &
+               REAL(CONJG(offdig)*offdig,db)*(v2a*v2b+uva*SQRT(v2b-v2b*v2b))
+          END IF
+       ENDDO
+
+       !********************************************************************
+       ! y-derivatives
+       !********************************************************************
+       IF(TFFT) THEN
+          CALL cdervy(psi(:,:,:,:,nst),ps1)  
+       ELSE
+          CALL cmuly(der1y,psi(:,:,:,:,nst),ps1,0)  
+       ENDIF
+       accvar(iso1) = accvar(iso1) + wxyz*SUM(REAL(CONJG(ps1)*ps1,db))*v2a
+       DO nst2=1,nstloc
+          IF(iso1==isospin(globalindex(nst2))) THEN
+             v2b=wocc(globalindex(nst2))
+             offdig=wxyz*SUM(CONJG(psi(:,:,:,:,nst2))*ps1)
+             accvar(iso1) = accvar(iso1) - &
+               REAL(CONJG(offdig)*offdig,db)*(v2a*v2b+uva*SQRT(v2b-v2b*v2b))
+          END IF
+       ENDDO
+
+       !********************************************************************
+       ! z-derivatives
+       !********************************************************************
+       IF(TFFT) THEN
+          CALL cdervz(psi(:,:,:,:,nst),ps1)  
+       ELSE
+          CALL cmulz(der1z,psi(:,:,:,:,nst),ps1,0)  
+       ENDIF
+       accvar(iso1) = accvar(iso1) + wxyz*SUM(REAL(CONJG(ps1)*ps1,db))*v2a
+       DO nst2=1,nstloc
+          IF(iso1==isospin(globalindex(nst2))) THEN
+             v2b=wocc(globalindex(nst2))
+             offdig=wxyz*SUM(CONJG(psi(:,:,:,:,nst2))*ps1)
+             accvar(iso1) = accvar(iso1) - &
+               REAL(CONJG(offdig)*offdig,db)*(v2a*v2b+uva*SQRT(v2b-v2b*v2b))
+          END IF
+       ENDDO
+
+    ENDDO
+    DEALLOCATE(ps1)
+
+    ecmcorr=(accvar(1)+accvar(2))*(f%h2m(1)+f%h2m(2))/2D0/mass_number
+    IF(testprint) WRITE(*,*) ' final check c.m. correction: <P**2>,Ecm=',&
+            accvar,ecmcorr,mass_number
+
+    RETURN
+  END SUBROUTINE cm_correction
+
 END MODULE Energies
 

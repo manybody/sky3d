@@ -803,6 +803,9 @@ CONTAINS
     CALL moments
     CALL integ_energy
     CALL sum_energy
+    IF(f%zpe==1 .AND. printing) THEN
+       CALL cm_correction()
+    END IF
     ! add information to summary files
     IF(printing) THEN
        IF(tabc_nprocs>1) THEN
@@ -818,13 +821,13 @@ CONTAINS
           END IF
        END IF
        OPEN(unit=scratch,file=energiesfile,POSITION='APPEND')  
-       WRITE(scratch,'(1x,i5,2F8.3,12F15.7)') &
+       WRITE(scratch,'(1x,i5,2F8.3,13F15.7)') &
             iter,pnr,ehf,ehfint,tke,ehfc,ehfCrho0,ehfCrho1,ehfCdrho0,ehfCdrho1,ehfCtau0,&
-            ehfCtau1,ehfCdJ0,ehfCdJ1
+            ehfCtau1,ehfCdJ0,ehfCdJ1,ecmcorr
        CLOSE(unit=scratch)
        OPEN(unit=scratch,file=converfile,POSITION='APPEND')  
        WRITE(scratch,'(1x,i5,f9.2,3(1pg11.3),2(0pf8.3),f6.1,f10.7)') &
-            iter,ehf,delesum/pnrtot,efluct1,efluct2,rmstot,beta,gamma,x0dmp
+            iter,ehf-ecmcorr,delesum/pnrtot,efluct1,efluct2,rmstot,beta,gamma,x0dmp
        CLOSE(scratch)
        OPEN(unit=scratch,file=dipolesfile, POSITION='APPEND')  
        WRITE(scratch,'(1x,i5,6E14.4)') iter,cmtot,cm(:,2)-cm(:,1)
@@ -834,16 +837,17 @@ CONTAINS
        CLOSE(unit=scratch)
        WRITE(*,'(/,A,I7,A/2(A,F12.4),A/(3(A,E12.5),A))') &
             ' ***** Iteration ',iter,' *************************************************&
-            &***********************************',' Total energy: ',ehf,&
-            ' MeV  Total kinetic energy: ', tke,' MeV',' de/e:      ',delesum,&
-            '      h**2  fluct.:    ',efluct1,' MeV, h*hfluc.:    ',efluct2,' MeV', &
+            &***********************************',' Total energy: ',ehf-ecmcorr,&
+            ' MeV  Total kinetic energy: ', tke,' MeV',&
+            ' de/e:      ',delesum,'      h**2  fluct.:    ',efluct1,&
+            ' MeV, h*hfluc.:    ',efluct2,' MeV', &
             ' MeV. Rearrangement E: ',e3corr,' MeV. Coul.Rearr.: ', &
-            ecorc,' MeV'
+             ecorc,' MeV   c.m.correction:',ecmcorr,' MeV'
        ! detail printout
        WRITE(*,'(/A)') ' Energies integrated from density functional:********************&
                   &********************************************'
        WRITE(*,'(4(A,1PE14.6),A/26X,3(A,1PE14.6),A)') &
-            ' Total:',ehfint,' MeV. t0 part:',ehf0,' MeV. t1 part:',ehf1, &
+            ' Total:',ehfint-ecmcorr,' MeV. t0 part:',ehf0,' MeV. t1 part:',ehf1, &
             ' MeV. t2 part:',ehf2,' MeV.',' t3 part:',ehf3,' MeV. t4 part:',ehfls, &
             ' MeV. Coulomb:',ehfc,' MeV.'
        WRITE(*,*)'                          *********************************************&
