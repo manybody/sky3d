@@ -12,6 +12,8 @@ MODULE Formfactor
   USE Densities, ONLY: rho,sodens
   USE Trivial, ONLY: rmulx,rmuly,rmulz
   USE Moment, ONLY: cm,moments
+  USE Forces
+  USE Energies
 
   IMPLICIT NONE
   LOGICAL,PARAMETER :: testform=.TRUE.
@@ -70,12 +72,13 @@ IF(testform)  WRITE(*,'(a,2i5,3(1pg12.4))') &
 
 !     width parameter for c.m. correction   !!! yet to be corrected
 
-!IF(ifzpe == 0) THEN
+IF(f%zpe == 0) THEN
   cmwid  = 1.58D0/(6D0*(nprot+nneut)**0.66666667D0)
-!ELSE
-!  zpeact = (widdz+widdxy)*0.5D0*(h2m(1)+h2m(2))/(npart(1)+npart(2))
-!  cmwid  = 0.375*h2mav/(atnum*zpeact)
-!END IF
+ELSE IF(f%zpe==1) THEN
+  cmwid  = 0.375D0*(f%h2m(1)+f%h2m(2))/(2D0*(nprot+nneut)*ecmcorr)
+ELSE
+  cmwid = 0D0
+END IF
 IF(testform) WRITE(*,'(a,2(1pg12.4))') ' cmwid=',cmwid
 
 ! prepare spin-orbit density
