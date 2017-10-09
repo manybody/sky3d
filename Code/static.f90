@@ -898,7 +898,7 @@ CONTAINS
             WRITE(*,'(1X,I3,F4.0,F8.5,2F9.5,F9.6,F8.3,F10.3,3F8.3,4F7.3)') &
                il,sp_parity(il),wocc(il),sp_efluct1(il),sp_efluct2(il), &
                sp_norm(il),sp_kinetic(il),sp_energy(il), &
-               sp_orbital(:,il),sp_spin(:,il)
+               sp_orbital(:,il),sp_spin(:,il),pairwg(il)
           END IF
        ENDDO
        CALL moment_print

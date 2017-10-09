@@ -217,7 +217,7 @@ CONTAINS
        DO iqq=1,2
           DO nst=npmin(iqq),npsi(iqq)
              edif=sp_energy(nst)-eferm(iqq)  
-             v2=0.5D0-0.5D0*edif/SQRT(edif*edif+deltaf(nst)**2)  
+             v2=0.5D0-0.5D0*edif/SQRT(edif*edif+(deltaf(nst)*pairwg(nst))**2)  
              vol=0.5D0*SQRT(MAX(v2-v2*v2,1D-20))  
              sumduv=vol*deltaf(nst)+sumduv  
           ENDDO
@@ -280,8 +280,14 @@ CONTAINS
       partnum_cutoff(iq)=particle_number+&
                          cutoff_factor*particle_number**0.6666666667D0
       IF(eferm_cutoff(iq)==0D0) THEN
-        it=npmin(iq)+NINT(partnum_cutoff(iq))-1
-        IF(it+NINT(particle_number/10)>npsi(iq)) STOP "not enough states to cover pairing space"
+!        it=npmin(iq)+NINT(partnum_cutoff(iq))-1
+        it=NINT(partnum_cutoff(iq))-1
+        IF(it+NINT(particle_number/10)>npsi(iq)) THEN
+          WRITE(*,*) 'particle_number etc:',particle_number,npmin(iq), &
+            it,it+NINT(particle_number/10),npsi(iq)
+          STOP "not enough states to cover pairing space"
+        END IF
+        it=npmin(iq)+it
         eferm_cutoff(iq)=0.5D0*(sp_energy(it)+sp_energy(it+1))  
         pairwg(npmin(iq):it)=1.D0
         pairwg(it+1:npsi(iq))=0.D0
@@ -489,7 +495,7 @@ CONTAINS
        IF(pair_cutoff(iq)>0.0d0.AND.edif>pair_cutoff(iq)) THEN
          wocc(k)=smal
        ELSE
-         wocc(k)=0.5D0 *(1.0D0-edif/SQRT(edif**2+deltaf(k)**2))  
+         wocc(k)=0.5D0 *(1.0D0-edif/SQRT(edif**2+(deltaf(k)*pairwg(k))**2))  
          wocc(k)=MIN(MAX(wocc(k),smal),1.D0-smal)  
          bcs_accum=bcs_accum+wocc(k)
        END IF

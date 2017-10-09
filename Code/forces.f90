@@ -232,7 +232,8 @@ CONTAINS
        WRITE(*,"(A6,F12.5)") "Power",f%power
        WRITE(*,"(A,I2)") " Pairing parameters: Option ipair:",ipair  
        WRITE(*,"(3(A7,F12.5))") "v0prot",p%v0prot,"v0neut",p%v0neut,"rho0pr",p%rho0pr
-       IF(cutoff_factor>0D0) WRITE(*,"(A,F12.5)") "cutoff_factor=",cutoff_factor
+       WRITE(*,"(A,2F12.5)") "cutoff_factor,ecut_stab=",cutoff_factor,ecut_stab
+
     ENDIF
   END SUBROUTINE read_force
 END MODULE Forces
