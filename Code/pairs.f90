@@ -27,13 +27,13 @@
 MODULE Pairs
   USE Params, ONLY: db,iter,printnow,wflag,hbc
   USE Forces, ONLY: ipair,p,pair_reg,delta_fit,pair_cutoff,cutoff_factor,ecut_stab
-  USE Grids, ONLY: nx,ny,nz,wxyz
+  USE Grids, ONLY: nx,ny,nz,wxyz,x
   USE Densities, ONLY:rho
   USE Levels
   USE Parallel, ONLY:globalindex,collect_density,collect_sp_property,tmpi,wflag
   IMPLICIT NONE
   PRIVATE
-  PUBLIC :: pair,epair,avdelt,avg,eferm,avdeltv2,eferm_cutoff,partnum_cutoff
+  PUBLIC :: pair,epair,avdelt,avg,eferm,avdeltv2,eferm_cutoff,partnum_cutoff,deltaf
   INTEGER :: iq                          !<Index labeling the isospin.
   REAL(db),SAVE :: eferm(2)=(/0D0,0D0/)  !<Fermi energy in MeV for the two isospins.
   REAL(db),SAVE :: epair(2)              !<Pairing energy in MeV for the two isospins. It is given by
@@ -147,9 +147,9 @@ CONTAINS
     !     computes the pair density
     INTEGER,PARAMETER :: itrsin=10
     ! iqq is different from module variable iq
-    INTEGER :: iqq,nst,is,nstind
+    INTEGER :: iqq,nst,is,nstind    ,ix
     REAL(db),PARAMETER :: smallp=0.000001D0
-    REAL(db) :: v0act,v2,vol,sumduv,edif
+    REAL(db) :: v0act,v2,vol,sumduv,edif,sumuv
     REAL(db),ALLOCATABLE :: work(:,:,:,:)  
     ! constant gap in early stages of iteration
 
@@ -166,17 +166,19 @@ CONTAINS
        DO is=1,2 
          DO nst=1,nstloc 
            nstind=globalindex(nst)
-           IF(isospin(nstind)==iqq)&
-            work(:,:,:,iqq)=work(:,:,:,iqq)+ pairwg(nstind)* &
-              SQRT(MAX(wocc(nstind)-wocc(nstind)**2,smallp))*0.5* &
-             (REAL(psi(:,:,:,is,nst))**2+AIMAG(psi(:,:,:,is,nst))**2)
+           IF(isospin(nstind)==iqq) THEN
+!              work(:,:,:,iqq)=work(:,:,:,iqq)+ 
+              work(:,:,:,iqq)=work(:,:,:,iqq)+ pairwg(nstind)* &
+                SQRT(MAX(wocc(nstind)-wocc(nstind)**2,smallp))*0.5* &
+               (REAL(psi(:,:,:,is,nst))**2+AIMAG(psi(:,:,:,is,nst))**2)
+           END IF
          ENDDO
        ENDDO
     END DO
     IF(tmpi) CALL collect_density(work)
     IF(wflag) WRITE(*,*)1,SUM(work(:,:,:,1))
     IF(wflag) WRITE(*,*)2,SUM(work(:,:,:,2))
-       ! determine pairing strength
+    ! determine pairing strength
     deltaf=0.0d0
     DO iqq=1,2
        IF(iqq==2) THEN  
@@ -193,7 +195,8 @@ CONTAINS
          END IF
        ELSE
           work(:,:,:,iqq)=v0act*work(:,:,:,iqq)  
-       END IF
+       END IF 
+
        ! finally compute the actual gaps as s.p. expectation values with
        ! the pair potential
        DO nst=1,nstloc
@@ -201,8 +204,8 @@ CONTAINS
           IF(isospin(nstind)==iqq) THEN
              DO is=1,2  
                 deltaf(nstind)=deltaf(nstind)+wxyz*SUM(work(:,:,:,iqq)* &
-                pairwg(nstind)* &
                 (REAL(psi(:,:,:,is,nst))**2+AIMAG(psi(:,:,:,is,nst))**2))
+!                *pairwg(nstind)
              ENDDO 
           END IF
        ENDDO
@@ -213,12 +216,14 @@ CONTAINS
 !!! PGR
     IF(ecut_stab.NE.0D0) THEN
        ! compute pairing energy from scratch
-       sumduv=0.0D0 
+       sumuv=0.0D0 
        DO iqq=1,2
+          sumduv=0.0D0 
           DO nst=npmin(iqq),npsi(iqq)
              edif=sp_energy(nst)-eferm(iqq)  
              v2=0.5D0-0.5D0*edif/SQRT(edif*edif+(deltaf(nst)*pairwg(nst))**2)  
              vol=0.5D0*SQRT(MAX(v2-v2*v2,1D-20))  
+             IF(iqq==1) sumuv=vol+sumuv  
              sumduv=vol*deltaf(nst)+sumduv  
           ENDDO
           epair(iqq)=sumduv  
@@ -311,7 +316,7 @@ CONTAINS
     sumdv2=0.0D0
     DO na=npmin(iq),npsi(iq)
        edif=sp_energy(na)-eferm(iq)  
-       equasi=SQRT(edif*edif+deltaf(na)**2)  
+       equasi=SQRT(edif*edif+(deltaf(na)*pairwg(na))**2)  
        v2=0.5D0-0.5D0*edif/equasi  
        vol=0.5D0*SQRT(MAX(v2-v2*v2,xsmall))  
        sumuv=vol+sumuv  

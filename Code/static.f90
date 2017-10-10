@@ -19,7 +19,7 @@ MODULE Static
   USE Constraint, ONLY: tconstraint,before_constraint,init_constraint,tune_constraint,add_constraint
   USE Inout, ONLY: write_wavefunctions, write_densities, plot_density, &
        sp_properties,start_protocol
-  USE Pairs, ONLY: pair,epair,avdelt,avdeltv2,avg,eferm,eferm_cutoff,partnum_cutoff,pairwg
+  USE Pairs, ONLY: pair,epair,avdelt,avdeltv2,avg,eferm,eferm_cutoff,partnum_cutoff,pairwg,deltaf
   USE Formfactor, ONLY: radius_print
   IMPLICIT NONE
   LOGICAL  :: tdiag=.FALSE.    !< if \c true, there is a diagonalization of
@@ -890,15 +890,15 @@ CONTAINS
              WRITE(*,'(A)') ' Proton Single Particle States:',header  
           END IF
           IF(cutoff_factor>0D0) THEN
-            WRITE(*,'(1X,I3,F4.0,F8.5,2F9.5,F9.6,F8.3,F10.3,3F8.3,4F7.3)') &
+            WRITE(*,'(1X,I3,F4.0,F8.5,2F9.5,F9.6,F8.3,F10.3,3F8.3,5F7.3)') &
                il,sp_parity(il),wocc(il),sp_efluct1(il),sp_efluct2(il), &
                sp_norm(il),sp_kinetic(il),sp_energy(il), &
-               sp_orbital(:,il),sp_spin(:,il),pairwg(il)
+               sp_orbital(:,il),sp_spin(:,il),pairwg(il),deltaf(il)
           ELSE
-            WRITE(*,'(1X,I3,F4.0,F8.5,2F9.5,F9.6,F8.3,F10.3,3F8.3,4F7.3)') &
+            WRITE(*,'(1X,I3,F4.0,F8.5,2F9.5,F9.6,F8.3,F10.3,3F8.3,5F7.3)') &
                il,sp_parity(il),wocc(il),sp_efluct1(il),sp_efluct2(il), &
                sp_norm(il),sp_kinetic(il),sp_energy(il), &
-               sp_orbital(:,il),sp_spin(:,il),pairwg(il)
+               sp_orbital(:,il),sp_spin(:,il),pairwg(il),deltaf(il)
           END IF
        ENDDO
        CALL moment_print
