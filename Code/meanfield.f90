@@ -291,6 +291,14 @@ CONTAINS
          upot(ix,iy,iz,iq)=50*(cos(REAL(ix)/nx*2*pi))
         END FORALL
         IF(wflag)WRITE(*,*) 'Slab guiding potential'
+      CASE('X')
+        DO iq=1,2; DO ix=1,nx; DO iy=1,ny; DO iz=1,nz
+!          IF(y(iy)>0) upot(ix,iy,iz,iq)=40*(cos(REAL(ix)/nx*2*pi+pi*REAL(iy)/ny))!+&
+            !(1.0d0-abs(REAL(iy-ny/2))/REAL(ny)*2)*REAL(iz)/nz*pi*2))
+          upot(ix,iy,iz,iq)=40*(cos(REAL(ix)/nx*2*pi-&
+            (1.0d0-abs(REAL(iy-ny/2))/REAL(ny)*2)*REAL(iz)/nz*pi*2))
+        END DO; END DO; END DO; END DO
+        IF(wflag)WRITE(*,*) 'Parking ramp guiding potential'
       CASE('R')
         FORALL(iq=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
          upot(ix,iy,iz,iq)=exp(-((x(ix))**2+(y(iy))**2)/(dx*nx/4)**2)
