@@ -65,7 +65,7 @@ OBJS   = params.o grids.o levels.o fourier.o forces.o $(PARALLEL_SKY) \
 	inout.o coulomb.o trivial.o densities.o fragments.o twobody.o \
 	energies.o static.o meanfield.o dynamic.o pairs.o moment.o \
 	main3d.o user.o external.o abso_bc.o constraint.o $(LINALG_SKY) \
-        radius.o
+        radius.o temperature.o
 #
 LINKERFLAGS_SKY    =  $(COMPILERFLAGS_SKY)
 #
@@ -79,6 +79,8 @@ makeit : $(EXEC_SKY)
 $(EXEC_SKY):$(OBJS)
 	$(COMPILER_SKY) $(LINKERFLAGS_SKY) -o $@  $(OBJS) $(LIBS_SKY) 
 #
+
+temperature.o : temperature.f90 levels.o
 
 user.o : user.f90 params.o grids.o levels.o Makefile
 
@@ -133,7 +135,7 @@ pairs.o : pairs.f90 forces.o grids.o levels.o densities.o $(PARALLEL_SKY) Makefi
 
 static.o : static.f90 params.o densities.o grids.o radius.o \
 	levels.o moment.o energies.o inout.o pairs.o \
-        constraint.o meanfield.o $(LINALG_SKY) Makefile
+        constraint.o meanfield.o $(LINALG_SKY) temperature.o Makefile
 
 constraint.o : constraint.f90 params.o densities.o grids.o \
 	levels.o Makefile

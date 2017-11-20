@@ -33,7 +33,7 @@ MODULE Pairs
   USE Parallel, ONLY:globalindex,collect_density,collect_sp_property,tmpi,wflag
   IMPLICIT NONE
   PRIVATE
-  PUBLIC :: pair,epair,avdelt,avg,eferm,avdeltv2,eferm_cutoff,partnum_cutoff,deltaf
+  PUBLIC :: pair,epair,avdelt,avg,eferm,avdeltv2,eferm_cutoff,partnum_cutoff,deltaf,rbrent
   INTEGER :: iq                          !<Index labeling the isospin.
   REAL(db),SAVE :: eferm(2)=(/0D0,0D0/)  !<Fermi energy in MeV for the two isospins.
   REAL(db),SAVE :: epair(2)              !<Pairing energy in MeV for the two isospins. It is given by
@@ -532,7 +532,6 @@ CONTAINS
   REAL(db) FUNCTION fermi_partnum(efermi)
     REAL(db),PARAMETER :: smal=1.0d-20  
     REAL(db),INTENT(in) :: efermi
-!    REAL(db),INTENT(OUT) :: bcs_partnum
     INTEGER :: k
     REAL(db) :: edif,fermi_accum
     fermi_accum=0D0

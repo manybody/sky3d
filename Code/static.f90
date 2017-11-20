@@ -17,6 +17,7 @@ MODULE Static
   USE Energies
   USE Parallel
   USE Constraint, ONLY: tconstraint,before_constraint,init_constraint,tune_constraint,add_constraint
+  USE Temperature, ONLY: kbT,temp_dist
   USE Inout, ONLY: write_wavefunctions, write_densities, plot_density, &
        sp_properties,start_protocol
   USE Pairs, ONLY: pair,epair,avdelt,avdeltv2,avg,eferm,eferm_cutoff,partnum_cutoff,pairwg,deltaf
@@ -80,7 +81,7 @@ CONTAINS
   SUBROUTINE getin_static
     NAMELIST/static/ tdiag,tlarge,maxiter, &
          radinx,radiny,radinz,serr,x0dmp,e0dmp,nneut,nprot,npsi,tvaryx_0,&
-         outerpot,outertype,ttime
+         outerpot,outertype,ttime,kbT
     npsi=0
     READ(5,static)
 
@@ -169,6 +170,11 @@ CONTAINS
        f%h2m=f%h2m*(mass_number-1.0D0)/mass_number
        WRITE(*,*) '***** Nucleon mass modified for z.p.e. correction'
     END IF
+    IF(.NOT.ALLOCATED(pairwg)) THEN
+      ALLOCATE(pairwg(nstmax))
+      pairwg=1D0                        ! default if no soft cutoff is invoked
+    END IF
+    IF(.NOT.ALLOCATED(deltaf)) ALLOCATE(deltaf(nstmax))
   END SUBROUTINE init_static
 !---------------------------------------------------------------------------  
 ! DESCRIPTION: statichf
@@ -321,7 +327,9 @@ CONTAINS
     IF(tmpi) CALL collect_energies(delesum,sumflu)!collect fluctuations and change in energy 
     IF(wflag)WRITE(*,*) 'DONE'
     ! pairing and orthogonalization
+    IF(kbT>0.0d0) CALL temp_dist
     IF(ipair/=0) CALL pair
+    IF(kbT>0.0d0.AND.ipair/=0) STOP 'Pairing and finite temperature is not implemented'
     IF(wflag)WRITE(*,'(A25)',advance="no") 'Initial ortho2... '
     IF (my_iso>0) THEN
       CALL diagstep(my_iso,.FALSE.)
@@ -380,7 +388,9 @@ CONTAINS
        !****************************************************
        ! Step 7: do pairing
        !****************************************************
+       IF(kbT>0.0d0) CALL temp_dist
        IF(ipair/=0) CALL pair
+       IF(kbT>0.0d0.AND.ipair/=0) STOP 'Pairing and finite temperature is not implemented'
        !****************************************************
        ! Step 8: get new densities and fields with relaxation
        !****************************************************
