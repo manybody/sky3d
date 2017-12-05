@@ -491,4 +491,8 @@ CONTAINS
        END FORALL
     END IF
   END SUBROUTINE laplace
+  FUNCTION entropy()
+  REAL(db) entropy
+    entropy=-SUM(wocc(:)*log(wocc(:)+(1-wocc(:))*log(1-wocc(:))))
+  END FUNCTION entropy
 END MODULE Levels

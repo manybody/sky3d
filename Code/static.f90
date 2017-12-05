@@ -845,9 +845,11 @@ CONTAINS
        OPEN(unit=scratch,file=spinfile, POSITION='APPEND')  
        WRITE(scratch,'(1x,i5,9F10.4)') iter,orbital,spin,total_angmom 
        CLOSE(unit=scratch)
-       WRITE(*,'(/,A,I7,A/2(A,F12.4),A/(3(A,E12.5),A))') &
+       WRITE(*,'(/,A,I7,A/A,F12.4,A/2(A,F12.4),A/(3(A,E12.5),A))') &
             ' ***** Iteration ',iter,' *************************************************&
-            &***********************************',' Total energy: ',ehf-ecmcorr,&
+            &***********************************',&
+            ' Free energy: ',ehf-ecmcorr-entropy()*kbT,' MeV',&
+            ' Total energy: ',ehf-ecmcorr,&
             ' MeV  Total kinetic energy: ', tke,' MeV',&
             ' de/e:      ',delesum,'      h**2  fluct.:    ',efluct1,&
             ' MeV, h*hfluc.:    ',efluct2,' MeV', &
