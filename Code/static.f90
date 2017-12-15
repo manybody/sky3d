@@ -157,8 +157,8 @@ CONTAINS
             '# Iter      Lx        Ly        Lz        Sx        Sy        &
             &Sz        Jx        Jy        Jz')
        CALL start_protocol(energiesfile, &
-            '# Iter    N(n)    N(p)       E(sum)         E(integ)       Ekin         &
-            &E_Coul         ehfCrho0       ehfCrho1       ehfCdrho0      ehfCdrh     & 
+            '# Iter    N(n)    N(p)       E(sum)         E(integ)       -TS            &
+            &Ekin         E_Coul         ehfCrho0       ehfCrho1       ehfCdrho0      ehfCdrh     & 
             &ehfCtau0       ehfCtau1       ehfCdJ0        ehfCdJ1')
        IF(tabc_nprocs>1.AND.tabc_myid==0) CALL start_protocol(tabcfile, &
             '# Iter   Energy         E_kin          E_Coul         E_Skyrme ')
@@ -805,7 +805,7 @@ CONTAINS
   SUBROUTINE sinfo(printing)
     INTEGER :: il,iq
     LOGICAL :: printing
-    REAL(db):: tabc_energy, tabc_ekin, tabc_ecoul, tabc_eskyrme
+    REAL(db):: tabc_energy, tabc_ekin, tabc_ecoul, tabc_eskyrme,entro
     CHARACTER(*),PARAMETER :: &
          header='  #  Par   v**2   var_h1   var_h2    Norm     Ekin    Energy &
          &    Lx      Ly      Lz     Sx     Sy     Sz    pairwg'   
@@ -831,8 +831,8 @@ CONTAINS
           END IF
        END IF
        OPEN(unit=scratch,file=energiesfile,POSITION='APPEND')  
-       WRITE(scratch,'(1x,i5,2F8.3,13F15.7)') &
-            iter,pnr,ehf,ehfint,tke,ehfc,ehfCrho0,ehfCrho1,ehfCdrho0,ehfCdrho1,ehfCtau0,&
+       WRITE(scratch,'(1x,i5,2F8.3,14F15.7)') &
+            iter,pnr,ehf,ehfint,-entropy()*kbT,tke,ehfc,ehfCrho0,ehfCrho1,ehfCdrho0,ehfCdrho1,ehfCtau0,&
             ehfCtau1,ehfCdJ0,ehfCdJ1,ecmcorr
        CLOSE(unit=scratch)
        OPEN(unit=scratch,file=converfile,POSITION='APPEND')  
@@ -845,10 +845,11 @@ CONTAINS
        OPEN(unit=scratch,file=spinfile, POSITION='APPEND')  
        WRITE(scratch,'(1x,i5,9F10.4)') iter,orbital,spin,total_angmom 
        CLOSE(unit=scratch)
-       WRITE(*,'(/,A,I7,A/A,F12.4,A/2(A,F12.4),A/(3(A,E12.5),A))') &
+       entro=entropy()
+       WRITE(*,'(/,A,I7,A/A,2(F12.4,A)/2(A,F12.4),A/(3(A,E12.5),A))') &
             ' ***** Iteration ',iter,' *************************************************&
             &***********************************',&
-            ' Free energy: ',ehf-ecmcorr-entropy()*kbT,' MeV',&
+            ' Free energy: ',ehf-ecmcorr-entro*kbT,' MeV Entropy: ',entro,'.',&
             ' Total energy: ',ehf-ecmcorr,&
             ' MeV  Total kinetic energy: ', tke,' MeV',&
             ' de/e:      ',delesum,'      h**2  fluct.:    ',efluct1,&

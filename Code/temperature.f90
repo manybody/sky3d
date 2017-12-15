@@ -27,7 +27,6 @@ CONTAINS
       IF(iq==1) particle_number=mass_number-charge_number
       IF(iq==2) particle_number=charge_number
       chem_pot(iq)=rbrent(particle_number,fermi_dist)
-      WRITE(*,*)'chem. potential',iq,chem_pot(iq)
     END DO
   END SUBROUTINE temp_dist
 !---------------------------------------------------------------------------  

@@ -493,6 +493,6 @@ CONTAINS
   END SUBROUTINE laplace
   FUNCTION entropy()
   REAL(db) entropy
-    entropy=-SUM(wocc(:)*log(wocc(:)+(1-wocc(:))*log(1-wocc(:))))
+    entropy=-SUM(wocc(:)*log(wocc(:))+(1.0d0-wocc(:))*log(1.0d0-wocc(:)))
   END FUNCTION entropy
 END MODULE Levels
