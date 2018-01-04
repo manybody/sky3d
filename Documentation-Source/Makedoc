@@ -1,0 +1,6 @@
+latex Userguide.tex
+bibtex Userguide.aux
+latex Userguide.tex
+latex Userguide.tex
+dvips Userguide.dvi
+ps2pdf Userguide.ps

@@ -15,7 +15,7 @@ MODULE DYNAMIC
   USE Levels
   USE Energies
   USE Moment
-  USE Twobody, ONLY: twobody_case,istwobody,roft,rdot, twobody_print
+  USE Twobody, ONLY: twobody_analysis,istwobody,roft,roft_old
   USE Parallel
   USE Meanfield, ONLY: skyrme, hpsi, spot
   USE Trivial, ONLY: overlap
@@ -371,7 +371,8 @@ CONTAINS
 !!    a full printout (determined by \c mprint).
 !!  - <b> Step 2: twobody analysis </b> the twobody analysis is
 !!    performed, but only if the calculation started as a twobody
-!!    scenario.
+!!    scenario. This is the simplified version which essentially only
+!!    determines the fragment in case of separation.  
 !!  - <b> Step 3: moments: </b> the moments of the distribution are
 !!    calculated using subroutine \c moments. This includes total mass,
 !!    momenta, and angular momenta. They are printed out if indicated by
@@ -408,25 +409,16 @@ CONTAINS
 !!    \c plot_densities and the binary densities are written onto <tt> *.tdd </tt>
 !!    files using \c write_densities.
 !!  - <b> Step 7: other output: </b> in the proper \c mprint interval
-!!    the two-body analysis results, the single-particle state
+!!    the single-particle state
 !!    information, and the moments are printed on standard output, using
-!!    also the routines \c twobody_print and \c moment_print. 
-!!
-!!    It is important to note that when \c tinfo is called before the 
-!!    time step iteration starts, the
-!!    two-body analysis cannot work because the fragment centers of mass
-!!    from the previous time step  are either not known yet (restart) or
-!!    identical to the present ones (initialization). The subroutine \c twobody_case 
-!!    is still called to find the fragment properties,
-!!    but the derived kinetic energy etc. will be incorrect. Therefore
-!!    the call to \c twobody_print is suppressed in this case. The
-!!    logical variable \c initialcall is used to recognize this case.
+!!    also the routine \c moment_print. 
 !!
 !!  - <b> Step 8: check for final separation: </b> for the twobody case
 !!    it is checked whether the separation found between the two fragments
 !!    is larger than the input quantity \c rsep with positive time
 !!    derivative \c rdot of the separation distance, in which case the
-!!    program is terminated with an appropriate message.
+!!    program complete twobody analysis is done and the wave functions
+!!    are saved; then the job is terminated with an appropriate message.
 !--------------------------------------------------------------------------- 
   SUBROUTINE tinfo
     REAL(db), DIMENSION(2) :: ecoll     ! storage for collective-flow energy
@@ -445,9 +437,9 @@ CONTAINS
     printnow=mprint>0.AND.MOD(iter,mprint)==0
     ! Step 2: twobody analysis
     IF(nof/=2) THEN  
-       istwobody=.FALSE.
+      istwobody=.FALSE.
     ELSE
-       CALL twobody_case(dt)
+       CALL twobody_analysis(.FALSE.) ! get distance in separated case
     ENDIF
     ! Step 3: moments calculated
     CALL moments
@@ -512,8 +504,6 @@ CONTAINS
     ENDIF
     ! Step 7: print other output
     IF(printnow.AND.wflag) THEN
-       IF(nof==2.AND.istwobody.AND..NOT.initialcall) &
-            CALL twobody_print
        WRITE(*,'(/A)') ' Neutron Single Particle States:',header
        DO il=1,nstmax
           IF(il==npmin(2)) THEN
@@ -526,10 +516,12 @@ CONTAINS
        CALL moment_print
     ENDIF
     DEALLOCATE(ps1)
-    ! Step 8: check whether final distance is reached in twobody case
-    IF(istwobody.AND.roft>rsep.AND.rdot>=0.D0) THEN  
-       CALL twobody_print
+    ! Step 8: check whether final distance is reached and it is
+    ! increasing in the twobody case
+    IF(istwobody.AND.roft>rsep.AND.roft>roft_old) THEN  
+       CALL twobody_analysis(.TRUE.) ! do complete version
        CALL write_wavefunctions
+       CALL write_densities
        IF(wflag) WRITE(*,*) ' Final separation distance reached'
        STOP ' Final distance reached'  
     ENDIF

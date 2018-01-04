@@ -1,8 +1,0 @@
-isagert@indiana.edu
-Satoshi Chiba <chiba.satoshi@nr.titech.ac.jp>
-hashimoto.yukio.gb@u.tsukuba.ac.jp
-Lu Guo <luguo@ucas.ac.cn>
-wangnan@szu.edu.cn
-jiang@mail.bnu.edu.cn
-Takatoshi Ichikawa <ichikawa@yukawa.kyoto-u.ac.jp>
-Yoritaka Iwata <iwata@cns.s.u-tokyo.ac.jp>

@@ -104,7 +104,7 @@ CONTAINS
     IF(mpi_myproc==0) THEN
        OPEN(UNIT=scratch2,FILE=wffile,STATUS='REPLACE',FORM='UNFORMATTED')
        WRITE(scratch2) iter,time,f%name,nstmax,nneut,nprot,number,npsi, &
-            charge_number,mass_number,cm
+            charge_number,mass_number,cmtot
        WRITE(scratch2) nx,ny,nz,dx,dy,dz,wxyz
        WRITE(scratch2) x,y,z
        WRITE(scratch2) wocc,sp_energy,sp_parity,sp_norm,sp_kinetic, &

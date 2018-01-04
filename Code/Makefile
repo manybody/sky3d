@@ -41,7 +41,7 @@ mpi-omp             : export EXEC_SKY = sky3d.mpi-omp
 #
 seq omp mpi debug seq_debug mpi_debug omp_debug mpi-omp ifort ifort_seq ifort_omp:
 	@$(MAKE) -f $(firstword $(MAKEFILE_LIST)) makeit
-	
+
 clean:
 	-@rm -f *.o *.mod 2>/dev/null || true
 
@@ -100,7 +100,7 @@ grids.o : grids.f90 params.o forces.o Makefile
 
 densities.o : densities.f90 params.o grids.o levels.o trivial.o Makefile
 
-fragments.o : fragments.f90 params.o grids.o forces.o levels.o twobody.o \
+fragments.o : fragments.f90 params.o grids.o forces.o levels.o \
 	$(PARALLEL_SKY) Makefile
 
 twobody.o : twobody.f90 params.o grids.o densities.o moment.o forces.o Makefile

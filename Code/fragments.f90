@@ -127,7 +127,6 @@ CONTAINS
 !!This calculates the \c fboost values from \c ecm and \c b. 
 !--------------------------------------------------------------------------- 
   SUBROUTINE getin_fragments
-    USE Twobody, ONLY: centerx,centerz
     INTEGER :: i
     REAL(db) :: fdx,fdy,fdz,fwxyz
     CHARACTER(8) :: forcename
@@ -208,11 +207,6 @@ CONTAINS
     charge_number=nprot
     mass_number=nneut+nprot
     IF(.NOT.fix_boost.AND.nof==2.AND.tdynamic) CALL twobody_init
-    IF(nof==2) THEN
-       ! Give fragment positions to 2-body analysis as initial guess
-       centerx=fcent(1,1:2)
-       centerz=fcent(3,1:2)
-    END IF
   END SUBROUTINE getin_fragments
 !---------------------------------------------------------------------------  
 ! DESCRIPTION: read_fragments

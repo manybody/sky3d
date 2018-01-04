@@ -150,7 +150,7 @@ CONTAINS
     ENDDO
     ! Step 3: Coulomb potential
     IF(tcoul) THEN
-       CALL poisson
+       CALL poisson(rho(:,:,:,2))
        upot(:,:,:,2)=upot(:,:,:,2)+wcoul
        IF(f%ex/=0) &
             upot(:,:,:,2)=upot(:,:,:,2)-slate*rho(:,:,:,2)**(1.0D0/3.0D0)

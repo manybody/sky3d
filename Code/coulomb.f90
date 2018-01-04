@@ -148,12 +148,13 @@ CONTAINS
 !!transform of \f$1/r\f$, but to compute it on the actual grid the same way
 !!as the densities and potentials are transformed
 !---------------------------------------------------------------------------  
-  SUBROUTINE poisson
+  SUBROUTINE poisson(rhocharge)
+    REAL(db),INTENT(IN) :: rhocharge(nx,ny,nz)
     COMPLEX(db),ALLOCATABLE :: rho2(:,:,:)
     ALLOCATE(rho2(nx2,ny2,nz2))
     ! put proton density into array of same or double size, zeroing rest
     IF(.NOT.periodic) rho2=(0.D0,0.D0)
-    rho2(1:nx,1:ny,1:nz)=rho(:,:,:,2)
+    rho2(1:nx,1:ny,1:nz)=rhocharge(:,:,:)
     ! transform into momentum space
     CALL dfftw_execute_dft(coulplan1,rho2,rho2)
     ! add charge factor and geometric factors
@@ -217,7 +218,7 @@ CONTAINS
        q(1,1,1)=(0.D0,0.D0)
     ELSE
        q=1.D0/SQRT(REAL(q))
-       q(1,1,1)=2.84D0/(dx*dy*dz)**(1.D0/3.D0)
+       q(1,1,1)=2.84D0*3.D0/(dx+dy+dz)
        CALL dfftw_execute_dft(coulplan1,q,q)
     END IF
     DEALLOCATE(iqx,iqy,iqz)
