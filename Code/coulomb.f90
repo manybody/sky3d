@@ -110,8 +110,9 @@
 
 MODULE Coulomb
   USE Params, ONLY: db,pi,e2
-  USE Grids, ONLY: nx,ny,nz,dx,dy,dz,wxyz,periodic
-  USE Densities, ONLY: rho
+  USE Trivial, ONLY: rmulx,rmuly,rmulz
+  USE Grids, ONLY: nx,ny,nz,dx,dy,dz,wxyz,periodic,screening,k_TF,der2x,der2y,der2z
+  USE Densities, ONLY: rho,rho_e,rhoC_eff
   USE ISO_C_BINDING
   IMPLICIT NONE
   !>@name Dimensions of the grid on which the Fourier transform is calculated. 
@@ -167,10 +168,17 @@ CONTAINS
     ! transform back to coordinate space and return in wcoul
     CALL dfftw_execute_dft(coulplan2,rho2,rho2)
     wcoul=REAL(rho2(1:nx,1:ny,1:nz))/(nx2*ny2*nz2)
+    IF(screening) THEN
+      CALL rmulx(der2x,wcoul(:,:,:),rhoC_eff(:,:,:),0)
+      CALL rmuly(der2y,wcoul(:,:,:),rhoC_eff(:,:,:),1)
+      CALL rmulz(der2z,wcoul(:,:,:),rhoC_eff(:,:,:),1)
+      rhoC_eff=-1.0d0/(4.0d0*pi*e2)*rhoC_eff
+      rho_e=rho(:,:,:,2)-rhoC_eff
+    END IF
     DEALLOCATE(rho2)
   END SUBROUTINE poisson
 !---------------------------------------------------------------------------  
-! DESCRIPTION: coulinint
+! DESCRIPTION: coulinit
 !> @brief
 !!This subroutine does the necessary initialization. 
 !!
@@ -189,9 +197,13 @@ CONTAINS
 !>
 !--------------------------------------------------------------------------- 
   SUBROUTINE coulinit
+    USE Levels, ONLY: nprot
+    USE Grids, ONLY: k_TF
+    USE Params, ONLY: hbc
     INCLUDE 'fftw3.f'
     REAL(db),ALLOCATABLE :: iqx(:),iqy(:),iqz(:)
-    INTEGER :: i,j,k
+    REAL(db) :: n_e,x_r,beta_r,k_F,alpha_f,r_e
+    INTEGER  :: i,j,k
     IF(ALLOCATED(q)) RETURN ! has been initialized already
     ! dimensions will be doubled for isolated distribution
     IF(periodic) THEN
@@ -214,7 +226,11 @@ CONTAINS
     FORALL(k=1:nz2,j=1:ny2,i=1:nx2) q(i,j,k)=iqx(i)+iqy(j)+iqz(k)
     q(1,1,1)=1.D0
     IF(periodic) THEN
-       q=1.D0/REAL(q)
+      IF(screening) THEN
+        q=1.D0/(REAL(q)+k_f**2)
+      ELSE 
+        q=1.D0/REAL(q)
+      END IF
        q(1,1,1)=(0.D0,0.D0)
     ELSE
        q=1.D0/SQRT(REAL(q))
@@ -222,6 +238,19 @@ CONTAINS
        CALL dfftw_execute_dft(coulplan1,q,q)
     END IF
     DEALLOCATE(iqx,iqy,iqz)
+    IF(screening)THEN
+      WRITE(*,*)'Electron screening is switched on.'
+      n_e=REAL(nprot)/REAL(nx*ny*nz*wxyz)
+      k_F=(3*pi**2*n_e)**(1.d0/3.d0)
+      x_r=hbc*k_F/0.510998
+      beta_r=x_r/sqrt(1.0d0+x_r**2)
+      alpha_f=1.0d0/137.036d0
+      k_TF=2.0d0*sqrt(alpha_f/(pi*beta_r))*k_F
+      r_e=1/k_TF
+      WRITE(*,*)'Mean electron density is: ',n_e
+      WRITE(*,*)'Screening wave length: ',k_TF
+      WRITE(*,*)'Screening radius: ',r_e
+    END IF
   END SUBROUTINE coulinit
 !---------------------------------------------------------------------------  
 ! DESCRIPTION: initiq

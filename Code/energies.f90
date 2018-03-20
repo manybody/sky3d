@@ -109,11 +109,11 @@ CONTAINS
 !--------------------------------------------------------------------------- 
   SUBROUTINE integ_energy
     USE Trivial, ONLY: rmulx,rmuly,rmulz
-    USE Grids, ONLY: wxyz,der1x,der2x,der1y,der2y,der1z,der2z
+    USE Grids, ONLY: wxyz,der1x,der2x,der1y,der2y,der1z,der2z,screening
     USE Coulomb, ONLY: wcoul
     INTEGER :: ix,iy,iz,iq
     REAL(db) :: rhot,rhon,rhop,d2rho,d2rhon,d2rhop,sc
-    REAL(db) :: rho0,rho1,d2rho0,d2rho1,tau0,tau1
+    REAL(db) :: rho0,rho1,d2rho0,d2rho1,tau0,tau1,ehfc1,ehfc2
     REAL(db) :: worka(nx,ny,nz,2)
     REAL(db) :: workb(nx,ny,nz,3,2)
     ! Step 1: compute laplacian of densities, then ehf0, ehf2, and ehf3
@@ -207,6 +207,8 @@ CONTAINS
     ! Step 4: Coulomb energy with Slater term, also correction
     ! term to Koopman formula
     ehfc=0.0D0
+    ehfc1=0.0d0
+    ehfc2=0.0d0
     ecorc=0.0D0
     IF(tcoul) THEN
        IF(f%ex/=0) THEN
@@ -217,14 +219,16 @@ CONTAINS
        DO iz=1,nz
           DO iy=1,ny
              DO ix=1,nx
-                rhop=rho(ix,iy,iz,2)
-                ehfc=ehfc+wxyz *(0.5D0*rhop*wcoul(ix,iy,iz) &
-                     +sc*rhop**(4.0D0/3.0D0))
+                rhop=rho(ix,iy,iz,2)             
+                ehfc1=ehfc1+wxyz*(0.5D0*rhop*wcoul(ix,iy,iz))
+                ehfc2=ehfc2+wxyz*(sc*rhop**(4.0D0/3.0D0))
                 ecorc=ecorc+wxyz*sc/3.0D0*rhop**(4.0D0/3.0D0)
              ENDDO
           ENDDO
        ENDDO
     ENDIF
+    ehfc=ehfc1+ehfc2
+    !WRITE(*,*)'Ecoul= ',ehfc1,ehfc2,ehfc
     ! Step 5: kinetic energy contribution
     ehft=wxyz*SUM(f%h2m(1)*tau(:,:,:,1)+f%h2m(2)*tau(:,:,:,2))
     ! Step 6: form total energy

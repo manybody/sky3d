@@ -25,6 +25,8 @@ MODULE Densities
   !< the density, separately for each isospin (in
   !!\f${\rm fm}^{-3} \f$).  The definition is:
   !!\f[ \rho_q(\vec r)=\sum_{k\in q}w_k^2\sum_s|\phi_k(\vec r,s)|^2,\qquad q=n,p \f]
+  REAL(db),ALLOCATABLE,DIMENSION(:,:,:) :: rho_e
+  REAL(db),ALLOCATABLE,DIMENSION(:,:,:) :: rhoC_eff
   REAL(db),ALLOCATABLE,DIMENSION(:,:,:,:) :: tau
   !<the kinetic energy density, separately
   !!for each isospin. It is defined as the sum of the spin
@@ -67,7 +69,7 @@ CONTAINS
 !--------------------------------------------------------------------------- 
   SUBROUTINE alloc_densities
     ALLOCATE(rho(nx,ny,nz,2),tau(nx,ny,nz,2),current(nx,ny,nz,3,2), &
-         sdens(nx,ny,nz,3,2),sodens(nx,ny,nz,3,2))
+         sdens(nx,ny,nz,3,2),sodens(nx,ny,nz,3,2),rho_e(nx,ny,nz),rhoC_eff(nx,ny,nz))
   END SUBROUTINE alloc_densities
 !---------------------------------------------------------------------------  
 ! DESCRIPTION: add_density

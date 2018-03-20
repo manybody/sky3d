@@ -23,6 +23,8 @@ MODULE Grids
   REAL(db) :: bangz         !< bloch phase in z-direction.
   LOGICAL  :: periodic      !< logical variable indicating whether the situation is triply 
   !!periodic in three-dimensional space.
+  LOGICAL  :: screening=.FALSE.!< If true, Coulomb field is computed with electron screening.
+  REAL(db) :: k_TF=0.0d0     !< Inverse screening length.
   REAL(db) :: dx            !< The spacing between grid points (in fm) in x-directions.
   REAL(db) :: dy            !< The spacing between grid points (in fm) in y-directions.
   REAL(db) :: dz            !< The spacing between grid points (in fm) in z-directions.
@@ -72,8 +74,9 @@ CONTAINS
 !!the volume element. 
 !--------------------------------------------------------------------------- 
   SUBROUTINE init_grid
+    REAL(db) :: rho_e
     NAMELIST /Grid/ nx,ny,nz,dx,dy,dz,periodic,bangx,bangy,bangz,&
-                    tabc_x,tabc_y,tabc_z
+                    tabc_x,tabc_y,tabc_z,screening
     dx=0.D0
     dy=0.D0
     dz=0.D0
@@ -103,7 +106,7 @@ CONTAINS
        STOP
     END IF
     IF(wflag) THEN
-      WRITE(*,*) 'Bloch twist x-direction: ',bangx
+       WRITE(*,*) 'Bloch twist x-direction: ',bangx
        WRITE(*,*) 'Bloch twist y-direction: ',bangy
        WRITE(*,*) 'Bloch twist z-direction: ',bangz
     END IF
