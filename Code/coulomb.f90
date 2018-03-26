@@ -200,6 +200,7 @@ CONTAINS
     USE Levels, ONLY: nprot
     USE Grids, ONLY: k_TF
     USE Params, ONLY: hbc
+    IMPLICIT NONE
     INCLUDE 'fftw3.f'
     REAL(db),ALLOCATABLE :: iqx(:),iqy(:),iqz(:)
     REAL(db) :: n_e,x_r,beta_r,k_F,alpha_f,r_e
@@ -227,7 +228,7 @@ CONTAINS
     q(1,1,1)=1.D0
     IF(periodic) THEN
       IF(screening) THEN
-        q=1.D0/(REAL(q)+k_f**2)
+        q=1.D0/(REAL(q)+k_TF**2)
       ELSE 
         q=1.D0/REAL(q)
       END IF
