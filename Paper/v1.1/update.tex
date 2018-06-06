@@ -1,0 +1,465 @@
+%% This template can be used to write a paper for
+%% Computer Physics Communications using LaTeX.
+%% For authors who want to write a computer program description,
+%% an example Program Summary is included that only has to be
+%% completed and which will give the correct layout in the
+%% preprint and the journal.
+%% The `elsarticle' style is used and more information on this style
+%% can be found at 
+%% http://www.elsevier.com/wps/find/authorsview.authors/elsarticle.
+%%
+%%
+\documentclass[final,1p,twocolumn]{elsarticle}
+
+%% Use the option review to obtain double line spacing
+%% \documentclass[preprint,review,12pt]{elsarticle}
+
+%% Use the options 1p,twocolumn; 3p; 3p,twocolumn; 5p; or 5p,twocolumn
+%% for a journal layout:
+%% \documentclass[final,1p,times]{elsarticle}
+%% \documentclass[final,1p,times,twocolumn]{elsarticle}
+%% \documentclass[final,3p,times]{elsarticle}
+%% \documentclass[final,3p,times,twocolumn]{elsarticle}
+%% \documentclass[final,5p,times]{elsarticle}
+%% \documentclass[final,5p,times,twocolumn]{elsarticle}
+
+%% if you use PostScript figures in your article
+%% use the graphics package for simple commands
+%% \usepackage{graphics}
+%% or use the graphicx package for more complicated commands
+%% \usepackage{graphicx}
+%% or use the epsfig package if you prefer to use the old commands
+%% \usepackage{epsfig}
+
+%% The amssymb package provides various useful mathematical symbols
+\usepackage{amssymb}
+\usepackage[usenames]{color}
+%% The amsthm package provides extended theorem environments
+%% \usepackage{amsthm}
+
+%% The lineno packages adds line numbers. Start line numbering with
+%% \begin{linenumbers}, end it with \end{linenumbers}. Or switch it on
+%% for the whole article with \linenumbers after \end{frontmatter}.
+%% \usepackage{lineno}
+
+%% natbib.sty is loaded by default. However, natbib options can be
+%% provided with \biboptions{...} command. Following options are
+%% valid:
+
+%%   round  -  round parentheses are used (default)
+%%   square -  square brackets are used   [option]
+%%   curly  -  curly braces are used      {option}
+%%   angle  -  angle brackets are used    <option>
+%%   semicolon  -  multiple citations separated by semi-colon
+%%   colon  - same as semicolon, an earlier confusion
+%%   comma  -  separated by comma
+%%   numbers-  selects numerical citations
+%%   super  -  numerical citations as superscripts
+%%   sort   -  sorts multiple citations according to order in ref. list
+%%   sort&compress   -  like sort, but also compresses numerical citations
+%%   compress - compresses without sorting
+%%
+%% \biboptions{comma,round}
+
+% \biboptions{}
+
+%% This list environment is used for the references in the
+%% Program Summary
+%%
+\newcounter{bla}
+\newenvironment{refnummer}{%
+\list{[\arabic{bla}]}%
+{\usecounter{bla}%
+ \setlength{\itemindent}{0pt}%
+ \setlength{\topsep}{0pt}%
+ \setlength{\itemsep}{0pt}%
+ \setlength{\labelsep}{2pt}%
+ \setlength{\listparindent}{0pt}%
+ \settowidth{\labelwidth}{[9]}%
+ \setlength{\leftmargin}{\labelwidth}%
+ \addtolength{\leftmargin}{\labelsep}%
+ \setlength{\rightmargin}{0pt}}}
+ {\endlist}
+
+\journal{Computer Physics Communications}
+
+\begin{document}
+
+\begin{frontmatter}
+
+%% Title, authors and addresses
+
+%% use the tnoteref command within \title for footnotes;
+%% use the tnotetext command for the associated footnote;
+%% use the fnref command within \author or \address for footnotes;
+%% use the fntext command for the associated footnote;
+%% use the corref command within \author for corresponding author footnotes;
+%% use the cortext command for the associated footnote;
+%% use the ead command for the email address,
+%% and the form \ead[url] for the home page:
+%%
+%% \title{Title\tnoteref{label1}}
+%% \tnotetext[label1]{}
+%% \author{Name\corref{cor1}\fnref{label2}}
+%% \ead{email address}
+%% \ead[url]{home page}
+%% \fntext[label2]{}
+%% \cortext[cor1]{}
+%% \address{Address\fnref{label3}}
+%% \fntext[label3]{}
+
+\title{The TDHF Code Sky3D Version 1.1} 
+
+\author{B.~Schuetrumpf\corref{gsi} }\ead{b.schuetrumpf@gsi.de}
+\address{National Superconducting Cyclotron Laboratory\\
+Michigan State University, East Lansing, Michigan 48824, USA}
+
+\author{P.-G.~Reinhard}\ead{Paul-Gerhard.Reinhard@physik.uni-erlangen.de}
+\address{Institut f\"ur Theoretische Physik II, Universit\"at
+  Erlangen-N\"urnberg, \\Staudtstrasse 7, 91058 Erlangen, Germany}
+
+\author{P.~D.~Stevenson}\ead{p.stevenson@surrey.ac.uk}
+\address{Department of Physics, University of Surrey, Guildford,
+  Surrey, GU2 7XH, United Kingdom}
+
+\author{A. S. Umar}\ead{sait.a.umar@Vanderbilt.Edu}
+\address{Department of Physics and Astronomy, Vanderbilt University, \\Nashville, Tennessee 37235, USA}
+
+\author{J.~A.~Maruhn\corref{author}} \ead{maruhn@th.physik.uni-frankfurt.de}
+\address{Institut f\"ur Theoretische Physik, Goethe-Universit\"at,
+  Max-von-Laue-Str. 1, \\60438 Frankfurt am Main, Germany}
+
+\cortext[gsi]{Present address: Gesellschaft f\"ur
+    Schwerionenforschung, 64291 Darmstadt, Germany}
+\cortext[author]{Corresponding author.}
+
+\begin{abstract}
+  The nuclear mean-field model based on Skyrme forces or related
+  density functionals has found widespread application to the
+  description of nuclear ground states, collective vibrational
+  excitations, and heavy-ion collisions. The code Sky3D solves the
+  static or dynamic equations on a three-dimensional Cartesian mesh
+  with isolated or periodic boundary conditions and no further
+  symmetry assumptions. Pairing can be included in the BCS
+  approximation for the static case. The code is implemented with a
+  view to allow easy modifications for including additional physics or
+  special analysis of the results.
+\end{abstract}
+
+\begin{keyword}
+Hartree-Fock; BCS; Density-functional theory; Skyrme energy functional; Giant Resonances;
+Heavy-Ion collisions.
+\end{keyword}
+\end{frontmatter}
+
+{\bf NEW VERSION PROGRAM SUMMARY}
+  %Delete as appropriate.
+{\bf PROGRAM SUMMARY}
+
+\begin{small}
+\noindent
+{\em Title:}  The TDHF Code Sky3D Version 1.1\\
+{\em Authors:}   B.~Schuetrumpf, P.-G.~Reinhard, P.~D.~Stevenson,
+A.~S.~Umar, and J.~A.~Maruhn, \\
+{\em Program Title:} Sky3D\\
+{\em Journal Reference:}                                      \\
+  %Leave blank, supplied by Elsevier.
+{\em Catalogue identifier:}                                   \\
+  %Leave blank, supplied by Elsevier.
+{\em Licensing provisions:}   none\\
+  %enter "none" if CPC non-profit use license is sufficient.
+{\em Programming language:} Fortran 90. The {\tt OpenMP} version
+requires a relatively recent compiler; it was found to work using {\tt
+  gfortran 4.6.2} or later and the Intel compiler version 12 or later.\\
+{\em Computer:}   All computers with a Fortran compiler supporting at
+least Fortran 90.\\
+  %Computer(s) for which program has been designed.
+{\em Operating system:}  All operating systems with such a
+compiler. Some of the Makefiles and scripts depend on a Unix-like
+system and need modification under Windows.\\
+  %Operating system(s) for which program has been designed.
+{\em RAM:} 1~GB\\
+  %RAM in bytes required to execute program with typical data.
+{\em Number of processors used:} no built-in limit, parallelization
+using both OpenMP and MPI.\\
+  %If more than one processor.
+{\em Supplementary material:} Extensive documentation and a number of
+utility programs to analyze the results and prepare them for graphics
+output using the Silo library ({\tt
+  http://wci.llnl.gov/simulation/computer-codes/silo}) for use in VisIT
+\cite{HPV:VisIt} or Paraview ({\tt https://www.paraview.org}). The
+code can serve as a template for interfacing to other database or graphics systems.  \\
+{\em Keywords:} Nuclear theory, Mean-field models, Nuclear reactions\\
+  % Please give some freely chosen keywords that we can use in a
+  % cumulative keyword index.
+{\em Classification:}  17.16 Theoretical Methods - General, 17.22 
+Hartree-Fock Calculations, 17.23 Fission and Fusion Processes\\
+  %Classify using CPC Program Library Subject Index, see (
+  % http://cpc.cs.qub.ac.uk/subjectIndex/SUBJECT_index.html)
+  %e.g. 4.4 Feynman diagrams, 5 Computer Algebra.
+{\em External routines/libraries:}  LAPACK, FFTW3. 
+\\
+{\em Catalogue identifier of previous version:}             \\
+ AESW\_v1\_0.\\
+  %Only required for a New Version summary, otherwise leave out.
+{\em Journal reference of previous version:}                  \\
+J.~A.~Maruhn, P.-G.~Reinhard, P.~D.~Stevenson, and A.~S.~Umar, "The
+TDHF Code Sky3D", Comp. Phys. Comm. {\bf 185}, 2195 (2014).\\
+  %Only required for a New Version summary, otherwise leave out.
+{\em Does the new version supersede the previous version?:}   \\
+Yes.\\
+
+{\em Nature of problem:} The time-dependent Hartree-Fock equations can
+be used to simulate nuclear vibrations and collisions between nuclei
+for low energies. This code implements the equations based on a Skyrme
+energy functional and also allows the determination of the
+ground-state structure of nuclei through the static version of the
+equations. For the case of vibrations the principal aim is to
+calculate the excitation spectra by Fourier-analyzing the time
+dependence of suitable observables. In collisions, the formation of a
+neck between nuclei, the dissipation of energy from collective motion,
+processes like charge transfer and the approach to fusion are of
+principal interest.\\
+  %Describe the nature of the problem here.
+\\
+{\em Solution method:} The nucleonic wave function spinors are
+represented on a three-dimensional Cartesian mesh with no further
+symmetry restrictions. The boundary conditions are always periodic for
+the wave functions, while the Coulomb potential can also be calculated
+for an isolated charge distribution. All spatial derivatives are
+evaluated using the finite Fourier transform method. The code solves
+the static Hartree-Fock equations with a damped gradient iteration
+method and the time-dependent Hartree-Fock equations with an expansion
+of the time-development operator. Any number of initial nuclei can be
+placed into the mesh in with arbitrary positions and
+initial velocities.\\
+
+{\em Reasons for the new version:}\\
+A few bugs were fixed and a number of enhancements added concerning
+faster convergence, better stability, and more sophisticated analysis
+of some results.
+
+{\em Summary of revisions:}\\
+The following is a brief summary. A more complete documentation can be
+found as {\tt update.pdf} in the {\tt Documentation} subdirectory.
+
+{\bf New documentation:} It was decided to switch the documentation to using the {\tt
+    Doxygen} system (available from {\tt www.doxygen.org}), which can
+  generate the documentation in a variety of formats. To generate the
+  documentation, go into the {\tt Doc-doxygen} subdirectory and
+  execute {\tt make html}, {\tt make latex}, or {\tt make all} to
+  produce the corresponding version or both of them.
+
+%{\color{red}
+  The documentation inserted into the source files accounts for most
+  of the formal changes in them. The general documentation is also
+  updated and present as ``Documentation.pdf''.
+%}
+
+ {\bf Bug fixes:} 
+\begin{enumerate}
+\item In the force database {\tt forces.data} two digits were
+  interchanged in the definition of SLy4d, leading to wrong results
+  for that force.
+
+\item If a restart is done for a two-body collision, the code changed
+  the number of fragments to {\tt nof}=1. The restart is then
+  initialized like a single-nucleus case with  {\tt nof}=1. But two-body
+  analysis was activated only for {\tt nof}>1 such that it was absent
+  after restart.
+
+%{\color{red}
+\item In the time-dependent mode, the wave functions were only save at
+  intervals of {\tt mprint} and {\tt mrest}, respectively. If a
+  calculation stops because of reaching the final distance or
+  fulfilling the convergence criterion, this may lead to a loss of
+  information, so that now both are done also in this event before the
+  job finishes.
+%}
+
+\item The external field parameters were calculated directly from the
+  input in {\tt getin\_external}. Since this is called before the
+  fragment initialization is done, coefficients depending on proton or
+  neutron number will not be calculated correctly. For this reason,
+  the calculation of these coefficients is separated into a new
+  routine {\tt init\_external}, which is called directly before the
+  dynamic calculation starts.
+\end{enumerate}
+
+{\bf Array allocation:} It turned out that having the working arrays
+as automatic variables could cause problems, as they are allocated on
+the stack and the proper stack size must be calculated. Therefore in
+all cases where a larger array is concerned, it is now changed to {\tt
+  ALLOCATABLE} and allocated and deallocated as necessary.
+
+{\bf Elimination of ``guru'' mode of FFTW3} While the guru mode as
+defined in the FFTW3 package (see {\tt fftw.org}) offers an elegant
+formulation of complicated multidimensional transforms, it is not
+implemented in some support libraries like the Intel\textregistered\
+MKL. There is not much loss in speed when this is replaced by
+standard transforms with some explicit loops added where
+necessary. This affects the wave function transforms in the $y$ and
+$z$ direction.
+
+{\bf Enhancement of the makefile} In the previous version there were
+several versions of the makefile, which had to be edited by hand to
+use different compilers. This was reformulated using a more flexible
+file with various targets predefined. Thus to generate the executable
+code, it is sufficient to execute ``{\tt make} {\em target} `` in the
+{\tt Code} subdirectory, where {\em target} is one of the following:
+
+\begin{itemize}
+\item {\tt seq} : simple sequential version with the gfortran compiler.
+\item {\tt ifort}, {\tt ifort\_seq} : sequential version using the Intel compiler. 
+\item {\tt omp} and {\tt ifort\_omp} produce the OpenMP version for
+  the gfortran and Intel compiler, respectively.
+\item {\tt mpi} : MPI version, which uses the compiler mpif90.
+\item {\tt mpi-omp} : MPI version also using OpenMP on each node.
+\item {\tt debug}, {\tt seq\_debug}, {\tt omp\_debug}, {\tt
+    mpi\_debug} : enable debugging mode for these cases. The first
+  three use the gfortran compiler.
+\item {\tt clean} : removes the generated object and module files.
+\item {\tt clean-exec} : same as {\tt clean} but removes the
+  executable files as well.
+\end{itemize}
+
+The generated executable files are called {\tt sky3d.seq}, {\tt
+  sky3d.ifort.seq}, {\tt sky3d.mpi}, {\tt sky3d.omp}, {\tt
+  sky3d.ifort.omp}, and {\tt sky3d.mpi-omp}, which should be
+self-explanatory. Thus several versions may be kept in the code
+directory, but a {\tt make clean} should be done before producing a
+new version to make sure the object and module files are correct.
+
+{\bf Skyrme-force compatibility for static restart:} the code normally
+checks that the Skyrme forces for all the input wave functions
+agree. It may be useful, however, to initialize a static calculation
+from results for a different Skyrme force. Therefore the consistency
+check was eliminated for the static case.
+
+{\bf Acceleration of the static calculations:} The basic parameters
+for the static iterations are (see Eq.~12 of the original paper) $x_0$
+(variable {\tt x0dmp}), which determines the size of the gradient
+step, and $E_0$ (variable {\tt e0dmp}) for the energy damping. These
+were read in and never changed throughout the calculation, except
+possibly through a restart. This can cause slow convergence, so that a
+method was developed to change {\tt x0dmp} during the iterations. The
+value from the input is now regarded as the minimum allowed one and
+saved in {\tt x0dmpmin}. At the start of the iterations, however, {\tt
+  x0dmp} is multiplied by 3 to attempt a faster convergence.
+
+The change in {\tt x0dmp} is then implemented by comparing the HF
+energy {\tt ehf} and the fluctuations {\tt efluct1} and {\tt efluct2}
+to the previous values saved in the variables {\tt ehfprev}, {\tt
+  efluct1prev}, and {\tt efluct2prev}. If the energy decreases or one
+of the fluctuations decreases by a factor of less than $1-10^{-5}$,
+{\tt x0dmp} is increased by a factor 1.005 to further speed up
+convergence. If none of these conditions holds, it is assumed that the
+step was too large and {\tt x0dmp} is reduced by a factor 0.8, but is
+never allowed to fall below {\tt x0dmpmin}.
+
+This whole process is turned on only if the input variable {\tt
+  tvaryx\_0} in the namelist "static" is {\tt .TRUE.} The default
+value is {\tt .FALSE.}
+
+A speedup up to a factor of 3 has been observed.
+
+{\bf External field expectation value} This value, which is printed in
+the file {\tt external.res}, was calculated from the spatial field
+including the (time-independent) amplitude {\tt amplq0}. The temporal
+Fourier transform then becomes quadratic in the amplitude, as the
+fluctuations in the density also grow linearly in {\tt amplq0}
+(provided the perturbation is not strong enough to take it into the
+nonlinear regime).  This may be confusing and we therefore divided the
+expectation value by this factor.  Note that if the external field is
+composed of a mixture of different multipoles (not coded presently),
+an overall scale factor should instead be used.
+
+%{\color{red}
+{\bf Enhanced two-body analysis:} the analysis of the final two-body
+quantities after breakup included directly in the code was very
+simplified and actually it was superfluous to do this so frequently.
+This is replaced by a much more thorough analyis, including
+determination of the internal angular momenta of the fragments and of
+a quite accurate Coulomb energy. It is done only when the final
+separation is reached, while a simple determination of whether the
+fragments have separated and, if so, what their distance is, is
+performed every time step.
+%}
+
+ {\bf Diagonalization} In the original program the diagonalization of
+ the Hamiltonian in the subroutine {\tt diagstep} was carried out
+ employing an eigenvalue decomposition using the LAPACK routine {\tt
+   ZHBEVD} which is optimized for banded matrices. This routine is
+ replaced in the update by the routine {\tt ZHEEVD} which is optimized
+ for general hermitian matrices. This change should result in a
+ moderate speed up for very large calculations. Furthermore the array
+ {\tt unitary}, previously a {\tt nstmax}$\times${\tt nstmax} array
+ has been reduced to a {\tt nlin}$\times${\tt nlin} array, where {\tt
+   nlin} is the number of wave functions of either neutrons or
+ protons. This array is now used as input and output for {\tt ZHEEVD}.
+
+{\bf New formulation of the spin-orbit term:}
+The action of the spin-orbit term has been corrected to comply with a
+strictly variational form. Starting from the spin-orbit energy
+\begin{equation}
+  E_{ls}
+  =
+  t_{ls}\int d^3r\,\vec{J}\cdot\nabla\rho
+  \quad,
+\end{equation}
+we obtain by variation with respect to the s.p. wavefunction $\psi^*$
+the spin-orbit term in the mean field in the symmetrized form
+\begin{equation}
+  \hat{h}_{ls}\psi
+  =
+  \frac{\mathrm{i}}{2}\left(
+   \vec{W}\cdot(\vec{\sigma}\times\nabla)\psi
+   +
+   \vec{\sigma}\cdot(\nabla\times(\vec{W}\psi)
+ \right)
+ \label{eq:hls-symm}
+\end{equation}
+where $\vec{W}=t_{ls}\nabla\rho$. In the previous version of the
+code, this term was simplified by applying the product rule for the
+$\nabla$ operator yielding
+\begin{eqnarray}
+  \frac{\mathrm{i}}{2}\left(
+   \vec{W}\cdot(\vec{\sigma}\times\nabla)\psi
+   +
+   \vec{\sigma}\cdot(\nabla\times(\vec{W}\psi)
+ \right)
+ &=&
+  \mathrm{i}\vec{W}\cdot(\vec{\sigma}\times\nabla)\psi
+  \quad.
+\end{eqnarray}
+Closer inspection reveals that the product rule is not perfectly
+fulfilled if the $\nabla$ operator is evaluated with finite Fourier
+transformation as inevitably done in the grid representation of the
+code. It turned out that this slight mismatch can accumulate to
+instabilities in TDHF runs over long times. Thus the variationally
+correct form (\ref{eq:hls-symm}) has been implemented now, although it
+leads to slightly longer running times.\\ 
+\\
+{\em Restrictions:} The reliability of the mean-field approximation is
+limited by the absence of hard nucleon-nucleon collisions. This limits
+the scope of applications to collision energies about a few MeV per
+nucleon above the Coulomb barrier and to relatively short interaction
+times. Similarly, some of the missing time-odd terms in the implementation
+of the Skyrme interaction may restrict the applications to even-even
+nuclei.\\
+\\
+{\em Unusual features:}\\
+The possibility of periodic boundary conditions and the highly
+flexible initialization make the code also suitable for astrophysical
+nuclear-matter applications.\\
+   \\
+{\em Running time:} The running time depends strongly on the size of
+the grid, the number of nucleons, and the duration of the
+collision. For a single-processor PC-type computer it can vary betweeneen
+a few minutes and weeks.\\
+  %Give an indication of the typical running time here.
+   \\
+\end{small}
+\bibliographystyle{elsarticle-num} 
+\bibliography{update}
+\end{document}

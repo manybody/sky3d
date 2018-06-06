@@ -76,7 +76,7 @@ CONTAINS
     ENDIF
     ! turn off zpe if desired
     IF(turnoff_zpe) THEN
-       f%zpe=1
+       f%zpe=-1
        WRITE(*,*) '***** Zero-point-energy correction turned off'
     END IF
     ! calculate "b" and Slater coefficients
