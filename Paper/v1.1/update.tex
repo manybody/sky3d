@@ -250,11 +250,11 @@ found as {\tt update.pdf} in the {\tt Documentation} subdirectory.
   execute {\tt make html}, {\tt make latex}, or {\tt make all} to
   produce the corresponding version or both of them.
 
-{\color{red}
+%{\color{red}
   The documentation inserted into the source files accounts for most
   of the formal changes in them. The general documentation is also
   updated and present as ``Documentation.pdf''.
-}
+%}
 
  {\bf Bug fixes:} 
 \begin{enumerate}
@@ -268,14 +268,14 @@ found as {\tt update.pdf} in the {\tt Documentation} subdirectory.
   analysis was activated only for {\tt nof}>1 such that it was absent
   after restart.
 
-{\color{red}
+%{\color{red}
 \item In the time-dependent mode, the wave functions were only save at
   intervals of {\tt mprint} and {\tt mrest}, respectively. If a
   calculation stops because of reaching the final distance or
   fulfilling the convergence criterion, this may lead to a loss of
   information, so that now both are done also in this event before the
   job finishes.
-}
+%}
 
 \item The external field parameters were calculated directly from the
   input in {\tt getin\_external}. Since this is called before the
@@ -374,7 +374,7 @@ expectation value by this factor.  Note that if the external field is
 composed of a mixture of different multipoles (not coded presently),
 an overall scale factor should instead be used.
 
-{\color{red}
+%{\color{red}
 {\bf Enhanced two-body analysis:} the analysis of the final two-body
 quantities after breakup included directly in the code was very
 simplified and actually it was superfluous to do this so frequently.
@@ -384,7 +384,7 @@ a quite accurate Coulomb energy. It is done only when the final
 separation is reached, while a simple determination of whether the
 fragments have separated and, if so, what their distance is, is
 performed every time step.
-}
+%}
 
  {\bf Diagonalization} In the original program the diagonalization of
  the Hamiltonian in the subroutine {\tt diagstep} was carried out
