@@ -215,6 +215,19 @@ CONTAINS
     ! allocated helper arrays
     ALLOCATE (wcoul(nx,ny,nz),q(nx2,ny2,nz2),iqx(nx2),iqy(ny2),iqz(nz2))
     ! set up FFTW plans
+    IF(screening)THEN
+      WRITE(*,*)'Electron screening is switched on.'
+      n_e=REAL(nprot)/REAL(nx*ny*nz*wxyz)
+      k_F=(3*pi**2*n_e)**(1.d0/3.d0)
+      x_r=hbc*k_F/0.510998
+      beta_r=x_r/sqrt(1.0d0+x_r**2)
+      alpha_f=1.0d0/137.036d0
+      k_TF=2.0d0*sqrt(alpha_f/(pi*beta_r))*k_F
+      r_e=1/k_TF
+      WRITE(*,*)'Mean electron density is: ',n_e
+      WRITE(*,*)'Screening wave length: ',k_TF
+      WRITE(*,*)'Screening radius: ',r_e
+    END IF
     CALL dfftw_plan_dft_3d(coulplan1,nx2,ny2,nz2,q,q, &
          FFTW_FORWARD, FFTW_ESTIMATE+FFTW_UNALIGNED)
     CALL dfftw_plan_dft_3d(coulplan2,nx2,ny2,nz2,q,q, &
@@ -229,6 +242,7 @@ CONTAINS
     IF(periodic) THEN
       IF(screening) THEN
         q=1.D0/(REAL(q)+k_TF**2)
+        WRITE(*,*)'**********SCREENING WITH k_TF= ',k_TF
       ELSE 
         q=1.D0/REAL(q)
       END IF
@@ -239,19 +253,6 @@ CONTAINS
        CALL dfftw_execute_dft(coulplan1,q,q)
     END IF
     DEALLOCATE(iqx,iqy,iqz)
-    IF(screening)THEN
-      WRITE(*,*)'Electron screening is switched on.'
-      n_e=REAL(nprot)/REAL(nx*ny*nz*wxyz)
-      k_F=(3*pi**2*n_e)**(1.d0/3.d0)
-      x_r=hbc*k_F/0.510998
-      beta_r=x_r/sqrt(1.0d0+x_r**2)
-      alpha_f=1.0d0/137.036d0
-      k_TF=2.0d0*sqrt(alpha_f/(pi*beta_r))*k_F
-      r_e=1/k_TF
-      WRITE(*,*)'Mean electron density is: ',n_e
-      WRITE(*,*)'Screening wave length: ',k_TF
-      WRITE(*,*)'Screening radius: ',r_e
-    END IF
   END SUBROUTINE coulinit
 !---------------------------------------------------------------------------  
 ! DESCRIPTION: initiq
