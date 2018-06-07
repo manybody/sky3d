@@ -1013,13 +1013,13 @@ CONTAINS
 !--------------------------------------------------------------------------- 
   SUBROUTINE planewaves
   IMPLICIT NONE
+  INTEGER,PARAMETER :: npwmax=10
   INTEGER  :: nst, iq
-  !
   INTEGER :: i,j,l,ii,jj,kk
   INTEGER :: kf(3,npsi(2)),temp_k(3)
   LOGICAL :: check
-  INTEGER :: ki(3,8*7**3),ki_t(3,7**3)
-  REAL(db) :: temp_e,temp_energies(8*7**3)
+  INTEGER :: ki(3,8*npwmax**3),ki_t(3,npwmax**3)
+  REAL(db) :: temp_e,temp_energies(8*npwmax**3)
   WRITE(*,*)
   WRITE(*,*)'*****init plane waves:*****'
   psi=(0.d0,0.d0)
@@ -1033,7 +1033,7 @@ CONTAINS
   ii=0
   jj=0
   kk=0
-  DO i=1,7**3
+  DO i=1,npwmax**3
     IF (ii==7) THEN
       ii=0
       jj=jj+1
@@ -1047,9 +1047,9 @@ CONTAINS
     ki(3,i)=kk
     ii=ii+1
   END DO
-  ki_t(:,1:7**3)=ki(:,1:7**3)
+  ki_t(:,1:npwmax**3)=ki(:,1:npwmax**3)
   l=1
-  DO i=1,7**3
+  DO i=1,npwmax**3
     DO j=1,8
       ki(:,l)=ki_t(:,i)
       IF(j==2.OR.j==4.OR.j==6.OR.j==8) THEN 
@@ -1066,7 +1066,7 @@ CONTAINS
     END DO
   END DO
   !insertion_sort
-  DO i=2,8*7**3
+  DO i=2,8*npwmax**3
     temp_e=temp_energies(i)
     temp_k(:)=ki(:,i)
     j=i
@@ -1084,6 +1084,7 @@ CONTAINS
     j=1 !counts "-"-signs
     l=1 !counts ki
     DO WHILE(nst<=npsi(iq))
+      IF(l>=8*npwmax**3)STOP 'PROBLEM'
       kf(:,i)=ki(:,l)
       CALL check_kf(kf,i,check)
       IF(check) THEN 
