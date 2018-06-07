@@ -257,7 +257,7 @@ CONTAINS
         IF(wflag)WRITE(*,*) 'Random guiding potential'
       CASE('P')
         FORALL(iq=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
-          upot(ix,iy,iz,iq)=30*(cos(REAL(ix)/nx*2*pi)+cos(REAL(iy)/ny*2*pi)+cos(REAL(iz)/nz*2*pi))
+          upot(ix,iy,iz,iq)=10*(cos(REAL(ix)/nx*2*pi)+cos(REAL(iy)/ny*2*pi)+cos(REAL(iz)/nz*2*pi))
         END FORALL
         IF(wflag)WRITE(*,*) 'P-surface guiding potential'
       CASE('G')
