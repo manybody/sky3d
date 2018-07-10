@@ -348,20 +348,26 @@ CONTAINS
     sq_Z = Z*Z
 !    mpi_nprocs_iso(1)=NINT(REAL(npsi(1))/REAL(npsi(2))/2.0*mpi_nprocs)*2
     IF(mpi_nprocs <128) THEN
-
      mpi_nprocs_iso(1)=NINT(sq_N/(sq_N+sq_Z)/2.0*mpi_nprocs)*2
      mpi_nprocs_iso(2)=mpi_nprocs-mpi_nprocs_iso(1)
-   ELSEIF(mpi_nprocs >= 128 .AND. mpi_nprocs < 256)THEN
+    ELSEIF(mpi_nprocs >= 128 .AND. mpi_nprocs < 256)THEN
      mpi_nprocs_iso(1)=NINT(sq_N/(sq_N+sq_Z)/2.0*mpi_nprocs)*2
      mpi_nprocs_iso(2)=mpi_nprocs-mpi_nprocs_iso(1)
     ELSEIF(mpi_nprocs >= 256 .AND. mpi_nprocs < 512) THEN
-
      mpi_nprocs_iso(1)=NINT(sq_N/(sq_N+sq_Z)/16.0*mpi_nprocs)*16
      mpi_nprocs_iso(2)=mpi_nprocs-mpi_nprocs_iso(1)
     ELSEIF(mpi_nprocs >=512) THEN
      mpi_nprocs_iso(1)=NINT(sq_N/(sq_N+sq_Z)/32.0*mpi_nprocs)*32
      mpi_nprocs_iso(2)=mpi_nprocs-mpi_nprocs_iso(1)
     ENDIF
+    IF(mpi_nprocs_iso(1)<4) THEN
+     mpi_nprocs_iso(1)=4
+     mpi_nprocs_iso(2)=mpi_nprocs-mpi_nprocs_iso(1)
+    END IF
+    IF(mpi_nprocs_iso(2)<4) THEN
+     mpi_nprocs_iso(2)=4
+     mpi_nprocs_iso(1)=mpi_nprocs-mpi_nprocs_iso(2)
+    END IF
     my_iso=1
     IF(mpi_myproc>=mpi_nprocs_iso(1)) my_iso=2
     CALL mpi_comm_split(mpi_comm_world,my_iso,mpi_myproc,comm_iso,mpi_ierror)
