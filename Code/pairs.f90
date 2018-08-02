@@ -26,14 +26,14 @@
 !------------------------------------------------------------------------------
 MODULE Pairs
   USE Params, ONLY: db,iter,printnow,wflag,hbc
-  USE Forces, ONLY: ipair,p,pair_reg,delta_fit,pair_cutoff,cutoff_factor
-  USE Grids, ONLY: nx,ny,nz,wxyz
+  USE Forces, ONLY: ipair,p,pair_reg,delta_fit,pair_cutoff,cutoff_factor,ecut_stab
+  USE Grids, ONLY: nx,ny,nz,wxyz,x
   USE Densities, ONLY:rho
   USE Levels
   USE Parallel, ONLY:globalindex,collect_density,collect_sp_property,tmpi,wflag
   IMPLICIT NONE
   PRIVATE
-  PUBLIC :: pair,epair,avdelt,avg,eferm,avdeltv2,eferm_cutoff,partnum_cutoff
+  PUBLIC :: pair,epair,avdelt,avg,eferm,avdeltv2,eferm_cutoff,partnum_cutoff,deltaf,rbrent
   INTEGER :: iq                          !<Index labeling the isospin.
   REAL(db),SAVE :: eferm(2)=(/0D0,0D0/)  !<Fermi energy in MeV for the two isospins.
   REAL(db),SAVE :: epair(2)              !<Pairing energy in MeV for the two isospins. It is given by
@@ -147,11 +147,13 @@ CONTAINS
     !     computes the pair density
     INTEGER,PARAMETER :: itrsin=10
     ! iqq is different from module variable iq
-    INTEGER :: iqq,nst,is,nstind
-    REAL(db),PARAMETER :: smallp=0.000001  
-    REAL(db) :: v0act
-    REAL(db) :: work(nx,ny,nz,2)  
+    INTEGER :: iqq,nst,is,nstind    ,ix
+    REAL(db),PARAMETER :: smallp=0.000001D0
+    REAL(db) :: v0act,v2,vol,sumduv,edif,sumuv
+    REAL(db),ALLOCATABLE :: work(:,:,:,:)  
     ! constant gap in early stages of iteration
+
+    ALLOCATE(work(nx,ny,nz,2))
     IF(iter<=itrsin) THEN  
        deltaf=11.2/SQRT(mass_number)
        RETURN  
@@ -164,17 +166,19 @@ CONTAINS
        DO is=1,2 
          DO nst=1,nstloc 
            nstind=globalindex(nst)
-           IF(isospin(nstind)==iqq)&
-            work(:,:,:,iqq)=work(:,:,:,iqq)+ pairwg(nstind)* &
-              SQRT(MAX(wocc(nstind)-wocc(nstind)**2,smallp))*0.5* &
-             (REAL(psi(:,:,:,is,nst))**2+AIMAG(psi(:,:,:,is,nst))**2)
+           IF(isospin(nstind)==iqq) THEN
+!              work(:,:,:,iqq)=work(:,:,:,iqq)+ 
+              work(:,:,:,iqq)=work(:,:,:,iqq)+ pairwg(nstind)* &
+                SQRT(MAX(wocc(nstind)-wocc(nstind)**2,smallp))*0.5* &
+               (REAL(psi(:,:,:,is,nst))**2+AIMAG(psi(:,:,:,is,nst))**2)
+           END IF
          ENDDO
        ENDDO
     END DO
     IF(tmpi) CALL collect_density(work)
     IF(wflag) WRITE(*,*)1,SUM(work(:,:,:,1))
     IF(wflag) WRITE(*,*)2,SUM(work(:,:,:,2))
-       ! determine pairing strength
+    ! determine pairing strength
     deltaf=0.0d0
     DO iqq=1,2
        IF(iqq==2) THEN  
@@ -191,7 +195,8 @@ CONTAINS
          END IF
        ELSE
           work(:,:,:,iqq)=v0act*work(:,:,:,iqq)  
-       END IF
+       END IF 
+
        ! finally compute the actual gaps as s.p. expectation values with
        ! the pair potential
        DO nst=1,nstloc
@@ -199,12 +204,45 @@ CONTAINS
           IF(isospin(nstind)==iqq) THEN
              DO is=1,2  
                 deltaf(nstind)=deltaf(nstind)+wxyz*SUM(work(:,:,:,iqq)* &
-                pairwg(nstind)* &
                 (REAL(psi(:,:,:,is,nst))**2+AIMAG(psi(:,:,:,is,nst))**2))
+!                *pairwg(nstind)
              ENDDO 
           END IF
        ENDDO
     ENDDO
+
+    DEALLOCATE(work)
+
+!!! PGR
+    IF(ecut_stab.NE.0D0) THEN
+       ! compute pairing energy from scratch
+       sumuv=0.0D0 
+       DO iqq=1,2
+          sumduv=0.0D0 
+          DO nst=npmin(iqq),npsi(iqq)
+             edif=sp_energy(nst)-eferm(iqq)  
+             v2=0.5D0-0.5D0*edif/SQRT(edif*edif+(deltaf(nst)*pairwg(nst))**2)  
+             vol=0.5D0*SQRT(MAX(v2-v2*v2,1D-20))  
+             IF(iqq==1) sumuv=vol+sumuv  
+             sumduv=vol*deltaf(nst)+sumduv  
+          ENDDO
+          epair(iqq)=sumduv  
+       END DO
+       ! now modify gap
+       DO nst=1,nstloc
+          nstind=globalindex(nst)
+          IF(isospin(nstind)==1) THEN
+            deltaf(nstind) = deltaf(nstind)*(1D0+(ecut_stab/epair(1))**2)
+          ELSE
+            deltaf(nstind) = deltaf(nstind)*(1D0+(ecut_stab/epair(2))**2)
+          END IF
+          deltaf(nstind) = min(deltaf(nstind),5D0)       
+       END DO
+
+
+    END IF
+!!! PGR
+
     IF(tmpi) CALL collect_sp_property(deltaf)
     
   END SUBROUTINE pairgap
@@ -247,8 +285,14 @@ CONTAINS
       partnum_cutoff(iq)=particle_number+&
                          cutoff_factor*particle_number**0.6666666667D0
       IF(eferm_cutoff(iq)==0D0) THEN
-        it=npmin(iq)+NINT(partnum_cutoff(iq))-1
-        IF(it+NINT(particle_number/10)>npsi(iq)) STOP "not enough states to cover pairing space"
+!        it=npmin(iq)+NINT(partnum_cutoff(iq))-1
+        it=NINT(partnum_cutoff(iq))-1
+        IF(it+NINT(particle_number/10)>npsi(iq)) THEN
+          WRITE(*,*) 'particle_number etc:',particle_number,npmin(iq), &
+            it,it+NINT(particle_number/10),npsi(iq)
+          STOP "not enough states to cover pairing space"
+        END IF
+        it=npmin(iq)+it
         eferm_cutoff(iq)=0.5D0*(sp_energy(it)+sp_energy(it+1))  
         pairwg(npmin(iq):it)=1.D0
         pairwg(it+1:npsi(iq))=0.D0
@@ -272,7 +316,7 @@ CONTAINS
     sumdv2=0.0D0
     DO na=npmin(iq),npsi(iq)
        edif=sp_energy(na)-eferm(iq)  
-       equasi=SQRT(edif*edif+deltaf(na)**2)  
+       equasi=SQRT(edif*edif+(deltaf(na)*pairwg(na))**2)  
        v2=0.5D0-0.5D0*edif/equasi  
        vol=0.5D0*SQRT(MAX(v2-v2*v2,xsmall))  
        sumuv=vol+sumuv  
@@ -284,7 +328,7 @@ CONTAINS
     sumuv=MAX(sumuv,xsmall)  
     avdelt(iq)=sumduv/sumuv
     avdeltv2(iq)=sumdv2/sumv2  
-    epair(iq)=sumduv  
+    epair(iq)=sumduv              !!! PGR: to be checked ???
     avg(iq)=epair(iq)/sumuv**2  
 !    IF(iq==1) WRITE(*,*) avdelt(1),delta_fit(iq)+1d-2,delta_fit(iq)-1d-2
     IF(delta_fit(iq)>1.0d-5.AND.avdeltv2(iq)>delta_fit(iq)+1d-3.AND.iq==1) THEN
@@ -456,7 +500,7 @@ CONTAINS
        IF(pair_cutoff(iq)>0.0d0.AND.edif>pair_cutoff(iq)) THEN
          wocc(k)=smal
        ELSE
-         wocc(k)=0.5D0 *(1.0D0-edif/SQRT(edif**2+deltaf(k)**2))  
+         wocc(k)=0.5D0 *(1.0D0-edif/SQRT(edif**2+(deltaf(k)*pairwg(k))**2))  
          wocc(k)=MIN(MAX(wocc(k),smal),1.D0-smal)  
          bcs_accum=bcs_accum+wocc(k)
        END IF
@@ -488,7 +532,6 @@ CONTAINS
   REAL(db) FUNCTION fermi_partnum(efermi)
     REAL(db),PARAMETER :: smal=1.0d-20  
     REAL(db),INTENT(in) :: efermi
-!    REAL(db),INTENT(OUT) :: bcs_partnum
     INTEGER :: k
     REAL(db) :: edif,fermi_accum
     fermi_accum=0D0

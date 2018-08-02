@@ -17,9 +17,11 @@ MODULE Static
   USE Energies
   USE Parallel
   USE Constraint, ONLY: tconstraint,before_constraint,init_constraint,tune_constraint,add_constraint
+  USE Temperature, ONLY: kbT,temp_dist
   USE Inout, ONLY: write_wavefunctions, write_densities, plot_density, &
        sp_properties,start_protocol
-  USE Pairs, ONLY: pair,epair,avdelt,avdeltv2,avg,eferm,eferm_cutoff,partnum_cutoff,pairwg
+  USE Pairs, ONLY: pair,epair,avdelt,avdeltv2,avg,eferm,eferm_cutoff,partnum_cutoff,pairwg,deltaf
+  USE Formfactor, ONLY: radius_print
   IMPLICIT NONE
   LOGICAL  :: tdiag=.FALSE.    !< if \c true, there is a diagonalization of
   !!the Hamiltonian during the later (after the 20th) static iterations.
@@ -79,7 +81,7 @@ CONTAINS
   SUBROUTINE getin_static
     NAMELIST/static/ tdiag,tlarge,maxiter, &
          radinx,radiny,radinz,serr,x0dmp,e0dmp,nneut,nprot,npsi,tvaryx_0,&
-         outerpot,outertype,ttime
+         outerpot,outertype,ttime,kbT
     npsi=0
     READ(5,static)
 
@@ -155,9 +157,9 @@ CONTAINS
             '# Iter      Lx        Ly        Lz        Sx        Sy        &
             &Sz        Jx        Jy        Jz')
        CALL start_protocol(energiesfile, &
-            '# Iter    N(n)      N(p)       E(sum)         E(integ)       Ekin         &
-            &E_Coul        ehfCrho0      ehfCrho1      ehfCdrho0     ehfCdrh       & 
-            &ehfCtau0      ehfCtau1      ehfCdJ0       ehfCdJ1')
+            '# Iter    N(n)    N(p)       E(sum)         E(integ)       -TS            &
+            &Ekin         E_Coul         ehfCrho0       ehfCrho1       ehfCdrho0      ehfCdrh     & 
+            &ehfCtau0       ehfCtau1       ehfCdJ0        ehfCdJ1')
        IF(tabc_nprocs>1.AND.tabc_myid==0) CALL start_protocol(tabcfile, &
             '# Iter   Energy         E_kin          E_Coul         E_Skyrme ')
     ENDIF
@@ -168,6 +170,11 @@ CONTAINS
        f%h2m=f%h2m*(mass_number-1.0D0)/mass_number
        WRITE(*,*) '***** Nucleon mass modified for z.p.e. correction'
     END IF
+    IF(.NOT.ALLOCATED(pairwg)) THEN
+      ALLOCATE(pairwg(nstmax))
+      pairwg=1D0                        ! default if no soft cutoff is invoked
+    END IF
+    IF(.NOT.ALLOCATED(deltaf)) ALLOCATE(deltaf(nstmax))
   END SUBROUTINE init_static
 !---------------------------------------------------------------------------  
 ! DESCRIPTION: statichf
@@ -320,7 +327,9 @@ CONTAINS
     IF(tmpi) CALL collect_energies(delesum,sumflu)!collect fluctuations and change in energy 
     IF(wflag)WRITE(*,*) 'DONE'
     ! pairing and orthogonalization
+    IF(kbT>0.0d0) CALL temp_dist
     IF(ipair/=0) CALL pair
+    IF(kbT>0.0d0.AND.ipair/=0) STOP 'Pairing and finite temperature is not implemented'
     IF(wflag)WRITE(*,'(A25)',advance="no") 'Initial ortho2... '
     IF (my_iso>0) THEN
       CALL diagstep(my_iso,.FALSE.)
@@ -379,7 +388,9 @@ CONTAINS
        !****************************************************
        ! Step 7: do pairing
        !****************************************************
+       IF(kbT>0.0d0) CALL temp_dist
        IF(ipair/=0) CALL pair
+       IF(kbT>0.0d0.AND.ipair/=0) STOP 'Pairing and finite temperature is not implemented'
        !****************************************************
        ! Step 8: get new densities and fields with relaxation
        !****************************************************
@@ -794,7 +805,7 @@ CONTAINS
   SUBROUTINE sinfo(printing)
     INTEGER :: il,iq
     LOGICAL :: printing
-    REAL(db):: tabc_energy, tabc_ekin, tabc_ecoul, tabc_eskyrme
+    REAL(db):: tabc_energy, tabc_ekin, tabc_ecoul, tabc_eskyrme,entro
     CHARACTER(*),PARAMETER :: &
          header='  #  Par   v**2   var_h1   var_h2    Norm     Ekin    Energy &
          &    Lx      Ly      Lz     Sx     Sy     Sz    pairwg'   
@@ -802,6 +813,9 @@ CONTAINS
     CALL moments
     CALL integ_energy
     CALL sum_energy
+    IF(f%zpe==1 .AND. printing) THEN
+       CALL cm_correction()
+    END IF
     ! add information to summary files
     IF(printing) THEN
        IF(tabc_nprocs>1) THEN
@@ -817,13 +831,13 @@ CONTAINS
           END IF
        END IF
        OPEN(unit=scratch,file=energiesfile,POSITION='APPEND')  
-       WRITE(scratch,'(1x,i5,1x,2(F9.2,1x),12(F13.4,1x))') &
-            iter,pnr,ehf,ehfint,tke,ehfc,ehfCrho0,ehfCrho1,ehfCdrho0,ehfCdrho1,ehfCtau0,&
-            ehfCtau1,ehfCdJ0,ehfCdJ1
+       WRITE(scratch,'(1x,i5,2F8.3,14F15.7)') &
+            iter,pnr,ehf,ehfint,-entropy()*kbT,tke,ehfc,ehfCrho0,ehfCrho1,ehfCdrho0,ehfCdrho1,ehfCtau0,&
+            ehfCtau1,ehfCdJ0,ehfCdJ1,ecmcorr
        CLOSE(unit=scratch)
        OPEN(unit=scratch,file=converfile,POSITION='APPEND')  
        WRITE(scratch,'(1x,i5,f9.2,3(1pg11.3),2(0pf8.3),f6.1,f10.7)') &
-            iter,ehf,delesum/pnrtot,efluct1,efluct2,rmstot,beta,gamma,x0dmp
+            iter,ehf-ecmcorr,delesum/pnrtot,efluct1,efluct2,rmstot,beta,gamma,x0dmp
        CLOSE(scratch)
        OPEN(unit=scratch,file=dipolesfile, POSITION='APPEND')  
        WRITE(scratch,'(1x,i5,6E14.4)') iter,cmtot,cm(:,2)-cm(:,1)
@@ -831,18 +845,22 @@ CONTAINS
        OPEN(unit=scratch,file=spinfile, POSITION='APPEND')  
        WRITE(scratch,'(1x,i5,9F10.4)') iter,orbital,spin,total_angmom 
        CLOSE(unit=scratch)
-       WRITE(*,'(/,A,I7,A/2(A,F12.4),A/(3(A,E12.5),A))') &
+       entro=entropy()
+       WRITE(*,'(/,A,I7,A/A,2(F12.4,A)/2(A,F12.4),A/(3(A,E12.5),A))') &
             ' ***** Iteration ',iter,' *************************************************&
-            &***********************************',' Total energy: ',ehf,&
-            ' MeV  Total kinetic energy: ', tke,' MeV',' de/e:      ',delesum,&
-            '      h**2  fluct.:    ',efluct1,' MeV, h*hfluc.:    ',efluct2,' MeV', &
+            &***********************************',&
+            ' Free energy: ',ehf-ecmcorr-entro*kbT,' MeV Entropy: ',entro,'.',&
+            ' Total energy: ',ehf-ecmcorr,&
+            ' MeV  Total kinetic energy: ', tke,' MeV',&
+            ' de/e:      ',delesum,'      h**2  fluct.:    ',efluct1,&
+            ' MeV, h*hfluc.:    ',efluct2,' MeV', &
             ' MeV. Rearrangement E: ',e3corr,' MeV. Coul.Rearr.: ', &
-            ecorc,' MeV'
+             ecorc,' MeV   c.m.correction:',ecmcorr,' MeV'
        ! detail printout
        WRITE(*,'(/A)') ' Energies integrated from density functional:********************&
                   &********************************************'
        WRITE(*,'(4(A,1PE14.6),A/26X,3(A,1PE14.6),A)') &
-            ' Total:',ehfint,' MeV. t0 part:',ehf0,' MeV. t1 part:',ehf1, &
+            ' Total:',ehfint-ecmcorr,' MeV. t0 part:',ehf0,' MeV. t1 part:',ehf1, &
             ' MeV. t2 part:',ehf2,' MeV.',' t3 part:',ehf3,' MeV. t4 part:',ehfls, &
             ' MeV. Coulomb:',ehfc,' MeV.'
        WRITE(*,*)'                          *********************************************&
@@ -885,18 +903,19 @@ CONTAINS
              WRITE(*,'(A)') ' Proton Single Particle States:',header  
           END IF
           IF(cutoff_factor>0D0) THEN
-            WRITE(*,'(1X,I3,F4.0,F8.5,2F9.5,F9.6,F8.3,F10.3,3F8.3,4F7.3)') &
+            WRITE(*,'(1X,I3,F4.0,F8.5,2F9.5,F9.6,F8.3,F10.3,3F8.3,5F7.3)') &
                il,sp_parity(il),wocc(il),sp_efluct1(il),sp_efluct2(il), &
                sp_norm(il),sp_kinetic(il),sp_energy(il), &
-               sp_orbital(:,il),sp_spin(:,il),pairwg(il)
+               sp_orbital(:,il),sp_spin(:,il),pairwg(il),deltaf(il)
           ELSE
-            WRITE(*,'(1X,I3,F4.0,F8.5,2F9.5,F9.6,F8.3,F10.3,3F8.3,4F7.3)') &
+            WRITE(*,'(1X,I3,F4.0,F8.5,2F9.5,F9.6,F8.3,F10.3,3F8.3,5F7.3)') &
                il,sp_parity(il),wocc(il),sp_efluct1(il),sp_efluct2(il), &
                sp_norm(il),sp_kinetic(il),sp_energy(il), &
-               sp_orbital(:,il),sp_spin(:,il)
+               sp_orbital(:,il),sp_spin(:,il),pairwg(il),deltaf(il)
           END IF
        ENDDO
        CALL moment_print
+       CALL radius_print
        CALL flush(6)
     END IF
   END SUBROUTINE sinfo

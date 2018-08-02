@@ -61,6 +61,8 @@ MODULE Forces
   REAL(db):: delta_fit(2)=-1.0d0   !<Allows for fitting to pairing gaps
   REAL(db):: pair_cutoff(2)=-1.0d0 !<Selects a hard pairing cutoff
   REAL(db):: cutoff_factor=0D0  !<The relative "margin" of extra particles defining pairing space.
+  REAL(db):: ecut_stab=0D0      ! E_cut for stabilized pairing  !!! PGR
+  !!! PGR: ecut_stab to be included in 'TYPE pairing'
   TYPE(Force) :: f         !< this contains parameters for
   !!the Skyrme force actually used in the present calculation, packed
   !into the derived-type \c Force.
@@ -141,7 +143,7 @@ CONTAINS
     NAMELIST /force/ name,pairing, &
          ex,zpe,h2m,t0,t1,t2,t3,t4,x0,x1,x2,x3,b4p,power, &
          ipair,v0prot,v0neut,rho0pr,turnoff_zpe,pair_reg,delta_fit,&
-         pair_cutoff,cutoff_factor
+         pair_cutoff,cutoff_factor,ecut_stab
     ! mark force & pairing parameters as undefined
     h2m=-1.0; v0prot=-1.0; v0neut=-1.0; rho0pr=-1.0
     READ(5,force)
@@ -230,7 +232,8 @@ CONTAINS
        WRITE(*,"(A6,F12.5)") "Power",f%power
        WRITE(*,"(A,I2)") " Pairing parameters: Option ipair:",ipair  
        WRITE(*,"(3(A7,F12.5))") "v0prot",p%v0prot,"v0neut",p%v0neut,"rho0pr",p%rho0pr
-       IF(cutoff_factor>0D0) WRITE(*,"(A,F12.5)") "cutoff_factor=",cutoff_factor
+       WRITE(*,"(A,2F12.5)") "cutoff_factor,ecut_stab=",cutoff_factor,ecut_stab
+
     ENDIF
   END SUBROUTINE read_force
 END MODULE Forces

@@ -117,6 +117,7 @@ CONTAINS     !  all dummy subroutines to run on a sequential machine
     STOP ' parallel calls inhibited '
     RETURN
   END SUBROUTINE mpi_get_processor_name
+  !************************************************************************
 !---------------------------------------------------------------------------  
 ! DESCRIPTION: associate_nodes
 !> @brief
@@ -139,16 +140,16 @@ CONTAINS     !  all dummy subroutines to run on a sequential machine
     RETURN
   END SUBROUTINE collect_densities
   !************************************************************************
-  SUBROUTINE collect_sp_properties
-    STOP ' parallel calls inhibited '
-    RETURN
-  END SUBROUTINE collect_sp_properties
-  !************************************************************************
   SUBROUTINE collect_density(dens)
     REAL(db):: dens(:,:,:,:)
     STOP ' COLLECT_DENSITY: parallel calls inhibited '
     RETURN
   END SUBROUTINE collect_density
+  !************************************************************************
+  SUBROUTINE collect_sp_properties
+    STOP ' parallel calls inhibited '
+    RETURN
+  END SUBROUTINE collect_sp_properties
   !************************************************************************
   SUBROUTINE collect_sp_property(dens)
     REAL(db):: dens(:)
