@@ -157,9 +157,10 @@ CONTAINS
             '# Iter      Lx        Ly        Lz        Sx        Sy        &
             &Sz        Jx        Jy        Jz')
        CALL start_protocol(energiesfile, &
-            '# Iter    N(n)    N(p)       E(sum)         E(integ)       -TS            &
-            &Ekin         E_Coul         ehfCrho0       ehfCrho1       ehfCdrho0      ehfCdrh     & 
-            &ehfCtau0       ehfCtau1       ehfCdJ0        ehfCdJ1')
+            '#Iter  N(n)      N(p)      E(sum)         E(integ)       &
+            &Ekin           E_Coul         ehfCrho0       ehfCrho1       &
+            &ehfCdrho0      ehfCdrho1      & 
+            &ehfCtau0       ehfCtau1       ehfCdJ0        ehfCdJ1        Ecm_corr       -TS')
        IF(tabc_nprocs>1.AND.tabc_myid==0) CALL start_protocol(tabcfile, &
             '# Iter   Energy         E_kin          E_Coul         E_Skyrme ')
     ENDIF
@@ -831,9 +832,9 @@ CONTAINS
           END IF
        END IF
        OPEN(unit=scratch,file=energiesfile,POSITION='APPEND')  
-       WRITE(scratch,'(1x,i5,2F8.3,14F15.7)') &
-            iter,pnr,ehf,ehfint,-entropy()*kbT,tke,ehfc,ehfCrho0,ehfCrho1,ehfCdrho0,ehfCdrho1,ehfCtau0,&
-            ehfCtau1,ehfCdJ0,ehfCdJ1,ecmcorr
+       WRITE(scratch,'(1x,i5,1x,2(F9.3,1x),14(F14.5,1x))') &
+            iter,pnr,ehf,ehfint,tke,ehfc,ehfCrho0,ehfCrho1,ehfCdrho0,ehfCdrho1,ehfCtau0,&
+            ehfCtau1,ehfCdJ0,ehfCdJ1,ecmcorr,-entropy()*kbT
        CLOSE(unit=scratch)
        OPEN(unit=scratch,file=converfile,POSITION='APPEND')  
        WRITE(scratch,'(1x,i5,f9.2,3(1pg11.3),2(0pf8.3),f6.1,f10.7)') &
