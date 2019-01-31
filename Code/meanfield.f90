@@ -298,9 +298,14 @@ CONTAINS
         IF(wflag)WRITE(*,*) 'Diamond guiding potential'
       CASE('S')
         FORALL(iq=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
-         upot(ix,iy,iz,iq)=50*(cos(REAL(ix)/nx*2*pi))
+         upot(ix,iy,iz,iq)=50*(cos(REAL(ix)/nx*2.0*pi))
         END FORALL
         IF(wflag)WRITE(*,*) 'Slab guiding potential'
+      CASE('T')
+        FORALL(iq=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
+         upot(ix,iy,iz,iq)=30*(cos(REAL(ix)/nx*4.0*pi))
+        END FORALL
+        IF(wflag)WRITE(*,*) 'Double slab guiding potential'
       CASE('X')
         DO iq=1,2; DO ix=1,nx; DO iy=1,ny; DO iz=1,nz
 !          IF(y(iy)>0) upot(ix,iy,iz,iq)=40*(cos(REAL(ix)/nx*2*pi+pi*REAL(iy)/ny))!+&
