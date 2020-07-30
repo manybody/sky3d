@@ -89,7 +89,7 @@ MODULE Params
   !!*.tdd</tt> files every \c  mplot time steps or iterations.
   INTEGER :: mrest=0    !<if greater than zero, a \c wffile is produced
   !!every \c mrest iterations or time steps.
-  INTEGER :: mconstr=0  !<if greater than zero and \c dconstr is \c true,
+  INTEGER :: mconstr=20  !<if greater than zero and \c dconstr is \c true,
   !!the density constraint is performed every \c mconstr time steps.
   !>@}
   !>@name Globally used variables
