@@ -21,7 +21,7 @@ omp mpi-omp               : export COMPILERFLAGS_SKY = -O3 -fopenmp -msse4.2 -mf
 seq_debug mpi_debug debug : export COMPILERFLAGS_SKY = -g -fbacktrace
 omp_debug                 : export COMPILERFLAGS_SKY = -g -fbacktrace -fopenmp
 ifort ifort_seq           : export COMPILERFLAGS_SKY = -axsse4.2 -msse4.2 -O3 -ip -no-prec-div -align all -mcmodel=large -shared-intel
-ifort_omp                 : export COMPILERFLAGS_SKY = -axsse4.2 -msse4.2 -O3 -ip -no-prec-div -align all -mcmodel=large -shared-intel -openmp
+ifort_omp                 : export COMPILERFLAGS_SKY = -axsse4.2 -msse4.2 -O3 -ip -no-prec-div -align all -mcmodel=large -shared-intel -qopenmp
 #
 # ----- which communication object file to use for building------------------
 #
