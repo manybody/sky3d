@@ -1,5 +1,5 @@
 !------------------------------------------------------------------------------
-! MODULE: Modulename
+! MODULE: Moment
 !------------------------------------------------------------------------------
 ! DESCRIPTION: 
 !> @brief
@@ -72,7 +72,7 @@ MODULE Moment
        moments,moment_print,moment_shortprint
 CONTAINS
 !---------------------------------------------------------------------------  
-! DESCRIPTION: Routinename
+! DESCRIPTION: moments
 !> @brief
 !!This is the principal subroutine for calculating the geometric
 !!quantities. It consists of two loops, both over isospin and space, and

@@ -1,5 +1,5 @@
 !------------------------------------------------------------------------------
-! MODULE: Modulename
+! MODULE: Forces
 !------------------------------------------------------------------------------
 ! DESCRIPTION: 
 !> @brief
@@ -78,7 +78,7 @@ MODULE Forces
   !>@}
 CONTAINS
 !---------------------------------------------------------------------------  
-! DESCRIPTION: Routinename
+! DESCRIPTION: read_force
 !> @brief
 !!The purpose of the subroutine is to read the force and pairing
 !!definitions. The \c NAMELIST} \c force contains all the

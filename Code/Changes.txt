@@ -60,5 +60,8 @@ mpi-omp: produces code with hybrid OpenMP+MPI parallelization(flags are fit for 
 ifort ifort_seq: sequential code with ifort.
 ifort_omp: OpenMP parallelized code with ifort.
 
+Step 4.0:
 
+- Implement the density constraint procedure for static constraints
+  to a dynamically determined density
   

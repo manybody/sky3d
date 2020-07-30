@@ -1,5 +1,5 @@
 !------------------------------------------------------------------------------
-! MODULE: Modulename
+! MODULE: Energies
 !------------------------------------------------------------------------------
 ! DESCRIPTION: 
 !> @brief
@@ -68,7 +68,7 @@
 !!    surface pairing.
 !------------------------------------------------------------------------------
 MODULE Energies
-  USE Params, ONLY: db,tcoul
+  USE Params, ONLY: db,tcoul,dconstr
   USE Forces
   USE Densities
   USE Levels
@@ -94,6 +94,7 @@ MODULE Energies
   REAL(db) :: ehf             !< Hartree-Fock energy from s.p. levels
   REAL(db) :: ehfprev         !< Hartree-Fock energy from s.p. levels of previous iteration
   REAL(db) :: e3corr          !< rearrangement energy
+  REAL(db) :: ecorl           !< density constraint energy
   REAL(db) :: orbital(3)      !< the three components of the total orbital
                               !!angular momentum in units of \f$ \hbar \f$.
   REAL(db) :: spin(3)         !< the three components of the total spin in
@@ -248,7 +249,9 @@ CONTAINS
 !!\f[ \sum_k (\epsilon_k-\tfrac1{2}v_k)=\tfrac1{2}\sum_k(2t_k+v_k)=
 !!\tfrac1{2}\sum_k(t_k+\epsilon_k). \f]
 !!The last sum is calculated, the rearrangement corrections 
-!!are added and the pairing energies subtracted.
+!!are added and the pairing energies subtracted. If density constraint
+!!is performed, then the constraint energy is subtracted in accordance
+!!with the density dependent part of the Koopman formula.
 !!
 !!The subroutine then sums up the single-particle energy fluctuation
 !!\c sp_efluct1 and \c sp_efluct2, dividing them by the nucleon
@@ -261,6 +264,7 @@ CONTAINS
     ehf=SUM(wocc*(sp_kinetic+sp_energy))/2.D0+e3corr+ecorc &
          -epair(1)-epair(2)
     tke=SUM(wocc*sp_kinetic)
+    IF(dconstr) ehf=ehf-0.5D0*ecorl
     efluct1=SUM(wocc*sp_efluct1)/pnrtot
     efluct2=SUM(wocc*sp_efluct2)/pnrtot
     DO i=1,3

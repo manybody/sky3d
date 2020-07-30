@@ -21,6 +21,7 @@ MODULE DYNAMIC
   USE Trivial, ONLY: overlap
   USE Inout, ONLY: write_wavefunctions,write_densities, plot_density, &
        sp_properties,start_protocol
+  USE Static
   USE External
   IMPLICIT NONE
   SAVE
@@ -46,7 +47,8 @@ CONTAINS
 !!This is a relatively simple routine that reads the input for namelist
 !!\c dynamic and prints it on standard output. If \c texternal is
 !!true, it also calls \c getin_external to read the external field
-!!parameters.
+!!parameters. If the density constraint is to be performed,
+!!the appropriate information is printed as well.
 !--------------------------------------------------------------------------- 
   SUBROUTINE getin_dynamic
     NAMELIST /dynamic/ nt,dt,mxpact,mrescm,rsep,texternal
@@ -58,6 +60,7 @@ CONTAINS
        WRITE(*,'(A,F7.2,A)') ' The calculation stops at ',rsep, &
             ' fm fragment separation'
        WRITE(*,'(A,I3)') ' Power limit in operator expansion:',mxpact
+       IF(dconstr) WRITE(*,'(A,I3)') ' Density constraint frequency:',mconstr
     ENDIF
     IF(texternal) CALL getin_external
   END SUBROUTINE getin_dynamic
@@ -93,13 +96,13 @@ CONTAINS
 !!        single-particle quantities and the total energies at time 0 or
 !!        iteration 0.
 !!     -# Finally preparations are made for the time-stepping loop: the
-!!        starting index is set to \c iter+1: this is either after the end of a
+!!        starting index is set to \c diter+1: this is either after the end of a
 !!        previous job in the case of a restart, or just one for a new
 !!        calculation. The physical time is either 0 or the time taken from
 !!        a restart file.
 !!
 !!  - <b> Step 2: predictor time step:</b> the loop over the iteration
-!!    index \c iter is started. Then the densities and mean-field
+!!    index \c diter is started. Then the densities and mean-field
 !!    components are estimated, i. e., in effect the Hamiltonian 
 !!    \f$ \hat h(t+\tfrac1{2}\Delta t) \f$ required by the numerical method. This is done
 !!    by evolving the wave functions for a full \c dt using the old
@@ -146,27 +149,43 @@ CONTAINS
 !!    subroutine \c resetcm is called every \c mrescm'th time step to
 !!    reset the center-of-mass velocity to zero.  
 !!
-!!  - <b> Step 5: generating some output </b> At this point the time is
+!!  - <b> Step 5: Density constraint calculation: </b>
+!!    If the density constraint calculation is desired by the user by setting
+!!    <tt> dconstr == True</tt> and <tt> mconstr /= 0</tt>,
+!!    statichf is called every \c mconstr'th time step to
+!!    minimize the energy while constraining the density.
+!!
+!!  - <b> Step 6: generating some output </b> At this point the time is
 !!    advanced by \c dt because the physical time is now the end of
 !!    the time step, and this must be printed out correctly by the
 !!    following output routines. \c tinfo is called to calculate
 !!    single-particle properties, total energies, and so on.
 !!
-!!  - <b> Step 6: finishing up the time step:</b> \c tinfo is called
-!!  to output the calculated data, then \c skyrme and \c extfld
-!!  calculate the mean field and the external field, respectively, for the
-!!  end of the time step, after which the wave functions are written
-!!  onto \c wffile depending on \c mrest.
+!!  - <b> Step 7: finishing up the time step:</b> \c tinfo is called
+!!    to output the calculated data, then \c skyrme and \c extfld
+!!    calculate the mean field and the external field, respectively, for the
+!!    end of the time step, after which the wave functions are written
+!!    onto \c wffile depending on \c mrest.
 !!
 !!This ends the time loop and subroutine \c dynamichf itself.
 !--------------------------------------------------------------------------- 
   SUBROUTINE dynamichf
     INTEGER :: nst,istart
     COMPLEX(db),ALLOCATABLE :: ps4(:,:,:,:)
+    REAL(db),DIMENSION(:),ALLOCATABLE :: woccold
+    REAL(db),DIMENSION(:,:,:,:),ALLOCATABLE :: rhoold,tauold
+    REAL(db),DIMENSION(:,:,:,:,:),ALLOCATABLE :: currentold,sdensold,sodensold
+    COMPLEX(db), DIMENSION(:,:,:,:,:), ALLOCATABLE :: psiold
+    IF(dconstr) THEN
+       ALLOCATE(woccold(nstloc),rhoold(nx,ny,nz,2),tauold(nx,ny,nz,2))
+       ALLOCATE(currentold(nx,ny,nz,3,2),sdensold(nx,ny,nz,3,2))
+       ALLOCATE(sodensold(nx,ny,nz,3,2))
+       ALLOCATE(psiold(nx,ny,nz,2,nstloc))
+    END IF
     ALLOCATE(ps4(nx,ny,nz,2))
     ! Step 1: Preparation phase
     IF(.NOT.trestart) THEN
-       iter=0
+       diter=0; iter=0
        time=0.0D0  
        ! save wave functions
        CALL write_wavefunctions
@@ -221,8 +240,9 @@ CONTAINS
     !***********************************************************************
     istart=iter+1
     ! Step 2: start loop and do half-time step
-    Timestepping:  DO iter=istart,nt  
-       IF(wflag) WRITE(*,'(/A,I6,A,F8.2,A)') ' Starting time step #',iter, &
+    Timestepping:  DO diter=istart,nt  
+       iter = diter
+       IF(wflag) WRITE(*,'(/A,I6,A,F8.2,A)') ' Starting time step #',diter, &
             ' at time=',time,' fm/c'
        ! correction for parallel version
        IF(tmpi) THEN
@@ -274,7 +294,7 @@ CONTAINS
        IF(tmpi) CALL collect_densities
        ! Step 4: eliminate center-of-mass motion if desired
        IF(mrescm/=0) THEN  
-          IF(MOD(iter,mrescm)==0) THEN  
+          IF(MOD(diter,mrescm)==0) THEN  
              CALL resetcm
              !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst) SCHEDULE(STATIC) &
              !$OMP REDUCTION(+:rho,tau,current,sdens,sodens)
@@ -287,19 +307,44 @@ CONTAINS
              IF(tmpi) CALL collect_densities
           ENDIF
        ENDIF
-       ! Step 5: generating some output
+       ! Step 5: perform density constraint if desired
+       IF(dconstr .AND. MOD(diter,mconstr)==0) THEN
+          iter = 0
+          psiold = psi
+          woccold = wocc
+          rhoold = rho
+          tauold = tau
+          currentold = current
+          sdensold = sdens
+          sodensold = sodens
+          CALL init_static
+          CALL statichf
+          ! reset densities to time evolution values
+          ecorl = 0.0D0
+          psi = psiold
+          wocc = woccold
+          rho = rhoold
+          tau = tauold
+          current = currentold
+          sdens = sdensold
+          sodens = sodensold
+          iter = diter
+       END IF
+       ! Step 6: generating some output
        time=time+dt
        CALL tinfo
-       ! Step 6: finishing up
+       ! Step 7: finishing up
        ! compute densities, currents, potentials etc.                  *
        CALL skyrme  
        IF(text_timedep) CALL extfld(time+dt)
-       IF(MOD(iter,mrest)==0) THEN  
+       IF(MOD(diter,mrest)==0) THEN  
           CALL write_wavefunctions
-          IF(wflag) WRITE(*,*) ' Wrote restart file at end of  iter=',iter
+          IF(wflag) WRITE(*,*) ' Wrote restart file at end of  iter=',diter
        ENDIF
     END DO Timestepping
     DEALLOCATE(ps4)
+    IF(dconstr) DEALLOCATE(woccold,rhoold,tauold,currentold,sdensold,sodensold)
+    IF(dconstr) DEALLOCATE(psiold)
   END SUBROUTINE dynamichf
 !---------------------------------------------------------------------------  
 ! DESCRIPTION: tstep

@@ -157,7 +157,7 @@ CONTAINS
     RETURN
   END SUBROUTINE collect_densities
 !---------------------------------------------------------------------------  
-! DESCRIPTION: Routinename
+! DESCRIPTION: collect_sp_properties
 !> @brief
 !!This subroutine collects the single-particle properties calculated
 !!from the wave functions and thus available only for the local wave

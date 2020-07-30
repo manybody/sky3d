@@ -1,5 +1,5 @@
 !------------------------------------------------------------------------------
-! MODULE: Modulename
+! MODULE: Params
 !------------------------------------------------------------------------------
 ! DESCRIPTION: 
 !> @brief
@@ -73,6 +73,8 @@ MODULE Params
   !!obtained from FFT.
   LOGICAL :: trestart=.FALSE. !< if \c true, restarts the calculation
   !!from the \c wffile.
+  LOGICAL :: dconstr=.FALSE. !< if \c true, performs the density constraint
+  !!during the time evolution.
   !>@}
   !**********************************************************************
   ! parameters controlling printout frequency etc.
@@ -87,11 +89,15 @@ MODULE Params
   !!*.tdd</tt> files every \c  mplot time steps or iterations.
   INTEGER :: mrest=0    !<if greater than zero, a \c wffile is produced
   !!every \c mrest iterations or time steps.
+  INTEGER :: mconstr=0  !<if greater than zero and \c dconstr is \c true,
+  !!the density constraint is performed every \c mconstr time steps.
   !>@}
   !>@name Globally used variables
   !>@{
-  INTEGER :: iter     !<number of the current time step or iteration.
-  !!Used in both static and dynamic modes.
+  INTEGER :: iter     !<number of the current iteration.
+  !!Used in the static and dynamic mode.
+  INTEGER :: diter     !<number of the current time step.
+  !!Used in the dynamic mode to save time step.
   REAL(db) :: time    !<the simulation time of the current step in
   !!fm/c; only meaningful in a dynamic calculation.
   LOGICAL :: wflag    !<indicates whether printing is allowed. This
@@ -116,5 +122,10 @@ MODULE Params
   REAL(db) :: r0=1.2D0         !<nuclear radius parameter. The nuclear radius
   !!\f$ R=r_0A^{1/3} \f$ is used to compute the \f$ \beta \f$ and \f$ \gamma \f$ deformation parameters 
   !!in subroutine \c moments. Units: fm.
+  !>@}
+  !>@name Density constraint parameters
+  !>@{
+  REAL(db) :: c0=1.90D0   !<c0 parameter for density constraint
+  REAL(db) :: d0=5e-5     !<d0 parameter for density constraint exchange term
   !>@}
 END MODULE Params

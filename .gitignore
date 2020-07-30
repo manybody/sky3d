@@ -1,0 +1,8 @@
+Code/*
+!Code/*.f*
+!Code/*.data
+!Code/*.static
+!Code/*.coll
+!Code/*.dox
+!Code/run
+!Code/Makefile

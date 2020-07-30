@@ -118,7 +118,7 @@ static.o : static.f90 params.o densities.o grids.o \
 
 dynamic.o : dynamic.f90 params.o densities.o grids.o trivial.o \
 	levels.o moment.o energies.o inout.o meanfield.o $(PARALLEL_SKY) \
-	twobody.o external.o Makefile
+	twobody.o external.o static.o Makefile
 
 main3d.o : main3d.f90 params.o fourier.o forces.o densities.o meanfield.o \
     levels.o grids.o fragments.o $(PARALLEL_SKY) dynamic.o static.o coulomb.o user.o \

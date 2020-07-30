@@ -117,6 +117,7 @@ CONTAINS
 !--------------------------------------------------------------------------- 
   SUBROUTINE init_static
     IF(wflag) THEN
+       IF(dconstr) WRITE(*,*) '***** Starting Density-constraint *****'
        WRITE(*,*) '***** Parameters for static calculation *****'
        WRITE(*,"(3(A,I4))") ' Neutrons:',nneut,' in ',npsi(1),' levels'
        WRITE(*,"(3(A,I4))") ' Protons :',nprot,' in ',npsi(2)-npsi(1),' levels'
@@ -196,7 +197,10 @@ CONTAINS
 !!    diagonalize the single-particle Hamiltonian.
 !!  - <b> Step 7: pairing and orthogonalization</b>: these are called for
 !!    the new wave functions.
-!!  - <b> Step 8: calculate densities and fields with relaxation</b>: the
+!!  - <b> Step 8: density constraint</b>: the quantities for the density
+!!    constraint minimization are calculated and \c psi is modified
+!!    by the constraint parameter.
+!!  - <b> Step 9: calculate densities and fields with relaxation</b>: the
 !!    old density \c rho and kinetic energy density \c tau are saved
 !!    in \c upot and \c bmass, which are here used purely as work
 !!    arrays. Then the new densities are accumulated from the wave
@@ -206,7 +210,7 @@ CONTAINS
 !!    calculate the new fields. Then the detailed single-particle
 !!    properties and energies are calculated and printed using 
 !!    \c sp_properties} and \c sinfo.
-!!  - <b> Step 9: finalizing the loop</b>: convergence is checked by
+!!  - <b> Step 10: finalizing the loop</b>: convergence is checked by
 !!    comparing \c sumflu per particle to \c serr, if it is smaller,
 !!    the job terminates after writing the final wave functions.
 !!    Otherwise, the wave functions are written if indicated by
@@ -218,7 +222,21 @@ CONTAINS
     LOGICAL, PARAMETER :: taddnew=.TRUE. ! mix old and new densities
     INTEGER :: iq,nst,firstiter
     REAL(db) :: sumflu,denerg
-    REAL(db),PARAMETER :: addnew=0.2D0,addco=1.0D0-addnew      
+    REAL(db),PARAMETER :: addnew=0.2D0,addco=1.0D0-addnew
+    REAL(db), DIMENSION(:,:,:,:), ALLOCATABLE :: rho0, rhoold, rhonew, drho, rlamold
+    REAL(db), DIMENSION(:,:,:,:), ALLOCATABLE :: drlam, rlamcof
+    REAL(db), DIMENSION(:,:,:,:), ALLOCATABLE :: rlam
+    COMPLEX(db), DIMENSION(:,:,:,:,:), ALLOCATABLE :: psiwork
+    If(dconstr) Then
+       Allocate(rho0(nx, ny, nz, 2), rhoold(nx, ny, nz, 2))
+       Allocate(drho(nx, ny, nz, 2), rhonew(nx, ny, nz, 2))
+       Allocate(rlamold(nx, ny, nz, 2), rlam(nx, ny, nz, 2))
+       Allocate(drlam(nx, ny, nz, 2), rlamcof(nx, ny, nz, 2))
+       ALLOCATE(psiwork(nx,ny,nz,2,nstmax))
+       rlam=0.0D0
+       rho0 = rho
+       rhoold = rho
+    End If   
     ! Step 1: initialization
     IF(tdiag) ALLOCATE(hmatr(nstmax,nstmax))
     IF(trestart) THEN
@@ -290,7 +308,35 @@ CONTAINS
        ! Step 7: do pairing and orthogonalization
        IF(ipair/=0) CALL pair
        CALL schmid
-       ! Step 8: get new densities and fields with relaxation
+       ! Step 8: Perform density constraint if desired
+       IF(dconstr) THEN
+         rhonew=0.0D0
+         !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst) SCHEDULE(STATIC) &
+         !$OMP REDUCTION(+:rhonew)
+         DO nst=1,nstmax
+            rhonew(:,:,:,isospin(nst))=rhonew(:,:,:,isospin(nst))+wocc(nst)* &
+                 (psi(:,:,:,1,nst)*CONJG(psi(:,:,:,1,nst))+ &
+                 psi(:,:,:,2,nst)*CONJG(psi(:,:,:,2,nst)))
+         END DO
+         !$OMP END PARALLEL DO
+         drho = rhonew - rhoold
+         rlamold = rlam
+         rlam = rlam + c0 * drho / (2.0_db*x0dmp*rhoold+d0)
+         drho = rhoold - rho0
+         drlam = c0 * drho / (2.0_db*x0dmp*rhoold+d0)
+         rlamcof = rlam - rlamold + drlam
+         psiwork = psi
+         !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst) SCHEDULE(STATIC)
+         DO nst=1,nstmax
+           psiwork(:,:,:,1,nst) = rlamcof(:,:,:,isospin(nst))*psiwork(:,:,:,1,nst)
+           psiwork(:,:,:,2,nst) = rlamcof(:,:,:,isospin(nst))*psiwork(:,:,:,2,nst)
+         ENDDO
+         !$OMP END PARALLEL DO
+         psi = psi - x0dmp*psiwork
+         ecorl=SUM(wxyz*(rlam(:,:,:,1)*rho(:,:,:,1)+rlam(:,:,:,2)*rho(:,:,:,2)))
+         CALL schmid
+       ENDIF
+       ! Step 9: get new densities and fields with relaxation
        IF(taddnew) THEN
           upot=rho
           bmass=tau
@@ -312,6 +358,11 @@ CONTAINS
           tau=addnew*tau+addco*bmass
        ENDIF
        CALL skyrme
+       ! Update old rho and add rlam to upot
+       IF(dconstr) THEN
+         rhoold = rho
+         upot = upot + rlam
+       ENDIF
        ! calculate and print information
        IF(mprint>0.AND.MOD(iter,mprint)==0) THEN
           CALL sp_properties
@@ -320,7 +371,7 @@ CONTAINS
           CALL sp_properties
           CALL sum_energy
        ENDIF
-       ! Step 9: check for convergence, saving wave functions
+       ! Step 10: check for convergence, saving wave functions
        IF(sumflu/nstmax<serr.AND.iter>1) THEN
           CALL write_wavefunctions
           EXIT Iteration  
@@ -328,7 +379,7 @@ CONTAINS
        IF(MOD(iter,mrest)==0) THEN  
           CALL write_wavefunctions
        ENDIF
-       ! Step 10: update step size for the next iteration
+       ! Step 11: update step size for the next iteration
        IF(tvaryx_0) THEN
           IF(ehf<ehfprev .OR. efluct1<(efluct1prev*(1.0d0-1.0d-5)) &
                .OR. efluct2<(efluct2prev*(1.0d0-1.0d-5))) THEN
@@ -343,6 +394,10 @@ CONTAINS
        END IF
     END DO Iteration
     IF(tdiag) DEALLOCATE(hmatr)
+    IF(dconstr) THEN
+       DEALLOCATE(rho0,rhoold,drho,rhonew,rlamold,drlam,rlam,rlamcof,psiwork)
+       WRITE(*,'(/,A,1PE15.6,/)') ' Final density-constrained energy: ',ehfint
+    END IF
   END SUBROUTINE statichf
 !---------------------------------------------------------------------------  
 ! DESCRIPTION: grstep
@@ -628,6 +683,7 @@ CONTAINS
          ' MeV. Coulomb:',ehfc,' MeV.'
     IF(ipair/=0) WRITE(*,'(2(A,1PE14.6))') ' Pairing energy neutrons: ', &
          epair(1),' protons: ',epair(2)
+    IF(dconstr) WRITE(*,'(A,1PE14.6)') ' Density-constraint energy: ',ecorl
     ! output densities
     IF(mplot/=0) THEN  
        IF(MOD(iter,mplot)==0) THEN

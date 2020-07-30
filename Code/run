@@ -1,0 +1,7 @@
+#!/bin/bash
+ulimit -s unlimited
+export OMP_STACKSIZE=2500m
+
+date
+time ./sky3d.omp
+date

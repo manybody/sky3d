@@ -371,7 +371,7 @@ CONTAINS
     CLOSE(unit=scratch)
   END SUBROUTINE read_one_fragment
 !---------------------------------------------------------------------------  
-! DESCRIPTION: Routinename
+! DESCRIPTION: locate
 !> @brief
 !!This has the task to position the file for reading wave functions at
 !!the correct place. It has as arguments the number of the file
@@ -411,7 +411,7 @@ CONTAINS
     END IF
   END SUBROUTINE locate
 !---------------------------------------------------------------------------  
-! DESCRIPTION: Routinename
+! DESCRIPTION: phases
 !> @brief
 !!This subroutine calculates the phase factors for a one-dimensional
 !!translation \f$ \Delta x \f$ as

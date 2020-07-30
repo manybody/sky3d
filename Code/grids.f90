@@ -1,5 +1,5 @@
 !------------------------------------------------------------------------------
-! MODULE: Modulename
+! MODULE: Grids
 !------------------------------------------------------------------------------
 ! DESCRIPTION: 
 !> @brief
@@ -94,7 +94,7 @@ CONTAINS
     wxyz=dx*dy*dz
   END SUBROUTINE init_grid
 !---------------------------------------------------------------------------  
-! DESCRIPTION: Routinename
+! DESCRIPTION: init_coord
 !> @brief
 !!In this subroutine the defining information for a grid direction
 !!(generically called \c v, which can be replaced by \c x, \c y, or \c z) 

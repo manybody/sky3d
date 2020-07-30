@@ -1,5 +1,5 @@
 !------------------------------------------------------------------------------
-! MODULE: Modulename
+! MODULE: Inout
 !------------------------------------------------------------------------------
 ! DESCRIPTION: 
 !> @brief
@@ -463,7 +463,7 @@ CONTAINS
     DEALLOCATE(pst,psx,psy,psz,psw)
   END SUBROUTINE sp_properties
 !---------------------------------------------------------------------------  
-! DESCRIPTION: Routinename
+! DESCRIPTION: start_protocol
 !> @brief
 !!This is given a file name and a character
 !!string for a header line to start the file contents. It is used for

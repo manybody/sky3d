@@ -165,7 +165,7 @@ CONTAINS
     ENDDO
   END SUBROUTINE pairgap
 !---------------------------------------------------------------------------  
-! DESCRIPTION: Routinename
+! DESCRIPTION: pairdn
 !> @brief
 !!The subroutine \c pairdn determines the pairing solution by using
 !!\c rbrent to find the correct Fermi energy for the given particle
@@ -327,7 +327,7 @@ CONTAINS
     ENDIF
   END FUNCTION rbrent
 !---------------------------------------------------------------------------  
-! DESCRIPTION: Routinename
+! DESCRIPTION: bcs_occupation
 !> @brief
 !!For a given Fermi energy \f$ \epsilon_F \f$ passed as argument \c efermi,
 !!this subroutine evaluates the particle number that would result with

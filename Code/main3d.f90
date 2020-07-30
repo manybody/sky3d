@@ -73,7 +73,8 @@ PROGRAM tdhf3d
   NAMELIST /files/ wffile,converfile,monopolesfile,dipolesfile, &
        momentafile,energiesfile,quadrupolesfile,spinfile,extfieldfile
   NAMELIST /main/ tcoul,mprint,mplot,trestart, &
-       writeselect,write_isospin,mrest,imode,tfft,nof,r0
+       writeselect,write_isospin,mrest,imode,tfft,nof,r0, &
+       dconstr,mconstr,c0,d0
   !********************************************************************
   ! Step 1: filename definitions
   !********************************************************************
@@ -91,6 +92,7 @@ PROGRAM tdhf3d
   tstatic=imode==1
   tdynamic=imode==2
   IF(tmpi.AND.tstatic) STOP 'MPI not implemented for static mode'
+  IF(tmpi.AND.dconstr) STOP 'MPI not implemented for density constraint'
   IF(.NOT.(tstatic.OR.tdynamic)) THEN
      IF(wflag) WRITE(*,*) 'Illegal value for imode:',imode
      STOP
@@ -99,6 +101,8 @@ PROGRAM tdhf3d
      WRITE(*,*) '***** Main parameter input *****'
      IF(tstatic) WRITE(*,*) 'This is a static calculation'
      IF(tdynamic) WRITE(*,*) 'This is a dynamic calculation'
+     IF(tstatic.AND.dconstr) STOP &
+        'Density constraint should not be ran for the static case'
      WRITE(*,'(3(A16,I5))') 'Print interval:',mprint, &
           'Plot interval:',mplot,'Save interval:',mrest
      WRITE(*,'(A,F7.4)') 'Radius parameter r0=',r0
@@ -141,6 +145,7 @@ PROGRAM tdhf3d
   IF(tstatic) THEN
      CALL getin_static
   ELSE
+     IF(dconstr) CALL getin_static
      CALL getin_dynamic
   END IF
   !********************************************************************
