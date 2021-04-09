@@ -1,5 +1,5 @@
 COMPILER = ifort
-COMPILERFLAGS  = -axsse4.2 -msse4.2 -O3 -ip -no-prec-div -align all -mcmodel=large -shared-intel
+COMPILERFLAGS  = -cpp -axsse4.2 -msse4.2 -O3 -ip -no-prec-div -align all -mcmodel=large -shared-intel
 # -mkl=sequential
 LINKERFLAGS    =  $(COMPILERFLAGS) -lfftw3 -llapack
 
