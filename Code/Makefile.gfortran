@@ -1,5 +1,5 @@
 COMPILER = gfortran
-COMPILERFLAGS  =  -O3 -msse4.2 -mfpmath=sse -ffast-math -finline-functions -funroll-loops
+COMPILERFLAGS  =  -cpp -O3 -msse4.2 -mfpmath=sse -ffast-math -finline-functions -funroll-loops
 #COMPILERFLAGS  =  -g -fbacktrace
 LINKERFLAGS    =  $(COMPILERFLAGS) -lfftw3 -llapack
 
