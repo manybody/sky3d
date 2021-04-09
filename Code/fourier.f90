@@ -2,7 +2,9 @@ MODULE Fourier
   USE params, ONLY: db,wflag
   USE Grids, ONLY: nx,ny,nz
   USE ISO_C_BINDING
+#ifdef _OPENMP
   USE OMP_LIB, ONLY: omp_get_max_threads
+#endif
   IMPLICIT NONE
   INTEGER(C_LONG),SAVE :: pforward,pbackward,xforward,xbackward, &
        yforward,ybackward,zforward,zbackward
@@ -11,7 +13,9 @@ CONTAINS
     INCLUDE 'fftw3.f'
     COMPLEX(db),ALLOCATABLE :: p(:,:,:,:,:)
     INTEGER,SAVE :: FFTW_planflag
+#ifdef _OPENMP
     INTEGER :: FFTW_thread_stat
+#endif
 ! set option for FFTW setup here
 !    FFTW_planflag=FFTW_ESTIMATE
 !    FFTW_planflag=FFTW_MEASURE
@@ -19,8 +23,10 @@ CONTAINS
 !    FFTW_planflag=FFTW_EXHAUSTIVE
 !    FFTW_planflag=FFTW_MEASURE+FFTW_UNALIGNED
     ALLOCATE(p(nx,ny,nz,2,2))
+#ifdef _OPENMP
     CALL dfftw_init_threads(FFTW_thread_stat)
     CALL dfftw_plan_with_nthreads(omp_get_max_threads())
+#endif
     CALL dfftw_plan_dft_3d(pforward,nx,ny,nz,p(:,:,:,1,1),p(:,:,:,1,1), &
          FFTW_FORWARD, FFTW_planflag)
     CALL dfftw_plan_dft_3d(pbackward,nx,ny,nz,p(:,:,:,1,1),p(:,:,:,1,1), &
