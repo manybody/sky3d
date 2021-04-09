@@ -1,6 +1,6 @@
 COMPILER = mpif90
 COMPILERFLAGS  =  -O3
-LINKERFLAGS    =  -O3
+LINKERFLAGS    =  $(COMPILERFLAGS) -lfftw3 -llapack
 
 SOURCE_TRAILER = .f90
 EXEC           = sky3d.mpi
@@ -14,7 +14,7 @@ SHELL = /bin/sh
 #---------------------------------------------------------	
 all:$(EXEC) 
 $(EXEC):$(OBJS) 	
-	$(COMPILER) $(LINKERFLAGS) -o $@  $(OBJS) -lfftw3 -llapack
+	$(COMPILER) $(LINKERFLAGS) -o $@  $(OBJS)
 #
 
 user.o : user.f90 params.o grids.o levels.o

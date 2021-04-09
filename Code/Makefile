@@ -1,7 +1,7 @@
 COMPILER = gfortran
 COMPILERFLAGS  =  -O3 -msse4.2 -mfpmath=sse -ffast-math -finline-functions -funroll-loops
 #COMPILERFLAGS  = -g -fbacktrace
-LINKERFLAGS    =  $(COMPILERFLAGS)
+LINKERFLAGS    =  $(COMPILERFLAGS) -lfftw3 -llapack
 
 SOURCE_TRAILER = .f90
 EXEC           = sky3d.seq
@@ -15,7 +15,7 @@ SHELL = /bin/sh
 #---------------------------------------------------------	
 all:$(EXEC) 
 $(EXEC):$(OBJS) 	
-	$(COMPILER) $(LINKERFLAGS) -o $@  $(OBJS) -lfftw3 -llapack
+	$(COMPILER) $(LINKERFLAGS) -o $@  $(OBJS)
 #
 
 user.o : user.f90 params.o grids.o levels.o
