@@ -1,7 +1,7 @@
 COMPILER = gfortran
 COMPILERFLAGS  =  -cpp -O3 -msse4.2 -mfpmath=sse -ffast-math -finline-functions -funroll-loops
 #COMPILERFLAGS  =  -g -fbacktrace
-LINKERFLAGS    =  $(COMPILERFLAGS) -lfftw3 -llapack
+LINKERFLAGS    =  $(COMPILERFLAGS) -lcufft -lcufftw -llapack
 
 SOURCE_TRAILER = .f90
 EXEC           = sky3d.omp

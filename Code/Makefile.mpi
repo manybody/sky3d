@@ -1,6 +1,6 @@
 COMPILER = mpif90
 COMPILERFLAGS  =  -cpp -O3
-LINKERFLAGS    =  $(COMPILERFLAGS) -lfftw3 -llapack
+LINKERFLAGS    =  $(COMPILERFLAGS) -lcufft -lcufftw -llapack
 
 SOURCE_TRAILER = .f90
 EXEC           = sky3d.mpi
