@@ -7,7 +7,7 @@ MODULE Fourier
        yforward,ybackward,zforward,zbackward
 CONTAINS
   SUBROUTINE init_fft
-    INCLUDE 'fftw3.f'
+    INCLUDE 'cufftw.h'
     COMPLEX(db),ALLOCATABLE :: p(:,:,:,:,:)
     INTEGER,SAVE :: FFTW_planflag             
 ! set option for FFTW setup here

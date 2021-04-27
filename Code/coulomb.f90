@@ -34,7 +34,7 @@ CONTAINS
   END SUBROUTINE poisson
   !***************************************************
   SUBROUTINE coulinit
-    INCLUDE 'fftw3.f'
+    INCLUDE 'cufftw.h'
     REAL(db),ALLOCATABLE :: iqx(:),iqy(:),iqz(:)
     INTEGER :: i,j,k
     IF(ALLOCATED(q)) RETURN ! has been initialized already
