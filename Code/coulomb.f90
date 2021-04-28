@@ -47,10 +47,8 @@ CONTAINS
     ! allocated helper arrays
     ALLOCATE (wcoul(nx,ny,nz),q(nx2,ny2,nz2),iqx(nx2),iqy(ny2),iqz(nz2))
     ! set up FFTW plans
-    CALL dfftw_plan_dft_3d(coulplan1,nx2,ny2,nz2,q,q, &
-         FFTW_FORWARD, FFTW_ESTIMATE+FFTW_UNALIGNED)
-    CALL dfftw_plan_dft_3d(coulplan2,nx2,ny2,nz2,q,q, &
-         FFTW_BACKWARD, FFTW_ESTIMATE+FFTW_UNALIGNED)
+    CALL cufftPlan3d(coulplan1,nx2,ny2,nz2,CUFFT_Z2Z)
+    CALL cufftPlan3d(coulplan2,nx2,ny2,nz2,CUFFT_Z2Z)
     ! calculate coordinate contributions to 1/k^2 or 1/r^2, respectively
     CALL initiq(nx2,dx,iqx)
     CALL initiq(ny2,dy,iqy)
