@@ -2,6 +2,9 @@ MODULE Coulomb
   USE Params, ONLY: db,pi,e2
   USE Grids, ONLY: nx,ny,nz,dx,dy,dz,wxyz,periodic
   USE Densities, ONLY: rho
+#ifdef CUDA
+  USE cufft_m
+#endif
   USE ISO_C_BINDING
   IMPLICIT NONE
   INTEGER,PRIVATE :: nx2,ny2,nz2
@@ -34,7 +37,9 @@ CONTAINS
   END SUBROUTINE poisson
   !***************************************************
   SUBROUTINE coulinit
-    INCLUDE 'cufftw.h'
+#ifndef CUDA
+    INCLUDE 'fftw3.f'
+#endif
     REAL(db),ALLOCATABLE :: iqx(:),iqy(:),iqz(:)
     INTEGER :: i,j,k
     IF(ALLOCATED(q)) RETURN ! has been initialized already
@@ -47,8 +52,15 @@ CONTAINS
     ! allocated helper arrays
     ALLOCATE (wcoul(nx,ny,nz),q(nx2,ny2,nz2),iqx(nx2),iqy(ny2),iqz(nz2))
     ! set up FFTW plans
+#ifdef CUDA
     CALL cufftPlan3d(coulplan1,nx2,ny2,nz2,CUFFT_Z2Z)
     CALL cufftPlan3d(coulplan2,nx2,ny2,nz2,CUFFT_Z2Z)
+#else
+    CALL dfftw_plan_dft_3d(coulplan1,nx2,ny2,nz2,q,q, &
+         FFTW_FORWARD, FFTW_ESTIMATE+FFTW_UNALIGNED)
+    CALL dfftw_plan_dft_3d(coulplan2,nx2,ny2,nz2,q,q, &
+         FFTW_BACKWARD, FFTW_ESTIMATE+FFTW_UNALIGNED)
+#endif
     ! calculate coordinate contributions to 1/k^2 or 1/r^2, respectively
     CALL initiq(nx2,dx,iqx)
     CALL initiq(ny2,dy,iqy)
