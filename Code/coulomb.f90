@@ -11,18 +11,31 @@ MODULE Coulomb
   INTEGER(C_LONG),PRIVATE,SAVE :: coulplan1,coulplan2
   REAL(db),ALLOCATABLE,SAVE :: wcoul(:,:,:)
   COMPLEX(db),PRIVATE,ALLOCATABLE,SAVE :: q(:,:,:)
+#ifdef CUDA
+  COMPLEX(db),PRIVATE,DEVICE :: q_d(:,:,:)
+#endif
   PUBLIC :: poisson,coulinit,wcoul
   PRIVATE :: initiq
 CONTAINS
   !***************************************************
   SUBROUTINE poisson
     COMPLEX(db),ALLOCATABLE :: rho2(:,:,:)
+#ifdef CUDA
+    COMPLEX(db),DEVICE :: rho2_d(:,:,:)
+#endif
     ALLOCATE(rho2(nx2,ny2,nz2))
     ! put proton density into array of same or double size, zeroing rest
     IF(.NOT.periodic) rho2=(0.D0,0.D0)
     rho2(1:nx,1:ny,1:nz)=rho(:,:,:,2)
     ! transform into momentum space
+#ifdef CUDA
+    ! Copy to device, perform FFT, copy back to host
+    rho2_d = rho2
+    CALL cufftExecZ2Z(coulplan1,rho2_d,rho2_d,CUFFT_FORWARD)
+    rho2 = rho2_d
+#else
     CALL dfftw_execute_dft(coulplan1,rho2,rho2)
+#endif
     ! add charge factor and geometric factors
     ! note that in the periodic case q has only a real part
     IF(periodic) THEN
@@ -31,7 +44,13 @@ CONTAINS
        rho2=e2*wxyz*q*rho2
     END IF
     ! transform back to coordinate space and return in wcoul
+#ifdef CUDA
+    rho2_d = rho2
+    CALL cufftExecZ2Z(coulplan2,rho2_d,rho2_d,CUFFT_INVERSE)
+    rho2 = rho2_d
+#else
     CALL dfftw_execute_dft(coulplan2,rho2,rho2)
+#endif
     wcoul=REAL(rho2(1:nx,1:ny,1:nz))/(nx2*ny2*nz2)
     DEALLOCATE(rho2)
   END SUBROUTINE poisson
@@ -74,7 +93,14 @@ CONTAINS
     ELSE
        q=1.D0/SQRT(REAL(q))
        q(1,1,1)=2.84D0/(dx*dy*dz)**(1.D0/3.D0)
+#ifdef CUDA
+       ! Copy to device, perform FFT, copy back to host
+       q_d = q
+       CALL cufftExecZ2Z(coulplan1,q_d,q_d,CUFFT_FORWARD)
+       q = q_d
+#else
        CALL dfftw_execute_dft(coulplan1,q,q)
+#endif
     END IF
     DEALLOCATE(iqx,iqy,iqz)
   END SUBROUTINE coulinit

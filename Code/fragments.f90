@@ -19,7 +19,8 @@ MODULE Fragments
   INTEGER :: fnx(mnof),fny(mnof),fnz(mnof)
   PUBLIC :: getin_fragments, read_fragments
   PRIVATE :: locate,phases
-CONTAINS 
+  REAL(db) :: start_fragments, finish_fragments
+CONTAINS
   !*******************************************************************
   SUBROUTINE getin_fragments
     USE Twobody, ONLY: centerx,centerz
@@ -125,10 +126,16 @@ CONTAINS
   SUBROUTINE read_one_fragment(iff)
     USE Parallel, ONLY: node,mpi_myproc,localindex
     USE Fourier
+#ifdef CUDA
+    USE cufft_m
+#endif
     INTEGER,INTENT(IN) :: iff
     LOGICAL :: multifile
     INTEGER :: ipn
     COMPLEX(db) :: ps1(nx,ny,nz,2),akx(nx),aky(ny),akz(nz)
+#ifdef CUDA
+    COMPLEX(db), DEVICE :: ps1_d(nx,ny,nz,2)
+#endif
     INTEGER :: iq,is,nst,oldnst,newnst,ix,iy,iz,iold,inew
     REAL(db) :: cmi(3)
     REAL(db) :: fx(fnx(iff)),fy(fny(iff)),fz(fnz(iff))
@@ -195,13 +202,26 @@ CONTAINS
              ps1=0.D0
              READ(scratch) ps1(1:fnx(iff),1:fny(iff),1:fnz(iff),:)
              DO is=1,2
+#ifdef CUDA
+                ! Copy to device, perform FFT, copy back to host
+                ps1_d = ps1
+                CALL cufftExecZ2Z(pforward,ps1_d(:,:,:,is),ps1_d(:,:,:,is),CUFFT_FORWARD)
+                ps1 = ps1_d
+#else
                 CALL dfftw_execute_dft(pforward,ps1(:,:,:,is),ps1(:,:,:,is))
-                FORALL(ix=1:nx,iy=1:ny,iz=1:nz) 
+#endif
+                FORALL(ix=1:nx,iy=1:ny,iz=1:nz)
                    ps1(ix,iy,iz,is)=ps1(ix,iy,iz,is)*akx(ix)*aky(iy)*akz(iz) &
                         /DBLE(nx*ny*nz)
                 END FORALL
+#ifdef CUDA
+                ps1_d = ps1
+                CALL cufftExecZ2Z(pbackward,ps1_d(:,:,:,is),ps1_d(:,:,:,is),CUFFT_INVERSE)
+                ps1 = ps1_d
+#else
                 CALL dfftw_execute_dft(pbackward,ps1(:,:,:,is),ps1(:,:,:,is))
-                WHERE(ABS(ps1)==0.D0) 
+#endif
+                WHERE(ABS(ps1)==0.D0)
                    psi(:,:,:,:,ipn)=1.0D-20
                 ELSEWHERE
                    psi(:,:,:,:,ipn)=ps1

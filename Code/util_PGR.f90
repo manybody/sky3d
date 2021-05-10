@@ -86,13 +86,29 @@
     COMPLEX(db), INTENT(IN) :: psin(:,:,:,:)
     REAL(db), INTENT(IN) :: timact
     COMPLEX(db), ALLOCATABLE:: ps1(:,:,:,:),ps2(:,:,:,:)
+#ifdef CUDA
+    COMPLEX(db), DEVICE :: psin_d(:,:,:,:),ps1_d(:,:,:,:),ps2_d(:,:,:,:)
+#endif
     REAL(db) :: kfac
     INTEGER :: iy
     ALLOCATE(ps1(nx,ny,nz,2),ps2(nx,ny,nz,2))
     kfac=(PI+PI)/(dy*ny)
+#ifdef CUDA
+    ! Copy to device, perform FFT, copy back to host
+    psin_d = psin
+    ps1_d = ps1
+    ps2_d = ps2
+    CALL cufftExecZ2Z(xforward,psin_d,ps1_d,CUFFT_FORWARD)
+    CALL cufftExecZ2Z(yforward,ps1_d,ps2_d,CUFFT_FORWARD)
+    CALL cufftExecZ2Z(zforward,ps2_d,ps1_d,CUFFT_FORWARD)
+    psin = psin_d
+    ps1 = ps1_d
+    ps2 = ps2_d
+#else
     CALL dfftw_execute_dft(xforward,psin,ps1)
     CALL dfftw_execute_dft(yforward,ps1,ps2)
     CALL dfftw_execute_dft(zforward,ps2,ps1)
+#endif
     WRITE(921,'(f8.3,4(1pg13.5))') timact,SUM(ABS(ps1(nx/2,ny/2,nz/2,:))),&
          SUM(ABS(ps1(nx/2,1,1,:))),SUM(ABS(ps1(1,ny/2,1,:))),&
          SUM(ABS(ps1(1,1,nz/2,:)))
@@ -113,15 +129,31 @@
   SUBROUTINE pmomscut(psin)  
     COMPLEX(db), INTENT(IN) :: psin(:,:,:,:)
     COMPLEX(db), ALLOCATABLE:: ps1(:,:,:,:),ps2(:,:,:,:)
+#ifdef CUDA
+    COMPLEX(db), DEVICE :: psin_d(:,:,:,:),ps1_d(:,:,:,:),ps2_d(:,:,:,:)
+#endif
     REAL(db) :: kfac
     INTEGER :: iy,ix,iz
     LOGICAL, SAVE :: tfirst=.true.
     !    IF(.NOT.tfirst) RETURN
     ALLOCATE(ps1(nx,ny,nz,2),ps2(nx,ny,nz,2))
     kfac=(PI+PI)/(dy*ny)
+#ifdef CUDA
+    ! Copy to device, perform FFT, copy back to host
+    psin_d = psin
+    ps1_d = ps1
+    ps2_d = ps2
+    CALL cufftExecZ2Z(xforward,psin,ps1,CUFFT_FORWARD)
+    CALL cufftExecZ2Z(yforward,ps1,ps2,CUFFT_FORWARD)
+    CALL cufftExecZ2Z(zforward,ps2,ps1,CUFFT_FORWARD)
+    psin = psin_d
+    ps1 = ps1_d
+    ps2 = ps2_d
+#else
     CALL dfftw_execute_dft(xforward,psin,ps1)
     CALL dfftw_execute_dft(yforward,ps1,ps2)
     CALL dfftw_execute_dft(zforward,ps2,ps1)
+#endif
     ! along x
     WRITE(922,'(a)') '# along x' 
     DO ix=nx/2+1,nx
