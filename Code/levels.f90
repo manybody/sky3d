@@ -32,20 +32,20 @@ CONTAINS
     COMPLEX(db), INTENT(OUT):: d1psout(:,:,:,:)
     COMPLEX(db), INTENT(OUT), OPTIONAL :: d2psout(:,:,:,:)
 #ifdef CUDA
-    COMPLEX(db), DEVICE ::  psin_d(:,:,:,:)
-    COMPLEX(db), DEVICE:: d1psout_d(:,:,:,:)
-    COMPLEX(db), DEVICE :: d2psout_d(:,:,:,:)
+    COMPLEX(db), ALLOCATABLE, DEVICE :: psin_d(:,:,:,:), d1psout_d(:,:,:,:), d2psout_d(:,:,:,:)
 #endif
     REAL(db) :: kfac
     INTEGER :: ix
     kfac=(PI+PI)/(dx*nx)
 #ifdef CUDA
+    ALLOCATE(psin_d(nx,ny,nz,2), d1psout_d(nx,ny,nz,2))
     ! Copy to device, perform FFT, copy back to host
     psin_d = psin
     d1psout_d = d1psout
     CALL cufftExecZ2Z(xforward,psin_d,d1psout_d,CUFFT_FORWARD)
     psin = psin_d
     d1psout = d1psout_d
+    DEALLOCATE(psin_d, d1psout_d)
 #else
     CALL dfftw_execute_dft(xforward,psin,d1psout)
 #endif
@@ -55,9 +55,11 @@ CONTAINS
           d2psout(nx-ix+1,:,:,:)=-(ix*kfac)**2*d1psout(nx-ix+1,:,:,:)/REAL(nx)
        ENDDO
 #ifdef CUDA
+       ALLOCATE(d2psout_d(nx,ny,nz,2))
        d2psout_d = d2psout
        CALL cufftExecZ2Z(xbackward,d2psout_d,d2psout_d,CUFFT_INVERSE)
        d2psout = d2psout_d
+       DEALLOCATE(d2psout_d)
 #else
        CALL dfftw_execute_dft(xbackward,d2psout,d2psout)
 #endif
@@ -72,9 +74,11 @@ CONTAINS
     ENDDO
     d1psout(nx/2+1,:,:,:)=(0.D0,0.D0)
 #ifdef CUDA
+    ALLOCATE(d1psout_d(nx,ny,nz,2))
     d1psout_d = d1psout
     CALL cufftExecZ2Z(xbackward,d1psout_d,d1psout_d,CUFFT_INVERSE)
     d1psout = d1psout_d
+    DEALLOCATE(d1psout_d)
 #else
     CALL dfftw_execute_dft(xbackward,d1psout,d1psout)
 #endif
@@ -85,9 +89,7 @@ CONTAINS
     COMPLEX(db), INTENT(OUT) :: d1psout(:,:,:,:)
     COMPLEX(db), INTENT(OUT), OPTIONAL :: d2psout(:,:,:,:)
 #ifdef CUDA
-    COMPLEX(db), DEVICE :: psin_d(:,:,:,:)
-    COMPLEX(db), DEVICE :: d1psout_d(:,:,:,:)
-    COMPLEX(db), DEVICE :: d2psout_d(:,:,:,:)
+    COMPLEX(db), ALLOCATABLE, DEVICE :: psin_d(:,:,:,:), d1psout_d(:,:,:,:), d2psout_d(:,:,:,:)
 #endif
     REAL(db) :: kfac
     INTEGER :: iy,is,k
@@ -95,12 +97,14 @@ CONTAINS
     DO is=1,2
        DO k=1,nz
 #ifdef CUDA
+          ALLOCATE(psin_d(nx,ny,nz,2), d1psout_d(nx,ny,nz,2))
           ! Copy to device, perform FFT, copy back to host
           psin_d = psin
           d1psout_d = d1psout
           CALL cufftExecZ2Z(yforward,psin_d(:,:,k,is),d1psout_d(:,:,k,is),CUFFT_FORWARD)
           psin = psin_d
           d1psout = d1psout_d
+          DEALLOCATE(psin_d, d1psout_d)
 #else
           CALL dfftw_execute_dft(yforward,psin(:,:,k,is),d1psout(:,:,k,is))
 #endif
@@ -114,9 +118,11 @@ CONTAINS
        DO is=1,2
           DO k=1,nz
 #ifdef CUDA
+             ALLOCATE(d2psout_d(nx,ny,nz,2))
              d2psout_d = d2psout
              CALL cufftExecZ2Z(ybackward,d2psout_d(:,:,k,is),d2psout_d(:,:,k,is),CUFFT_INVERSE)
              d2psout = d2psout_d
+             DEALLOCATE(d2psout_d)
 #else
              CALL dfftw_execute_dft(ybackward,d2psout(:,:,k,is),d2psout(:,:,k,is))
 #endif
@@ -135,9 +141,11 @@ CONTAINS
     DO is=1,2
        DO k=1,nz
 #ifdef CUDA
+          ALLOCATE(d1psout_d(nx,ny,nz,2))
           d1psout_d = d1psout
           CALL cufftExecZ2Z(ybackward,d1psout_d(:,:,k,is),d1psout_d(:,:,k,is),CUFFT_INVERSE)
           d1psout = d1psout_d
+          DEALLOCATE(d1psout_d)
 #else
           CALL dfftw_execute_dft(ybackward,d1psout(:,:,k,is),d1psout(:,:,k,is))
 #endif
@@ -150,21 +158,21 @@ CONTAINS
     COMPLEX(db), INTENT(OUT) :: d1psout(:,:,:,:)
     COMPLEX(db), INTENT(OUT), OPTIONAL :: d2psout(:,:,:,:)
 #ifdef CUDA
-    COMPLEX(db), DEVICE :: psin_d(:,:,:,:)
-    COMPLEX(db), DEVICE :: d1psout_d(:,:,:,:)
-    COMPLEX(db), DEVICE :: d2psout_d(:,:,:,:)
+    COMPLEX(db), ALLOCATABLE, DEVICE :: psin_d(:,:,:,:), d1psout_d(:,:,:,:), d2psout_d(:,:,:,:)
 #endif
     REAL(db) :: kfac
     INTEGER :: iz,is
     kfac=(PI+PI)/(dz*nz)
     DO is=1,2
 #ifdef CUDA
+       ALLOCATE(psin_d(nx,ny,nz,2), d1psout_d(nx,ny,nz,2))
        ! Copy to device, perform FFT, copy back to host
        psin_d = psin
        d1psout_d = d1psout
        CALL cufftExecZ2Z(zforward,psin_d(:,:,:,is),d1psout_d(:,:,:,is),CUFFT_FORWARD)
        psin = psin_d
        d1psout = d1psout_d
+       DEALLOCATE(psin_d, d1psout_d)
 #else
        CALL dfftw_execute_dft(zforward,psin(:,:,:,is),d1psout(:,:,:,is))
 #endif
@@ -176,9 +184,11 @@ CONTAINS
        ENDDO
        DO is=1,2
 #ifdef CUDA
+          ALLOCATE(d2psout_d(nx,ny,nz,2))
           d2psout_d = d2psout
           CALL cufftExecZ2Z(zbackward,d2psout_d(:,:,:,is),d2psout_d(:,:,:,is),CUFFT_INVERSE)
           d2psout = d2psout_d
+          DEALLOCATE(d2psout_d)
 #else
           CALL dfftw_execute_dft(zbackward,d2psout(:,:,:,is),d2psout(:,:,:,is))
 #endif
@@ -195,9 +205,11 @@ CONTAINS
     d1psout(:,:,nz/2+1,:)=(0.D0,0.D0)
     DO is=1,2
 #ifdef CUDA
+       ALLOCATE(d1psout_d(nx,ny,nz,2))
        d1psout_d = d1psout
        CALL cufftExecZ2Z(zbackward,d1psout_d(:,:,:,is),d1psout_d(:,:,:,is),CUFFT_INVERSE)
        d1psout = d1psout_d
+       DEALLOCATE(d1psout_d)
 #else
        CALL dfftw_execute_dft(zbackward,d1psout(:,:,:,is),d1psout(:,:,:,is))
 #endif
@@ -210,7 +222,7 @@ CONTAINS
     COMPLEX(db), INTENT(IN)   :: psin(:,:,:,:)
     COMPLEX(db), INTENT(OUT)  :: psout(:,:,:,:)
 #ifdef CUDA
-    COMPLEX(db), DEVICE :: psout_d(:,:,:,:)
+    COMPLEX(db), ALLOCATABLE, DEVICE :: psout_d(:,:,:,:)
 #endif
     REAL(db), INTENT(IN), OPTIONAL :: e0inv
     REAL(db) :: kfacx, kfacy, kfacz
@@ -234,6 +246,7 @@ CONTAINS
     psout=psin
     DO is=1,2
 #ifdef CUDA
+       ALLOCATE(psout_d(nx,ny,nz,2))
        ! Copy to device, perform FFT, copy back to host
        psout_d = psout
        CALL cufftExecZ2Z(pforward,psout_d(:,:,:,is),psout_d(:,:,:,is),CUFFT_FORWARD)
@@ -260,6 +273,7 @@ CONTAINS
        psout_d = psout
        CALL cufftExecZ2Z(pbackward,psout_d(:,:,:,is),psout_d(:,:,:,is),CUFFT_INVERSE)
        psout = psout_d
+       DEALLOCATE(psout_d)
 #else
        CALL dfftw_execute_dft(pbackward,psout(:,:,:,is),psout(:,:,:,is))
 #endif

@@ -12,7 +12,7 @@ MODULE Coulomb
   REAL(db),ALLOCATABLE,SAVE :: wcoul(:,:,:)
   COMPLEX(db),PRIVATE,ALLOCATABLE,SAVE :: q(:,:,:)
 #ifdef CUDA
-  COMPLEX(db),PRIVATE,DEVICE :: q_d(:,:,:)
+  COMPLEX(db),PRIVATE,ALLOCATABLE,DEVICE :: q_d(:,:,:)
 #endif
   PUBLIC :: poisson,coulinit,wcoul
   PRIVATE :: initiq
@@ -21,9 +21,12 @@ CONTAINS
   SUBROUTINE poisson
     COMPLEX(db),ALLOCATABLE :: rho2(:,:,:)
 #ifdef CUDA
-    COMPLEX(db),DEVICE :: rho2_d(:,:,:)
+    COMPLEX(db),ALLOCATABLE,DEVICE :: rho2_d(:,:,:)
 #endif
     ALLOCATE(rho2(nx2,ny2,nz2))
+#ifdef CUDA
+    ALLOCATE(rho2_d(nx2,ny2,nz2))
+#endif
     ! put proton density into array of same or double size, zeroing rest
     IF(.NOT.periodic) rho2=(0.D0,0.D0)
     rho2(1:nx,1:ny,1:nz)=rho(:,:,:,2)
@@ -53,6 +56,9 @@ CONTAINS
 #endif
     wcoul=REAL(rho2(1:nx,1:ny,1:nz))/(nx2*ny2*nz2)
     DEALLOCATE(rho2)
+#ifdef CUDA
+    DEALLOCATE(rho2_d)
+#endif
   END SUBROUTINE poisson
   !***************************************************
   SUBROUTINE coulinit
@@ -72,6 +78,7 @@ CONTAINS
     ALLOCATE (wcoul(nx,ny,nz),q(nx2,ny2,nz2),iqx(nx2),iqy(ny2),iqz(nz2))
     ! set up FFTW plans
 #ifdef CUDA
+    ALLOCATE(q_d(nx2,ny2,nz2))
     CALL cufftPlan3d(coulplan1,nx2,ny2,nz2,CUFFT_Z2Z)
     CALL cufftPlan3d(coulplan2,nx2,ny2,nz2,CUFFT_Z2Z)
 #else
@@ -103,6 +110,9 @@ CONTAINS
 #endif
     END IF
     DEALLOCATE(iqx,iqy,iqz)
+#ifdef CUDA
+    DEALLOCATE(q_d)
+#endif
   END SUBROUTINE coulinit
   !***************************************************
   SUBROUTINE initiq(n,d,iq)

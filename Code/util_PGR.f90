@@ -87,11 +87,14 @@
     REAL(db), INTENT(IN) :: timact
     COMPLEX(db), ALLOCATABLE:: ps1(:,:,:,:),ps2(:,:,:,:)
 #ifdef CUDA
-    COMPLEX(db), DEVICE :: psin_d(:,:,:,:),ps1_d(:,:,:,:),ps2_d(:,:,:,:)
+    COMPLEX(db), ALLOCATABLE, DEVICE :: psin_d(:,:,:,:),ps1_d(:,:,:,:),ps2_d(:,:,:,:)
 #endif
     REAL(db) :: kfac
     INTEGER :: iy
     ALLOCATE(ps1(nx,ny,nz,2),ps2(nx,ny,nz,2))
+#ifdef CUDA
+    ALLOCATE(psin_d(nx,ny,nz,2),ps1_d(nx,ny,nz,2),ps2_d(nx,ny,nz,2))
+#endif
     kfac=(PI+PI)/(dy*ny)
 #ifdef CUDA
     ! Copy to device, perform FFT, copy back to host
@@ -114,6 +117,9 @@
          SUM(ABS(ps1(1,1,nz/2,:)))
     CALL flush(921)
     DEALLOCATE(ps1,ps2)
+#ifdef CUDA
+    DEALLOCATE(psin_d,ps1_d,ps2_d)
+#endif
   END SUBROUTINE pmomsmax
 
 
@@ -130,13 +136,16 @@
     COMPLEX(db), INTENT(IN) :: psin(:,:,:,:)
     COMPLEX(db), ALLOCATABLE:: ps1(:,:,:,:),ps2(:,:,:,:)
 #ifdef CUDA
-    COMPLEX(db), DEVICE :: psin_d(:,:,:,:),ps1_d(:,:,:,:),ps2_d(:,:,:,:)
+    COMPLEX(db), ALLOCATABLE, DEVICE :: psin_d(:,:,:,:),ps1_d(:,:,:,:),ps2_d(:,:,:,:)
 #endif
     REAL(db) :: kfac
     INTEGER :: iy,ix,iz
     LOGICAL, SAVE :: tfirst=.true.
     !    IF(.NOT.tfirst) RETURN
     ALLOCATE(ps1(nx,ny,nz,2),ps2(nx,ny,nz,2))
+#ifdef CUDA
+    ALLOCATE(psin_d(nx,ny,nz,2),ps1_d(nx,ny,nz,2),ps2_d(nx,ny,nz,2))
+#endif
     kfac=(PI+PI)/(dy*ny)
 #ifdef CUDA
     ! Copy to device, perform FFT, copy back to host
@@ -220,5 +229,8 @@
     WRITE(922,'(1x/1x)')
     CALL flush(922)
     DEALLOCATE(ps1,ps2)
+#ifdef CUDA
+    DEALLOCATE(psin_d,ps1_d,ps2_d)
+#endif
     !    tfirst=.false.
   END SUBROUTINE pmomscut

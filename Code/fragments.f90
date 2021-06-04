@@ -134,7 +134,7 @@ CONTAINS
     INTEGER :: ipn
     COMPLEX(db) :: ps1(nx,ny,nz,2),akx(nx),aky(ny),akz(nz)
 #ifdef CUDA
-    COMPLEX(db), DEVICE :: ps1_d(nx,ny,nz,2)
+    COMPLEX(db), ALLOCATABLE, DEVICE :: ps1_d(:,:,:,:)
 #endif
     INTEGER :: iq,is,nst,oldnst,newnst,ix,iy,iz,iold,inew
     REAL(db) :: cmi(3)
@@ -204,6 +204,7 @@ CONTAINS
              DO is=1,2
 #ifdef CUDA
                 ! Copy to device, perform FFT, copy back to host
+                ALLOCATE(ps1_d(nx,ny,nz,2))
                 ps1_d = ps1
                 CALL cufftExecZ2Z(pforward,ps1_d(:,:,:,is),ps1_d(:,:,:,is),CUFFT_FORWARD)
                 ps1 = ps1_d
@@ -218,6 +219,7 @@ CONTAINS
                 ps1_d = ps1
                 CALL cufftExecZ2Z(pbackward,ps1_d(:,:,:,is),ps1_d(:,:,:,is),CUFFT_INVERSE)
                 ps1 = ps1_d
+                DEALLOCATE(ps1_d)
 #else
                 CALL dfftw_execute_dft(pbackward,ps1(:,:,:,is),ps1(:,:,:,is))
 #endif
