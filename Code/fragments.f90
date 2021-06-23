@@ -127,6 +127,7 @@ CONTAINS
     USE Parallel, ONLY: node,mpi_myproc,localindex
     USE Fourier
 #ifdef CUDA
+    USE cudafor
     USE cufft_m
 #endif
     INTEGER,INTENT(IN) :: iff
@@ -134,6 +135,7 @@ CONTAINS
     INTEGER :: ipn
     COMPLEX(db) :: ps1(nx,ny,nz,2),akx(nx),aky(ny),akz(nz)
 #ifdef CUDA
+    INTEGER :: istat
     COMPLEX(db), ALLOCATABLE, DEVICE :: ps1_d(:,:,:,:)
 #endif
     INTEGER :: iq,is,nst,oldnst,newnst,ix,iy,iz,iold,inew
@@ -142,6 +144,9 @@ CONTAINS
     REAL(db),DIMENSION(fnstmax(iff)) :: fwocc,fsp_energy,fsp_parity, &
          fsp_norm,fsp_kinetic,fsp_efluct1
     INTEGER,DIMENSION(fnstmax(iff)) :: fnode,flocalindex
+#ifdef CUDA
+    ALLOCATE(ps1_d(nx,ny,nz,2))
+#endif
     OPEN(UNIT=scratch,FILE=filename(iff),STATUS='old',FORM=&
          'unformatted')
     READ(scratch) 
@@ -204,10 +209,9 @@ CONTAINS
              DO is=1,2
 #ifdef CUDA
                 ! Copy to device, perform FFT, copy back to host
-                ALLOCATE(ps1_d(nx,ny,nz,2))
-                ps1_d = ps1
+                istat = cudaMemcpy(ps1_d(1,1,1,is), ps1(1,1,1,is), nx*ny*nz)
                 CALL cufftExecZ2Z(pforward,ps1_d(:,:,:,is),ps1_d(:,:,:,is),CUFFT_FORWARD)
-                ps1 = ps1_d
+                istat = cudaMemcpy(ps1(1,1,1,is), ps1_d(1,1,1,is), nx*ny*nz)
 #else
                 CALL dfftw_execute_dft(pforward,ps1(:,:,:,is),ps1(:,:,:,is))
 #endif
@@ -216,10 +220,9 @@ CONTAINS
                         /DBLE(nx*ny*nz)
                 END FORALL
 #ifdef CUDA
-                ps1_d = ps1
+                istat = cudaMemcpy(ps1_d(1,1,1,is), ps1(1,1,1,is), nx*ny*nz)
                 CALL cufftExecZ2Z(pbackward,ps1_d(:,:,:,is),ps1_d(:,:,:,is),CUFFT_INVERSE)
-                ps1 = ps1_d
-                DEALLOCATE(ps1_d)
+                istat = cudaMemcpy(ps1(1,1,1,is), ps1_d(1,1,1,is), nx*ny*nz)
 #else
                 CALL dfftw_execute_dft(pbackward,ps1(:,:,:,is),ps1(:,:,:,is))
 #endif
@@ -235,6 +238,9 @@ CONTAINS
        ENDDO
     ENDDO
     CLOSE(unit=scratch)
+#ifdef CUDA
+    DEALLOCATE(ps1_d)
+#endif
   END SUBROUTINE read_one_fragment
   !*******************************************************************
   ! position scratch file in correct location

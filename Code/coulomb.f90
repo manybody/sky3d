@@ -3,6 +3,7 @@ MODULE Coulomb
   USE Grids, ONLY: nx,ny,nz,dx,dy,dz,wxyz,periodic
   USE Densities, ONLY: rho
 #ifdef CUDA
+  USE cudafor
   USE cufft_m
 #endif
   USE ISO_C_BINDING
@@ -12,6 +13,7 @@ MODULE Coulomb
   REAL(db),ALLOCATABLE,SAVE :: wcoul(:,:,:)
   COMPLEX(db),PRIVATE,ALLOCATABLE,SAVE :: q(:,:,:)
 #ifdef CUDA
+  INTEGER :: istat
   COMPLEX(db),PRIVATE,ALLOCATABLE,DEVICE :: q_d(:,:,:)
 #endif
   PUBLIC :: poisson,coulinit,wcoul
@@ -33,9 +35,9 @@ CONTAINS
     ! transform into momentum space
 #ifdef CUDA
     ! Copy to device, perform FFT, copy back to host
-    rho2_d = rho2
+    istat = cudaMemcpy(rho2_d(1,1,1), rho2(1,1,1), nx2*ny2*nz2)
     CALL cufftExecZ2Z(coulplan1,rho2_d,rho2_d,CUFFT_FORWARD)
-    rho2 = rho2_d
+    istat = cudaMemcpy(rho2(1,1,1), rho2_d(1,1,1), nx2*ny2*nz2)
 #else
     CALL dfftw_execute_dft(coulplan1,rho2,rho2)
 #endif
@@ -48,9 +50,9 @@ CONTAINS
     END IF
     ! transform back to coordinate space and return in wcoul
 #ifdef CUDA
-    rho2_d = rho2
+    istat = cudaMemcpy(rho2_d(1,1,1), rho2(1,1,1), nx2*ny2*nz2)
     CALL cufftExecZ2Z(coulplan2,rho2_d,rho2_d,CUFFT_INVERSE)
-    rho2 = rho2_d
+    istat = cudaMemcpy(rho2(1,1,1), rho2_d(1,1,1), nx2*ny2*nz2)
 #else
     CALL dfftw_execute_dft(coulplan2,rho2,rho2)
 #endif
@@ -102,9 +104,9 @@ CONTAINS
        q(1,1,1)=2.84D0/(dx*dy*dz)**(1.D0/3.D0)
 #ifdef CUDA
        ! Copy to device, perform FFT, copy back to host
-       q_d = q
+       istat = cudaMemcpy(q_d(1,1,1), q(1,1,1), nx2*ny2*nz2)
        CALL cufftExecZ2Z(coulplan1,q_d,q_d,CUFFT_FORWARD)
-       q = q_d
+       istat = cudaMemcpy(q(1,1,1), q_d(1,1,1), nx2*ny2*nz2)
 #else
        CALL dfftw_execute_dft(coulplan1,q,q)
 #endif

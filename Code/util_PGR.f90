@@ -87,26 +87,29 @@
     REAL(db), INTENT(IN) :: timact
     COMPLEX(db), ALLOCATABLE:: ps1(:,:,:,:),ps2(:,:,:,:)
 #ifdef CUDA
+    INTEGER :: istat, psin_size
     COMPLEX(db), ALLOCATABLE, DEVICE :: psin_d(:,:,:,:),ps1_d(:,:,:,:),ps2_d(:,:,:,:)
 #endif
     REAL(db) :: kfac
     INTEGER :: iy
     ALLOCATE(ps1(nx,ny,nz,2),ps2(nx,ny,nz,2))
 #ifdef CUDA
-    ALLOCATE(psin_d(nx,ny,nz,2),ps1_d(nx,ny,nz,2),ps2_d(nx,ny,nz,2))
+    ALLOCATE(psin_d, MOLD=psin)
+    psin_size = SIZE(psin)
+    ALLOCATE(ps1_d(nx,ny,nz,2),ps2_d(nx,ny,nz,2))
 #endif
     kfac=(PI+PI)/(dy*ny)
 #ifdef CUDA
     ! Copy to device, perform FFT, copy back to host
-    psin_d = psin
-    ps1_d = ps1
-    ps2_d = ps2
+    istat = cudaMemcpy(psin_d(1,1,1,1), psin(1,1,1,1), psin_size)
+    istat = cudaMemcpy(ps1_d(1,1,1,1), ps1(1,1,1,1), nx*ny*nz*2)
+    istat = cudaMemcpy(ps2_d(1,1,1,1), ps2(1,1,1,1), nx*ny*nz*2)
     CALL cufftExecZ2Z(xforward,psin_d,ps1_d,CUFFT_FORWARD)
     CALL cufftExecZ2Z(yforward,ps1_d,ps2_d,CUFFT_FORWARD)
     CALL cufftExecZ2Z(zforward,ps2_d,ps1_d,CUFFT_FORWARD)
-    psin = psin_d
-    ps1 = ps1_d
-    ps2 = ps2_d
+    istat = cudaMemcpy(psin(1,1,1,1), psin_d(1,1,1,1), psin_size)
+    istat = cudaMemcpy(ps1(1,1,1,1), ps1_d(1,1,1,1), nx*ny*nz*2)
+    istat = cudaMemcpy(ps2(1,1,1,1), ps2_d(1,1,1,1), nx*ny*nz*2)
 #else
     CALL dfftw_execute_dft(xforward,psin,ps1)
     CALL dfftw_execute_dft(yforward,ps1,ps2)
@@ -136,6 +139,7 @@
     COMPLEX(db), INTENT(IN) :: psin(:,:,:,:)
     COMPLEX(db), ALLOCATABLE:: ps1(:,:,:,:),ps2(:,:,:,:)
 #ifdef CUDA
+    INTEGER :: istat, psin_size
     COMPLEX(db), ALLOCATABLE, DEVICE :: psin_d(:,:,:,:),ps1_d(:,:,:,:),ps2_d(:,:,:,:)
 #endif
     REAL(db) :: kfac
@@ -144,20 +148,22 @@
     !    IF(.NOT.tfirst) RETURN
     ALLOCATE(ps1(nx,ny,nz,2),ps2(nx,ny,nz,2))
 #ifdef CUDA
-    ALLOCATE(psin_d(nx,ny,nz,2),ps1_d(nx,ny,nz,2),ps2_d(nx,ny,nz,2))
+    ALLOCATE(psin_d, MOLD=psin)
+    psin_size = SIZE(psin)
+    ALLOCATE(ps1_d(nx,ny,nz,2),ps2_d(nx,ny,nz,2))
 #endif
     kfac=(PI+PI)/(dy*ny)
 #ifdef CUDA
     ! Copy to device, perform FFT, copy back to host
-    psin_d = psin
-    ps1_d = ps1
-    ps2_d = ps2
+    istat = cudaMemcpy(psin_d(1,1,1,1), psin(1,1,1,1), psin_size)
+    istat = cudaMemcpy(ps1_d(1,1,1,1), ps1(1,1,1,1), nx*ny*nz*2)
+    istat = cudaMemcpy(ps2_d(1,1,1,1), ps2(1,1,1,1), nx*ny*nz*2)
     CALL cufftExecZ2Z(xforward,psin,ps1,CUFFT_FORWARD)
     CALL cufftExecZ2Z(yforward,ps1,ps2,CUFFT_FORWARD)
     CALL cufftExecZ2Z(zforward,ps2,ps1,CUFFT_FORWARD)
-    psin = psin_d
-    ps1 = ps1_d
-    ps2 = ps2_d
+    istat = cudaMemcpy(psin(1,1,1,1), psin_d(1,1,1,1), psin_size)
+    istat = cudaMemcpy(ps1(1,1,1,1), ps1_d(1,1,1,1), nx*ny*nz*2)
+    istat = cudaMemcpy(ps2(1,1,1,1), ps2_d(1,1,1,1), nx*ny*nz*2)
 #else
     CALL dfftw_execute_dft(xforward,psin,ps1)
     CALL dfftw_execute_dft(yforward,ps1,ps2)

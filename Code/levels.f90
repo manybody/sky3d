@@ -3,6 +3,7 @@ MODULE Levels
   USE Grids, ONLY: nx,ny,nz,dx,dy,dz
   USE Fourier
 #ifdef CUDA
+  USE cudafor
   USE cufft_m
 #endif
   IMPLICIT NONE
@@ -32,20 +33,23 @@ CONTAINS
     COMPLEX(db), INTENT(OUT):: d1psout(:,:,:,:)
     COMPLEX(db), INTENT(OUT), OPTIONAL :: d2psout(:,:,:,:)
 #ifdef CUDA
+    INTEGER :: istat, psin_size, d1psout_size, d2psout_size
     COMPLEX(db), ALLOCATABLE, DEVICE :: psin_d(:,:,:,:), d1psout_d(:,:,:,:), d2psout_d(:,:,:,:)
 #endif
     REAL(db) :: kfac
     INTEGER :: ix
     kfac=(PI+PI)/(dx*nx)
 #ifdef CUDA
-    ALLOCATE(psin_d(nx,ny,nz,2), d1psout_d(nx,ny,nz,2))
+    ALLOCATE(psin_d, MOLD=psin)
+    ALLOCATE(d1psout_d, MOLD=d1psout)
+    psin_size = SIZE(psin)
+    d1psout_size = SIZE(d1psout)
     ! Copy to device, perform FFT, copy back to host
-    psin_d = psin
-    d1psout_d = d1psout
+    istat = cudaMemcpy(psin_d(1,1,1,1), psin(1,1,1,1), psin_size)
+    istat = cudaMemcpy(d1psout_d(1,1,1,1), d1psout(1,1,1,1), d1psout_size)
     CALL cufftExecZ2Z(xforward,psin_d,d1psout_d,CUFFT_FORWARD)
-    psin = psin_d
-    d1psout = d1psout_d
-    DEALLOCATE(psin_d, d1psout_d)
+    istat = cudaMemcpy(psin(1,1,1,1), psin_d(1,1,1,1), psin_size)
+    istat = cudaMemcpy(d1psout(1,1,1,1), d1psout_d(1,1,1,1), d1psout_size)
 #else
     CALL dfftw_execute_dft(xforward,psin,d1psout)
 #endif
@@ -55,11 +59,11 @@ CONTAINS
           d2psout(nx-ix+1,:,:,:)=-(ix*kfac)**2*d1psout(nx-ix+1,:,:,:)/REAL(nx)
        ENDDO
 #ifdef CUDA
-       ALLOCATE(d2psout_d(nx,ny,nz,2))
-       d2psout_d = d2psout
+       ALLOCATE(d2psout_d, MOLD=d2psout)
+       d2psout_size = SIZE(d2psout)
+       istat = cudaMemcpy(d2psout_d(1,1,1,1), d2psout(1,1,1,1), d2psout_size)
        CALL cufftExecZ2Z(xbackward,d2psout_d,d2psout_d,CUFFT_INVERSE)
-       d2psout = d2psout_d
-       DEALLOCATE(d2psout_d)
+       istat = cudaMemcpy(d2psout(1,1,1,1), d2psout_d(1,1,1,1), d2psout_size)
 #else
        CALL dfftw_execute_dft(xbackward,d2psout,d2psout)
 #endif
@@ -74,11 +78,11 @@ CONTAINS
     ENDDO
     d1psout(nx/2+1,:,:,:)=(0.D0,0.D0)
 #ifdef CUDA
-    ALLOCATE(d1psout_d(nx,ny,nz,2))
-    d1psout_d = d1psout
+    istat = cudaMemcpy(d1psout_d(1,1,1,1), d1psout(1,1,1,1), d1psout_size)
     CALL cufftExecZ2Z(xbackward,d1psout_d,d1psout_d,CUFFT_INVERSE)
-    d1psout = d1psout_d
-    DEALLOCATE(d1psout_d)
+    istat = cudaMemcpy(d1psout(1,1,1,1), d1psout_d(1,1,1,1), d1psout_size)
+
+    DEALLOCATE(psin_d, d1psout_d, d2psout_d)
 #else
     CALL dfftw_execute_dft(xbackward,d1psout,d1psout)
 #endif
@@ -89,22 +93,29 @@ CONTAINS
     COMPLEX(db), INTENT(OUT) :: d1psout(:,:,:,:)
     COMPLEX(db), INTENT(OUT), OPTIONAL :: d2psout(:,:,:,:)
 #ifdef CUDA
+    INTEGER :: istat, psin_size, d1psout_size, d2psout_size
     COMPLEX(db), ALLOCATABLE, DEVICE :: psin_d(:,:,:,:), d1psout_d(:,:,:,:), d2psout_d(:,:,:,:)
 #endif
     REAL(db) :: kfac
     INTEGER :: iy,is,k
     kfac=(PI+PI)/(dy*ny)
+#ifdef CUDA
+    ALLOCATE(psin_d, MOLD=psin)
+    ALLOCATE(d1psout_d, MOLD=d1psout)
+    ALLOCATE(d2psout_d, MOLD=d2psout)
+    psin_size = SIZE(psin, 1) + SIZE(psin, 2)
+    d1psout_size = SIZE(d1psout, 1) + SIZE(d1psout, 2)
+    d2psout_size = SIZE(d2psout, 1) + SIZE(d2psout, 2)
+#endif
     DO is=1,2
        DO k=1,nz
 #ifdef CUDA
-          ALLOCATE(psin_d(nx,ny,nz,2), d1psout_d(nx,ny,nz,2))
           ! Copy to device, perform FFT, copy back to host
-          psin_d = psin
-          d1psout_d = d1psout
+          istat = cudaMemcpy(psin_d(1,1,k,is), psin(1,1,k,is), psin_size)
+          istat = cudaMemcpy(d1psout_d(1,1,k,is), d1psout(1,1,k,is), d1psout_size)
           CALL cufftExecZ2Z(yforward,psin_d(:,:,k,is),d1psout_d(:,:,k,is),CUFFT_FORWARD)
-          psin = psin_d
-          d1psout = d1psout_d
-          DEALLOCATE(psin_d, d1psout_d)
+          istat = cudaMemcpy(psin(1,1,k,is), psin_d(1,1,k,is), psin_size)
+          istat = cudaMemcpy(d1psout(1,1,k,is), d1psout_d(1,1,k,is), d1psout_size)
 #else
           CALL dfftw_execute_dft(yforward,psin(:,:,k,is),d1psout(:,:,k,is))
 #endif
@@ -118,11 +129,9 @@ CONTAINS
        DO is=1,2
           DO k=1,nz
 #ifdef CUDA
-             ALLOCATE(d2psout_d(nx,ny,nz,2))
-             d2psout_d = d2psout
+             istat = cudaMemcpy(d2psout_d(1,1,k,is), d2psout(1,1,k,is), d2psout_size)
              CALL cufftExecZ2Z(ybackward,d2psout_d(:,:,k,is),d2psout_d(:,:,k,is),CUFFT_INVERSE)
-             d2psout = d2psout_d
-             DEALLOCATE(d2psout_d)
+             istat = cudaMemcpy(d2psout(1,1,k,is), d2psout_d(1,1,k,is), d2psout_size)
 #else
              CALL dfftw_execute_dft(ybackward,d2psout(:,:,k,is),d2psout(:,:,k,is))
 #endif
@@ -141,16 +150,17 @@ CONTAINS
     DO is=1,2
        DO k=1,nz
 #ifdef CUDA
-          ALLOCATE(d1psout_d(nx,ny,nz,2))
-          d1psout_d = d1psout
+          istat = cudaMemcpy(d1psout_d(1,1,k,is), d1psout(1,1,k,is), d1psout_size)
           CALL cufftExecZ2Z(ybackward,d1psout_d(:,:,k,is),d1psout_d(:,:,k,is),CUFFT_INVERSE)
-          d1psout = d1psout_d
-          DEALLOCATE(d1psout_d)
+          istat = cudaMemcpy(d1psout(1,1,k,is), d1psout_d(1,1,k,is), d1psout_size)
 #else
           CALL dfftw_execute_dft(ybackward,d1psout(:,:,k,is),d1psout(:,:,k,is))
 #endif
        END DO
     END DO
+#ifdef CUDA
+    DEALLOCATE(psin_d, d1psout_d, d2psout_d)
+#endif
   END SUBROUTINE cdervy
   !************************************************************
   SUBROUTINE cdervz(psin,d1psout,d2psout)  
@@ -158,21 +168,28 @@ CONTAINS
     COMPLEX(db), INTENT(OUT) :: d1psout(:,:,:,:)
     COMPLEX(db), INTENT(OUT), OPTIONAL :: d2psout(:,:,:,:)
 #ifdef CUDA
+    INTEGER :: istat, psin_size, d1psout_size, d2psout_size
     COMPLEX(db), ALLOCATABLE, DEVICE :: psin_d(:,:,:,:), d1psout_d(:,:,:,:), d2psout_d(:,:,:,:)
 #endif
     REAL(db) :: kfac
     INTEGER :: iz,is
     kfac=(PI+PI)/(dz*nz)
+#ifdef CUDA
+    ALLOCATE(psin_d, MOLD=psin)
+    ALLOCATE(d1psout_d, MOLD=d1psout)
+    ALLOCATE(d2psout_d, MOLD=d2psout)
+    psin_size = SIZE(psin, 1) + SIZE(psin, 2) + SIZE(psin, 3)
+    d1psout_size = SIZE(d1psout, 1) + SIZE(d1psout, 2) + SIZE(d1psout, 3)
+    d2psout_size = SIZE(d2psout, 1) + SIZE(d2psout, 2) + SIZE(d2psout, 3)
+#endif
     DO is=1,2
 #ifdef CUDA
-       ALLOCATE(psin_d(nx,ny,nz,2), d1psout_d(nx,ny,nz,2))
        ! Copy to device, perform FFT, copy back to host
-       psin_d = psin
-       d1psout_d = d1psout
+       istat = cudaMemcpy(psin_d(1,1,1,is), psin(1,1,1,is), psin_size)
+       istat = cudaMemcpy(d1psout_d(1,1,1,is), d1psout(1,1,1,is), d1psout_size)
        CALL cufftExecZ2Z(zforward,psin_d(:,:,:,is),d1psout_d(:,:,:,is),CUFFT_FORWARD)
-       psin = psin_d
-       d1psout = d1psout_d
-       DEALLOCATE(psin_d, d1psout_d)
+       istat = cudaMemcpy(psin(1,1,1,is), psin_d(1,1,1,is), psin_size)
+       istat = cudaMemcpy(d1psout(1,1,1,is), d1psout_d(1,1,1,is), d1psout_size)
 #else
        CALL dfftw_execute_dft(zforward,psin(:,:,:,is),d1psout(:,:,:,is))
 #endif
@@ -184,11 +201,9 @@ CONTAINS
        ENDDO
        DO is=1,2
 #ifdef CUDA
-          ALLOCATE(d2psout_d(nx,ny,nz,2))
-          d2psout_d = d2psout
+          istat = cudaMemcpy(d2psout_d(1,1,1,is), d2psout(1,1,1,is), d2psout_size)
           CALL cufftExecZ2Z(zbackward,d2psout_d(:,:,:,is),d2psout_d(:,:,:,is),CUFFT_INVERSE)
-          d2psout = d2psout_d
-          DEALLOCATE(d2psout_d)
+          istat = cudaMemcpy(d2psout(1,1,1,is), d2psout_d(1,1,1,is), d2psout_size)
 #else
           CALL dfftw_execute_dft(zbackward,d2psout(:,:,:,is),d2psout(:,:,:,is))
 #endif
@@ -205,15 +220,16 @@ CONTAINS
     d1psout(:,:,nz/2+1,:)=(0.D0,0.D0)
     DO is=1,2
 #ifdef CUDA
-       ALLOCATE(d1psout_d(nx,ny,nz,2))
-       d1psout_d = d1psout
+       istat = cudaMemcpy(d1psout_d(1,1,1,is), d1psout(1,1,1,is), d1psout_size)
        CALL cufftExecZ2Z(zbackward,d1psout_d(:,:,:,is),d1psout_d(:,:,:,is),CUFFT_INVERSE)
-       d1psout = d1psout_d
-       DEALLOCATE(d1psout_d)
+       istat = cudaMemcpy(d1psout(1,1,1,is), d1psout_d(1,1,1,is), d1psout_size)
 #else
        CALL dfftw_execute_dft(zbackward,d1psout(:,:,:,is),d1psout(:,:,:,is))
 #endif
     END DO
+#ifdef CUDA
+    DEALLOCATE(psin_d, d1psout_d, d2psout_d)
+#endif
   END SUBROUTINE cdervz
   !************************************************************
   SUBROUTINE laplace(psin,psout,e0inv)  
@@ -222,6 +238,7 @@ CONTAINS
     COMPLEX(db), INTENT(IN)   :: psin(:,:,:,:)
     COMPLEX(db), INTENT(OUT)  :: psout(:,:,:,:)
 #ifdef CUDA
+    INTEGER :: istat, psout_size
     COMPLEX(db), ALLOCATABLE, DEVICE :: psout_d(:,:,:,:)
 #endif
     REAL(db), INTENT(IN), OPTIONAL :: e0inv
@@ -244,13 +261,16 @@ CONTAINS
        k2facx(nx-ix+1)=-(ix*kfacx)**2
     ENDDO
     psout=psin
+#ifdef CUDA
+    ALLOCATE(psout_d, MOLD=psout)
+    psout_size = SIZE(psout, 1) + SIZE(psout, 2) + SIZE(psout, 3)
+#endif
     DO is=1,2
 #ifdef CUDA
-       ALLOCATE(psout_d(nx,ny,nz,2))
        ! Copy to device, perform FFT, copy back to host
-       psout_d = psout
+       istat = cudaMemcpy(psout_d(1,1,1,is), psout(1,1,1,is), psout_size)
        CALL cufftExecZ2Z(pforward,psout_d(:,:,:,is),psout_d(:,:,:,is),CUFFT_FORWARD)
-       psout = psout_d
+       istat = cudaMemcpy(psout(1,1,1,is), psout_d(1,1,1,is), psout_size)
 #else
        CALL dfftw_execute_dft(pforward,psout(:,:,:,is),psout(:,:,:,is))
 #endif
@@ -270,14 +290,16 @@ CONTAINS
     ENDIF
     DO is=1,2
 #ifdef CUDA
-       psout_d = psout
+       istat = cudaMemcpy(psout_d(1,1,1,is), psout(1,1,1,is), psout_size)
        CALL cufftExecZ2Z(pbackward,psout_d(:,:,:,is),psout_d(:,:,:,is),CUFFT_INVERSE)
-       psout = psout_d
-       DEALLOCATE(psout_d)
+       istat = cudaMemcpy(psout(1,1,1,is), psout_d(1,1,1,is), psout_size)
 #else
        CALL dfftw_execute_dft(pbackward,psout(:,:,:,is),psout(:,:,:,is))
 #endif
     END DO
+#ifdef CUDA
+    DEALLOCATE(psout_d)
+#endif
   END SUBROUTINE laplace
   !************************************************************
   SUBROUTINE schmid
