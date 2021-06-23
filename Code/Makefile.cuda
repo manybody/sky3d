@@ -1,10 +1,10 @@
 COMPILER = nvfortran
-COMPILERFLAGS  =  -cpp -O3 -msse4.2 -Mcuda -mcmodel=medium -Mlarge_arrays -r8
+COMPILERFLAGS  =  -cpp -O3 -msse4.2 -D CUDA -Mcuda -mcmodel=medium -Mlarge_arrays -r8
 LINKERFLAGS    =  $(COMPILERFLAGS) -lcufft -lcufftw -llapack
 
 SOURCE_TRAILER = .f90
 EXEC           = sky3d.cuda
-OBJS           = params.o grids.o levels.o fourier.o forces.o $(PARALLEL_SKY) \
+OBJS           = params.o grids.o levels.o fourier.o forces.o sequential.o \
 	inout.o coulomb.o trivial.o densities.o fragments.o twobody.o \
 	energies.o static.o meanfield.o dynamic.o pairs.o moment.o \
 	main3d.o user.o external.o abso_bc.o cufft_m.o precision_m.o
@@ -30,7 +30,7 @@ trivial.o : trivial.f90 params.o grids.o
 
 forces.o : forces.f90 forces.data params.o
 
-fourier.o : fourier.f90 params.o grids.o
+fourier.o : fourier.f90 cufft_m.o params.o grids.o
 
 params.o : params.f90
 
@@ -40,7 +40,7 @@ sequential.o: sequential.f90 levels.o params.o grids.o densities.o
 
 levels.o : levels.f90 params.o grids.o forces.o fourier.o trivial.o
 
-grids.o : grids.f90 params.o forces.o
+grids.o : grids.f90 precision_m.o params.o forces.o
 
 densities.o : densities.f90 params.o grids.o levels.o trivial.o
 
