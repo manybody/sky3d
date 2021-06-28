@@ -98,7 +98,8 @@ CONTAINS
     istat = cudaMemcpy(d1psout(1,1,1,1), d1psout_d(1,1,1,1), d1psout_size)
     istat = cudaDeviceSynchronize()
 
-    DEALLOCATE(psin_d, d1psout_d, d2psout_d)
+    DEALLOCATE(psin_d, d1psout_d)
+    IF (ALLOCATED(d2psout_d)) DEALLOCATE(d2psout_d)
 #else
     CALL dfftw_execute_dft(xbackward,d1psout,d1psout)
 #endif
@@ -122,10 +123,13 @@ CONTAINS
 #ifdef CUDA
     ALLOCATE(psin_d, MOLD=psin)
     ALLOCATE(d1psout_d, MOLD=d1psout)
-    ALLOCATE(d2psout_d, MOLD=d2psout)
     psin_size = SIZE(psin, 1) + SIZE(psin, 2)
     d1psout_size = SIZE(d1psout, 1) + SIZE(d1psout, 2)
-    d2psout_size = SIZE(d2psout, 1) + SIZE(d2psout, 2)
+
+    IF(PRESENT(d2psout)) THEN
+      ALLOCATE(d2psout_d, MOLD=d2psout)
+      d2psout_size = SIZE(d2psout, 1) + SIZE(d2psout, 2)
+    ENDIF
 #endif
     DO is=1,2
        DO k=1,nz
@@ -196,7 +200,8 @@ CONTAINS
        END DO
     END DO
 #ifdef CUDA
-    DEALLOCATE(psin_d, d1psout_d, d2psout_d)
+    DEALLOCATE(psin_d, d1psout_d)
+    IF (ALLOCATED(d2psout_d)) DEALLOCATE(d2psout_d)
 #endif
   END SUBROUTINE cdervy
   !************************************************************
@@ -284,7 +289,8 @@ CONTAINS
        WRITE(*,*) "FFT_DEBUG: timer = ", timer
     END DO
 #ifdef CUDA
-    DEALLOCATE(psin_d, d1psout_d, d2psout_d)
+    DEALLOCATE(psin_d, d1psout_d)
+    IF (ALLOCATED(d2psout_d)) DEALLOCATE(d2psout_d)
 #endif
   END SUBROUTINE cdervz
   !************************************************************
