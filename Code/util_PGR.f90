@@ -113,6 +113,7 @@
     istat = cudaMemcpy(psin(1,1,1,1), psin_d(1,1,1,1), psin_size)
     istat = cudaMemcpy(ps1(1,1,1,1), ps1_d(1,1,1,1), nx*ny*nz*2)
     istat = cudaMemcpy(ps2(1,1,1,1), ps2_d(1,1,1,1), nx*ny*nz*2)
+    istat = cudaDeviceSynchronize()
 #else
     CALL dfftw_execute_dft(xforward,psin,ps1)
     CALL dfftw_execute_dft(yforward,ps1,ps2)
@@ -174,6 +175,7 @@
     istat = cudaMemcpy(psin(1,1,1,1), psin_d(1,1,1,1), psin_size)
     istat = cudaMemcpy(ps1(1,1,1,1), ps1_d(1,1,1,1), nx*ny*nz*2)
     istat = cudaMemcpy(ps2(1,1,1,1), ps2_d(1,1,1,1), nx*ny*nz*2)
+    istat = cudaDeviceSynchronize()
 #else
     CALL dfftw_execute_dft(xforward,psin,ps1)
     CALL dfftw_execute_dft(yforward,ps1,ps2)

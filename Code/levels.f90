@@ -53,6 +53,7 @@ CONTAINS
     CALL cufftExecZ2Z(xforward,psin_d,d1psout_d,CUFFT_FORWARD)
     istat = cudaMemcpy(psin(1,1,1,1), psin_d(1,1,1,1), psin_size)
     istat = cudaMemcpy(d1psout(1,1,1,1), d1psout_d(1,1,1,1), d1psout_size)
+    istat = cudaDeviceSynchronize()
 #else
     CALL dfftw_execute_dft(xforward,psin,d1psout)
 #endif
@@ -69,9 +70,11 @@ CONTAINS
 #ifdef CUDA
        ALLOCATE(d2psout_d, MOLD=d2psout)
        d2psout_size = SIZE(d2psout)
+
        istat = cudaMemcpy(d2psout_d(1,1,1,1), d2psout(1,1,1,1), d2psout_size)
        CALL cufftExecZ2Z(xbackward,d2psout_d,d2psout_d,CUFFT_INVERSE)
        istat = cudaMemcpy(d2psout(1,1,1,1), d2psout_d(1,1,1,1), d2psout_size)
+       istat = cudaDeviceSynchronize()
 #else
        CALL dfftw_execute_dft(xbackward,d2psout,d2psout)
 #endif
@@ -94,6 +97,7 @@ CONTAINS
     istat = cudaMemcpy(d1psout_d(1,1,1,1), d1psout(1,1,1,1), d1psout_size)
     CALL cufftExecZ2Z(xbackward,d1psout_d,d1psout_d,CUFFT_INVERSE)
     istat = cudaMemcpy(d1psout(1,1,1,1), d1psout_d(1,1,1,1), d1psout_size)
+    istat = cudaDeviceSynchronize()
 
     DEALLOCATE(psin_d, d1psout_d, d2psout_d)
 #else
@@ -134,6 +138,7 @@ CONTAINS
           CALL cufftExecZ2Z(yforward,psin_d(:,:,k,is),d1psout_d(:,:,k,is),CUFFT_FORWARD)
           istat = cudaMemcpy(psin(1,1,k,is), psin_d(1,1,k,is), psin_size)
           istat = cudaMemcpy(d1psout(1,1,k,is), d1psout_d(1,1,k,is), d1psout_size)
+          istat = cudaDeviceSynchronize()
 #else
           CALL dfftw_execute_dft(yforward,psin(:,:,k,is),d1psout(:,:,k,is))
 #endif
@@ -155,6 +160,7 @@ CONTAINS
              istat = cudaMemcpy(d2psout_d(1,1,k,is), d2psout(1,1,k,is), d2psout_size)
              CALL cufftExecZ2Z(ybackward,d2psout_d(:,:,k,is),d2psout_d(:,:,k,is),CUFFT_INVERSE)
              istat = cudaMemcpy(d2psout(1,1,k,is), d2psout_d(1,1,k,is), d2psout_size)
+             istat = cudaDeviceSynchronize()
 #else
              CALL dfftw_execute_dft(ybackward,d2psout(:,:,k,is),d2psout(:,:,k,is))
 #endif
@@ -181,6 +187,7 @@ CONTAINS
           istat = cudaMemcpy(d1psout_d(1,1,k,is), d1psout(1,1,k,is), d1psout_size)
           CALL cufftExecZ2Z(ybackward,d1psout_d(:,:,k,is),d1psout_d(:,:,k,is),CUFFT_INVERSE)
           istat = cudaMemcpy(d1psout(1,1,k,is), d1psout_d(1,1,k,is), d1psout_size)
+          istat = cudaDeviceSynchronize()
 #else
           CALL dfftw_execute_dft(ybackward,d1psout(:,:,k,is),d1psout(:,:,k,is))
 #endif
@@ -223,6 +230,7 @@ CONTAINS
        CALL cufftExecZ2Z(zforward,psin_d(:,:,:,is),d1psout_d(:,:,:,is),CUFFT_FORWARD)
        istat = cudaMemcpy(psin(1,1,1,is), psin_d(1,1,1,is), psin_size)
        istat = cudaMemcpy(d1psout(1,1,1,is), d1psout_d(1,1,1,is), d1psout_size)
+       istat = cudaDeviceSynchronize()
 #else
        CALL dfftw_execute_dft(zforward,psin(:,:,:,is),d1psout(:,:,:,is))
 #endif
@@ -242,6 +250,7 @@ CONTAINS
           istat = cudaMemcpy(d2psout_d(1,1,1,is), d2psout(1,1,1,is), d2psout_size)
           CALL cufftExecZ2Z(zbackward,d2psout_d(:,:,:,is),d2psout_d(:,:,:,is),CUFFT_INVERSE)
           istat = cudaMemcpy(d2psout(1,1,1,is), d2psout_d(1,1,1,is), d2psout_size)
+          istat = cudaDeviceSynchronize()
 #else
           CALL dfftw_execute_dft(zbackward,d2psout(:,:,:,is),d2psout(:,:,:,is))
 #endif
@@ -266,6 +275,7 @@ CONTAINS
        istat = cudaMemcpy(d1psout_d(1,1,1,is), d1psout(1,1,1,is), d1psout_size)
        CALL cufftExecZ2Z(zbackward,d1psout_d(:,:,:,is),d1psout_d(:,:,:,is),CUFFT_INVERSE)
        istat = cudaMemcpy(d1psout(1,1,1,is), d1psout_d(1,1,1,is), d1psout_size)
+       istat = cudaDeviceSynchronize()
 #else
        CALL dfftw_execute_dft(zbackward,d1psout(:,:,:,is),d1psout(:,:,:,is))
 #endif
@@ -319,6 +329,7 @@ CONTAINS
        istat = cudaMemcpy(psout_d(1,1,1,is), psout(1,1,1,is), psout_size)
        CALL cufftExecZ2Z(pforward,psout_d(:,:,:,is),psout_d(:,:,:,is),CUFFT_FORWARD)
        istat = cudaMemcpy(psout(1,1,1,is), psout_d(1,1,1,is), psout_size)
+       istat = cudaDeviceSynchronize()
 #else
        CALL dfftw_execute_dft(pforward,psout(:,:,:,is),psout(:,:,:,is))
 #endif
@@ -346,6 +357,7 @@ CONTAINS
        istat = cudaMemcpy(psout_d(1,1,1,is), psout(1,1,1,is), psout_size)
        CALL cufftExecZ2Z(pbackward,psout_d(:,:,:,is),psout_d(:,:,:,is),CUFFT_INVERSE)
        istat = cudaMemcpy(psout(1,1,1,is), psout_d(1,1,1,is), psout_size)
+       istat = cudaDeviceSynchronize()
 #else
        CALL dfftw_execute_dft(pbackward,psout(:,:,:,is),psout(:,:,:,is))
 #endif
