@@ -47,11 +47,10 @@ CONTAINS
     ALLOCATE(d1psout_d, MOLD=d1psout)
     psin_size = SIZE(psin)
     d1psout_size = SIZE(d1psout)
+
     ! Copy to device, perform FFT, copy back to host
     istat = cudaMemcpy(psin_d(1,1,1,1), psin(1,1,1,1), psin_size)
-    istat = cudaMemcpy(d1psout_d(1,1,1,1), d1psout(1,1,1,1), d1psout_size)
     CALL cufftExecZ2Z(xforward,psin_d,d1psout_d,CUFFT_FORWARD)
-    istat = cudaMemcpy(psin(1,1,1,1), psin_d(1,1,1,1), psin_size)
     istat = cudaMemcpy(d1psout(1,1,1,1), d1psout_d(1,1,1,1), d1psout_size)
     istat = cudaDeviceSynchronize()
 #else
@@ -134,9 +133,7 @@ CONTAINS
 #ifdef CUDA
           ! Copy to device, perform FFT, copy back to host
           istat = cudaMemcpy(psin_d(1,1,k,is), psin(1,1,k,is), psin_size)
-          istat = cudaMemcpy(d1psout_d(1,1,k,is), d1psout(1,1,k,is), d1psout_size)
           CALL cufftExecZ2Z(yforward,psin_d(:,:,k,is),d1psout_d(:,:,k,is),CUFFT_FORWARD)
-          istat = cudaMemcpy(psin(1,1,k,is), psin_d(1,1,k,is), psin_size)
           istat = cudaMemcpy(d1psout(1,1,k,is), d1psout_d(1,1,k,is), d1psout_size)
           istat = cudaDeviceSynchronize()
 #else
@@ -153,6 +150,7 @@ CONTAINS
           d2psout(:,iy,:,:)=-((iy-1)*kfac)**2*d1psout(:,iy,:,:)/REAL(ny)
           d2psout(:,ny-iy+1,:,:)=-(iy*kfac)**2*d1psout(:,ny-iy+1,:,:)/REAL(ny)
        ENDDO
+
        DO is=1,2
           DO k=1,nz
              CALL cpu_time(start_levels)
@@ -216,19 +214,20 @@ CONTAINS
 #ifdef CUDA
     ALLOCATE(psin_d, MOLD=psin)
     ALLOCATE(d1psout_d, MOLD=d1psout)
-    ALLOCATE(d2psout_d, MOLD=d2psout)
     psin_size = SIZE(psin, 1) + SIZE(psin, 2) + SIZE(psin, 3)
     d1psout_size = SIZE(d1psout, 1) + SIZE(d1psout, 2) + SIZE(d1psout, 3)
-    d2psout_size = SIZE(d2psout, 1) + SIZE(d2psout, 2) + SIZE(d2psout, 3)
+
+    IF(PRESENT(d2psout)) THEN
+      ALLOCATE(d2psout_d, MOLD=d2psout)
+      d2psout_size = SIZE(d2psout, 1) + SIZE(d2psout, 2) + SIZE(d2psout, 3)
+    ENDIF
 #endif
     DO is=1,2
        CALL cpu_time(start_levels)
 #ifdef CUDA
        ! Copy to device, perform FFT, copy back to host
        istat = cudaMemcpy(psin_d(1,1,1,is), psin(1,1,1,is), psin_size)
-       istat = cudaMemcpy(d1psout_d(1,1,1,is), d1psout(1,1,1,is), d1psout_size)
        CALL cufftExecZ2Z(zforward,psin_d(:,:,:,is),d1psout_d(:,:,:,is),CUFFT_FORWARD)
-       istat = cudaMemcpy(psin(1,1,1,is), psin_d(1,1,1,is), psin_size)
        istat = cudaMemcpy(d1psout(1,1,1,is), d1psout_d(1,1,1,is), d1psout_size)
        istat = cudaDeviceSynchronize()
 #else
