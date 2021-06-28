@@ -18,6 +18,8 @@ MODULE Coulomb
 #endif
   PUBLIC :: poisson,coulinit,wcoul
   PRIVATE :: initiq
+  REAL(db) :: start_coulomb, finish_coulomb, timer
+  COMMON /Timer/ timer
 CONTAINS
   !***************************************************
   SUBROUTINE poisson
@@ -33,6 +35,7 @@ CONTAINS
     IF(.NOT.periodic) rho2=(0.D0,0.D0)
     rho2(1:nx,1:ny,1:nz)=rho(:,:,:,2)
     ! transform into momentum space
+    CALL cpu_time(start_coulomb)
 #ifdef CUDA
     ! Copy to device, perform FFT, copy back to host
     istat = cudaMemcpy(rho2_d(1,1,1), rho2(1,1,1), nx2*ny2*nz2)
@@ -41,6 +44,10 @@ CONTAINS
 #else
     CALL dfftw_execute_dft(coulplan1,rho2,rho2)
 #endif
+    CALL cpu_time(finish_coulomb)
+    timer=timer+finish_coulomb-start_coulomb
+    WRITE(*,*) "FFT_DEBUG: coulomb.1 = ", finish_coulomb-start_coulomb
+    WRITE(*,*) "FFT_DEBUG: timer = ", timer
     ! add charge factor and geometric factors
     ! note that in the periodic case q has only a real part
     IF(periodic) THEN
@@ -49,6 +56,7 @@ CONTAINS
        rho2=e2*wxyz*q*rho2
     END IF
     ! transform back to coordinate space and return in wcoul
+    CALL cpu_time(start_coulomb)
 #ifdef CUDA
     istat = cudaMemcpy(rho2_d(1,1,1), rho2(1,1,1), nx2*ny2*nz2)
     CALL cufftExecZ2Z(coulplan2,rho2_d,rho2_d,CUFFT_INVERSE)
@@ -56,6 +64,10 @@ CONTAINS
 #else
     CALL dfftw_execute_dft(coulplan2,rho2,rho2)
 #endif
+    CALL cpu_time(finish_coulomb)
+    timer=timer+finish_coulomb-start_coulomb
+    WRITE(*,*) "FFT_DEBUG: coulomb.2 = ", finish_coulomb-start_coulomb
+    WRITE(*,*) "FFT_DEBUG: timer = ", timer
     wcoul=REAL(rho2(1:nx,1:ny,1:nz))/(nx2*ny2*nz2)
     DEALLOCATE(rho2)
 #ifdef CUDA
@@ -102,6 +114,7 @@ CONTAINS
     ELSE
        q=1.D0/SQRT(REAL(q))
        q(1,1,1)=2.84D0/(dx*dy*dz)**(1.D0/3.D0)
+       CALL cpu_time(start_coulomb)
 #ifdef CUDA
        ! Copy to device, perform FFT, copy back to host
        istat = cudaMemcpy(q_d(1,1,1), q(1,1,1), nx2*ny2*nz2)
@@ -110,6 +123,10 @@ CONTAINS
 #else
        CALL dfftw_execute_dft(coulplan1,q,q)
 #endif
+       CALL cpu_time(finish_coulomb)
+       timer=timer+finish_coulomb-start_coulomb
+       WRITE(*,*) "FFT_DEBUG: coulomb.3 = ", finish_coulomb-start_coulomb
+       WRITE(*,*) "FFT_DEBUG: timer = ", timer
     END IF
     DEALLOCATE(iqx,iqy,iqz)
 #ifdef CUDA

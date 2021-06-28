@@ -92,6 +92,8 @@
 #endif
     REAL(db) :: kfac
     INTEGER :: iy
+    REAL(db) :: start_util, finish_util, timer
+    COMMON /Timer/ timer
     ALLOCATE(ps1(nx,ny,nz,2),ps2(nx,ny,nz,2))
 #ifdef CUDA
     ALLOCATE(psin_d, MOLD=psin)
@@ -99,6 +101,7 @@
     ALLOCATE(ps1_d(nx,ny,nz,2),ps2_d(nx,ny,nz,2))
 #endif
     kfac=(PI+PI)/(dy*ny)
+    CALL cpu_time(start_util)
 #ifdef CUDA
     ! Copy to device, perform FFT, copy back to host
     istat = cudaMemcpy(psin_d(1,1,1,1), psin(1,1,1,1), psin_size)
@@ -115,6 +118,10 @@
     CALL dfftw_execute_dft(yforward,ps1,ps2)
     CALL dfftw_execute_dft(zforward,ps2,ps1)
 #endif
+    CALL cpu_time(finish_util)
+    timer=timer+finish_util-start_util
+    WRITE(*,*) "FFT_DEBUG: util_PGR.1 = ", finish_util-start_util
+    WRITE(*,*) "FFT_DEBUG: timer = ", timer
     WRITE(921,'(f8.3,4(1pg13.5))') timact,SUM(ABS(ps1(nx/2,ny/2,nz/2,:))),&
          SUM(ABS(ps1(nx/2,1,1,:))),SUM(ABS(ps1(1,ny/2,1,:))),&
          SUM(ABS(ps1(1,1,nz/2,:)))
@@ -144,6 +151,8 @@
 #endif
     REAL(db) :: kfac
     INTEGER :: iy,ix,iz
+    REAL(db) :: start_util, finish_util, timer
+    COMMON /Timer/ timer
     LOGICAL, SAVE :: tfirst=.true.
     !    IF(.NOT.tfirst) RETURN
     ALLOCATE(ps1(nx,ny,nz,2),ps2(nx,ny,nz,2))
@@ -153,6 +162,7 @@
     ALLOCATE(ps1_d(nx,ny,nz,2),ps2_d(nx,ny,nz,2))
 #endif
     kfac=(PI+PI)/(dy*ny)
+    CALL cpu_time(start_util)
 #ifdef CUDA
     ! Copy to device, perform FFT, copy back to host
     istat = cudaMemcpy(psin_d(1,1,1,1), psin(1,1,1,1), psin_size)
@@ -169,6 +179,10 @@
     CALL dfftw_execute_dft(yforward,ps1,ps2)
     CALL dfftw_execute_dft(zforward,ps2,ps1)
 #endif
+    CALL cpu_time(finish_util)
+    timer=timer+finish_util-start_util
+    WRITE(*,*) "FFT_DEBUG: util_PGR.2 = ", finish_util-start_util
+    WRITE(*,*) "FFT_DEBUG: timer = ", timer
     ! along x
     WRITE(922,'(a)') '# along x' 
     DO ix=nx/2+1,nx

@@ -145,4 +145,5 @@ PROGRAM tdhf3d
      CALL dynamichf
   ENDIF
   CALL finish_mpi
+  WRITE(*,*) "FFT_DEBUG: timer = ", timer
 END PROGRAM tdhf3d

@@ -207,6 +207,7 @@ CONTAINS
              ps1=0.D0
              READ(scratch) ps1(1:fnx(iff),1:fny(iff),1:fnz(iff),:)
              DO is=1,2
+                CALL cpu_time(start_fragments)
 #ifdef CUDA
                 ! Copy to device, perform FFT, copy back to host
                 istat = cudaMemcpy(ps1_d(1,1,1,is), ps1(1,1,1,is), nx*ny*nz)
@@ -215,10 +216,15 @@ CONTAINS
 #else
                 CALL dfftw_execute_dft(pforward,ps1(:,:,:,is),ps1(:,:,:,is))
 #endif
+                CALL cpu_time(finish_fragments)
+                timer=timer+finish_fragments-start_fragments
+                WRITE(*,*) "FFT_DEBUG: fragments.1 = ", finish_fragments-start_fragments
+                WRITE(*,*) "FFT_DEBUG: timer = ", timer
                 FORALL(ix=1:nx,iy=1:ny,iz=1:nz)
                    ps1(ix,iy,iz,is)=ps1(ix,iy,iz,is)*akx(ix)*aky(iy)*akz(iz) &
                         /DBLE(nx*ny*nz)
                 END FORALL
+                CALL cpu_time(start_fragments)
 #ifdef CUDA
                 istat = cudaMemcpy(ps1_d(1,1,1,is), ps1(1,1,1,is), nx*ny*nz)
                 CALL cufftExecZ2Z(pbackward,ps1_d(:,:,:,is),ps1_d(:,:,:,is),CUFFT_INVERSE)
@@ -226,6 +232,10 @@ CONTAINS
 #else
                 CALL dfftw_execute_dft(pbackward,ps1(:,:,:,is),ps1(:,:,:,is))
 #endif
+                CALL cpu_time(finish_fragments)
+                timer=timer+finish_fragments-start_fragments
+                WRITE(*,*) "FFT_DEBUG: fragments.2 = ", finish_fragments-start_fragments
+                WRITE(*,*) "FFT_DEBUG: timer = ", timer
                 WHERE(ABS(ps1)==0.D0)
                    psi(:,:,:,:,ipn)=1.0D-20
                 ELSEWHERE
