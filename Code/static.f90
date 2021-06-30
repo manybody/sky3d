@@ -36,7 +36,7 @@ CONTAINS
           IF(ipair==0.OR.nof<0) THEN  
              npsi(2)=nprot  
           ELSE  
-             npsi(2)=NINT(nprot+1.65*FLOAT(nprot)**0.666667D0)  
+             npsi(2)=NINT(nprot+1.65*REAL(nprot,db)**0.666667D0)  
              IF(MOD(npsi(2),2)/=0) npsi(2)=npsi(2)+1
           ENDIF
        ENDIF
