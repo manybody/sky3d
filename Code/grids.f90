@@ -54,7 +54,7 @@ CONTAINS
          der2v(:,:),cdmpv(:,:)
     INTEGER :: i
     ALLOCATE(v(nv),der1v(nv,nv),der2v(nv,nv),cdmpv(nv,nv))
-    v=(/ ((i-1)*dv-0.5D0*FLOAT(nv-1)*dv,i=1,nv) /)
+    v=(/ ((i-1)*dv-0.5D0*REAL(nv-1,KIND(v))*dv,i=1,nv) /)
     IF(wflag) THEN
        WRITE(*,'(1X,A,I3,A,F8.4,2(A,F8.4))') name // ' direction: ',nv, &
             ' points, spacing:',dv,' ranging from ',v(1),' to ',v(nv)
