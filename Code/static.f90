@@ -28,7 +28,7 @@ CONTAINS
           IF(ipair==0.OR.nof<0) THEN  
              npsi(1)=nneut  
           ELSE  
-             npsi(1)=NINT(nneut+1.65*FLOAT(nneut)**0.666667D0)  
+             npsi(1)=NINT(nneut+1.65*REAL(nneut,db)**0.666667D0)  
              IF(MOD(npsi(1),2)/=0) npsi(1)=npsi(1)+1
           ENDIF
        ENDIF
