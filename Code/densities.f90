@@ -6,23 +6,33 @@ MODULE Densities
   IMPLICIT NONE
   SAVE
   REAL(db),ALLOCATABLE,DIMENSION(:,:,:,:) :: rho,tau
-  REAL(db),ALLOCATABLE,DIMENSION(:,:,:,:,:) :: current,sdens,sodens
+  REAL(db),ALLOCATABLE,DIMENSION(:,:,:,:,:) :: current,sdens,sodens,tdens, &
+  scurrentx,scurrenty,scurrentz, fdens,nablarho
 CONTAINS
   !***********************************************************************
   SUBROUTINE alloc_densities
     ALLOCATE(rho(nx,ny,nz,2),tau(nx,ny,nz,2),current(nx,ny,nz,3,2), &
-         sdens(nx,ny,nz,3,2),sodens(nx,ny,nz,3,2))
+          sdens(nx,ny,nz,3,2),sodens(nx,ny,nz,3,2), tdens(nx,ny,nz,3,2), &
+         scurrentx(nx,ny,nz,3,2),scurrenty(nx,ny,nz,3,2),scurrentz(nx,ny,nz,3,2), &
+         fdens(nx,ny,nz,3,2))
+         IF(mlocalize/=0)  ALLOCATE(nablarho(nx,ny,nz,3,2))
   END SUBROUTINE alloc_densities
   !***********************************************************************
-  SUBROUTINE add_density(iq,weight,psin,lrho,ltau,lcurrent,lsdens,lsodens)  
+  SUBROUTINE add_density(iq,weight,psin,lrho,ltau,lcurrent,lsdens,lsodens,&
+              ltdens,lfdens,lscurrentx,lscurrenty,lscurrentz)
     COMPLEX(db),INTENT(INOUT) :: psin(nx,ny,nz,2)
-    REAL(db),DIMENSION(:,:,:,:),INTENT(INOUT) :: lrho,ltau
-    REAL(db),DIMENSION(:,:,:,:,:),INTENT(INOUT) :: lcurrent,lsdens,lsodens
+    COMPLEX(db) :: psx(nx,ny,nz,2),psy(nx,ny,nz,2),psz(nx,ny,nz,2)
+    REAL(db),INTENT(INOUT) :: lrho(nx,ny,nz,2),ltau(nx,ny,nz,2)
+    REAL(db),INTENT(INOUT) :: lcurrent(nx,ny,nz,3,2),lsdens(nx,ny,nz,3,2)
+    REAL(db),INTENT(INOUT) :: lsodens(nx,ny,nz,3,2)
+    REAL(db),INTENT(INOUT) :: lfdens(nx,ny,nz,3,2),ltdens(nx,ny,nz,3,2)
+    REAL(db),INTENT(INOUT) :: lscurrentx(nx,ny,nz,3,2),lscurrenty(nx,ny,nz,3,2)
+    REAL(db),INTENT(INOUT) :: lscurrentz(nx,ny,nz,3,2)
+    REAL(db) :: lnablarho(nx,ny,nz,3,2)
     INTEGER,INTENT(IN) :: iq
     REAL(db),INTENT(IN) :: weight
-    COMPLEX(db),ALLOCATABLE :: ps1(:,:,:,:)  
+    COMPLEX(db) :: ps1(nx,ny,nz,2)  
     INTEGER :: ix,iy,iz
-    ALLOCATE(ps1(nx,ny,nz,2))
     IF(weight<=0.D0) RETURN
     !***********************************************************************
     ! non-derivative terms
