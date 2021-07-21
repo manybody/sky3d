@@ -15,7 +15,8 @@ CONTAINS
          sdens(nx,ny,nz,3,2),sodens(nx,ny,nz,3,2))
   END SUBROUTINE alloc_densities
   !***********************************************************************
-  SUBROUTINE add_density(iq,weight,psin,lrho,ltau,lcurrent,lsdens,lsodens)  
+  SUBROUTINE add_density(iq,weight,psin,lrho,ltau,lcurrent,lsdens,lsodens,&
+              ltdens,lfdens,lscurrentx,lscurrenty,lscurrentz) 
     COMPLEX(db),INTENT(INOUT) :: psin(nx,ny,nz,2)
     REAL(db),DIMENSION(:,:,:,:),INTENT(INOUT) :: lrho,ltau
     REAL(db),DIMENSION(:,:,:,:,:),INTENT(INOUT) :: lcurrent,lsdens,lsodens
