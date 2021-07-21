@@ -43,7 +43,7 @@ levels.o : levels.f90 params.o grids.o forces.o fourier.o trivial.o
 
 grids.o : grids.f90 params.o forces.o
 
-densities.o : densities.f90 params.o grids.o levels.o trivial.o 
+densities.o : densities.f90 params.o grids.o levels.o trivial.o forces.o
 
 fragments.o : fragments.f90 params.o grids.o forces.o levels.o twobody.o \
 	sequential.o 
