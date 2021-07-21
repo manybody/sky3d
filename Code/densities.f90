@@ -3,6 +3,7 @@ MODULE Densities
   USE Grids, ONLY: nx,ny,nz,der1x,der1y,der1z
   USE Levels, ONLY: cdervx,cdervy,cdervz
   USE Trivial, ONLY: cmulx,cmuly,cmulz
+  USE Forces
   IMPLICIT NONE
   SAVE
   REAL(db),ALLOCATABLE,DIMENSION(:,:,:,:) :: rho,tau
