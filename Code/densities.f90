@@ -62,8 +62,11 @@ CONTAINS
      lsodens(ix,iy,iz,3,iq)=lsodens(ix,iy,iz,3,iq)-weight &
           *(  REAL(psin(ix,iy,iz,1)*CONJG(ps1(ix,iy,iz,2))) &
           - REAL(psin(ix,iy,iz,2)*CONJG(ps1(ix,iy,iz,1))) )
+    END FORALL
+
      ! T_x components        
      IF(ston) THEN
+     FORALL(ix=1:nx,iy=1:ny,iz=1:nz)
      ltdens(ix,iy,iz,1,iq) = ltdens(ix,iy,iz,1,iq)+2.d0*weight &
           *(  REAL(ps1(ix,iy,iz,2)*CONJG(ps1(ix,iy,iz,1)))  )
      ltdens(ix,iy,iz,2,iq) = ltdens(ix,iy,iz,2,iq)+2.d0*weight &
@@ -71,9 +74,12 @@ CONTAINS
      ltdens(ix,iy,iz,3,iq) = ltdens(ix,iy,iz,3,iq)+weight &
           *(  REAL(ps1(ix,iy,iz,1)*CONJG(ps1(ix,iy,iz,1))) &
           -   REAL(ps1(ix,iy,iz,2)*CONJG(ps1(ix,iy,iz,2)))  )
-       ENDIF
-    ! x components J_xj 
-       IF(jfon .OR. j2on) THEN
+     END FORALL
+     ENDIF
+
+     ! x components J_xj 
+     IF(jfon .OR. j2on) THEN
+     FORALL(ix=1:nx,iy=1:ny,iz=1:nz)
        lscurrentx(ix,iy,iz,1,iq) = lscurrentx(ix,iy,iz,1,iq)+weight* &
           (  AIMAG(ps1(ix,iy,iz,2)*CONJG(psin(ix,iy,iz,1))) &
           +  AIMAG(ps1(ix,iy,iz,1)*CONJG(psin(ix,iy,iz,2)))  )
@@ -83,8 +89,8 @@ CONTAINS
        lscurrentx(ix,iy,iz,3,iq) = lscurrentx(ix,iy,iz,3,iq)+weight* &
           (  AIMAG(ps1(ix,iy,iz,1)*CONJG(psin(ix,iy,iz,1))) &
           -  AIMAG(ps1(ix,iy,iz,2)*CONJG(psin(ix,iy,iz,2)))  )
-       ENDIF
-    END FORALL
+     END FORALL
+     ENDIF
     !***********************************************************************
     ! y-derivatives
     !***********************************************************************
@@ -100,15 +106,18 @@ CONTAINS
          ps1(:,:,:,2)*CONJG(psin(:,:,:,2)))
      IF(tlocalize) lnablarho(:,:,:,2,iq)=lnablarho(:,:,:,2,iq)+weight* &
          REAL(ps1(:,:,:,1)*CONJG(psin(:,:,:,1))+ps1(:,:,:,2)*CONJG(psin(:,:,:,2)))
-    FORALL(ix=1:Nx,iy=1:ny,iz=1:nz)
+     FORALL(ix=1:Nx,iy=1:ny,iz=1:nz)
      lsodens(ix,iy,iz,1,iq)=lsodens(ix,iy,iz,1,iq)+weight &
           *AIMAG( ps1(ix,iy,iz,1)*CONJG(psin(ix,iy,iz,1)) &
           -ps1(ix,iy,iz,2)*CONJG(psin(ix,iy,iz,2)) )
      lsodens(ix,iy,iz,3,iq)=lsodens(ix,iy,iz,3,iq)-weight &
           *AIMAG( ps1(ix,iy,iz,2)*CONJG(psin(ix,iy,iz,1)) &
           +ps1(ix,iy,iz,1)*CONJG(psin(ix,iy,iz,2)) )
+     END FORALL
+
      ! T_y components
      IF(ston) THEN
+     FORALL(ix=1:Nx,iy=1:ny,iz=1:nz)
      ltdens(ix,iy,iz,1,iq) = ltdens(ix,iy,iz,1,iq)+2.d0*weight &
           *(  REAL(ps1(ix,iy,iz,2)*CONJG(ps1(ix,iy,iz,1)))  )
      ltdens(ix,iy,iz,2,iq) = ltdens(ix,iy,iz,2,iq)+2.d0*weight &
@@ -116,9 +125,12 @@ CONTAINS
      ltdens(ix,iy,iz,3,iq) = ltdens(ix,iy,iz,3,iq)+weight &
           *(  REAL(ps1(ix,iy,iz,1)*CONJG(ps1(ix,iy,iz,1))) &
           -   REAL(ps1(ix,iy,iz,2)*CONJG(ps1(ix,iy,iz,2)))  )
-       ENDIF
+     END FORALL
+     ENDIF
+
      ! y components J_yj
      IF(jfon .OR. j2on) THEN
+     FORALL(ix=1:Nx,iy=1:ny,iz=1:nz)
      lscurrenty(ix,iy,iz,1,iq) = lscurrenty(ix,iy,iz,1,iq)+weight* &
           (  AIMAG(ps1(ix,iy,iz,2)*CONJG(psin(ix,iy,iz,1))) &
           +  AIMAG(ps1(ix,iy,iz,1)*CONJG(psin(ix,iy,iz,2)))  )
@@ -128,8 +140,8 @@ CONTAINS
      lscurrenty(ix,iy,iz,3,iq) = lscurrenty(ix,iy,iz,3,iq)+weight* &
           (  AIMAG(ps1(ix,iy,iz,1)*CONJG(psin(ix,iy,iz,1))) &
           -  AIMAG(ps1(ix,iy,iz,2)*CONJG(psin(ix,iy,iz,2)))  )
+     END FORALL
      ENDIF
-    END FORALL
     !***********************************************************************
     ! z-derivatives
     !***********************************************************************
@@ -145,15 +157,18 @@ CONTAINS
          ps1(:,:,:,2)*CONJG(psin(:,:,:,2)))
      IF(tlocalize) lnablarho(:,:,:,3,iq)=lnablarho(:,:,:,3,iq)+weight* &
          REAL(ps1(:,:,:,1)*CONJG(psin(:,:,:,1))+ps1(:,:,:,2)*CONJG(psin(:,:,:,2)))
-    FORALL(ix=1:Nx,iy=1:ny,iz=1:nz)
+     FORALL(ix=1:Nx,iy=1:ny,iz=1:nz)
      lsodens(ix,iy,iz,1,iq)=lsodens(ix,iy,iz,1,iq)+weight &
           *REAL( ps1(ix,iy,iz,2)*CONJG(psin(ix,iy,iz,1)) &
           -ps1(ix,iy,iz,1)*CONJG(psin(ix,iy,iz,2)) )
      lsodens(ix,iy,iz,2,iq)=lsodens(ix,iy,iz,2,iq)+weight &
           *AIMAG( ps1(ix,iy,iz,2)*CONJG(psin(ix,iy,iz,1)) &
           +ps1(ix,iy,iz,1)*CONJG(psin(ix,iy,iz,2)) )
+     END FORALL
+
      ! T_z components
      IF(ston) THEN
+     FORALL(ix=1:Nx,iy=1:ny,iz=1:nz)
      ltdens(ix,iy,iz,1,iq) = ltdens(ix,iy,iz,1,iq)+2.d0*weight &
           *(  REAL(ps1(ix,iy,iz,2)*CONJG(ps1(ix,iy,iz,1)))  )
      ltdens(ix,iy,iz,2,iq) = ltdens(ix,iy,iz,2,iq)+2.d0*weight &
@@ -161,9 +176,12 @@ CONTAINS
      ltdens(ix,iy,iz,3,iq) = ltdens(ix,iy,iz,3,iq)+weight &
           *(  REAL(ps1(ix,iy,iz,1)*CONJG(ps1(ix,iy,iz,1))) &
           -   REAL(ps1(ix,iy,iz,2)*CONJG(ps1(ix,iy,iz,2)))  )
-       ENDIF
-    ! z components J_zj
+     END FORALL
+     ENDIF
+
+     ! z components J_zj
      IF(jfon .OR. j2on) THEN
+     FORALL(ix=1:Nx,iy=1:ny,iz=1:nz)
      lscurrentz(ix,iy,iz,1,iq) = lscurrentz(ix,iy,iz,1,iq)+weight* &
           (  AIMAG(ps1(ix,iy,iz,2)*CONJG(psin(ix,iy,iz,1))) &
           +  AIMAG(ps1(ix,iy,iz,1)*CONJG(psin(ix,iy,iz,2)))  )
@@ -173,8 +191,8 @@ CONTAINS
      lscurrentz(ix,iy,iz,3,iq) = lscurrentz(ix,iy,iz,3,iq)+weight* &
           (  AIMAG(ps1(ix,iy,iz,1)*CONJG(psin(ix,iy,iz,1))) &
           -  AIMAG(ps1(ix,iy,iz,2)*CONJG(psin(ix,iy,iz,2)))  )
-       ENDIF
-    END FORALL
+     END FORALL
+     ENDIF
     !***********************************************************************
     ! mixed-derivatives
     !***********************************************************************
