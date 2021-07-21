@@ -1,5 +1,5 @@
 MODULE Densities
-  USE Params, ONLY: db,tfft
+  USE Params, ONLY: db,toddls,tfft,tlocalize,mlocalize
   USE Grids, ONLY: nx,ny,nz,der1x,der1y,der1z
   USE Levels, ONLY: cdervx,cdervy,cdervz
   USE Trivial, ONLY: cmulx,cmuly,cmulz
