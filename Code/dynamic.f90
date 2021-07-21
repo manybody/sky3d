@@ -87,19 +87,26 @@ CONTAINS
             '#   time       average_extfield')
 
     END IF
-    ! calculate densities and currents
-    rho=0.0D0
-    tau=0.0D0
-    current=0.0D0
-    sdens=0.0D0
-    sodens=0.0D0
-    !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst) SCHEDULE(STATIC) &
-    !$OMP REDUCTION(+:rho,tau,current,sdens,sodens)
-    DO nst=1,nstloc
-       CALL add_density(isospin(globalindex(nst)),wocc(globalindex(nst)), &
-            psi(:,:,:,:,nst),rho,tau,current,sdens,sodens)  
-    ENDDO
-    !$OMP END PARALLEL DO
+! calculate densities and currents
+rho=0.0D0
+tau=0.0D0
+current=0.0D0
+sdens=0.0D0
+sodens=0.0D0
+tdens=0.0D0  
+fdens=0.0D0
+scurrentx=0.0D0
+scurrenty=0.0D0
+scurrentz=0.0D0
+!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst) SCHEDULE(STATIC) &
+!$OMP REDUCTION(+:rho,tau,current,sdens,sodens,tdens,fdens,scurrentx,scurrenty,scurrentz)
+DO nst=1,nstloc
+CALL add_density(isospin(nst),wocc(nst),psi(:,:,:,:,nst), &
+rho,tau,current,sdens,sodens,tdens,fdens,scurrentx, &
+scurrenty,scurrentz)
+ENDDO
+!$OMP END PARALLEL DO
+
     IF(tmpi) CALL collect_densities
     ! calculate mean fields and external fields
     CALL skyrme
@@ -112,23 +119,39 @@ CONTAINS
        IF(wflag) WRITE(*,'(/A,I6,A,F8.2,A)') ' Starting time step #',iter, &
             ' at time=',time,' fm/c'
        ! correction for parallel version
-       IF(tmpi) THEN
-          rho=rho/mpi_nprocs
-          tau=tau/mpi_nprocs
-          current=current/mpi_nprocs
-          sodens=sodens/mpi_nprocs
-          sdens=sdens/mpi_nprocs
-       ENDIF
-       ! propagate to end of time step and add to densities
-       !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,ps4) SCHEDULE(STATIC) &
-       !$OMP REDUCTION(+:rho,tau,current,sdens,sodens)
-       DO nst=1,nstloc
-          ps4=psi(:,:,:,:,nst) 
-          CALL tstep(isospin(globalindex(nst)),mxpact/2,ps4)
-          CALL add_density(isospin(globalindex(nst)),wocc(globalindex(nst)), &
-               ps4,rho,tau,current,sdens,sodens)  
-       ENDDO
-       !$OMP END PARALLEL DO
+   IF(tmpi) THEN
+rho=rho/mpi_nprocs
+tau=tau/mpi_nprocs
+ current=current/mpi_nprocs
+sodens=sodens/mpi_nprocs
+sdens=sdens/mpi_nprocs
+tdens=tdens/mpi_nprocs
+fdens=fdens/mpi_nprocs
+scurrentx=scurrentx/mpi_nprocs
+scurrenty=scurrenty/mpi_nprocs
+scurrentz=scurrentz/mpi_nprocs
+ENDIF
+rho=0.0D0
+tau=0.0D0
+current=0.0D0
+sdens=0.0D0
+sodens=0.0D0
+tdens=0.0D0  
+fdens=0.0D0
+scurrentx=0.0D0
+scurrenty=0.0D0
+scurrentz=0.0D0
+! propagate to end of time step and add to densities
+!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,ps4) SCHEDULE(STATIC) &
+!$OMP REDUCTION(+:rho,tau,current,sdens,sodens,tdens,fdens,scurrentx,scurrenty,scurrentz)
+DO nst=1,nstloc
+ps4=psi(:,:,:,:,nst)
+CALL tstep(isospin(globalindex(nst)),mxpact,ps4,dt/2.0)
+CALL add_density(isospin(nst),wocc(nst),ps4, &
+rho,tau,current,sdens,sodens,tdens,fdens,scurrentx, &
+scurrenty,scurrentz)  
+ENDDO
+!$OMP END PARALLEL DO
        IF(tmpi) CALL collect_densities
        ! average over time step
        rho=0.5D0*rho
@@ -136,27 +159,38 @@ CONTAINS
        current=0.5D0*current
        sodens=0.5D0*sodens
        sdens=0.5D0*sdens
+       tdens=0.5D0*tdens  
+       fdens=0.5D0*fdens
+       scurrentx=0.5D0*scurrentx
+       scurrenty=0.5D0*scurrenty
+       scurrentz=0.5D0*scurrentz
        ! compute mean field and add external field
        CALL skyrme  
        IF(text_timedep) CALL extfld(time+dt/2.0D0)
        ! Step 3: full time step
        ! reset densities
-       rho=0.0D0
-       tau=0.0D0
-       current=0.0D0
-       sdens=0.0D0
-       sodens=0.0D0
+      rho=0.0D0
+      tau=0.0D0
+      current=0.0D0
+      sdens=0.0D0
+      sodens=0.0D0
+      tdens=0.0D0
+      fdens=0.0D0
+      scurrentx=0.0D0
+      scurrenty=0.0D0
+      scurrentz=0.0D0
        ! propagate to end of step, accumulate densities
-       !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,ps4) SCHEDULE(STATIC) &
-       !$OMP REDUCTION(+:rho,tau,current,sdens,sodens)
-       DO nst=1,nstloc
-          ps4=psi(:,:,:,:,nst) 
-          CALL tstep(isospin(globalindex(nst)),mxpact,ps4)
-          CALL add_density(isospin(globalindex(nst)),wocc(globalindex(nst)), &
-               ps4,rho,tau,current,sdens,sodens)  
-          psi(:,:,:,:,nst)=ps4
-       ENDDO
-       !$OMP END PARALLEL DO
+!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,ps4) SCHEDULE(STATIC) &
+!$OMP REDUCTION(+:rho,tau,current,sdens,sodens,tdens,fdens,scurrentx,scurrenty,scurrentz)
+DO nst=1,nstloc
+ps4=psi(:,:,:,:,nst)
+CALL tstep(isospin(globalindex(nst)),mxpact,ps4,dt)
+CALL add_density(isospin(nst),wocc(nst),ps4, &
+rho,tau,current,sdens,sodens,tdens,fdens,scurrentx, &
+scurrenty,scurrentz)
+psi(:,:,:,:,nst)=ps4
+ENDDO
+!$OMP END PARALLEL DO
        ! sum up over nodes
        IF(tmpi) CALL collect_densities
        IF(nabsorb > 0) CALL absbc(nabsorb,iter,nt,time)
@@ -164,14 +198,14 @@ CONTAINS
        IF(mrescm/=0) THEN  
           IF(MOD(iter,mrescm)==0) THEN  
              CALL resetcm
-             !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst) SCHEDULE(STATIC) &
-             !$OMP REDUCTION(+:rho,tau,current,sdens,sodens)
-             DO nst=1,nstloc
-                CALL add_density(isospin(globalindex(nst)), &
-                     wocc(globalindex(nst)), &
-                     psi(:,:,:,:,nst),rho,tau,current,sdens,sodens)  
-             ENDDO
-             !$OMP END PARALLEL DO
+            !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst) SCHEDULE(STATIC) &
+            !$OMP REDUCTION(+:rho,tau,current,sdens,sodens,tdens,fdens,scurrentx,   scurrenty,scurrentz)
+            DO nst=1,nstloc
+            CALL add_density(isospin(nst),wocc(nst),psi(:,:,:,:,nst), &
+            rho,tau,current,sdens,sodens,tdens,fdens,scurrentx, &
+scurrenty,scurrentz)
+            ENDDO
+            !$OMP END PARALLEL DO
              IF(tmpi) CALL collect_densities
           ENDIF
        ENDIF
