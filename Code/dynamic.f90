@@ -146,7 +146,7 @@ scurrentz=0.0D0
 !$OMP REDUCTION(+:rho,tau,current,sdens,sodens,tdens,fdens,scurrentx,scurrenty,scurrentz)
 DO nst=1,nstloc
 ps4=psi(:,:,:,:,nst)
-CALL tstep(isospin(globalindex(nst)),mxpact,ps4,dt/2.0)
+CALL tstep(isospin(globalindex(nst)),mxpact/2,ps4)
 CALL add_density(isospin(nst),wocc(nst),ps4, &
 rho,tau,current,sdens,sodens,tdens,fdens,scurrentx, &
 scurrenty,scurrentz)  
@@ -184,7 +184,7 @@ ENDDO
 !$OMP REDUCTION(+:rho,tau,current,sdens,sodens,tdens,fdens,scurrentx,scurrenty,scurrentz)
 DO nst=1,nstloc
 ps4=psi(:,:,:,:,nst)
-CALL tstep(isospin(globalindex(nst)),mxpact,ps4,dt)
+CALL tstep(isospin(globalindex(nst)),mxpact,ps4)
 CALL add_density(isospin(nst),wocc(nst),ps4, &
 rho,tau,current,sdens,sodens,tdens,fdens,scurrentx, &
 scurrenty,scurrentz)
