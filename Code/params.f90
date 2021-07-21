@@ -47,4 +47,6 @@ MODULE Params
   INTEGER,PARAMETER ::  mnof=4   ! maximum number of fragments
   INTEGER :: nof                 ! real number of fragments
   REAL(db) :: r0=1.2D0
+  INTEGER :: mlocalize=0
+  LOGICAL :: tlocalize=.FALSE.
 END MODULE Params
