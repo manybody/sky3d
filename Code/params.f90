@@ -32,6 +32,8 @@ MODULE Params
   LOGICAL :: tdynamic
   LOGICAL :: tfft=.TRUE.
   LOGICAL :: trestart=.FALSE.
+  LOGICAL,PARAMETER ::  toddls=.TRUE.    
+  LOGICAL,PARAMETER ::  todd=.TRUE.   
   !**********************************************************************
   ! parameters controlling printout frequency etc.
   !**********************************************************************
