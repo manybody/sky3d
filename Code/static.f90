@@ -104,10 +104,20 @@ CONTAINS
     current=0.0D0
     sdens=0.0D0
     sodens=0.0D0
-    DO nst=1,nstmax
-       CALL add_density(isospin(nst),wocc(nst),psi(:,:,:,:,nst), &
-            rho,tau,current,sdens,sodens)  
-    ENDDO
+    tdens=0.0D0
+    fdens=0.0D0
+    scurrentx=0.0D0
+    scurrenty=0.0D0
+    scurrentz=0.0D0
+    IF(tlocalize) nablarho = 0.0D0
+!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst) SCHEDULE(STATIC) &
+!$OMP REDUCTION(+:rho,tau,current,sdens,sodens,tdens,fdens,scurrentx,scurrenty,scurrentz)
+      DO nst=1,nstmax
+        CALL add_density(isospin(nst),wocc(nst),psi(:,:,:,:,nst), &
+             rho,tau,current,sdens,sodens,tdens,fdens,scurrentx, &
+           scurrenty,scurrentz)  
+      ENDDO
+!$OMP END PARALLEL DO
     CALL skyrme
     ! Step 3: initial gradient step
     delesum=0.0D0  
@@ -160,18 +170,25 @@ CONTAINS
           upot=rho
           bmass=tau
        ENDIF
-       rho=0.0D0
-       tau=0.0D0
-       current=0.0D0
-       sdens=0.0D0
-       sodens=0.0D0
-       !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst) SCHEDULE(STATIC) &
-       !$OMP REDUCTION(+:rho, tau, current, sdens, sodens)
-       DO nst=1,nstmax
-          CALL add_density(isospin(nst),wocc(nst),psi(:,:,:,:,nst), &
-               rho,tau,current,sdens,sodens)  
-       ENDDO
-       !$OMP END PARALLEL DO
+      rho=0.0D0
+      tau=0.0D0
+      current=0.0D0
+      sdens=0.0D0
+      sodens=0.0D0
+      tdens=0.0D0
+      fdens=0.0D0
+      scurrentx=0.0D0
+      scurrenty=0.0D0
+      scurrentz=0.0D0
+      IF(tlocalize) nablarho = 0.0D0
+!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst) SCHEDULE(STATIC) &
+!$OMP REDUCTION(+:rho,tau,current,sdens,sodens,tdens,fdens,scurrentx,scurrenty,scurrentz)
+      DO nst=1,nstmax
+        CALL add_density(isospin(nst),wocc(nst),psi(:,:,:,:,nst), &
+             rho,tau,current,sdens,sodens,tdens,fdens,scurrentx, &
+           scurrenty,scurrentz)  
+      ENDDO
+!$OMP END PARALLEL DO
        IF(taddnew) THEN
           rho=addnew*rho+addco*upot
           tau=addnew*tau+addco*bmass
