@@ -35,6 +35,7 @@ MODULE Forces
   ! charge and mass number in static case for pairing
   REAL(db) :: h2ma ! average h2m over p and n, used in some places
   REAL(db) :: nucleon_mass
+  REAL(db) :: b0,b0p,b1,b1p,b2,b2p,b3,b3p,b4,b4p,slate
   ! derived "b" and Slater coefficients
 CONTAINS
   SUBROUTINE read_force(s2on,sfon,ston,jfon,j2on,divson,lapson,te,toten)
@@ -105,6 +106,18 @@ CONTAINS
        f%zpe=1
        WRITE(*,*) '***** Zero-point-energy correction turned off'
     END IF
+        ! calculate "b" and Slater coefficients
+    b0=f%t0*(1.0D0+0.5D0*f%x0)  
+    b0p=f%t0*(0.5D0+f%x0)  
+    b1=(f%t1+0.5D0*f%x1*f%t1+f%t2+0.5*f%x2*f%t2)/4.0D0  
+    b1p=(f%t1*(0.5D0+f%x1)-f%t2*(0.5D0+f%x2))/4.0D0  
+    b2=(3.0D0*f%t1*(1.D0+0.5D0*f%x1)-f%t2*(1.D0+0.5D0*f%x2))/8.0D0
+    b2p=(3.D0*f%t1*(0.5D0+f%x1)+f%t2*(0.5D0+f%x2))/8.D0
+    b3=f%t3*(1.D0+0.5D0*f%x3)/4.D0
+    b3p=f%t3*(0.5D0+f%x3)/4.D0  
+    b4=f%t4/2.D0 
+    b4p=f%b4p  
+    slate=(3.0D0/pi)**(1.0D0/3.0D0)*e2
     ! now set up pairing: first case of none
     IF(TRIM(pairing)=='NONE') THEN
       p%v0prot=0.D0; p%v0neut=0.D0; p%rho0pr=0.16D0
