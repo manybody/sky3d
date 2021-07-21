@@ -32,7 +32,7 @@ CONTAINS
     REAL(db) :: lnablarho(nx,ny,nz,3,2)
     INTEGER,INTENT(IN) :: iq
     REAL(db),INTENT(IN) :: weight
-    COMPLEX(db) :: ps1(nx,ny,nz,2)  
+    COMPLEX(db),ALLOCATABLE :: ps1(:,:,:,:)  
     INTEGER :: ix,iy,iz
     ALLOCATE(ps1(nx,ny,nz,2))
     IF(weight<=0.D0) RETURN
