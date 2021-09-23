@@ -102,17 +102,9 @@ CONTAINS
     ecorrs=0.0d0
     ehfcor=0.0D0
     ehfscor=0.0D0
-    DO iz = 1,nz
-       DO iy = 1,ny
-          DO ix = 1,nx
-          rhot=rho(ix,iy,iz,1)+rho(ix,iy,iz,2)
-          rhon=rho(ix,iy,iz,1)
-          rhop=rho(ix,iy,iz,2)
-          ehfcor=ehfcor+wxyz*rhot**f%power*(b3*rhot**2 &
-               -b3p*(rhop**2+rhon**2))/3.D0
-          ENDDO
-       ENDDO
-     ENDDO
+    ehfcor=sum(ehfcor+wxyz*(rho(ix,iy,iz,1)+rho(ix,iy,iz,2))**f%power*&
+                          (b3*(rho(ix,iy,iz,1)+rho(ix,iy,iz,2))**2 &
+               -b3p*(rho(ix,iy,iz,2)**2+ rho(ix,iy,iz,1)**2))/3.D0)
 
    IF(s2on) THEN
     DO iz=1,nz
