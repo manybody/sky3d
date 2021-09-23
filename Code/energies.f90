@@ -71,7 +71,7 @@ CONTAINS
     !
     INTEGER :: ix,iy,iz,iq,icomp,p
     REAL(db) :: rhot,rhon,rhop,sdenst,sdensp,sdensn,d2rho,d2rhon,d2rhop, &
-         t0a,t0c,t3a,t3b,t1a,t1b,tj1,tj2,b4,turnx,slate, &
+         t0a,t0c,t3a,t3b,t1a,t1b,tj1,tj2,turnx, &
          scurrent2,scurrentp,scurrentn,j1t,j1n,j1p,t0ja, &
          t0jb,t0jaf,t0jbf,jot,jon,jop,t1ja,t1jb,j21t,j21n,j21p, &
          j122t,j122n,j122p,t0d,t0f,sdent,t1jaf,t1jbf,t2jaf,t2jbf, &
@@ -101,13 +101,17 @@ CONTAINS
     ecorrs=0.0d0
     ehfcor=0.0D0
     ehfscor=0.0D0
-    FORALL (iz = 1:nz,iy = 1:ny,ix = 1:nx )
+    DO iz = 1,nz
+       DO iy = 1,ny
+          DO ix = 1,nx
           rhot=rho(ix,iy,iz,1)+rho(ix,iy,iz,2)
           rhon=rho(ix,iy,iz,1)
           rhop=rho(ix,iy,iz,2)
           ehfcor=ehfcor+wxyz*rhot**f%power*(b3*rhot**2 &
                -b3p*(rhop**2+rhon**2))/3.D0
-    END FORALL
+          ENDDO
+       ENDDO
+     ENDDO
 
    IF(s2on) THEN
     DO iz=1,nz

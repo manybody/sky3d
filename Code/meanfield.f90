@@ -72,10 +72,9 @@ SUBROUTINE skyrme
   REAL(db),PARAMETER :: epsilon = 1.0d-25  
   LOGICAL,PARAMETER :: tspint = .TRUE.  
   REAL(db) :: spino(2,2),t0c,t0a,ttb,tta,tmb,tma,tdb,tda, &
-       t3aa,t3ba,t3a,t3b,t4h,b4,b4q,rotspp,rotspn,tsa,tsb, &
+       t3aa,t3ba,t3a,t3b,t4h,rotspp,rotspn,tsa,tsb, &
        t3sa,t3sb,t3saa,t3sbb,tlsaa,tlsbb,ttka,ttkb,tja,tjb, &
-       tjc,tjd,tj2a,tj2b,tlscc,tdivsa
-  REAL(db) :: slate
+       tjc,tjd,tj2a,tj2b,tlscc,tdivsa,b4q
   INTEGER :: ix,iy,iz,ic,iq,icomp,i
   slate=(3.0d0/pi)**(1.0d0/3.0d0)*e2   !
   wlspot = 0.0d0
