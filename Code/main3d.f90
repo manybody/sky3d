@@ -1,7 +1,7 @@
 PROGRAM tdhf3d  
   USE Params
   USE Fourier
-  USE Forces, ONLY: read_force
+  USE Forces, ONLY: read_force,s2on,ston,sfon,j2on,jfon,divson,lapson,te,toten
   USE Densities, ONLY: alloc_densities
   USE Meanfield, ONLY: alloc_fields
   USE Levels
@@ -29,7 +29,7 @@ PROGRAM tdhf3d
   !********************************************************************
   ! Step 2: read force definition and determine force
   !********************************************************************
-  CALL read_force
+  CALL read_force(s2on,sfon,ston,jfon,j2on,divson,lapson,te,toten)
   !********************************************************************
   ! Step 3: read principal parameters
   !********************************************************************

@@ -1,5 +1,5 @@
 MODULE Energies
-  USE Params, ONLY: db,tcoul,icoul,pi,e2
+  USE Params, ONLY: db,tcoul,pi,e2
   USE Forces
   USE Densities
   USE Levels

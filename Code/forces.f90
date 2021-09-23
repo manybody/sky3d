@@ -1,5 +1,5 @@
 MODULE Forces
-  USE Params, ONLY: db,scratch,wflag, hbc
+  USE Params, ONLY: db,scratch,wflag, hbc, e2,pi
   IMPLICIT NONE
   SAVE
   ! Record defining pairing

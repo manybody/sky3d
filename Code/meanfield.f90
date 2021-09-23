@@ -1,5 +1,5 @@
 Module Meanfield
-  USE Params, ONLY: db,tcoul,wflag,icoul,tdynamic,todd,toddls,e2,pi,icoul
+  USE Params, ONLY: db,tcoul,wflag,tcoul,tdynamic,todd,toddls,e2,pi
   USE Densities
   USE Forces 
   USE Grids, ONLY: nx,ny,nz,der1x,der2x,der1y,der2y,der1z,der2z,wxyz
