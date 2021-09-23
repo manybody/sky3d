@@ -340,8 +340,7 @@ scurrenty,scurrentz)
             tke,' MeV.'
        WRITE(*,'(/A)') ' Energies integrated from density functional:'
        WRITE(*,'(4(A,1PE14.6),A/26X,3(A,1PE14.6),A)') &
-            ' Total:',ehfint,' MeV. t0 part:',ehf0,' MeV. t1 part:', &
-            ehf1,' MeV. t2 part:',ehf2,' MeV',' t3 part:',ehf3, &
+            ' Total:',ehfint,' MeV. t0 part:',ehf0,' MeV t3 part:',ehf3, &
             ' MeV. t4 part:',ehfls,' MeV. Coulomb:',ehfc,' MeV.'
     ENDIF
     ! Step 6: density output

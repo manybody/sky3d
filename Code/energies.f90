@@ -60,6 +60,7 @@ MODULE Energies
   REAL(db) :: ehf       ! Hartree-Fock energy from s.p. levels
   REAL(db) :: ehfprev
   REAL(db) :: orbital(3),spin(3),total_angmom(3)
+  REAL(db) :: e_extern=0D0  ! energy from external field (accumulator)
 CONTAINS
 !***************************************************************************
   SUBROUTINE integ_energy

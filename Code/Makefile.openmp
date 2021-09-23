@@ -14,7 +14,7 @@ SHELL = /bin/sh
 #---------------------------------------------------------	
 all:$(EXEC) 
 $(EXEC):$(OBJS) 	
-	$(COMPILER) $(LINKERFLAGS) -o $@  $(OBJS) -lfftw3 -llapack
+	$(COMPILER) $(LINKERFLAGS) -o $@  $(OBJS) -lfftw3 -llapack -lblas
 #
 
 user.o : user.f90 params.o grids.o levels.o
