@@ -10,8 +10,6 @@ MODULE Energies
   REAL(db) :: ehfs0	! S^2 part of t0 contribution
   REAL(db) :: ehf12	! t1 & t2 contribution (Laplacian part)
   REAL(db) :: ehf22	! t1 & t2 contribution (current part)
-  REAL(db) :: ehfcor
-  REAL(db) :: ehfscor
   REAL(db) :: ehfcurr	! t1 & t2 j^2 contribution
   REAL(db) :: ehf32	! t1 & t2 contribution (invariant part - S.T-J^2)
   REAL(db) :: ehf52	! t1 & t2 contribution (invariant part - S.F-J^2)
@@ -89,7 +87,6 @@ CONTAINS
     REAL(db) :: worka(nx,ny,nz,2)
     REAL(db) :: workb(nx,ny,nz,3,2)
     REAL(db) :: workc(nx,ny,nz,3)
-    slate=(3.0D0/pi)**(1.0D0/3.0D0)*e2
     b3=f%t3*(1.D0+0.5D0*f%x3)/4.D0
     b3p=f%t3*(0.5D0+f%x3)/4.D0 
     b2=f%t3*f%x3/8.D0
@@ -100,30 +97,14 @@ CONTAINS
     !***********************************************************************
     ecorr=0.0d0
     ecorrs=0.0d0
-    ehfcor=0.0D0
-    ehfscor=0.0D0
-    ehfcor=sum(ehfcor+wxyz*(rho(ix,iy,iz,1)+rho(ix,iy,iz,2))**f%power*&
-                          (b3*(rho(ix,iy,iz,1)+rho(ix,iy,iz,2))**2 &
-               -b3p*(rho(ix,iy,iz,2)**2+ rho(ix,iy,iz,1)**2))/3.D0)
+    ecorr=-sum(f%power*wxyz*(rho(ix,iy,iz,1)+rho(ix,iy,iz,2))**f%power*&
+              (b3*(rho(ix,iy,iz,1)+rho(ix,iy,iz,2))**2 &
+               -b3p*(rho(ix,iy,iz,2)**2+ rho(ix,iy,iz,1)**2))/6.D0)
 
-   IF(s2on) THEN
-    DO iz=1,nz
-      DO iy=1,ny
-        DO ix=1,nx
-          DO p=1,3
-          rhot=rho(ix,iy,iz,1)+rho(ix,iy,iz,2)
-          sdenst=sdens(ix,iy,iz,p,1)+sdens(ix,iy,iz,p,2)
-          sdensn=sdens(ix,iy,iz,p,1)
-          sdensp=sdens(ix,iy,iz,p,2)
-          ehfscor=ehfscor+wxyz*rhot**f%power*(b2*sdenst**2 &
-               -b2p*(sdensp**2+sdensn**2))/3.D0
-          ENDDO
-        ENDDO
-      ENDDO
-    ENDDO
+    IF(s2on) THEN
+      ecorrs=-sum(f%power*wxyz*(rho(:,:,:,1)+rho(:,:,:,2))**f%power*(b2*(sdens(:,:,:,:,1)+sdens(:,:,:,:,2))**2 &
+              -b2p*(sdens(:,:,:,:,1)**2+sdens(:,:,:,:,2)**2))/6.D0)
     ENDIF
-    ecorr=-f%power*ehfcor/2.D0
-    ecorrs=-f%power*ehfscor/2.D0
     !***********************************************************************
     !        t0 and t3 terms                                               *
     !***********************************************************************
@@ -160,8 +141,6 @@ CONTAINS
          DO iy = 1,ny
             DO ix = 1,nx
                rhot = rho(ix,iy,iz,1)+rho(ix,iy,iz,2)
-               rhon = rho(ix,iy,iz,1)
-               rhop = rho(ix,iy,iz,2)
                sdent =  (sdens(ix,iy,iz,1,1) + sdens(ix,iy,iz,1,2))**2&
                       + (sdens(ix,iy,iz,2,1) + sdens(ix,iy,iz,2,2))**2&
                       + (sdens(ix,iy,iz,3,1) + sdens(ix,iy,iz,3,2))**2
@@ -496,4 +475,3 @@ CONTAINS
   END SUBROUTINE sum_energy
 !***************************************************************************
 END MODULE Energies
-
