@@ -321,23 +321,6 @@ SUBROUTINE skyrme
          ENDDO
       ENDIF
       !***********************************************************************
-      !        calculate the laplacian of sdens(store in laps)               *
-      !***********************************************************************
-      DO iq = 1,2
-         DO icomp = 1,3
-            CALL rmulx(der2x,sdens(:,:,:,icomp,iq),laps(:,:,:,icomp,iq),0)  
-            CALL rmuly(der2y,sdens(:,:,:,icomp,iq),laps(:,:,:,icomp,iq),1)  
-            CALL rmulz(der2z,sdens(:,:,:,icomp,iq),laps(:,:,:,icomp,iq),1)
-         ENDDO
-      ENDDO
-
-      IF (lapson) THEN
-         DO iq = 1,2
-            spot(:,:,:,:,iq) = spot(:,:,:,:,iq) + &
-                              (tlsaa -toten/4.0d0)*laps(:,:,:,:,iq)+(tlsbb+tlscc)*laps(:,:,:,:,3-iq)
-         ENDDO
-      ENDIF
-      !***********************************************************************
       !       time odd components T from S.T                                 *
       !***********************************************************************
       IF (ston) THEN
@@ -396,42 +379,6 @@ SUBROUTINE skyrme
             ENDDO
          ENDDO
       ENDIF
-      !***********************************************************************
-      !        nabla_i(nabla_i S_i) part of divS  (store in laps)            *
-      !***********************************************************************
-      DO iq = 1,2
-         CALL rmulx(der2x,sdens(:,:,:,1,iq),laps(:,:,:,1,iq),0)  
-         CALL rmuly(der2y,sdens(:,:,:,2,iq),laps(:,:,:,2,iq),0)  
-         CALL rmulz(der2z,sdens(:,:,:,3,iq),laps(:,:,:,3,iq),0)  
-      ENDDO
-      !
-      IF (divson) THEN
-         DO iq = 1,2
-            spot(:,:,:,:,iq) = spot(:,:,:,:,iq) + &
-                             3.0d0*toten/4.0d0*laps(:,:,:,:,iq) + tdivsa*laps(:,:,:,:,3-iq)
-         ENDDO
-      ENDIF
-      !***********************************************************************
-      !        nabla_j(nabla_i S_j) part of divS  (store in laps)            *
-      !***********************************************************************
-      DO iq = 1,2
-         CALL rmulx(der1x,sdens(:,:,:,1,iq)+sdens(:,:,:,3,iq),laps(:,:,:,3,iq),0) 
-         CALL rmulz(der1z,laps(:,:,:,3,iq),divs(:,:,:,3,iq),0)  
-         CALL rmuly(der1y,sdens(:,:,:,2,iq)+sdens(:,:,:,1,iq),laps(:,:,:,1,iq),0)  
-         CALL rmulx(der1x,laps(:,:,:,1,iq),divs(:,:,:,1,iq),0)  
-         CALL rmulz(der1z,sdens(:,:,:,3,iq)+sdens(:,:,:,2,iq),laps(:,:,:,2,iq),0)   
-         CALL rmuly(der1y,laps(:,:,:,2,iq),divs(:,:,:,2,iq),0)  
-      ENDDO
-      !
-      IF (divson) THEN
-         DO iq = 1,2
-            spot(:,:,:,:,iq) = spot(:,:,:,:,iq) + &
-                           3.0d0*toten/4.0d0*divs(:,:,:,:,iq) +tdivsa*divs(:,:,:,:,3-iq)
-         ENDDO
-      ENDIF
-      !
-   ENDIF
-   
    !***********************************************************************
    !       Weights for J_ij components including tensor                   *
    !***********************************************************************
