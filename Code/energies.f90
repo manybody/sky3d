@@ -114,11 +114,10 @@ CONTAINS
     DO iz = 1,nz
        DO iy = 1,ny
           DO ix = 1,nx
-             rhot = rho(ix,iy,iz,1)+rho(ix,iy,iz,2)
              rhon = rho(ix,iy,iz,1)
              rhop = rho(ix,iy,iz,2)
-             ehf0 = ehf0+wxyz *(t0a*rhot**2-t0c *(rhop**2+rhon**2))
-             ehf3 = ehf3+wxyz*rhot**f%power *(t3a*rhot**2-t3b* &
+             ehf0 = ehf0+wxyz *(t0a*(rhon+rhop)**2 -t0c*(rhop**2+rhon**2))
+             ehf3 = ehf3+wxyz*(rhon+rhop)**f%power *(t3a*(rhon+rhop)**2-t3b* &
                   (rhop**2+rhon**2))
           ENDDO
        ENDDO
