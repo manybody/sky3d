@@ -73,16 +73,14 @@ CONTAINS
          t0a,t0c,t3a,t3b,t1a,t1b,tj1,tj2,turnx, &
          scurrent2,scurrentp,scurrentn,j1t,j1n,j1p,t0ja, &
          t0jb,t0jaf,t0jbf,jot,jon,jop,t1ja,t1jb,j21t,j21n,j21p, &
-         j122t,j122n,j122p,t0d,t0f,sdent,t1jaf,t1jbf,t2jaf,t2jbf, &
+         j122n,j122p,t0d,t0f,sdent,t1jaf,t1jbf,t2jaf,t2jbf, &
          sdenn,sdenp,t3d,t3f,tsta,tstb,tlsa,tlsb,stden,stdenn, &
          stdenp,t2ja,t2jb,tjuua,tjuub,tlsc,tlsd,t20jaf,t20jbf, &
          t20ja,t20jb,tstat,tstbt,sc,b3,b3p,b2,b2p
     INTEGER :: il
     REAL(db) :: weight
     !***********************************************************************
-    !        calculates the hf energy by integrating the energy functional *
-    !        parameters t0...x3+coulomb+spin-orbit                         *
-    !        ayuk=0.0 uses the zero-range form of the skyrme force         *
+    !calculates the hf energy by integrating the energy functional         *
     !***********************************************************************
     REAL(db) :: worka(nx,ny,nz,2)
     REAL(db) :: workb(nx,ny,nz,3,2)
@@ -92,8 +90,7 @@ CONTAINS
     b2=f%t3*f%x3/8.D0
     b2p=f%t3/8.D0
     !***********************************************************************
-    !     calculate the correction term to the hf energy due to the 3-body *
-    !     force. this could be replaced but the answer is general for the  *
+    !calculate the correction term to the hf energy due to the 3-body force*
     !***********************************************************************
     ecorr=0.0d0
     ecorrs=0.0d0
@@ -171,13 +168,11 @@ CONTAINS
     DO iz = 1,nz
        DO iy = 1,ny
           DO ix = 1,nx
-             rhot = rho(ix,iy,iz,1)+rho(ix,iy,iz,2)
              rhon = rho(ix,iy,iz,1)
              rhop = rho(ix,iy,iz,2)
-             d2rho = worka(ix,iy,iz,1)+worka(ix,iy,iz,2)
              d2rhon = worka(ix,iy,iz,1)
              d2rhop = worka(ix,iy,iz,2)
-             ehf12 = ehf12+wxyz *(t1a*rhot*d2rho+t1b *(rhop* &
+             ehf12 = ehf12+wxyz *(t1a*(rhon+rhop)*(d2rhon+d2rhop)+t1b *(rhop* &
                   d2rhop+rhon*d2rhon))
           ENDDO
        ENDDO
@@ -197,29 +192,6 @@ CONTAINS
     ! Work out j^2 component separately
     ehfcurr=wxyz*SUM(-t1a*(workc(:,:,:,1)+workc(:,:,:,2)+workc(:,:,:,3)) &
                 -t1b*(worka(:,:,:,1)+worka(:,:,:,2)))
-    !***********************************************************************
-    !        laplace S term                                                *
-    !        Added by EMMA SUCKLING: 26.08.09                              *
-    !***********************************************************************
-    ehf42=0.0d0
-    tlsa = (f%t2*f%x2-3.0d0*f%t1*f%x1)/32.0d0
-    tlsb =(3.0d0*f%t1+f%t2)/32.0d0
-    tlsc = (3.0d0*te-toten)/16.0d0
-    tlsd = -(3.0d0*te+toten)/16.0d0
-    DO iq = 1,2
-      DO icomp = 1,3
-         CALL rmulx(der2x,sdens(:,:,:,icomp,iq),workb(:,:,:,icomp,iq),0)
-         CALL rmuly(der2y,sdens(:,:,:,icomp,iq),workb(:,:,:,icomp,iq),1)
-         CALL rmulz(der2z,sdens(:,:,:,icomp,iq),workb(:,:,:,icomp,iq),1)
-      ENDDO
-    ENDDO
-    !
-    IF (lapson) THEN
-      ehf42=wxyz*SUM((tlsa+tlsc)*(sdens(:,:,:,:,1)+sdens(:,:,:,:,2))* &
-                  (workb(:,:,:,:,1)+workb(:,:,:,:,2)) &
-                  +(tlsb+tlsd)*(sdens(:,:,:,:,1)*workb(:,:,:,:,1)+ &
-                  sdens(:,:,:,:,2)*workb(:,:,:,:,2)))
-    ENDIF
     !***********************************************************************
     !        S.T  term                                                     *
     !***********************************************************************
@@ -342,12 +314,6 @@ CONTAINS
       ehfjvu1 = wxyz*(tjuua*j21t + tjuub*(j21n+j21p))
       ehfj22af = wxyz*(0.5d0*t2jaf*j21t + 0.5d0*t2jbf*(j21n+j21p))
     ENDIF
-    j122t=SUM((scurrentx(:,:,:,2,1)+scurrentx(:,:,:,2,2))* &
-          (scurrenty(:,:,:,1,1)+scurrenty(:,:,:,1,2)) &
-          +(scurrentx(:,:,:,3,1)+scurrentx(:,:,:,3,2))* &
-          (scurrentz(:,:,:,1,1)+scurrentz(:,:,:,1,2)) &
-          +(scurrenty(:,:,:,3,1)+scurrenty(:,:,:,3,2))* &
-          (scurrentz(:,:,:,2,1)+scurrentz(:,:,:,2,2)))
     j122n=SUM(scurrentx(:,:,:,2,1)*scurrenty(:,:,:,1,1)+ &
           scurrentx(:,:,:,3,1)*scurrentz(:,:,:,1,1)+ &
           scurrenty(:,:,:,3,1)*scurrentz(:,:,:,2,1))
@@ -355,11 +321,11 @@ CONTAINS
           scurrentx(:,:,:,3,2)*scurrentz(:,:,:,1,2)+ &
           scurrenty(:,:,:,3,2)*scurrentz(:,:,:,2,2))
     IF(j2on) THEN
-      ehfj22b = wxyz*(t2ja*j122t + t2jb*(j122n+j122p))
+      ehfj22b = wxyz*(t2ja*(j122n+j122p) + t2jb*(j122n+j122p))
     ENDIF
     IF(jfon) THEN
-      ehfjvu2 = wxyz*(2.0d0*tjuua*j122t + 2.0d0*tjuub*(j122n+j122p))
-      ehfj22bf = wxyz*(t2jaf*j122t + t2jbf*(j122n+j122p))
+      ehfjvu2 = wxyz*(2.0d0*tjuua*(j122n+j122p) + 2.0d0*tjuub*(j122n+j122p))
+      ehfj22bf = wxyz*(t2jaf*(j122n+j122p) + t2jbf*(j122n+j122p))
     ENDIF
     ehfjvu=ehfjvu1+ehfjvu2
     ehfj2=ehfj21+ehfj22a+ehfj22b+ehfj20
@@ -380,21 +346,6 @@ CONTAINS
     ENDIF
     ehf52=ehfsf+ehfjuu+ehfjvu
     !***********************************************************************
-    !        divS  term                                                    *
-    !***********************************************************************
-    ehfds=0.0d0
-    DO iq = 1,2
-      CALL rmulx(der1x,sdens(:,:,:,1,iq),worka(:,:,:,iq),0)
-      CALL rmuly(der1y,sdens(:,:,:,2,iq),worka(:,:,:,iq),1)
-      CALL rmulz(der1z,sdens(:,:,:,3,iq),worka(:,:,:,iq),1)
-    ENDDO
-    IF(divson) THEN
-      ehfds=wxyz*SUM(3.0d0*(3.0d0*te-toten)/16.0d0* &
-                (worka(:,:,:,1)+worka(:,:,:,2))**2 &
-                -3.0d0*(3.0d0*te+toten)/16.0d0* &
-                (worka(:,:,:,1)**2+worka(:,:,:,2)**2))
-    ENDIF
-    !***********************************************************************
     !        spin-orbit contribution to hf energy                          *
     !***********************************************************************
     DO iq = 1,2
@@ -409,7 +360,7 @@ CONTAINS
          f%b4p *(rho(:,:,:,2)*worka(:,:,:,2)+rho(:,:,:,1)*worka(:,:,:,1)))
 
     !***********************************************************************
-    !        s.(nabla x j) added by EMMA SUCKLING: 22.07.09                *
+    !        s.(nabla x j)                                                 *
     !***********************************************************************
     DO iq = 1,2
         CALL rmuly(der1y,current(:,:,:,3,iq),workb(:,:,:,1,iq),0)
@@ -435,16 +386,9 @@ CONTAINS
       ELSE
         sc=0.D0
       END IF
-      DO iz=1,nz
-        DO iy=1,ny
-          DO ix=1,nx
-            rhop=rho(ix,iy,iz,2)
-            ehfc=ehfc+wxyz *(0.5D0*rhop*wcoul(ix,iy,iz) &
-                 +sc*rhop**(4.0D0/3.0D0))
-            ecorc=ecorc+wxyz*sc/3.0D0*rhop**(4.0D0/3.0D0)
-          ENDDO
-        ENDDO
-      ENDDO
+            ehfc= wyxz*sum((0.5D0*rho(:,:,:,2)*wcoul(:,:,:) &
+                 +sc*rho(:,:,:,2)**(4.0D0/3.0D0)))
+            ecorc= wxyz*sum(sc/3.0D0*(rho(:,:,:,2)**(4.0D0/3.0D0)))
     ENDIF
     !***********************************************************************
     !        kinetic energy contribution                                   *
