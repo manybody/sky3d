@@ -94,9 +94,9 @@ CONTAINS
     !***********************************************************************
     ecorr=0.0d0
     ecorrs=0.0d0
-    ecorr=-sum(f%power*wxyz*(rho(ix,iy,iz,1)+rho(ix,iy,iz,2))**f%power*&
-              (b3*(rho(ix,iy,iz,1)+rho(ix,iy,iz,2))**2 &
-               -b3p*(rho(ix,iy,iz,2)**2+ rho(ix,iy,iz,1)**2))/6.D0)
+    ecorr=-sum(f%power*wxyz*(rho(:,:,:,1)+rho(:,:,:,2))**f%power*&
+              (b3*(rho(:,:,:,1)+rho(:,:,:,2))**2 &
+               -b3p*(rho(:,:,:,2)**2+ rho(:,:,:,1)**2))/6.D0)
 
     IF(s2on) THEN
       ecorrs=-sum(f%power*wxyz*(rho(:,:,:,1)+rho(:,:,:,2))**f%power*(b2*(sdens(:,:,:,:,1)+sdens(:,:,:,:,2))**2 &
