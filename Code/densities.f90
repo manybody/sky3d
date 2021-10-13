@@ -117,7 +117,7 @@ CONTAINS
          ps1(:,:,:,2)*CONJG(psin(:,:,:,2)))
      IF(tlocalize) lnablarho(:,:,:,2,iq)=lnablarho(:,:,:,2,iq)+weight* &
          REAL(ps1(:,:,:,1)*CONJG(psin(:,:,:,1))+ps1(:,:,:,2)*CONJG(psin(:,:,:,2)))
-     FORALL(ix=1:Nx,iy=1:ny,iz=1:nz)
+     FORALL(ix=1:nx,iy=1:ny,iz=1:nz)
      lsodens(ix,iy,iz,1,iq)=lsodens(ix,iy,iz,1,iq)+weight &
           *AIMAG( ps1(ix,iy,iz,1)*CONJG(psin(ix,iy,iz,1)) &
           -ps1(ix,iy,iz,2)*CONJG(psin(ix,iy,iz,2)) )
@@ -128,7 +128,7 @@ CONTAINS
 
      ! T_y components
      IF(ston) THEN
-     FORALL(ix=1:Nx,iy=1:ny,iz=1:nz)
+     FORALL(ix=1:nx,iy=1:ny,iz=1:nz)
      ltdens(ix,iy,iz,1,iq) = ltdens(ix,iy,iz,1,iq)+2.d0*weight &
           *(  REAL(ps1(ix,iy,iz,2)*CONJG(ps1(ix,iy,iz,1)))  )
      ltdens(ix,iy,iz,2,iq) = ltdens(ix,iy,iz,2,iq)+2.d0*weight &
@@ -141,7 +141,7 @@ CONTAINS
 
      ! y components J_yj
      IF(jfon .OR. j2on) THEN
-     FORALL(ix=1:Nx,iy=1:ny,iz=1:nz)
+     FORALL(ix=1:nx,iy=1:ny,iz=1:nz)
      lscurrenty(ix,iy,iz,1,iq) = lscurrenty(ix,iy,iz,1,iq)+weight* &
           (  AIMAG(ps1(ix,iy,iz,2)*CONJG(psin(ix,iy,iz,1))) &
           +  AIMAG(ps1(ix,iy,iz,1)*CONJG(psin(ix,iy,iz,2)))  )
@@ -168,7 +168,7 @@ CONTAINS
          ps1(:,:,:,2)*CONJG(psin(:,:,:,2)))
      IF(tlocalize) lnablarho(:,:,:,3,iq)=lnablarho(:,:,:,3,iq)+weight* &
          REAL(ps1(:,:,:,1)*CONJG(psin(:,:,:,1))+ps1(:,:,:,2)*CONJG(psin(:,:,:,2)))
-     FORALL(ix=1:Nx,iy=1:ny,iz=1:nz)
+     FORALL(ix=1:nx,iy=1:ny,iz=1:nz)
      lsodens(ix,iy,iz,1,iq)=lsodens(ix,iy,iz,1,iq)+weight &
           *REAL( ps1(ix,iy,iz,2)*CONJG(psin(ix,iy,iz,1)) &
           -ps1(ix,iy,iz,1)*CONJG(psin(ix,iy,iz,2)) )
@@ -179,7 +179,7 @@ CONTAINS
 
      ! T_z components
      IF(ston) THEN
-     FORALL(ix=1:Nx,iy=1:ny,iz=1:nz)
+     FORALL(ix=1:nx,iy=1:ny,iz=1:nz)
      ltdens(ix,iy,iz,1,iq) = ltdens(ix,iy,iz,1,iq)+2.d0*weight &
           *(  REAL(ps1(ix,iy,iz,2)*CONJG(ps1(ix,iy,iz,1)))  )
      ltdens(ix,iy,iz,2,iq) = ltdens(ix,iy,iz,2,iq)+2.d0*weight &
@@ -192,7 +192,7 @@ CONTAINS
 
      ! z components J_zj
      IF(jfon .OR. j2on) THEN
-     FORALL(ix=1:Nx,iy=1:ny,iz=1:nz)
+     FORALL(ix=1:nx,iy=1:ny,iz=1:nz)
      lscurrentz(ix,iy,iz,1,iq) = lscurrentz(ix,iy,iz,1,iq)+weight* &
           (  AIMAG(ps1(ix,iy,iz,2)*CONJG(psin(ix,iy,iz,1))) &
           +  AIMAG(ps1(ix,iy,iz,1)*CONJG(psin(ix,iy,iz,2)))  )
@@ -217,7 +217,7 @@ CONTAINS
        CALL cmuly(der1y,psin,psy,0)  
        CALL cmulz(der1z,psin,psz,0)  
      ENDIF
-     FORALL(ix=1:Nx,iy=1:ny,iz=1:nz)
+     FORALL(ix=1:nx,iy=1:ny,iz=1:nz)
      ! F_x components
      lfdens(ix,iy,iz,1,iq) = lfdens(ix,iy,iz,1,iq)+2.0d0*weight &
           *(  REAL(psx(ix,iy,iz,2)*CONJG(psx(ix,iy,iz,1)))  )

@@ -1,0 +1,81 @@
+COMPILER = gfortran
+COMPILERFLAGS  =  -O3 -msse4.2 -mfpmath=sse -ffast-math -finline-functions -funroll-loops
+#COMPILERFLAGS  = -g -fbacktrace
+LINKERFLAGS    =  $(COMPILERFLAGS)
+
+SOURCE_TRAILER = .f90
+EXEC           = sky3d.seq
+OBJS           = params.o grids.o levels.o fourier.o forces.o sequential.o \
+	inout.o coulomb.o trivial.o densities.o fragments.o twobody.o \
+	energies.o static.o meanfield.o dynamic.o pairs.o moment.o \
+	main3d.o user.o external.o abso_bc.o
+
+SHELL = /bin/sh
+
+#---------------------------------------------------------	
+all:$(EXEC) 
+$(EXEC):$(OBJS) 	
+	$(COMPILER) $(LINKERFLAGS) -o $@  $(OBJS) -lfftw3 -llapack -lblas 
+#
+
+user.o : user.f90 params.o grids.o levels.o
+
+external.o : external.f90 params.o sequential.o grids.o levels.o meanfield.o
+
+coulomb.o : coulomb.f90 params.o grids.o densities.o
+
+inout.o : inout.f90 params.o sequential.o grids.o moment.o densities.o \
+	levels.o  coulomb.o forces.o meanfield.o forces.o
+
+trivial.o : trivial.f90 params.o grids.o
+
+forces.o : forces.f90 forces.data params.o 
+
+fourier.o : fourier.f90 params.o grids.o
+
+params.o : params.f90
+
+moment.o : moment.f90 params.o grids.o densities.o
+
+sequential.o: sequential.f90 levels.o params.o grids.o densities.o
+
+levels.o : levels.f90 params.o grids.o forces.o fourier.o trivial.o
+
+grids.o : grids.f90 params.o forces.o
+
+densities.o : densities.f90 params.o grids.o levels.o trivial.o forces.o
+
+fragments.o : fragments.f90 params.o grids.o forces.o levels.o twobody.o \
+	sequential.o 
+
+abso_bc.o : abso_bc.f90 params.o grids.o forces.o levels.o meanfield.o \
+	fragments.o sequential.o  Makefile
+
+twobody.o : twobody.f90 params.o grids.o densities.o moment.o forces.o
+
+energies.o :   energies.f90 params.o forces.o densities.o levels.o grids.o \
+	trivial.o pairs.o
+
+meanfield.o : meanfield.f90 params.o densities.o forces.o grids.o coulomb.o \
+	trivial.o levels.o
+
+pairs.o : pairs.f90 forces.o grids.o levels.o densities.o
+
+static.o : static.f90 params.o densities.o grids.o \
+	levels.o moment.o energies.o inout.o pairs.o meanfield.o
+
+dynamic.o : dynamic.f90 params.o densities.o grids.o trivial.o \
+	levels.o moment.o energies.o inout.o meanfield.o sequential.o \
+	twobody.o external.o abso_bc.o
+
+main3d.o : main3d.f90 params.o fourier.o forces.o densities.o meanfield.o levels.o grids.o fragments.o sequential.o dynamic.o static.o coulomb.o user.o
+
+.SUFFIXES:  .f90 .f .o 
+
+%.o : %.mod
+
+.f90.o:	
+	$(COMPILER) $(COMPILERFLAGS)  -c $<
+
+.f.o:
+	$(COMPILER) $(COMPILERFLAGS)  -c $<

@@ -388,9 +388,12 @@ CONTAINS
          ecorc,' MeV x0dmp: ',x0dmp
     ! detail printout
     WRITE(*,'(/A)') ' Energies integrated from density functional:'
-    WRITE(*,'(4(A,1PE14.6),A/26X,3(A,1PE14.6),A)') &
-         ' Total:',ehfint,' MeV. t0 part:',ehf0,' MeV',' t3 part:',ehf3,' MeV. t4 part:',ehfls, &
-         ' MeV. Coulomb:',ehfc,' MeV.'
+    WRITE(*,'(/,A,I7,A/2(A,F12.4),A/(3(A,E12.5),A))') &
+         ' ***** Iteration ',iter,' *****',' Total energy: ',ehf,' MeV  Total kinetic energy: ', &
+         tke,' MeV',' de/e:      ',delesum,'      h**2  fluct.:    ',efluct1, &
+         ' MeV, h*hfluc.:    ',efluct2,' MeV', &
+         ' MeV. Rearrangement E: ',ecorr+ecorrs,' MeV. Coul.Rearr.: ', &
+         ecorc,' MeV'
     IF(ipair/=0) WRITE(*,'(2(A,1PE14.6))') ' Pairing energy neutrons: ', &
          epair(1),' protons: ',epair(2)
     ! output densities
