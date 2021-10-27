@@ -73,7 +73,7 @@ CONTAINS
          t0a,t0c,t3a,t3b,t1a,t1b,tj1,tj2,turnx, &
          scurrent2,scurrentp,scurrentn,j1t,j1n,j1p,t0ja, &
          t0jb,t0jaf,t0jbf,jot,jon,jop,t1ja,t1jb,j21t,j21n,j21p, &
-         j122n,j122p,t0d,t0f,sdent,t1jaf,t1jbf,t2jaf,t2jbf, &
+         j122t,j122n,j122p,t0d,t0f,sdent,t1jaf,t1jbf,t2jaf,t2jbf, &
          sdenn,sdenp,t3d,t3f,tsta,tstb,tlsa,tlsb,stden,stdenn, &
          stdenp,t2ja,t2jb,tjuua,tjuub,tlsc,tlsd,t20jaf,t20jbf, &
          t20ja,t20jb,tstat,tstbt,sc,b3,b3p,b2,b2p
@@ -277,13 +277,13 @@ CONTAINS
     t20jb = -(f%t1-f%t2-2.0d0*(te-toten))/24.0d0
     t20jaf = 3.0d0*(te+toten)/24.0d0
     t20jbf = -3.0d0*(te-toten)/24.0d0
-    jot=SUM(((scurrentx(:,:,:,1,1)+scurrentx(:,:,:,1,2)) &
-         +(scurrenty(:,:,:,2,1)+scurrenty(:,:,:,2,2)) &
-         +(scurrentz(:,:,:,3,1)+scurrentz(:,:,:,3,2)))**2)
-    jon=SUM((scurrentx(:,:,:,1,1)+scurrenty(:,:,:,2,1) &
-         +scurrentz(:,:,:,3,1))**2)
-    jop=SUM((scurrentx(:,:,:,1,2)+scurrenty(:,:,:,2,2) &
-         +scurrentz(:,:,:,3,2))**2)
+    jot=SUM( (scurrentx(:,:,:,1,1)+scurrentx(:,:,:,1,2))**2 &
+         +(scurrenty(:,:,:,2,1)+scurrenty(:,:,:,2,2))**2 &
+         +(scurrentz(:,:,:,3,1)+scurrentz(:,:,:,3,2))**2)
+    jon=SUM(scurrentx(:,:,:,1,1)**2+scurrenty(:,:,:,2,1)**2 &
+         +scurrentz(:,:,:,3,1)**2)
+    jop=SUM( scurrentx(:,:,:,1,2)**2 +scurrenty(:,:,:,2,2)**2 &
+         +scurrentz(:,:,:,3,2)**2)
     IF(j2on) THEN
       ehfj0 = wxyz*(t0ja*jot + t0jb*(jon+jop))
       ehfj20 = wxyz*(t20ja*jot + t20jb*(jon+jop))
@@ -336,6 +336,12 @@ CONTAINS
       ehfjvu1 = wxyz*(tjuua*j21t + tjuub*(j21n+j21p))
       ehfj22af = wxyz*(0.5d0*t2jaf*j21t + 0.5d0*t2jbf*(j21n+j21p))
     ENDIF
+    j122t=SUM((scurrentx(:,:,:,2,1)+scurrentx(:,:,:,2,2))* &
+          (scurrenty(:,:,:,1,1)+scurrenty(:,:,:,1,2)) &
+          +(scurrentx(:,:,:,3,1)+scurrentx(:,:,:,3,2))* &
+          (scurrentz(:,:,:,1,1)+scurrentz(:,:,:,1,2)) &
+          +(scurrenty(:,:,:,3,1)+scurrenty(:,:,:,3,2))* &
+          (scurrentz(:,:,:,2,1)+scurrentz(:,:,:,2,2)))       
     j122n=SUM(scurrentx(:,:,:,2,1)*scurrenty(:,:,:,1,1)+ &
           scurrentx(:,:,:,3,1)*scurrentz(:,:,:,1,1)+ &
           scurrenty(:,:,:,3,1)*scurrentz(:,:,:,2,1))
@@ -343,11 +349,11 @@ CONTAINS
           scurrentx(:,:,:,3,2)*scurrentz(:,:,:,1,2)+ &
           scurrenty(:,:,:,3,2)*scurrentz(:,:,:,2,2))
     IF(j2on) THEN
-      ehfj22b = wxyz*(t2ja*(j122n+j122p) + t2jb*(j122n+j122p))
+      ehfj22b = wxyz*(t2ja*j122t + t2jb*(j122n+j122p))
     ENDIF
     IF(jfon) THEN
-      ehfjvu2 = wxyz*(2.0d0*tjuua*(j122n+j122p) + 2.0d0*tjuub*(j122n+j122p))
-      ehfj22bf = wxyz*(t2jaf*(j122n+j122p) + t2jbf*(j122n+j122p))
+      ehfjvu2 = wxyz*(2.0d0*tjuua*j122t + 2.0d0*tjuub*(j122n+j122p))
+      ehfj22bf = wxyz*(t2jaf*j122t + t2jbf*(j122n+j122p))
     ENDIF
     ehfjvu=ehfjvu1+ehfjvu2
     ehfj2=ehfj21+ehfj22a+ehfj22b+ehfj20

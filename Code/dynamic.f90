@@ -298,7 +298,7 @@ scurrenty,scurrentz)
        DO iq=1,2
           ecoll(iq)=f%h2m(iq)*SUM( &
                (current(:,:,:,1,iq)**2+current(:,:,:,2,iq)**2&
-               +current(:,:,:,3,iq)**2)/rho(:,:,:,iq) )
+               +current(:,:,:,3,iq)**2)/rho(:,:,:,iq) )*wxyz
        ENDDO
        IF(time==0D0) THEN
           pnrold=pnr
@@ -323,6 +323,18 @@ scurrenty,scurrentz)
        WRITE(scratch,'(F10.2,9(1pg13.5))') &
             time,pnr-pnrold,ehf-ehfold,ehfint-eintold,&
             tke-ekinold,ecoll-ecollold
+       CLOSE(unit=scratch)
+       OPEN(unit=scratch,file ='enden.res',POSITION='APPEND')
+       WRITE(scratch,'(1x,f10.4,9(1pg13.5))') time,ehf0,ehfs0,ehf3, &
+                        ehfs3,ehf12,ehf22,ehfls,ehf42
+       CLOSE(unit=scratch)
+       OPEN(unit=scratch,file ='enden2.res',POSITION='APPEND')
+       WRITE(scratch,'(1x,f10.4,8(1pg13.5))') time,ehfjl,ehfjp,ehfst, &
+                        ehf32,ehfsf,ehf52,ehfds
+       CLOSE(unit=scratch)
+       OPEN(unit=scratch,file ='enden3.res',POSITION='APPEND')
+       WRITE(scratch,'(1x,f10.4,9(1pg13.5))') time,ehfjl,ehfjp,ehfj0+ehfj0f, &
+                        ehfj1+ehfj1f,ehfj2+ehfj2f,ehfjuu,ehfj,ehfjvu
        CLOSE(unit=scratch)
        WRITE(*,'(/A,I7,A,F12.4,A/2(A,F12.4),A)') &
             ' ***** Time step #',iter,' at time ',time,' fm/c *****', &
