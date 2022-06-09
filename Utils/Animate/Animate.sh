@@ -82,3 +82,6 @@ ffmpeg -i $oname.avi $oname.mp4 >/dev/null 2>&1
 
 if [ -f $oname.mp4 ] 
 then
+    echo ""
+    echo "$oname.mp4 successfully written in directory $1"
+fi
