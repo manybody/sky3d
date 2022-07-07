@@ -1,0 +1,7 @@
+# output density files
+.tdd
+
+# compilation intermediaries
+.mod
+.o
+
