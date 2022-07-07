@@ -1,4 +1,5 @@
-# output density files
+# output files from sample runs
+.res
 .tdd
 
 # compilation intermediaries
