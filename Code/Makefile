@@ -11,8 +11,8 @@ ifort ifort_seq ifort_omp          : export COMPILER_SKY = ifort
 #
 # ----- define libraries-----------------------------------------------------
 #
-seq omp debug seq_debug omp_debug ifort ifort_seq ifort_omp : export LIBS_SKY = -lfftw3 -llapack -lblas
-mpi mpi_debug mpi-omp                                       : export LIBS_SKY = -lfftw3 -lscalapack -llapack -lblas
+seq omp debug seq_debug omp_debug ifort ifort_seq ifort_omp : export LIBS_SKY = -lfftw3 -llapack -lopenblas
+mpi mpi_debug mpi-omp                                       : export LIBS_SKY = -lfftw3 -lscalapack -llapack -lopenblas
 #
 # ----- define compiler flags and linker flags-------------------------------
 #
