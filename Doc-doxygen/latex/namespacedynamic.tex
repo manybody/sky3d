@@ -1,0 +1,240 @@
+\hypertarget{namespacedynamic}{}\doxysubsection{dynamic Module Reference}
+\label{namespacedynamic}\index{dynamic@{dynamic}}
+
+
+This module contains the routines needed for time propagation of the system. All the logic needed for this case is concentrated here; all other modules except for {\ttfamily External} are equally used in the static calculation.  
+
+
+\doxysubsubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespacedynamic_a25a35b2c3f00abafa02b49fae36b450c}{getin\+\_\+dynamic}}
+\begin{DoxyCompactList}\small\item\em This is a relatively simple routine that reads the input for namelist {\ttfamily dynamic} and prints it on standard output. If {\ttfamily texternal} is true, it also calls {\ttfamily getin\+\_\+external} to read the external field parameters. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacedynamic_a05d4cb5b6f8395bbda511e5a937b317a}{dynamichf}}
+\begin{DoxyCompactList}\small\item\em This subroutine performs the main time-\/integration algorithm starting at time step 0 and then iterating the desired number of steps. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacedynamic_a67d48d0e156e217e9e42654cb7189912}{tstep}} (iq, mxp, psout)
+\begin{DoxyCompactList}\small\item\em In this subroutine one wave function given as the argument {\ttfamily psout} is stepped forward in time by the interval {\ttfamily dt}. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacedynamic_acc79414314504771509e8982faefe77b}{tinfo}}
+\begin{DoxyCompactList}\small\item\em This subroutine is used to output various pieces of information relevant especially to the dynamic mode of the code. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacedynamic_aad225fa83cc6ff167d9a63f234e32ae1}{resetcm}}
+\begin{DoxyCompactList}\small\item\em This subroutine resets the center-\/of-\/mass velocity to zero. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+integer \mbox{\hyperlink{namespacedynamic_a082deb2f0c47a60e4e2ef2dc1ce395e6}{nt}}
+\begin{DoxyCompactList}\small\item\em the number of the final time step to be calculated. In case of a restart this is smaller than the total number of time steps. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacedynamic_a2f8a4fbc7fad45d168c880b0f7fbebf9}{dt}}
+\begin{DoxyCompactList}\small\item\em the physical time increment in units of fm/c. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacedynamic_ab28058983e8491350fbbeaa9cd1c03a1}{mxpact}} =6
+\begin{DoxyCompactList}\small\item\em the number of terms to be taken in the expansion of the potential \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacedynamic_a22bc0055a5dfc3e92580a8697a8ab1ef}{mrescm}} =0
+\begin{DoxyCompactList}\small\item\em frequency of c.\+m. motion correction \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacedynamic_a8f66cf733898b4e6596541c4665bb503}{rsep}}
+\begin{DoxyCompactList}\small\item\em the final separation distance. The calculation is stopped if there has been a reseparation into two fragments and their distance exceeds {\ttfamily rsep}. \end{DoxyCompactList}\item 
+logical \mbox{\hyperlink{namespacedynamic_a9c78ad5d4b68b5815c853cf157e875a8}{texternal}} =.F\+A\+L\+S\+E.
+\begin{DoxyCompactList}\small\item\em this logical variable indicates that an external field is present. See module {\ttfamily External}. \end{DoxyCompactList}\item 
+logical \mbox{\hyperlink{namespacedynamic_a1b0110fc909c9bf8bc9878b8a0afe0cf}{text\+\_\+timedep}}
+\begin{DoxyCompactList}\small\item\em this logical variable indicates that the external field is time-\/dependent and does not describe an instantaneous boost. \end{DoxyCompactList}\item 
+real(db), parameter \mbox{\hyperlink{namespacedynamic_ab70ac1e2a79efd1c86cfefc148f67593}{esf}} =0.\+0\+D0
+\begin{DoxyCompactList}\small\item\em this is the energy shift for the call to {\ttfamily hpsi}. Since it is not used in the dynamics part of the code, it is here set to the constant value of zero. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+This module contains the routines needed for time propagation of the system. All the logic needed for this case is concentrated here; all other modules except for {\ttfamily External} are equally used in the static calculation. 
+
+\doxysubsubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespacedynamic_a05d4cb5b6f8395bbda511e5a937b317a}\label{namespacedynamic_a05d4cb5b6f8395bbda511e5a937b317a}} 
+\index{dynamic@{dynamic}!dynamichf@{dynamichf}}
+\index{dynamichf@{dynamichf}!dynamic@{dynamic}}
+\doxyparagraph{\texorpdfstring{dynamichf()}{dynamichf()}}
+{\footnotesize\ttfamily subroutine dynamic\+::dynamichf}
+
+
+
+This subroutine performs the main time-\/integration algorithm starting at time step 0 and then iterating the desired number of steps. 
+
+Its building blocks are\+:
+\begin{DoxyItemize}
+\item {\bfseries{ Step 1\+: preparation phase\+:}} this phase consists of several substeps.
+\begin{DoxyEnumerate}
+\item If this is not a restart, the time and iteration number are zeroed (for a restart only the physical time is taken from the {\ttfamily wffile}). The wave functions are saved in the {\ttfamily wffile}, to save setup time in case the calculation has to be restarted from this initial point.
+\item The instantaneous external boost is applied using {\ttfamily extboost}. If this subroutine has applied a boost, it sets {\ttfamily text\+\_\+timedep} to {\ttfamily }.F\+A\+L\+SE. so no further calls to external-\/field routines are made (except for {\ttfamily print\+\_\+extfield}).
+\item The protocol files {\ttfamily  $\ast$.res } are initialized with their header lines. ~\newline
+
+\item The densities and current are calculated in a loop over wave function by calling {\ttfamily add\+\_\+densities}. They are first set to zero and then accumulated in a loop over the set on the local node, followed by collecting them over all nodes.
+\item The mean field and (if {\ttfamily texternal} is true) the external field are calculated for time zero using routines {\ttfamily skyrme} and {\ttfamily extfld}.
+\item Then {\ttfamily tinfo} is called to calculate and print the single-\/particle quantities and the total energies at time 0 or iteration 0.
+\item Finally preparations are made for the time-\/stepping loop\+: the starting index is set to {\ttfamily iter+1}\+: this is either after the end of a previous job in the case of a restart, or just one for a new calculation. The physical time is either 0 or the time taken from a restart file.
+\end{DoxyEnumerate}
+\item {\bfseries{ Step 2\+: predictor time step\+:}} the loop over the iteration index {\ttfamily iter} is started. Then the densities and mean-\/field components are estimated, i. e., in effect the Hamiltonian $ \hat h(t+\tfrac1{2}\Delta t) $ required by the numerical method. This is done by evolving the wave functions for a full {\ttfamily dt} using the old Hamiltonian and averaging the densities between old and new ones to obtain the mid-\/time Hamiltonian for propagation. In detail the procedure is as follows\+:
+\begin{DoxyEnumerate}
+\item The densities are not set to zero in order to allow adding the contributions of the wave functions at the end of the time step.
+\item In the M\+PI version, the densities are divided by the number of nodes. In this way, adding up contributions from all nodes, the densities from the beginning of the time step will be included correctly.
+\item Subroutine {\ttfamily tstep} is used to propagate the wave functions to the end of the time step. Note that truncation in the exponential happens at {\ttfamily mxpact/2}, since the accuracy need not be as high as in the full step. For each wave function its contribution is added to the densities. The wave functions themselves do not need to be saved as they are not used for anything else.
+\item After the loop, contributions from all the nodes are added up for the M\+PI case using subroutine {\ttfamily collect\+\_\+densities}.
+\item The densities are multiplied by one half to form the average of the values at $ t $ and $ t+\Delta t $.
+\item These average densities are then used to calculate the mean field at half time using subroutine {\ttfamily skyrme\}}; also the external field is obtained for the half time using {\ttfamily extfld}.
+\end{DoxyEnumerate}
+\item {\bfseries{ Step 3\+: full time step\+:}} Now that the single-\/particle Hamiltonian has been estimated for the middle of the time step, the propagation can be carried out to the end of the time step. This is quite analogous to the half step with only three crucial differences\+:
+\begin{DoxyEnumerate}
+\item The densities are reset to zero before the wave function loop, so the densities summed up are the purely the densities at the end of the time step,
+\item the series expansion in {\ttfamily tstep} now uses the full {\ttfamily mxpact} terms, and
+\item the new wave functions are copied back into {\ttfamily psi} to be available for the next time step.
+\end{DoxyEnumerate}
+\item {\bfseries{ Step 4\+: Center-\/of-\/mass correction\+: }} If a center-\/of-\/mass correction is desired by the user by setting {\ttfamily  mrescm /=0}, subroutine {\ttfamily resetcm} is called every {\ttfamily mrescm\textquotesingle{}th} time step to reset the center-\/of-\/mass velocity to zero. ~\newline
+
+\item {\bfseries{ Step 5\+: generating some output }} At this point the time is advanced by {\ttfamily dt} because the physical time is now the end of the time step, and this must be printed out correctly by the following output routines. {\ttfamily tinfo} is called to calculate single-\/particle properties, total energies, and so on.
+\item {\bfseries{ Step 6\+: finishing up the time step\+:}} {\ttfamily tinfo} is called to output the calculated data, then {\ttfamily skyrme} and {\ttfamily extfld} calculate the mean field and the external field, respectively, for the end of the time step, after which the wave functions are written onto {\ttfamily wffile} depending on {\ttfamily mrest}.
+\end{DoxyItemize}
+
+This ends the time loop and subroutine {\ttfamily dynamichf} itself. \mbox{\Hypertarget{namespacedynamic_a25a35b2c3f00abafa02b49fae36b450c}\label{namespacedynamic_a25a35b2c3f00abafa02b49fae36b450c}} 
+\index{dynamic@{dynamic}!getin\_dynamic@{getin\_dynamic}}
+\index{getin\_dynamic@{getin\_dynamic}!dynamic@{dynamic}}
+\doxyparagraph{\texorpdfstring{getin\_dynamic()}{getin\_dynamic()}}
+{\footnotesize\ttfamily subroutine dynamic\+::getin\+\_\+dynamic}
+
+
+
+This is a relatively simple routine that reads the input for namelist {\ttfamily dynamic} and prints it on standard output. If {\ttfamily texternal} is true, it also calls {\ttfamily getin\+\_\+external} to read the external field parameters. 
+
+\mbox{\Hypertarget{namespacedynamic_aad225fa83cc6ff167d9a63f234e32ae1}\label{namespacedynamic_aad225fa83cc6ff167d9a63f234e32ae1}} 
+\index{dynamic@{dynamic}!resetcm@{resetcm}}
+\index{resetcm@{resetcm}!dynamic@{dynamic}}
+\doxyparagraph{\texorpdfstring{resetcm()}{resetcm()}}
+{\footnotesize\ttfamily subroutine dynamic\+::resetcm}
+
+
+
+This subroutine resets the center-\/of-\/mass velocity to zero. 
+
+The velocity, or rather the corresponding wave vector, is calculated from the current density using \[ \rho(\vec r) \vec k=\frac{1}{2\I}\sum_{\alpha\in q}w_\alpha^2 \sum_s\left(\psi_\alpha^*(\vec r,s)\nabla\psi_\alpha(\vec r,s)-\psi_\alpha(\vec r,s) \nabla\psi_\alpha^*(\vec r,s)\right). \] The wave functions are then multiplied by a common plane-\/wave phase factor $ \exp(-\I\vec k\cdot \vec r) $ to give a counter boost. \mbox{\Hypertarget{namespacedynamic_acc79414314504771509e8982faefe77b}\label{namespacedynamic_acc79414314504771509e8982faefe77b}} 
+\index{dynamic@{dynamic}!tinfo@{tinfo}}
+\index{tinfo@{tinfo}!dynamic@{dynamic}}
+\doxyparagraph{\texorpdfstring{tinfo()}{tinfo()}}
+{\footnotesize\ttfamily subroutine dynamic\+::tinfo}
+
+
+
+This subroutine is used to output various pieces of information relevant especially to the dynamic mode of the code. 
+
+It is called at the end of the full time step and consists of the following steps\+:
+\begin{DoxyItemize}
+\item {\bfseries{ Step 1\+: initialization\+: }} the flag {\ttfamily printnow} is calculated to keep track of whether this is the proper time step for a full printout (determined by {\ttfamily mprint}).
+\item {\bfseries{ Step 2\+: twobody analysis }} the twobody analysis is performed, but only if the calculation started as a twobody scenario. This is the simplified version which essentially only determines the fragment in case of separation. ~\newline
+
+\item {\bfseries{ Step 3\+: moments\+: }} the moments of the distribution are calculated using subroutine {\ttfamily moments}. This includes total mass, momenta, and angular momenta. They are printed out if indicated by {\ttfamily printnow}, both on the large output and in the specialized files {\ttfamily dipolesfile}, {\ttfamily momentafile}, and {\ttfamily spinfile}. If there is an external field, the routine {\ttfamily print\+\_\+extfield} is called to print the current expectation value of the external field.
+
+{\bfseries{Note that the moments need to be calculated every time step, because some of the logic may depend on them, especially the twobody-\/analysis, which needs the correct c.\+m., for example and is calculated at every time step and on every node.}}
+\item {\bfseries{ Step 4\+: single-\/particle quantities\+:}} the single-\/particle energies are calculated straightforwardly as expectation values of the Hamiltonian. The routine {\ttfamily sp\+\_\+properties} is then called to obtain the other single-\/particle properties like angular momenta. They are communicated between the processors. The angular momenta are written to {\ttfamily spinfile}.
+\item {\bfseries{ Step 5\+: total energies\+:}} The integrated energy {\ttfamily ehfint} and its contributions are calculated in {\ttfamily integ\+\_\+energy}. The subroutine {\ttfamily sum\+\_\+energy} is called to calculate the three-\/body energy and the single-\/particle based total energy {\ttfamily ehf}. The collective kinetic energy {\ttfamily ecoll} is computed directly here, because it is needed only in the dynamic calculations and only for output. It is defined as \[ E_{\rm coll}=\frac{\hbar^2}{2m}\int \D^3r \frac{{\vec \jmath\,}^2}{\rho} \] The energies are protocolled in {\ttfamily energiesfile} and on standard output.
+\item {\bfseries{ Step 6\+: density output\+:}} at intervals of {\ttfamily mprint} or in the first time step the density printer plot is generated using {\ttfamily plot\+\_\+densities} and the binary densities are written onto {\ttfamily  $\ast$.tdd } files using {\ttfamily write\+\_\+densities}.
+\item {\bfseries{ Step 7\+: other output\+: }} in the proper {\ttfamily mprint} interval the single-\/particle state information, and the moments are printed on standard output, using also the routine {\ttfamily moment\+\_\+print}.
+\item {\bfseries{ Step 8\+: check for final separation\+: }} for the twobody case it is checked whether the separation found between the two fragments is larger than the input quantity {\ttfamily rsep} with positive time derivative {\ttfamily rdot} of the separation distance, in which case the program complete twobody analysis is done and the wave functions are saved; then the job is terminated with an appropriate message. 
+\end{DoxyItemize}\mbox{\Hypertarget{namespacedynamic_a67d48d0e156e217e9e42654cb7189912}\label{namespacedynamic_a67d48d0e156e217e9e42654cb7189912}} 
+\index{dynamic@{dynamic}!tstep@{tstep}}
+\index{tstep@{tstep}!dynamic@{dynamic}}
+\doxyparagraph{\texorpdfstring{tstep()}{tstep()}}
+{\footnotesize\ttfamily subroutine dynamic\+::tstep (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{iq,  }\item[{integer, intent(in)}]{mxp,  }\item[{complex(db), dimension(\+:,\+:,\+:,\+:), intent(inout)}]{psout }\end{DoxyParamCaption})}
+
+
+
+In this subroutine one wave function given as the argument {\ttfamily psout} is stepped forward in time by the interval {\ttfamily dt}. 
+
+The method used is the expansion of the exponential time-\/development operator cut off at the power of {\ttfamily mxp}, which in practice is usually around 6. Suppressing the argument of $ \hat h $ for brevity, we can write \[ \hat U(t,t+\Delta t)\,\phi\approx \sum_{n=0}^m \phi^{(n)} \] with \[ \phi^{(0)}=\phi,\qquad \phi^{(k+1)}=\frac{-\I\,\Delta t} {\hbar c k}\,\hat h\,\phi^{(k)},\quad k=0,\ldots,m-1. \]
+
+Thus the application of the polynomial to a single-\/particle wave function can be evaluated simply in a loop applying $ \hat h\phi_k $ repeatedly and accumulating the results in wave function {\ttfamily psout}.
+
+The argument {\ttfamily iq} is only necessary because {\ttfamily hpsi} needs information about the isospin of the wave function.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em iq} & I\+N\+T\+E\+G\+ER, takes the isospin. \\
+\hline
+\mbox{\texttt{ in}}  & {\em mxp} & R\+E\+A\+L(db), takes the power to which the time-\/development operator is expanded. \\
+\hline
+\mbox{\texttt{ in,out}}  & {\em psout} & R\+E\+A\+L(db), array, takes the wave function and returns evolved wave function. \\
+\hline
+\end{DoxyParams}
+
+
+\doxysubsubsection{Variable Documentation}
+\mbox{\Hypertarget{namespacedynamic_a2f8a4fbc7fad45d168c880b0f7fbebf9}\label{namespacedynamic_a2f8a4fbc7fad45d168c880b0f7fbebf9}} 
+\index{dynamic@{dynamic}!dt@{dt}}
+\index{dt@{dt}!dynamic@{dynamic}}
+\doxyparagraph{\texorpdfstring{dt}{dt}}
+{\footnotesize\ttfamily real(db) dynamic\+::dt}
+
+
+
+the physical time increment in units of fm/c. 
+
+\mbox{\Hypertarget{namespacedynamic_ab70ac1e2a79efd1c86cfefc148f67593}\label{namespacedynamic_ab70ac1e2a79efd1c86cfefc148f67593}} 
+\index{dynamic@{dynamic}!esf@{esf}}
+\index{esf@{esf}!dynamic@{dynamic}}
+\doxyparagraph{\texorpdfstring{esf}{esf}}
+{\footnotesize\ttfamily real(db), parameter dynamic\+::esf =0.\+0\+D0}
+
+
+
+this is the energy shift for the call to {\ttfamily hpsi}. Since it is not used in the dynamics part of the code, it is here set to the constant value of zero. 
+
+\mbox{\Hypertarget{namespacedynamic_a22bc0055a5dfc3e92580a8697a8ab1ef}\label{namespacedynamic_a22bc0055a5dfc3e92580a8697a8ab1ef}} 
+\index{dynamic@{dynamic}!mrescm@{mrescm}}
+\index{mrescm@{mrescm}!dynamic@{dynamic}}
+\doxyparagraph{\texorpdfstring{mrescm}{mrescm}}
+{\footnotesize\ttfamily integer dynamic\+::mrescm =0}
+
+
+
+frequency of c.\+m. motion correction 
+
+\mbox{\Hypertarget{namespacedynamic_ab28058983e8491350fbbeaa9cd1c03a1}\label{namespacedynamic_ab28058983e8491350fbbeaa9cd1c03a1}} 
+\index{dynamic@{dynamic}!mxpact@{mxpact}}
+\index{mxpact@{mxpact}!dynamic@{dynamic}}
+\doxyparagraph{\texorpdfstring{mxpact}{mxpact}}
+{\footnotesize\ttfamily integer dynamic\+::mxpact =6}
+
+
+
+the number of terms to be taken in the expansion of the potential 
+
+\mbox{\Hypertarget{namespacedynamic_a082deb2f0c47a60e4e2ef2dc1ce395e6}\label{namespacedynamic_a082deb2f0c47a60e4e2ef2dc1ce395e6}} 
+\index{dynamic@{dynamic}!nt@{nt}}
+\index{nt@{nt}!dynamic@{dynamic}}
+\doxyparagraph{\texorpdfstring{nt}{nt}}
+{\footnotesize\ttfamily integer dynamic\+::nt}
+
+
+
+the number of the final time step to be calculated. In case of a restart this is smaller than the total number of time steps. 
+
+\mbox{\Hypertarget{namespacedynamic_a8f66cf733898b4e6596541c4665bb503}\label{namespacedynamic_a8f66cf733898b4e6596541c4665bb503}} 
+\index{dynamic@{dynamic}!rsep@{rsep}}
+\index{rsep@{rsep}!dynamic@{dynamic}}
+\doxyparagraph{\texorpdfstring{rsep}{rsep}}
+{\footnotesize\ttfamily real(db) dynamic\+::rsep}
+
+
+
+the final separation distance. The calculation is stopped if there has been a reseparation into two fragments and their distance exceeds {\ttfamily rsep}. 
+
+\mbox{\Hypertarget{namespacedynamic_a1b0110fc909c9bf8bc9878b8a0afe0cf}\label{namespacedynamic_a1b0110fc909c9bf8bc9878b8a0afe0cf}} 
+\index{dynamic@{dynamic}!text\_timedep@{text\_timedep}}
+\index{text\_timedep@{text\_timedep}!dynamic@{dynamic}}
+\doxyparagraph{\texorpdfstring{text\_timedep}{text\_timedep}}
+{\footnotesize\ttfamily logical dynamic\+::text\+\_\+timedep}
+
+
+
+this logical variable indicates that the external field is time-\/dependent and does not describe an instantaneous boost. 
+
+\mbox{\Hypertarget{namespacedynamic_a9c78ad5d4b68b5815c853cf157e875a8}\label{namespacedynamic_a9c78ad5d4b68b5815c853cf157e875a8}} 
+\index{dynamic@{dynamic}!texternal@{texternal}}
+\index{texternal@{texternal}!dynamic@{dynamic}}
+\doxyparagraph{\texorpdfstring{texternal}{texternal}}
+{\footnotesize\ttfamily logical dynamic\+::texternal =.F\+A\+L\+S\+E.}
+
+
+
+this logical variable indicates that an external field is present. See module {\ttfamily External}. 
+

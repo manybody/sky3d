@@ -1,0 +1,26 @@
+\hypertarget{inout_8f90}{}\doxysubsection{inout.\+f90 File Reference}
+\label{inout_8f90}\index{inout.f90@{inout.f90}}
+\doxysubsubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \mbox{\hyperlink{namespaceinout}{inout}}
+\begin{DoxyCompactList}\small\item\em This module contains the procedures for binary input and output of the larger fields. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespaceinout_a9d5fd84daf7280d1429a1cc639a77e1b}{inout\+::write\+\_\+wavefunctions}}
+\begin{DoxyCompactList}\small\item\em This subroutine writes the wave functions to the disk and has two modes of operation depending on whether the code runs on distributed-\/memory systems in {\ttfamily M\+PI} mode or on a shared-\/memory or single-\/processor machine. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceinout_a106b9c386384f988c48ef5ac7780283e}{inout\+::write\+\_\+densities}}
+\begin{DoxyCompactList}\small\item\em This subroutine produces a file {\ttfamily iter.\+tdd} with density and current data for the present time step or iteration with number {\ttfamily iter}. In the file name {\ttfamily iter} is given in 6 decimal digits. \end{DoxyCompactList}\item 
+subroutine, private \mbox{\hyperlink{namespaceinout_a30aedba153613f9688e3911420485cdd}{inout\+::write\+\_\+one\+\_\+density}} (name, values)
+\begin{DoxyCompactList}\small\item\em This subroutines does the actual output for {\ttfamily write\+\_\+densities} in the case of a scalar field. Its functioning should be clear from the description above. \end{DoxyCompactList}\item 
+subroutine, private \mbox{\hyperlink{namespaceinout_ae5e01e6139174c3213653d9d426393be}{inout\+::write\+\_\+vec\+\_\+density}} (name, values)
+\begin{DoxyCompactList}\small\item\em This also does the actual output for subroutines {\ttfamily write\+\_\+densities} for the case of a vector field. Its functioning should be clear from the description above. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceinout_a674610dcc3ea10a3bacbc06cf120c257}{inout\+::plot\+\_\+density}}
+\begin{DoxyCompactList}\small\item\em Produces a simple printer plot of the density distribution in the reaction plane. This is not supposed to replace better plotting codes, but simply allows a quick glance at what is happening in the code, even while it is running. \end{DoxyCompactList}\item 
+pure real(db) function \mbox{\hyperlink{namespaceinout_a12702257d10a7c3db099de11a2a7eb78}{inout\+::bplina}} (n, m, xar, zar, fun, xcu, zcu)
+\begin{DoxyCompactList}\small\item\em Does a bilinear interpolation of fun(nx,nz), on xar(n) and zar(m) \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceinout_a9a96b0fa1f4abbf1b4a2da1b9064af9f}{inout\+::sp\+\_\+properties}}
+\begin{DoxyCompactList}\small\item\em In this routine the kinetic energy, orbital and spin angular momenta expectation values, {\ttfamily sp\+\_\+kinetic}, {\ttfamily sp\+\_\+orbital\}} and {\ttfamily sp\+\_\+spin} of the single-\/particle states are calculated. The latter are both three-\/dimensional vectors. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceinout_a66b3c7249f196c6a18b17f073ffc4b21}{inout\+::start\+\_\+protocol}} (filename, header)
+\begin{DoxyCompactList}\small\item\em This is given a file name and a character string for a header line to start the file contents. It is used for the {\ttfamily $\ast$.res} files. If the file already exists, nothing is done, since this probably a restart job and output should just be added at the end of the file. \end{DoxyCompactList}\end{DoxyCompactItemize}

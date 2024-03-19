@@ -1,0 +1,42 @@
+\hypertarget{coulomb_8f90}{}\doxysubsection{coulomb.\+f90 File Reference}
+\label{coulomb_8f90}\index{coulomb.f90@{coulomb.f90}}
+\doxysubsubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \mbox{\hyperlink{namespacecoulomb}{coulomb}}
+\begin{DoxyCompactList}\small\item\em This module offers the subroutine {\ttfamily poisson}, which calculates the Coulomb potential from the proton density. The two boundary conditions allowed are distinguished by the value of the variable periodic. If it is true, the mesh is assumed to be periodic in all three directions and the Poisson equation is solved using the $\frac{1}{k^2}$ Green’s function in momentum space and assuming a homogeneous negative background annulling the total charge (jellium approximation). Otherwise the boundary condition is for an isolated charge distribution. In this case the potential is calculated by the method of doubling the grid in all directions with zero density, folding with the 1/r-\/potential in momentum space and then restricting to the physical region. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine, public \mbox{\hyperlink{namespacecoulomb_a5f0400055fa5aa4cbfc054c9e1bf565b}{coulomb\+::poisson}} (rhocharge)
+\begin{DoxyCompactList}\small\item\em This subroutine solves the Poisson equation by the Fourier method. \end{DoxyCompactList}\item 
+subroutine, public \mbox{\hyperlink{namespacecoulomb_a74649b61a8f2de130fb95edb9a62d498}{coulomb\+::coulinit}}
+\begin{DoxyCompactList}\small\item\em This subroutine does the necessary initialization. \end{DoxyCompactList}\item 
+subroutine, private \mbox{\hyperlink{namespacecoulomb_aee5145182fc0abb626eaa2850a87826c}{coulomb\+::initiq}} (n, d, iq)
+\begin{DoxyCompactList}\small\item\em This subroutine calculates the contributions of each Cartesian index to $r^2$ and $k^{-2}$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+real(db), dimension(\+:,\+:,\+:), allocatable, save, public \mbox{\hyperlink{namespacecoulomb_a26740de741e0c1efe01fe26e5c996135}{coulomb\+::wcoul}}
+\begin{DoxyCompactList}\small\item\em ~\newline
+ \end{DoxyCompactList}\item 
+complex(db), dimension(\+:,\+:,\+:), allocatable, save, private \mbox{\hyperlink{namespacecoulomb_ad9f62c9032d70f15617f01a0c9ecb0c7}{coulomb\+::q}}
+\begin{DoxyCompactList}\small\item\em array for the complex Green’s function (isolated) or array of 1/r values. Its dimension also depends on the boundary condition. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ Dimensions of the grid on which the Fourier transform is calculated.}\par
+{\em For the periodic case they are identical to the regular dimensions, for the isolated case they are doubled. }\begin{DoxyCompactItemize}
+\item 
+integer, private \mbox{\hyperlink{namespacecoulomb_a821f17159bc941612225823801555733}{coulomb\+::nx2}}
+\item 
+integer, private \mbox{\hyperlink{namespacecoulomb_aec5bb921ae0a248b7ce45c157e9d793d}{coulomb\+::ny2}}
+\item 
+integer, private \mbox{\hyperlink{namespacecoulomb_a0de0e5b7d18f4ce88eeb7ea25839149a}{coulomb\+::nz2}}
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Plans for F\+F\+TW complex forward and reverse transforms}\par
+{\em with array dimensions depending on the boundary condition. }\begin{DoxyCompactItemize}
+\item 
+integer(c\+\_\+long), save, private \mbox{\hyperlink{namespacecoulomb_a20877fe904a19406549cfc1e10b30128}{coulomb\+::coulplan1}}
+\item 
+integer(c\+\_\+long), save, private \mbox{\hyperlink{namespacecoulomb_abfd1cdc755ebb2f0adcd1d1ce1cf4503}{coulomb\+::coulplan2}}
+\end{DoxyCompactItemize}
+\end{Indent}

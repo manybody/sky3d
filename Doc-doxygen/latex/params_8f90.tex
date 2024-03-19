@@ -1,0 +1,103 @@
+\hypertarget{params_8f90}{}\doxysubsection{params.\+f90 File Reference}
+\label{params_8f90}\index{params.f90@{params.f90}}
+\doxysubsubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \mbox{\hyperlink{namespaceparams}{params}}
+\begin{DoxyCompactList}\small\item\em This module contains some general parameters critical to controlling the code and some mathematical and physical constants used everywhere. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{Indent}\textbf{ General paramters}\par
+\begin{DoxyCompactItemize}
+\item 
+integer, parameter \mbox{\hyperlink{namespaceparams_ab8c908d02badd538fe1493bf712f0b65}{params\+::db}} =S\+E\+L\+E\+C\+T\+E\+D\+\_\+\+R\+E\+A\+L\+\_\+\+K\+I\+ND(12, 100)
+\begin{DoxyCompactList}\small\item\em this is a constant determining the precision of real numbers in the code in a portable manner. In practice it will usually be {\ttfamily  R\+E\+A\+L(8) }. \end{DoxyCompactList}\item 
+real(db), parameter \mbox{\hyperlink{namespaceparams_a7b380d15d97222a101fe5162eac67441}{params\+::pi}} =3.\+14159265358979D0
+\begin{DoxyCompactList}\small\item\em the constant $ \pi $. \end{DoxyCompactList}\item 
+real(db), parameter \mbox{\hyperlink{namespaceparams_a41ede236caef2816adfb1e6a5ffd3995}{params\+::hbc}} =197.\+32164D0
+\begin{DoxyCompactList}\small\item\em the constant $ \hbar c $ in units of Me\+V$\ast$fm. \end{DoxyCompactList}\item 
+real(db), parameter \mbox{\hyperlink{namespaceparams_a931716a85a71e4f9ad3cfca03eae321e}{params\+::e2}} =1.\+43989D0
+\begin{DoxyCompactList}\small\item\em the electron charge squared. It is calculated as $ \alpha\hbar c $ and has units of Me\+V$\ast$fm. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ File names and units}\par
+{\em These variables allow the user to change the names of some of the files used by the code. Except for {\ttfamily wffile}, output is produced for an iteration or a time step at selected intervals. }\begin{DoxyCompactItemize}
+\item 
+character(len=80) \mbox{\hyperlink{namespaceparams_a891f0b1ab35b30165839e2cd3c3a308b}{params\+::wffile}} =\textquotesingle{}none\textquotesingle{}
+\begin{DoxyCompactList}\small\item\em file to contain the static single-\/particle wave functions plus some additional data. It is also used for restarting an interrupted calculation and is rewritten regularly (see variables {\ttfamily trestart} and {\ttfamily mrest}). It can be turned off completely using the name {\ttfamily \textquotesingle{}N\+O\+NE\textquotesingle{}}. \end{DoxyCompactList}\item 
+character(len=80) \mbox{\hyperlink{namespaceparams_a254c68d4ce3e56a8f95f36738a780754}{params\+::converfile}} =\textquotesingle{}conver.\+res\textquotesingle{}
+\begin{DoxyCompactList}\small\item\em contains convergence information for the static calculation. \end{DoxyCompactList}\item 
+character(len=80) \mbox{\hyperlink{namespaceparams_ae696222364ee2496e572da2c1b7e9231}{params\+::monopolesfile}} =\textquotesingle{}monopoles.\+res\textquotesingle{}
+\begin{DoxyCompactList}\small\item\em contains moment values of monopole type. \end{DoxyCompactList}\item 
+character(len=80) \mbox{\hyperlink{namespaceparams_a0b29ee7564ef424cb96e1887feec9c9f}{params\+::dipolesfile}} =\textquotesingle{}dipoles.\+res\textquotesingle{}
+\begin{DoxyCompactList}\small\item\em contains moment values of dipole type. \end{DoxyCompactList}\item 
+character(len=80) \mbox{\hyperlink{namespaceparams_a69c04f5831df52bdc62e9494fe4f4ed2}{params\+::momentafile}} =\textquotesingle{}momenta.\+res\textquotesingle{}
+\begin{DoxyCompactList}\small\item\em contains components of the total momentum. \end{DoxyCompactList}\item 
+character(len=80) \mbox{\hyperlink{namespaceparams_a26cdbe6a54025e78e6e53ec8facce5b3}{params\+::energiesfile}} =\textquotesingle{}energies.\+res\textquotesingle{}
+\begin{DoxyCompactList}\small\item\em energy data for time-\/dependent mode. \end{DoxyCompactList}\item 
+character(len=80) \mbox{\hyperlink{namespaceparams_a8cfc4d9b68c3fcee70cbada589e67fee}{params\+::quadrupolesfile}} =\textquotesingle{}quadrupoles.\+res\textquotesingle{}
+\begin{DoxyCompactList}\small\item\em contains moment values of dipole type. \end{DoxyCompactList}\item 
+character(len=80) \mbox{\hyperlink{namespaceparams_a91d16396473cfb488ab06e0b9681dfca}{params\+::spinfile}} =\textquotesingle{}spin.\+res\textquotesingle{}
+\begin{DoxyCompactList}\small\item\em time-\/dependent total, orbital, and spin angular-\/momentum data as three-\/dimensional vectors. \end{DoxyCompactList}\item 
+character(len=80) \mbox{\hyperlink{namespaceparams_a57cbd328f20f47876306d52c516e1703}{params\+::extfieldfile}} =\textquotesingle{}extfield.\+res\textquotesingle{}
+\begin{DoxyCompactList}\small\item\em contains the time-\/dependence of the expectation value of the external field. Present only if an external field for boost or time-\/dependent excitation is used. \end{DoxyCompactList}\item 
+integer, parameter \mbox{\hyperlink{namespaceparams_ac2aa5c826bb3f7d2943759349793df9a}{params\+::scratch}} =11
+\begin{DoxyCompactList}\small\item\em unit number used for temporary storage. \end{DoxyCompactList}\item 
+integer, parameter \mbox{\hyperlink{namespaceparams_a1df949628a35feb91cf3ac694e35036c}{params\+::scratch2}} =12
+\begin{DoxyCompactList}\small\item\em unit number used for temporary storage. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Switches}\par
+\begin{DoxyCompactItemize}
+\item 
+logical \mbox{\hyperlink{namespaceparams_a32608470beeb16cce1656a93c8fffba8}{params\+::tcoul}} =.T\+R\+U\+E.
+\begin{DoxyCompactList}\small\item\em indicates whether the Coulomb field should be included or not. \end{DoxyCompactList}\item 
+logical \mbox{\hyperlink{namespaceparams_a790b5aa3b043d85e874f50c599094b85}{params\+::tstatic}}
+\begin{DoxyCompactList}\small\item\em {\ttfamily true} for a static job. Not input directly but from the input variable {\ttfamily imode}, which is 1 for the static. \end{DoxyCompactList}\item 
+logical \mbox{\hyperlink{namespaceparams_a38248c7070c6fffc07c89a78cd25e29b}{params\+::tdynamic}}
+\begin{DoxyCompactList}\small\item\em {\ttfamily true} for a dynamic job. Not input directly but from the input variable {\ttfamily imode}, which is 1 for the static. \end{DoxyCompactList}\item 
+logical \mbox{\hyperlink{namespaceparams_a5bae013116a1da0b1dec357ab39bcbc0}{params\+::tfft}} =.T\+R\+U\+E.
+\begin{DoxyCompactList}\small\item\em if {\ttfamily true}, the derivatives of the wave functions, but not of the densities, are done directly through F\+FT. Otherwise matrix multiplication is used, but with the matrix also obtained from F\+FT. \end{DoxyCompactList}\item 
+logical \mbox{\hyperlink{namespaceparams_afc7931aafccc3d7feb83943d4fad8890}{params\+::trestart}} =.F\+A\+L\+S\+E.
+\begin{DoxyCompactList}\small\item\em if {\ttfamily true}, restarts the calculation from the {\ttfamily wffile}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Output control}\par
+\begin{DoxyCompactItemize}
+\item 
+integer \mbox{\hyperlink{namespaceparams_aea28dd70b0004eb259f764136a7a2c30}{params\+::mprint}} =100
+\begin{DoxyCompactList}\small\item\em control for printer output. If {\ttfamily mprint} is greater than zero, more detailed output is produced every {\ttfamily mprint} iterations or time steps on standard output. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespaceparams_a12cc49e721a9bd6524466da6d1d0ad1b}{params\+::mplot}} =0
+\begin{DoxyCompactList}\small\item\em if {\ttfamily mplot} is greater than zero, a printer plot is produced and the densities are dumped onto {\ttfamily  $\ast$.tdd} files every {\ttfamily mplot} time steps or iterations. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespaceparams_ace788a4d16a7db75cd1d551f16a63178}{params\+::mrest}} =0
+\begin{DoxyCompactList}\small\item\em if greater than zero, a {\ttfamily wffile} is produced every {\ttfamily mrest} iterations or time steps. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Globally used variables}\par
+\begin{DoxyCompactItemize}
+\item 
+integer \mbox{\hyperlink{namespaceparams_ab66eeb1509fbc1b59e01e19736e1a7f5}{params\+::iter}}
+\begin{DoxyCompactList}\small\item\em number of the current time step or iteration. Used in both static and dynamic modes. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespaceparams_a38280aa2e210d44328d65d3cebeb3de2}{params\+::time}}
+\begin{DoxyCompactList}\small\item\em the simulation time of the current step in fm/c; only meaningful in a dynamic calculation. \end{DoxyCompactList}\item 
+logical \mbox{\hyperlink{namespaceparams_a2297789d48a2510293d93fc3f5393a1c}{params\+::wflag}}
+\begin{DoxyCompactList}\small\item\em indicates whether printing is allowed. This is necessary for the parallel job to have only one processor print and concerns both the standard output and the {\ttfamily  $\ast$.res} files. \end{DoxyCompactList}\item 
+logical \mbox{\hyperlink{namespaceparams_a56493871e4df9f5bb704082263adc790}{params\+::printnow}}
+\begin{DoxyCompactList}\small\item\em this variable is set to true if conditions for printing are met, such as a certain interval in iteration number. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Field output control}\par
+\begin{DoxyCompactItemize}
+\item 
+integer, parameter \mbox{\hyperlink{namespaceparams_ae555e0b173068333467dea181b6585a6}{params\+::nselect}} =10
+\begin{DoxyCompactList}\small\item\em parameter limiting how many fields can be selected for binary output, it is just the length of the character string {\ttfamily writeselect}. \end{DoxyCompactList}\item 
+character(len=nselect) \mbox{\hyperlink{namespaceparams_aa7fab2d846d420ee6b816422758e7cd4}{params\+::writeselect}} =\textquotesingle{}r\textquotesingle{}
+\begin{DoxyCompactList}\small\item\em it is used to determine which fields should be output under the control of {\ttfamily mplot}. \end{DoxyCompactList}\item 
+logical \mbox{\hyperlink{namespaceparams_a722d73632fd7b85a9ae4ca3b8ca485bb}{params\+::write\+\_\+isospin}} =.F\+A\+L\+S\+E.
+\begin{DoxyCompactList}\small\item\em if this is {\ttfamily .F\+A\+L\+SE.}, the proton and neutron contributions of a field are added up before output. Otherwise both are written. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Fragment number parameters}\par
+\begin{DoxyCompactItemize}
+\item 
+integer, parameter \mbox{\hyperlink{namespaceparams_a12f33de55657dc47c13587839d279089}{params\+::mnof}} =4
+\begin{DoxyCompactList}\small\item\em number of fragments for the initialization maximum allowed. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespaceparams_ac18766a1097db27f31b03ab88ff3eb29}{params\+::nof}}
+\begin{DoxyCompactList}\small\item\em actual number of fragments for the initialization. ~\newline
+ \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespaceparams_a6114151c6eefc72873dab9d8308bfc55}{params\+::r0}} =1.\+2D0
+\begin{DoxyCompactList}\small\item\em nuclear radius parameter. The nuclear radius $ R=r_0A^{1/3} $ is used to compute the $ \beta $ and $ \gamma $ deformation parameters in subroutine {\ttfamily moments}. Units\+: fm. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}

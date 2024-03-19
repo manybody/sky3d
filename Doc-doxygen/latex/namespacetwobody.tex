@@ -1,0 +1,367 @@
+\hypertarget{namespacetwobody}{}\doxysubsection{twobody Module Reference}
+\label{namespacetwobody}\index{twobody@{twobody}}
+
+
+This module contains the routines to distinguish between a one and two-\/body system and to perform a two-\/body analysis in the case of a two-\/body collision including scattering angles and momenta.  
+
+
+\doxysubsubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespacetwobody_a2330263249174a77f31f7d221b32ecd2}{twobody\+\_\+analysis}} (full\+\_\+analysis)
+\begin{DoxyCompactList}\small\item\em For a two-\/body collision, this subroutine checks whether the system is separated and in that case determines either only the distance of the fragments or, for the final state, produces a detailed analysis. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacetwobody_ae44d409d045e1a7e46e63d1166633885}{analyze}} (ifrag)
+\begin{DoxyCompactList}\small\item\em This subroutine calculates properties of the two separate fragment or of the whole system. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacetwobody_a383bfa98740a91ee8ba2b8d1e2bd308a}{gauss}} (a, b, c)
+\begin{DoxyCompactList}\small\item\em This subroutine does a simple direct solution of the 3 by 3 linear system of equations. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacetwobody_aebc4b35f90a4ba0188028f8799f7f462}{scattering}}
+\begin{DoxyCompactList}\small\item\em This subroutine calculates the relative motion and the various energies in the final state and, by referring back to the initial state before the collision, also the net scattering results. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacetwobody_a9d40744e5bb0676f61280e518b5555ac}{cut\+\_\+system}} (full\+\_\+analysis)
+\begin{DoxyCompactList}\small\item\em This subroutine finds out whether the system can be decomposed into two fragments records the geometry of this decomposition. \end{DoxyCompactList}\item 
+real(db) function \mbox{\hyperlink{namespacetwobody_a7421597c06f0fee95ef869ee4125ec3c}{getslope}} ()
+\begin{DoxyCompactList}\small\item\em In this function the slope of the fragment connection line in the $x-z $ plane is determined. \end{DoxyCompactList}\item 
+logical function \mbox{\hyperlink{namespacetwobody_a72a5db841ae42fb0913afd1f592159f1}{divpoint}} (xmin, zmin, bb, slope)
+\begin{DoxyCompactList}\small\item\em The function divpoint examines the line determined by the axis of largest quadrupole moment to look for a suitable separation point between two fragments. If one is found with sufficiently low density, it returns {\ttfamily T\+R\+UE} and the properties of that point in its arguments. Otherwise it returns {\ttfamily F\+A\+L\+SE}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+real(db), parameter \mbox{\hyperlink{namespacetwobody_abb1f19bd8de3cd06a90cb0be37f89bea}{threshold}} =1.D-\/5
+\begin{DoxyCompactList}\small\item\em threshold density to recognze separate fragmenst \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacetwobody_a3faecacbdb442de749fe70c30728f444}{mass\+\_\+case}}
+\begin{DoxyCompactList}\small\item\em records the initial mass relation. 0 indicates a symmetric collision, 1 that fragment \#1 is the lighter one, 2 that fragment \#2 is heavier. This is needed to order the fragments the same way in the final state. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacetwobody_aed651dcad4935f4cff54b95a1d791092}{roft}}
+\begin{DoxyCompactList}\small\item\em fragment separation at the current time, zero means connected system \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacetwobody_a9b4a03d159774bc105a30873aa2bfdc3}{roft\+\_\+old}}
+\begin{DoxyCompactList}\small\item\em fragment separation at the last time step. Needed to check whether the motion is outgoing or incoming \end{DoxyCompactList}\item 
+real(db), dimension(3, 0\+:2) \mbox{\hyperlink{namespacetwobody_a9d1f788f4eeaffe4819a7688117ebd21}{velocity}}
+\begin{DoxyCompactList}\small\item\em c.\+m. velocity vectors for the total system and the fragments \end{DoxyCompactList}\item 
+real(db), dimension(\+:,\+:,\+:), allocatable, private \mbox{\hyperlink{namespacetwobody_a903caebecd1d2127d0ac9e7d379a57b0}{rhotot}}
+\begin{DoxyCompactList}\small\item\em total density \end{DoxyCompactList}\item 
+real(db), dimension(\+:,\+:,\+:,\+:), allocatable, private \mbox{\hyperlink{namespacetwobody_a101c61c5e7316c281654170add663303}{currtot}}
+\begin{DoxyCompactList}\small\item\em total current density \end{DoxyCompactList}\item 
+integer, dimension(\+:,\+:,\+:), allocatable, private \mbox{\hyperlink{namespacetwobody_a5e3817f0f66f20d1fe6310db16b91adc}{frag}}
+\begin{DoxyCompactList}\small\item\em for each mesh pint, tells whether it is in fragment 1 or 2, or below the cutoff density, (value 0) \end{DoxyCompactList}\item 
+logical \mbox{\hyperlink{namespacetwobody_acf94ee03e78b349d4269ab8186c236a7}{istwobody}}
+\begin{DoxyCompactList}\small\item\em principal return value. Tells whether the system is separated. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ mass,charge, c.\+m., momentum, and angular momentum of the total system and the fragments}\par
+\begin{DoxyCompactItemize}
+\item 
+real(db), dimension(0\+:2) \mbox{\hyperlink{namespacetwobody_a8bd07e07192b10c28601fcf4fb33f5d8}{mass}}
+\item 
+real(db), dimension(0\+:2) \mbox{\hyperlink{namespacetwobody_a106274f3ec31d1cf1acd95be8e48a958}{charge}}
+\item 
+real(db), dimension(3, 0\+:2) \mbox{\hyperlink{namespacetwobody_ab9cccd46f8d1c9decdf96594d353472e}{cmfrag}}
+\item 
+real(db), dimension(3, 0\+:2) \mbox{\hyperlink{namespacetwobody_a2100c772082008166c536aced5a79c5b}{momentum}}
+\item 
+real(db), dimension(3, 0\+:2) \mbox{\hyperlink{namespacetwobody_a2457901b1c62691433d20e06d5896005}{angmom}}
+\end{DoxyCompactItemize}
+\end{Indent}
+
+
+\doxysubsubsection{Detailed Description}
+This module contains the routines to distinguish between a one and two-\/body system and to perform a two-\/body analysis in the case of a two-\/body collision including scattering angles and momenta. 
+
+\doxysubsubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespacetwobody_ae44d409d045e1a7e46e63d1166633885}\label{namespacetwobody_ae44d409d045e1a7e46e63d1166633885}} 
+\index{twobody@{twobody}!analyze@{analyze}}
+\index{analyze@{analyze}!twobody@{twobody}}
+\doxyparagraph{\texorpdfstring{analyze()}{analyze()}}
+{\footnotesize\ttfamily subroutine twobody\+::analyze (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{ifrag }\end{DoxyParamCaption})}
+
+
+
+This subroutine calculates properties of the two separate fragment or of the whole system. 
+
+It evaluates integrated quantities for a subset of the mesh controlled by its argument {\ttfamily ifrag} in conjunction with the array {\ttfamily frag}. More specifically, {\ttfamily ifrag=0} is used to calculate on the whole mesh while {\ttfamily ifrag=1} or 2 select the points belonging to the corresponding fragment. The array {\ttfamily frag} contains the relevant index for each mesh point.
+\begin{DoxyItemize}
+\item Most of the calculated quantities have an index {\ttfamily ifrag} to store these results separately. Thus {\ttfamily cm(1\+:3,0\+:2)} is used to store the total center of mass in {\ttfamily cm(\+:,0)} and the centers of mass of the two fragments in {\ttfamily cm(\+:,1)} or {\ttfamily cm(\+:,2)}, respectively.
+\item The first loop and the following statements calculate the mass number, charge number, center of mass, and total momentum of the system or fragment. From the latter two velocities are derived\+: {\ttfamily velcorr}, which is in the units used for the {\ttfamily current} density in Sky3D, namely fm $^{-4}$, while {\ttfamily velocity} is in units of $c$.
+\item The next loop calculates the collective orbital angular momentum {\ttfamily angmom} with respect to the center of mass, subtracting its motion, and the classical tensor $\Theta$ of inertia, {\ttfamily inertia}. This allows calculating also the instantaneous angular velocity vector {\ttfamily omega} by solving $\vec L=\Theta\vec\omega$ using the subroutine {\ttfamily gauss}.
+\end{DoxyItemize}
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em ifrag} & I\+N\+T\+E\+G\+ER, index of fragment 1 or 2 to be investigated, or 0 for whole system \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacetwobody_a9d40744e5bb0676f61280e518b5555ac}\label{namespacetwobody_a9d40744e5bb0676f61280e518b5555ac}} 
+\index{twobody@{twobody}!cut\_system@{cut\_system}}
+\index{cut\_system@{cut\_system}!twobody@{twobody}}
+\doxyparagraph{\texorpdfstring{cut\_system()}{cut\_system()}}
+{\footnotesize\ttfamily subroutine twobody\+::cut\+\_\+system (\begin{DoxyParamCaption}\item[{logical, intent(in)}]{full\+\_\+analysis }\end{DoxyParamCaption})}
+
+
+
+This subroutine finds out whether the system can be decomposed into two fragments records the geometry of this decomposition. 
+
+There is an iteration using index {\ttfamily itcm} to make the line connecting the centers of the fragments consistent. It starts with the quadrupole tensor principal axis using function {\ttfamily getslope}. After calculating the fragment centers-\/of-\/mass, this is corrected iteratively. Within the loop the following steps are executed\+:
+\begin{DoxyEnumerate}
+\item If this is not the first iteration, calculate the slope of the center-\/connecting line from the centers of mass.
+\item Call {\ttfamily divpoint} to find whether there is a sufficiently low density between two fragments along that line. If there is, keep track of the minimum-\/density location.
+\item Taking the line from that point, calculate the properties of the line perpendicular to the inter-\/center connection\+: the line dividing space between the fragments.
+\item Then assign fragment index {\ttfamily frag(ix,iy,iz)} for each grid point by checking which side of the dividing line they are on. At the same time, accumulate data for the fragment masses and centers of mass.
+\item If the centers of mass have not changed significantly, stop the iterations. Otherwise repeat.
+\item Record the center distance and return if this is not a full analysis.
+\item Finally, make sure that the assignment of fragment index to heavier or lighter fragment remains the same. This uses array {\ttfamily swap} to interchange 1 and 2.
+\end{DoxyEnumerate}
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em full\+\_\+analysis} & L\+O\+G\+I\+C\+AL, if false, do only what is necessary for calculating the distance \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacetwobody_a72a5db841ae42fb0913afd1f592159f1}\label{namespacetwobody_a72a5db841ae42fb0913afd1f592159f1}} 
+\index{twobody@{twobody}!divpoint@{divpoint}}
+\index{divpoint@{divpoint}!twobody@{twobody}}
+\doxyparagraph{\texorpdfstring{divpoint()}{divpoint()}}
+{\footnotesize\ttfamily logical function twobody\+::divpoint (\begin{DoxyParamCaption}\item[{real(db), intent(out)}]{xmin,  }\item[{real(db), intent(out)}]{zmin,  }\item[{real(db), intent(in)}]{bb,  }\item[{real(db), intent(in)}]{slope }\end{DoxyParamCaption})}
+
+
+
+The function divpoint examines the line determined by the axis of largest quadrupole moment to look for a suitable separation point between two fragments. If one is found with sufficiently low density, it returns {\ttfamily T\+R\+UE} and the properties of that point in its arguments. Otherwise it returns {\ttfamily F\+A\+L\+SE}. 
+
+To this end it looks at the behavior of the densities along this line. Since the line has no relation to the numerical grid, this is not trivial.
+\begin{DoxyItemize}
+\item {\bfseries{ First loop\+: }} Essentially it looks through the $(x,z)$-\/plane to find points closer than half a grid spacing to the desired line with equation {\ttfamily z=slope$\ast$x+bb} (logical variable {\ttfamily online}). If the slope is larger than one, i. e., if the nuclei are separating predominantly in the $x$-\/direction, we need to take the equation {\ttfamily x=(z-\/bb)/slope} instead to get better resolution. To make the result monotonic along the line, the do loop in $z$ runs backward for negative slopes. The points found are collected in index vectors {\ttfamily ixl}, {\ttfamily izl} with accompanying densities {\ttfamily rhol } stored in arrays of length {\ttfamily il}.
+\item {\bfseries{ Second loop\+: }} now the number of fragments {\ttfamily nf} is counted by examining this one-\/dimensional density curve, looking for disconnected density humps above {\ttfamily vacuum} density. Where the \`{}`vacuum'\textquotesingle{} region starts and ends is recorded in variables {\ttfamily n1} and {\ttfamily n2}. The logic is as follows\+:
+\begin{DoxyEnumerate}
+\item The logical variable {\ttfamily in\+\_\+vacuum} keeps track of whether the search is in a vacuum region at the moment or not. It starts as {\ttfamily T\+R\+UE}.
+\item Go to the next point. If its density is above {\ttfamily vacuum}, and we are in the vacuum, a new fragment is starting and we increase the number of fragments {\ttfamily nf} by 1. If it becomes bigger than 2, exit, because there are three or more fragments. If it is now 2, record the starting index for the second fragment in {\ttfamily n2}.
+\item If the density is below {\ttfamily vacuum} and we are not in vacuum, a fragment is being ended. If it is the first fragment, we record this index in {\ttfamily n1}.
+\end{DoxyEnumerate}
+\item {\bfseries{ Final processing\+: }} At this point we expect a two-\/fragment situation if {\ttfamily nf=2} and in this case the void region between the fragments extends from {\ttfamily n1} to {\ttfamily n2}, which are indices into arrays {\ttfamily ix1} and {\ttfamily iz1} giving the position in the $(x,z)$-\/plane. The code calculates the midpoint between the two positions and returns {\ttfamily T\+R\+UE} in this case.
+\end{DoxyItemize}
+
+\begin{DoxyReturn}{Returns}
+L\+O\+G\+I\+C\+AL, indicates whether there is a fragment division or not. 
+\end{DoxyReturn}
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em xmin} & R\+E\+A\+L(db), $x$-\/coordinate of the dividing point. \\
+\hline
+\mbox{\texttt{ out}}  & {\em zmin} & R\+E\+A\+L(db), $z$-\/coordinate of the dividing point. \\
+\hline
+\mbox{\texttt{ in}}  & {\em bb} & R\+E\+A\+L(db), intercept of the line joining the fragments.. \\
+\hline
+\mbox{\texttt{ in}}  & {\em slope} & R\+E\+A\+L(db), slope of the line joining the fragments. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacetwobody_a383bfa98740a91ee8ba2b8d1e2bd308a}\label{namespacetwobody_a383bfa98740a91ee8ba2b8d1e2bd308a}} 
+\index{twobody@{twobody}!gauss@{gauss}}
+\index{gauss@{gauss}!twobody@{twobody}}
+\doxyparagraph{\texorpdfstring{gauss()}{gauss()}}
+{\footnotesize\ttfamily subroutine twobody\+::gauss (\begin{DoxyParamCaption}\item[{real(db), dimension(3,3), intent(in)}]{a,  }\item[{real(db), dimension(3), intent(in)}]{b,  }\item[{real(db), dimension(3), intent(out)}]{c }\end{DoxyParamCaption})}
+
+
+
+This subroutine does a simple direct solution of the 3 by 3 linear system of equations. 
+
+This is an explicit implementation using the determinant algorithm.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em a(3,3)} & R\+E\+A\+L(db), Matrix of the linear system. \\
+\hline
+\mbox{\texttt{ in}}  & {\em b(3)} & R\+E\+A\+L(db), right-\/hand side of the equations. \\
+\hline
+\mbox{\texttt{ out}}  & {\em c(3)} & R\+E\+A\+L(db), solution vector. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacetwobody_a7421597c06f0fee95ef869ee4125ec3c}\label{namespacetwobody_a7421597c06f0fee95ef869ee4125ec3c}} 
+\index{twobody@{twobody}!getslope@{getslope}}
+\index{getslope@{getslope}!twobody@{twobody}}
+\doxyparagraph{\texorpdfstring{getslope()}{getslope()}}
+{\footnotesize\ttfamily real(db) function twobody\+::getslope}
+
+
+
+In this function the slope of the fragment connection line in the $x-z $ plane is determined. 
+
+The slope is determined by the eigenvector of largest quadrupole moment in the $(x,z)$-\/plane. The first loop sums up the quadrupole tensor, which is dimensioned {\ttfamily  q2(3,3)} but of which the index 2 is not actually necessary, since the $y$-\/direction is not involved. The definition is kept three-\/dimensional to reduce confusion and make later generalization easier. The two-\/dimensional eigenvalue problem for {\ttfamily q2} has the secular equation\+: \[(q_{11}-\lambda)(q_{33}-\lambda)-q_{13}^2=0,\] with $\lambda$ the eigenvalue. For the larger eigenvalue we get \[\lambda=\frac1{2}\left(q_{11}+q_{33}+\sqrt{(q_{11}-q_{33})^2 -4q_{13}^2}\right),\] and solving the equation $q_{13}x+(q_{33}-\lambda)z=0$ for $z$ yields \begin{eqnarray*} z&=&\frac{q_{13}}{\lambda-q_{33}}\,x\\ &=& \frac{q_{13}}{\frac1{2}\left(q_{11}-q_{33}+\sqrt{(q_{11}-q_{33})^2 -4q_{13}^2}\right)}. \end{eqnarray*} The code calls the denominator {\ttfamily denom} and makes sure no division by zero happens (this could happen for a spherical distribution). The resulting slope is returned in the module variable {\ttfamily slope}.
+
+
+\begin{DoxyRetVals}{Return values}
+{\em newslope} & R\+E\+A\+L(db), calculated slope. \\
+\hline
+\end{DoxyRetVals}
+\mbox{\Hypertarget{namespacetwobody_aebc4b35f90a4ba0188028f8799f7f462}\label{namespacetwobody_aebc4b35f90a4ba0188028f8799f7f462}} 
+\index{twobody@{twobody}!scattering@{scattering}}
+\index{scattering@{scattering}!twobody@{twobody}}
+\doxyparagraph{\texorpdfstring{scattering()}{scattering()}}
+{\footnotesize\ttfamily subroutine twobody\+::scattering}
+
+
+
+This subroutine calculates the relative motion and the various energies in the final state and, by referring back to the initial state before the collision, also the net scattering results. 
+
+The subroutine calculates the scattering angle as the sum of three contributions\+: the ingoing Rutherford angle, the rotation angle during the T\+D\+HF calculation, and the outgoing Rutherford angle.
+
+The Rutherford trajectories are hyperbolas described in polar coordinates as \[r(\phi)=\frac{k}{\epsilon\cos\phi-1}.\] with $r$ and $\phi$ describing the relative vector of the two-\/body problem. It is confined to the angular region $-\phi_\infty<\phi<\phi_\infty$ with the asymptotic angle $\phi_\infty=\cos^{-1}(\epsilon^{-1})$. The angle $\phi=0$ corresponds to the symmetry axis of the hyperbola.
+
+A problem is that this axis is not directly connected to the coordinates used for the T\+D\+HF calculation, which is assumed to have $x$ and $z$ as the reaction plane. Since, however, the parameters of the hyperbola $k$ and $\epsilon$ can be calculated from the impact parameter and energy of the relative motion, it suffices to know $r$ to calculate the angle corresponding to it in the hyperbola system of coordinates. This is done slightly differently for the incoming and outgoing trajectories.
+
+The following steps are done\+:
+\begin{DoxyItemize}
+\item Examine the initial state before the collision\+: Since the properties of the fragments may not be available anymore after a restart, we have to partially restore them from the original input files. {\itshape This requires that these files, or symbolic links to them, be present in current directory.} From {\ttfamily for005} it reads the center-\/of-\/mass energy $E_{\rm cm}$ and impact parameter $b$ as well as the initial positions of the nuclei for the start of the T\+D\+HF calculation, $\vec r_{0i},\;i=1,2$ called {\ttfamily fcent(\+:,i)} in the code. Then the masses $A_i$ and charges $Z_i$ are input from the fragment data files.
+\item As the next step, the variable {\ttfamily mass\+\_\+case} is determined to make sure the mass relation is the same in the ingoing and outgoing case. For symmetric collisions of course the scattering is not uniquely determined. From these data the following quantities are successively calculated\+:
+\begin{DoxyEnumerate}
+\item The initial relative vector for the T\+D\+HF calculation \[\vec r(t=0)=\vec r_2(t=0)-\vec r_1(t=0),\]
+\item the initial reduced mass \[\mu=m_0\frac{A_1A_2}{A_1+A_2},\]
+\item the dimensionless initial orbital angular momentum of relative motion, \[L_{\rm init}=\mu v_{\rm init}b=\mu\sqrt{\frac{2E_{\rm cm}}{\mu}}\, \frac{b}{\hbar}.\] From these quantities the parameters of the hyperbola can be calculated\+:
+\item the parameter $ k $ \[ k=\frac{L_{\rm init}^2\hbar^2}{e^2Z_1Z_2\mu},\]
+\item the major axis \[a=\frac{e^2Z_1Z_2}{2E_{\rm cm}},\]
+\item from which $ \epsilon $ results\+: \[\epsilon=\frac{\sqrt{a^2+b^2}}{a}.\] Now the angles can be calculated from the equation of the hyperbola. The asymptotic angle \[\phi_\infty=\cos^{-1}(1/\epsilon)\] and the angle corresponding to the initial position, \[\phi(t=0)=\cos^{-1}\left(\frac{k/|\vec r(t=0)|+1}{\epsilon}\right).\] In the code both are converted to degrees. The incoming Rutherford scattering angle is just the difference, \[\phi_{\rm incoming}=\phi_\infty-\phi(t=0).\]
+\end{DoxyEnumerate}
+\item The rotation of the system during the T\+D\+HF calculation is obtained from the initial and final positions of the fragments via the scalar product of the relative vectors.
+\item The code then calculates the relative motion properties in the final state\+: reduced mass {\ttfamily mu}, relative velocity {\ttfamily vrel}, kinetic energy {\ttfamily erel}, and angular momentum of relative motion {\ttfamily relangmom}. In addition the point-\/charge Coulomb interaction energy {\ttfamily ecoul\+\_\+point}, the velocity and kinetic energy in the radial direction {\ttfamily rdot} and {\ttfamily edot} are produced for information.
+\item For the extrapolation of the relative motion energy to infinite separation a more refinde calculation of the Coulomb energy is needed. This is done by using subroutine {\ttfamily poisson} three times\+: once for the total system and then for each fragment individually by removing the charge density from all space points associated with the other fragment. This yields {\ttfamily ecoul(0\+:2)} and the Coulomb interaction energy {\ttfamily ecoul\+\_\+int} can then be obtained as {\ttfamily ecoul(0)-\/ecoul(1)-\/ecoul(2)}. The asymptotic energy is then the sum of {\ttfamily erel} and {\ttfamily ecoul\+\_\+int}.
+\item Finally the deflection angle for the outgoing Rutherford trajectory is obtained. The main difference to the incoming trajectory is that now the quantities determining the hyperbola parameters are taken from the two-\/body analysis, namely the masses and charges of the fragments, the $y$-\/component of the angular momentum of relative motion {\ttfamily relangmom(1\+:2)}, and the final energy of relative motion {\ttfamily final\+\_\+ecm}. Otherwise the calculation proceeds identically, though the variable {\ttfamily b} has to be renamed {\ttfamily b}, since the impact parameter may be different for the final state.
+\item The subroutine then prints all the details. 
+\end{DoxyItemize}\mbox{\Hypertarget{namespacetwobody_a2330263249174a77f31f7d221b32ecd2}\label{namespacetwobody_a2330263249174a77f31f7d221b32ecd2}} 
+\index{twobody@{twobody}!twobody\_analysis@{twobody\_analysis}}
+\index{twobody\_analysis@{twobody\_analysis}!twobody@{twobody}}
+\doxyparagraph{\texorpdfstring{twobody\_analysis()}{twobody\_analysis()}}
+{\footnotesize\ttfamily subroutine twobody\+::twobody\+\_\+analysis (\begin{DoxyParamCaption}\item[{logical, intent(in)}]{full\+\_\+analysis }\end{DoxyParamCaption})}
+
+
+
+For a two-\/body collision, this subroutine checks whether the system is separated and in that case determines either only the distance of the fragments or, for the final state, produces a detailed analysis. 
+
+The subroutine starts off by allocating arrays {\ttfamily rhotot} and, if the full analysis is desired, {\ttfamily currtot}, which are then assigned the total density and current density, respectively. These are set to zero wherever the density is below the {\ttfamily threshold}. Then the following steps are taken\+:
+\begin{DoxyItemize}
+\item For the full analysis the total current density and the isospin-\/dependent density and current density are also cut off. Then the subroutine {\ttfamily analyze} is called for the whole system by setting {\ttfamily frag} such that all points have fragment index 0. The coordinate values are corrected for a shift in the center-\/of-\/mass. The total current density is then adjusted to remove any overall motion of the system in the grid.
+\item Following this, subroutine {\ttfamily cut\+\_\+system} is called to calculation fragment properties in the case of separation. If {\ttfamily full\+\_\+analysis} is true, this should be the case, as it is done only for the final state.
+\item For {\ttfamily full\+\_\+analysis=false}, the analysis is finished, since the fragment distance has been calculated. Therefore there is a {\ttfamily R\+E\+T\+U\+RN} after the arrays have been deallocated.
+\item After this the subroutine {\ttfamily analyze} is called separately for the two fragments to determine their properties
+\item Based on this information, subroutine {\ttfamily scattering} is called to calculate relative motion and the overall scattering results.
+\end{DoxyItemize}
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em full\+\_\+analysis} & L\+O\+G\+I\+C\+AL, if T\+R\+UE the full analysis is done, otherwise only the fragment separation is calculated. \\
+\hline
+\end{DoxyParams}
+
+
+\doxysubsubsection{Variable Documentation}
+\mbox{\Hypertarget{namespacetwobody_a2457901b1c62691433d20e06d5896005}\label{namespacetwobody_a2457901b1c62691433d20e06d5896005}} 
+\index{twobody@{twobody}!angmom@{angmom}}
+\index{angmom@{angmom}!twobody@{twobody}}
+\doxyparagraph{\texorpdfstring{angmom}{angmom}}
+{\footnotesize\ttfamily real(db), dimension(3,0\+:2) twobody\+::angmom}
+
+\mbox{\Hypertarget{namespacetwobody_a106274f3ec31d1cf1acd95be8e48a958}\label{namespacetwobody_a106274f3ec31d1cf1acd95be8e48a958}} 
+\index{twobody@{twobody}!charge@{charge}}
+\index{charge@{charge}!twobody@{twobody}}
+\doxyparagraph{\texorpdfstring{charge}{charge}}
+{\footnotesize\ttfamily real(db), dimension(0\+:2) twobody\+::charge}
+
+\mbox{\Hypertarget{namespacetwobody_ab9cccd46f8d1c9decdf96594d353472e}\label{namespacetwobody_ab9cccd46f8d1c9decdf96594d353472e}} 
+\index{twobody@{twobody}!cmfrag@{cmfrag}}
+\index{cmfrag@{cmfrag}!twobody@{twobody}}
+\doxyparagraph{\texorpdfstring{cmfrag}{cmfrag}}
+{\footnotesize\ttfamily real(db), dimension(3,0\+:2) twobody\+::cmfrag}
+
+\mbox{\Hypertarget{namespacetwobody_a101c61c5e7316c281654170add663303}\label{namespacetwobody_a101c61c5e7316c281654170add663303}} 
+\index{twobody@{twobody}!currtot@{currtot}}
+\index{currtot@{currtot}!twobody@{twobody}}
+\doxyparagraph{\texorpdfstring{currtot}{currtot}}
+{\footnotesize\ttfamily real(db), dimension(\+:,\+:,\+:,\+:), allocatable, private twobody\+::currtot\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+total current density 
+
+\mbox{\Hypertarget{namespacetwobody_a5e3817f0f66f20d1fe6310db16b91adc}\label{namespacetwobody_a5e3817f0f66f20d1fe6310db16b91adc}} 
+\index{twobody@{twobody}!frag@{frag}}
+\index{frag@{frag}!twobody@{twobody}}
+\doxyparagraph{\texorpdfstring{frag}{frag}}
+{\footnotesize\ttfamily integer, dimension(\+:,\+:,\+:), allocatable, private twobody\+::frag\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+for each mesh pint, tells whether it is in fragment 1 or 2, or below the cutoff density, (value 0) 
+
+\mbox{\Hypertarget{namespacetwobody_acf94ee03e78b349d4269ab8186c236a7}\label{namespacetwobody_acf94ee03e78b349d4269ab8186c236a7}} 
+\index{twobody@{twobody}!istwobody@{istwobody}}
+\index{istwobody@{istwobody}!twobody@{twobody}}
+\doxyparagraph{\texorpdfstring{istwobody}{istwobody}}
+{\footnotesize\ttfamily logical twobody\+::istwobody}
+
+
+
+principal return value. Tells whether the system is separated. 
+
+\mbox{\Hypertarget{namespacetwobody_a8bd07e07192b10c28601fcf4fb33f5d8}\label{namespacetwobody_a8bd07e07192b10c28601fcf4fb33f5d8}} 
+\index{twobody@{twobody}!mass@{mass}}
+\index{mass@{mass}!twobody@{twobody}}
+\doxyparagraph{\texorpdfstring{mass}{mass}}
+{\footnotesize\ttfamily real(db), dimension(0\+:2) twobody\+::mass}
+
+\mbox{\Hypertarget{namespacetwobody_a3faecacbdb442de749fe70c30728f444}\label{namespacetwobody_a3faecacbdb442de749fe70c30728f444}} 
+\index{twobody@{twobody}!mass\_case@{mass\_case}}
+\index{mass\_case@{mass\_case}!twobody@{twobody}}
+\doxyparagraph{\texorpdfstring{mass\_case}{mass\_case}}
+{\footnotesize\ttfamily integer twobody\+::mass\+\_\+case}
+
+
+
+records the initial mass relation. 0 indicates a symmetric collision, 1 that fragment \#1 is the lighter one, 2 that fragment \#2 is heavier. This is needed to order the fragments the same way in the final state. 
+
+\mbox{\Hypertarget{namespacetwobody_a2100c772082008166c536aced5a79c5b}\label{namespacetwobody_a2100c772082008166c536aced5a79c5b}} 
+\index{twobody@{twobody}!momentum@{momentum}}
+\index{momentum@{momentum}!twobody@{twobody}}
+\doxyparagraph{\texorpdfstring{momentum}{momentum}}
+{\footnotesize\ttfamily real(db), dimension(3,0\+:2) twobody\+::momentum}
+
+\mbox{\Hypertarget{namespacetwobody_a903caebecd1d2127d0ac9e7d379a57b0}\label{namespacetwobody_a903caebecd1d2127d0ac9e7d379a57b0}} 
+\index{twobody@{twobody}!rhotot@{rhotot}}
+\index{rhotot@{rhotot}!twobody@{twobody}}
+\doxyparagraph{\texorpdfstring{rhotot}{rhotot}}
+{\footnotesize\ttfamily real(db), dimension(\+:,\+:,\+:), allocatable, private twobody\+::rhotot\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+total density 
+
+\mbox{\Hypertarget{namespacetwobody_aed651dcad4935f4cff54b95a1d791092}\label{namespacetwobody_aed651dcad4935f4cff54b95a1d791092}} 
+\index{twobody@{twobody}!roft@{roft}}
+\index{roft@{roft}!twobody@{twobody}}
+\doxyparagraph{\texorpdfstring{roft}{roft}}
+{\footnotesize\ttfamily real(db) twobody\+::roft}
+
+
+
+fragment separation at the current time, zero means connected system 
+
+\mbox{\Hypertarget{namespacetwobody_a9b4a03d159774bc105a30873aa2bfdc3}\label{namespacetwobody_a9b4a03d159774bc105a30873aa2bfdc3}} 
+\index{twobody@{twobody}!roft\_old@{roft\_old}}
+\index{roft\_old@{roft\_old}!twobody@{twobody}}
+\doxyparagraph{\texorpdfstring{roft\_old}{roft\_old}}
+{\footnotesize\ttfamily real(db) twobody\+::roft\+\_\+old}
+
+
+
+fragment separation at the last time step. Needed to check whether the motion is outgoing or incoming 
+
+\mbox{\Hypertarget{namespacetwobody_abb1f19bd8de3cd06a90cb0be37f89bea}\label{namespacetwobody_abb1f19bd8de3cd06a90cb0be37f89bea}} 
+\index{twobody@{twobody}!threshold@{threshold}}
+\index{threshold@{threshold}!twobody@{twobody}}
+\doxyparagraph{\texorpdfstring{threshold}{threshold}}
+{\footnotesize\ttfamily real(db), parameter twobody\+::threshold =1.D-\/5}
+
+
+
+threshold density to recognze separate fragmenst 
+
+\mbox{\Hypertarget{namespacetwobody_a9d1f788f4eeaffe4819a7688117ebd21}\label{namespacetwobody_a9d1f788f4eeaffe4819a7688117ebd21}} 
+\index{twobody@{twobody}!velocity@{velocity}}
+\index{velocity@{velocity}!twobody@{twobody}}
+\doxyparagraph{\texorpdfstring{velocity}{velocity}}
+{\footnotesize\ttfamily real(db), dimension(3,0\+:2) twobody\+::velocity}
+
+
+
+c.\+m. velocity vectors for the total system and the fragments 
+

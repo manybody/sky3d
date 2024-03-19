@@ -43,17 +43,24 @@ MODULE Params
   CHARACTER(LEN=80) :: converfile='conver.res'           !<contains convergence 
   !!information for the static calculation.
   CHARACTER(LEN=80) :: monopolesfile='monopoles.res'     !<contains moment 
-  !!values of monopole type.
-  CHARACTER(LEN=80) :: dipolesfile='dipoles.res'         !<contains moment values of dipole type.
+  !!values of monopole (L=0) type.
+  CHARACTER(LEN=80) :: dipolesfile='dipoles.res'         !<contains moment values of dipole (L=1) type.
+  CHARACTER(LEN=80) :: quadrupolesfile='quadrupoles.res' !<contains moment values of quadrupole (L=2) type.
+  CHARACTER(LEN=80) :: octupolesfile='octupoles.res'   !<contains moment values of octupole (L=3) type.
+
+  CHARACTER(LEN=80) :: hexadecapolesfile='hexadecapoles.res' !<contains moment values of hexadecapole (L=4) type.
+
+  CHARACTER(LEN=80) :: diatriacontapolesfile='diatriacontapoles.res' !<contains moment values of hexadecapole (L=5) type.
+
+  CHARACTER(LEN=80) :: energiesfile='energies.res'       !<energy data for time-dependent mode.
   CHARACTER(LEN=80) :: momentafile='momenta.res'         !<contains components of the total
   !!momentum.
-  CHARACTER(LEN=80) :: energiesfile='energies.res'       !<energy data for time-dependent mode.
-  CHARACTER(LEN=80) :: quadrupolesfile='quadrupoles.res' !<contains moment values of dipole type.
   CHARACTER(LEN=80) :: spinfile='spin.res'               !<time-dependent total, orbital, and spin
   !!angular-momentum data as three-dimensional vectors. 
   CHARACTER(LEN=80) :: extfieldfile='extfield.res'       !<contains the time-dependence of the
   !!expectation value of the external field. Present only if an
-  !!external field for boost or time-dependent excitation is used.
+  !!external field for boost or time-dependent excitation is used along with the strength of the boost and the
+  !! L and M values used in the definition.
   INTEGER,PARAMETER :: scratch=11                        !<unit number used for temporary storage.
   INTEGER,PARAMETER :: scratch2=12                       !<unit number used for temporary storage.
   !>@}

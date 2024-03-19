@@ -1,0 +1,59 @@
+\hypertarget{twobody_8f90}{}\doxysubsection{twobody.\+f90 File Reference}
+\label{twobody_8f90}\index{twobody.f90@{twobody.f90}}
+\doxysubsubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \mbox{\hyperlink{namespacetwobody}{twobody}}
+\begin{DoxyCompactList}\small\item\em This module contains the routines to distinguish between a one and two-\/body system and to perform a two-\/body analysis in the case of a two-\/body collision including scattering angles and momenta. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespacetwobody_a2330263249174a77f31f7d221b32ecd2}{twobody\+::twobody\+\_\+analysis}} (full\+\_\+analysis)
+\begin{DoxyCompactList}\small\item\em For a two-\/body collision, this subroutine checks whether the system is separated and in that case determines either only the distance of the fragments or, for the final state, produces a detailed analysis. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacetwobody_ae44d409d045e1a7e46e63d1166633885}{twobody\+::analyze}} (ifrag)
+\begin{DoxyCompactList}\small\item\em This subroutine calculates properties of the two separate fragment or of the whole system. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacetwobody_a383bfa98740a91ee8ba2b8d1e2bd308a}{twobody\+::gauss}} (a, b, c)
+\begin{DoxyCompactList}\small\item\em This subroutine does a simple direct solution of the 3 by 3 linear system of equations. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacetwobody_aebc4b35f90a4ba0188028f8799f7f462}{twobody\+::scattering}}
+\begin{DoxyCompactList}\small\item\em This subroutine calculates the relative motion and the various energies in the final state and, by referring back to the initial state before the collision, also the net scattering results. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacetwobody_a9d40744e5bb0676f61280e518b5555ac}{twobody\+::cut\+\_\+system}} (full\+\_\+analysis)
+\begin{DoxyCompactList}\small\item\em This subroutine finds out whether the system can be decomposed into two fragments records the geometry of this decomposition. \end{DoxyCompactList}\item 
+real(db) function \mbox{\hyperlink{namespacetwobody_a7421597c06f0fee95ef869ee4125ec3c}{twobody\+::getslope}} ()
+\begin{DoxyCompactList}\small\item\em In this function the slope of the fragment connection line in the $x-z $ plane is determined. \end{DoxyCompactList}\item 
+logical function \mbox{\hyperlink{namespacetwobody_a72a5db841ae42fb0913afd1f592159f1}{twobody\+::divpoint}} (xmin, zmin, bb, slope)
+\begin{DoxyCompactList}\small\item\em The function divpoint examines the line determined by the axis of largest quadrupole moment to look for a suitable separation point between two fragments. If one is found with sufficiently low density, it returns {\ttfamily T\+R\+UE} and the properties of that point in its arguments. Otherwise it returns {\ttfamily F\+A\+L\+SE}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+real(db), parameter \mbox{\hyperlink{namespacetwobody_abb1f19bd8de3cd06a90cb0be37f89bea}{twobody\+::threshold}} =1.D-\/5
+\begin{DoxyCompactList}\small\item\em threshold density to recognze separate fragmenst \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacetwobody_a3faecacbdb442de749fe70c30728f444}{twobody\+::mass\+\_\+case}}
+\begin{DoxyCompactList}\small\item\em records the initial mass relation. 0 indicates a symmetric collision, 1 that fragment \#1 is the lighter one, 2 that fragment \#2 is heavier. This is needed to order the fragments the same way in the final state. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacetwobody_aed651dcad4935f4cff54b95a1d791092}{twobody\+::roft}}
+\begin{DoxyCompactList}\small\item\em fragment separation at the current time, zero means connected system \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacetwobody_a9b4a03d159774bc105a30873aa2bfdc3}{twobody\+::roft\+\_\+old}}
+\begin{DoxyCompactList}\small\item\em fragment separation at the last time step. Needed to check whether the motion is outgoing or incoming \end{DoxyCompactList}\item 
+real(db), dimension(3, 0\+:2) \mbox{\hyperlink{namespacetwobody_a9d1f788f4eeaffe4819a7688117ebd21}{twobody\+::velocity}}
+\begin{DoxyCompactList}\small\item\em c.\+m. velocity vectors for the total system and the fragments \end{DoxyCompactList}\item 
+real(db), dimension(\+:,\+:,\+:), allocatable, private \mbox{\hyperlink{namespacetwobody_a903caebecd1d2127d0ac9e7d379a57b0}{twobody\+::rhotot}}
+\begin{DoxyCompactList}\small\item\em total density \end{DoxyCompactList}\item 
+real(db), dimension(\+:,\+:,\+:,\+:), allocatable, private \mbox{\hyperlink{namespacetwobody_a101c61c5e7316c281654170add663303}{twobody\+::currtot}}
+\begin{DoxyCompactList}\small\item\em total current density \end{DoxyCompactList}\item 
+integer, dimension(\+:,\+:,\+:), allocatable, private \mbox{\hyperlink{namespacetwobody_a5e3817f0f66f20d1fe6310db16b91adc}{twobody\+::frag}}
+\begin{DoxyCompactList}\small\item\em for each mesh pint, tells whether it is in fragment 1 or 2, or below the cutoff density, (value 0) \end{DoxyCompactList}\item 
+logical \mbox{\hyperlink{namespacetwobody_acf94ee03e78b349d4269ab8186c236a7}{twobody\+::istwobody}}
+\begin{DoxyCompactList}\small\item\em principal return value. Tells whether the system is separated. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ mass,charge, c.\+m., momentum, and angular momentum of the total system and the fragments}\par
+\begin{DoxyCompactItemize}
+\item 
+real(db), dimension(0\+:2) \mbox{\hyperlink{namespacetwobody_a8bd07e07192b10c28601fcf4fb33f5d8}{twobody\+::mass}}
+\item 
+real(db), dimension(0\+:2) \mbox{\hyperlink{namespacetwobody_a106274f3ec31d1cf1acd95be8e48a958}{twobody\+::charge}}
+\item 
+real(db), dimension(3, 0\+:2) \mbox{\hyperlink{namespacetwobody_ab9cccd46f8d1c9decdf96594d353472e}{twobody\+::cmfrag}}
+\item 
+real(db), dimension(3, 0\+:2) \mbox{\hyperlink{namespacetwobody_a2100c772082008166c536aced5a79c5b}{twobody\+::momentum}}
+\item 
+real(db), dimension(3, 0\+:2) \mbox{\hyperlink{namespacetwobody_a2457901b1c62691433d20e06d5896005}{twobody\+::angmom}}
+\end{DoxyCompactItemize}
+\end{Indent}

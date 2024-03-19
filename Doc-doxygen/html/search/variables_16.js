@@ -1,0 +1,6 @@
+var searchData=
+[
+  ['y_791',['y',['../namespacegrids.html#aa0184ba4195c1ec4f41681076ea12d69',1,'grids']]],
+  ['ybackward_792',['ybackward',['../namespacefourier.html#ab6ecb8019844c362572611811e13e5d3',1,'fourier']]],
+  ['yforward_793',['yforward',['../namespacefourier.html#acc329727a2f093ac309d86f3f64da946',1,'fourier']]]
+];

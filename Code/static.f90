@@ -17,7 +17,7 @@ MODULE Static
   USE Energies
   USE Inout, ONLY: write_wavefunctions, write_densities, plot_density, &
        sp_properties,start_protocol
-  USE Pairs, ONLY: pair,epair
+  USE Pairs, ONLY: pair,epair,avdelt
   IMPLICIT NONE
   LOGICAL  :: tdiag=.FALSE.    !< if \c true, there is a diagonalization of
   !!the Hamiltonian during the later (after the 20th) static iterations.
@@ -126,8 +126,8 @@ CONTAINS
        WRITE(*,"(A,1PE12.4)") " Convergence limit: ",serr  
        ! initialize *.res files
        CALL start_protocol(converfile, &
-            '# Iter   Energy  d_Energy    h**2        h*h        rms    &
-            &beta2  gamma')
+            '# Iter   Energy  d_Energy    h**2        h*h        rms      r^2     r^3     r^4    &
+            &beta2   gamma      Avdelta(N)   Avdelta(P)')
        CALL start_protocol(dipolesfile, &
             '# Iter    c.m. x-y-z                                  Isovector&
             &dipoles x-y-z')
@@ -600,13 +600,13 @@ CONTAINS
          header='  #  Par   v**2   var_h1   var_h2    Norm     Ekin    Energy &
          &    Lx      Ly      Lz     Sx     Sy     Sz  '   
     ! calculate static observables for printout                       *
-    CALL moments
+    CALL moments(0,0)
     CALL integ_energy
     CALL sum_energy
     ! add information to summary files
     OPEN(unit=scratch,file=converfile,POSITION='APPEND')  
-    WRITE(scratch,'(1x,i5,f9.2,3(1pg11.3),2(0pf8.3),f6.1)') &
-         iter,ehf,delesum/pnrtot,efluct1,efluct2,rmstot,beta,gamma
+   WRITE(scratch,'(2x,i5,f9.2,3(1pg11.3),6(0pf15.8),f15.8,f15.8)') &
+         iter,ehf,delesum/pnrtot,efluct1,efluct2,rmstot,r2tot,r3tot,r4tot,beta,gamma,avdelt(1),avdelt(2)
     CLOSE(scratch)
     OPEN(unit=scratch,file=dipolesfile, POSITION='APPEND')  
     WRITE(scratch,'(1x,i5,6E14.4)') iter,cmtot,cm(:,2)-cm(:,1)

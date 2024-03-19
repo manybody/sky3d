@@ -1,0 +1,35 @@
+\hypertarget{pairs_8f90}{}\doxysubsection{pairs.\+f90 File Reference}
+\label{pairs_8f90}\index{pairs.f90@{pairs.f90}}
+\doxysubsubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \mbox{\hyperlink{namespacepairs}{pairs}}
+\begin{DoxyCompactList}\small\item\em The principal part of this module is the subroutine {\ttfamily pair}, which computes the pairing solution based on the B\+CS model. It is the only public part of this module. The other subroutines are helper routines that directly use the single-\/particle properties defined in module {\ttfamily Levels}. The module variable {\ttfamily iq} controls whether the solution is sought for neutrons ({\ttfamily  iq=1 } or protons {\ttfamily  iq=2 } and accordingly the single-\/particle levels from {\ttfamily  npmin(iq) } to {\ttfamily  npsi(iq) } are affected. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine, public \mbox{\hyperlink{namespacepairs_ac8694dc544ae812f2f869cbf14c428fd}{pairs\+::pair}}
+\begin{DoxyCompactList}\small\item\em This is the only routine visible from outside the module. It solves the pairing problem and prints out summary information. The principal results used in the rest of the code are the B\+CS occupation numbers $ v_k^2\rightarrow {\tt wocc} $ and the pairing energies {\ttfamily epair}. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacepairs_a7c2431ffd1557afa02f0c9a176e915ef}{pairs\+::pairgap}}
+\begin{DoxyCompactList}\small\item\em This subroutine calculates the pairing gaps $ \Delta_k $ stored in the array {\ttfamily deltaf} for all single-\/particle states. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacepairs_a441ef2eae46f5af49f393c98a761ab2f}{pairs\+::pairdn}} (particle\+\_\+number)
+\begin{DoxyCompactList}\small\item\em The subroutine {\ttfamily pairdn} determines the pairing solution by using {\ttfamily rbrent} to find the correct Fermi energy for the given particle number. After that a few averaged or integral quantities are calculated. \end{DoxyCompactList}\item 
+real(db) function \mbox{\hyperlink{namespacepairs_a8db3773f533823b3f6847833b721a349}{pairs\+::rbrent}} (particle\+\_\+number)
+\begin{DoxyCompactList}\small\item\em This subroutine is an adapted version of the {\itshape  Van Wijngaarden-\/\+Dekker-\/\+Brent} method for finding the root of a function (see {\bfseries [Pre92aB]} ). Given the desired particle number as an argument, it searches for the value of the Fermi energy that makes this particle number agree with that returned by {\ttfamily bcs\+\_\+occupation}. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacepairs_a9b69f1dbee78573a5e136e5bc13aa442}{pairs\+::bcs\+\_\+occupation}} (efermi, bcs\+\_\+partnum)
+\begin{DoxyCompactList}\small\item\em For a given Fermi energy $ \epsilon_F $ passed as argument {\ttfamily efermi}, this subroutine evaluates the particle number that would result with such a Fermi energy and returns it as its second argument, {\ttfamily bcs\+\_\+partnum}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+integer \mbox{\hyperlink{namespacepairs_afb437f116fbaed9632a22d7d2d5c8d07}{pairs\+::iq}}
+\begin{DoxyCompactList}\small\item\em Index labeling the isospin. \end{DoxyCompactList}\item 
+real(db), dimension(2), save \mbox{\hyperlink{namespacepairs_ac16f79935af718cf65355d27efbc9368}{pairs\+::eferm}}
+\begin{DoxyCompactList}\small\item\em Fermi energy in MeV for the two isospins. \end{DoxyCompactList}\item 
+real(db), dimension(2), save, public \mbox{\hyperlink{namespacepairs_ab9b18b29c64456ece2c660791fe9d26e}{pairs\+::epair}}
+\begin{DoxyCompactList}\small\item\em Pairing energy in MeV for the two isospins. It is given by. \end{DoxyCompactList}\item 
+real(db), dimension(2), save \mbox{\hyperlink{namespacepairs_a78993b1f56f566702b152ccbacec8a48}{pairs\+::avdelt}}
+\begin{DoxyCompactList}\small\item\em Average gap in MeV for the two isospins. It is given by. \end{DoxyCompactList}\item 
+real(db), dimension(2), save \mbox{\hyperlink{namespacepairs_a335ba4c0f8f79719ec51d80e08832660}{pairs\+::avg}}
+\begin{DoxyCompactList}\small\item\em The average pairing force for each isospin, given by. \end{DoxyCompactList}\item 
+real(db), dimension(\+:), allocatable, save \mbox{\hyperlink{namespacepairs_a360ac97176e3d6a4e86e16cd7a321e10}{pairs\+::deltaf}}
+\begin{DoxyCompactList}\small\item\em single-\/particle gap in MeV for each single-\/particle state. \end{DoxyCompactList}\end{DoxyCompactItemize}

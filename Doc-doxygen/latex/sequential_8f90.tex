@@ -1,0 +1,47 @@
+\hypertarget{sequential_8f90}{}\doxysubsection{sequential.\+f90 File Reference}
+\label{sequential_8f90}\index{sequential.f90@{sequential.f90}}
+\doxysubsubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \mbox{\hyperlink{namespaceparallel}{parallel}}
+\begin{DoxyCompactList}\small\item\em This module organizes the execution on distributed-\/memory machines using {\ttfamily M\+PI}. Its interface is made such that on sequential machines {\ttfamily \mbox{\hyperlink{parallel_8f90}{parallel.\+f90}}} can simply be replaced by a special version {\ttfamily \mbox{\hyperlink{sequential_8f90}{sequential.\+f90}}} which contains a definition of this module generating trivial data. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespaceparallel_af4d1baf7c89b4eb0a8ea52b0d0dffa04}{parallel\+::alloc\+\_\+nodes}}
+\begin{DoxyCompactList}\small\item\em This subroutine merely allocates the internal arrays of module {\ttfamily Parallel}. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceparallel_aa3a47cbcb6f4f85c1cf754b1d85a088b}{parallel\+::init\+\_\+all\+\_\+mpi}}
+\begin{DoxyCompactList}\small\item\em {\ttfamily init\+\_\+all\+\_\+mpi} This subroutine initializes {\ttfamily M\+PI} and finds out the number of processors {\ttfamily mpi\+\_\+nprocs} as well as the index of the current one {\ttfamily mpi\+\_\+myproc}. The flag {\ttfamily wflag} is set to true only for the processor numbered 0. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceparallel_a5274b306c0464a4e2ff54c06fee5cf43}{parallel\+::mpi\+\_\+init}} (ierror)
+\begin{DoxyCompactList}\small\item\em dummy function for the M\+PI routine \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceparallel_a72000f1fe30f921830c34726bfc48d57}{parallel\+::mpi\+\_\+comm\+\_\+size}} (comm\+\_\+world, nprocs, ierror)
+\begin{DoxyCompactList}\small\item\em dummy function for the M\+PI routine \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceparallel_ae96c33bcbbf241f5e3ef41b525d44f36}{parallel\+::mpi\+\_\+comm\+\_\+rank}} (comm\+\_\+world, myproc, ierror)
+\begin{DoxyCompactList}\small\item\em dummy function for the M\+PI routine \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceparallel_a74c997f5a6f0b3d6cee5447c8e7a287a}{parallel\+::mpi\+\_\+get\+\_\+processor\+\_\+name}} (processor\+\_\+name, proc\+\_\+namelen, ierror)
+\begin{DoxyCompactList}\small\item\em dummy function for the M\+PI routine \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceparallel_a2b5b4fe98b4e7c2af82404aa78215255}{parallel\+::mpi\+\_\+barrier}} (comm\+\_\+world, ierror)
+\begin{DoxyCompactList}\small\item\em dummy function for the M\+PI routine \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceparallel_aac16d0a02c718c0fb956e02b986b638d}{parallel\+::associate\+\_\+nodes}}
+\begin{DoxyCompactList}\small\item\em The first loop in this subroutine distributes the wave functions over the nodes. This is done by looping over the wave functions and assigning one to each processor in turn. When the number of processors has been reached, it restarts from processor 0. This way of allocation is to some extent arbitrary and can be changed. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceparallel_a88b2a7834b1887a9e74cf410e6362af9}{parallel\+::mpi\+\_\+allreduce}} (rho, tmp\+\_\+rho, length, i\+\_\+double\+\_\+precision, sum, comm\+\_\+world, ierror)
+\begin{DoxyCompactList}\small\item\em dummy function for the M\+PI routine \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceparallel_a1608a6c6b47142227f92bf4cc49e8268}{parallel\+::collect\+\_\+densities}}
+\begin{DoxyCompactList}\small\item\em This subroutine uses the {\ttfamily M\+PI} routine {\ttfamily mpi\+\_\+allreduce} to sum up the partial densities from the different nodes, using temporary arrays {\ttfamily tmp\+\_\+rho} and {\ttfamily tmp\+\_\+current} (depending on whether it is a scalar or vector field) in the process. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceparallel_a0a509a54da5b66697fd0276110148543}{parallel\+::collect\+\_\+sp\+\_\+properties}}
+\begin{DoxyCompactList}\small\item\em This subroutine collects the single-\/particle properties calculated from the wave functions and thus available only for the local wave functions on each node. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceparallel_a23978d1e63ec00b9bd3dd670eaf2a599}{parallel\+::finish\+\_\+mpi}}
+\begin{DoxyCompactList}\small\item\em This is just a wrapper for the {\ttfamily M\+PI} finalization call. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+integer \mbox{\hyperlink{namespaceparallel_a37d1ce75101788b75c2ed15cae88dcf5}{parallel\+::processor\+\_\+name}}
+\item 
+integer \mbox{\hyperlink{namespaceparallel_afe3fc05e32b34e42b81fab02f26bbd57}{parallel\+::proc\+\_\+namelen}}
+\item 
+integer \mbox{\hyperlink{namespaceparallel_aefce06d5c67ff6bf57317a43977b50d8}{parallel\+::mpi\+\_\+comm\+\_\+world}}
+\item 
+integer \mbox{\hyperlink{namespaceparallel_a161a973634596e8f992dddec0ffb7dc9}{parallel\+::mpi\+\_\+sum}}
+\item 
+integer \mbox{\hyperlink{namespaceparallel_a14bf7e02e0c33115d9058ffd60561f8e}{parallel\+::mpi\+\_\+double\+\_\+precision}}
+\end{DoxyCompactItemize}

@@ -1,0 +1,320 @@
+\hypertarget{namespacestatic}{}\doxysubsection{static Module Reference}
+\label{namespacestatic}\index{static@{static}}
+
+
+This module contains the routines needed for the static iterations. All the logic needed for this case is concentrated here; all other modules except for {\ttfamily External} are equally used in the dynamic calculation.  
+
+
+\doxysubsubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespacestatic_a0819e22b12fb490f7e3d309592b6b6b7}{getin\+\_\+static}}
+\begin{DoxyCompactList}\small\item\em This routine reads the input for the static calculation using namelist {\ttfamily static}. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacestatic_afa74b74b5f0d14e753aea12e1f5a3015}{init\+\_\+static}}
+\begin{DoxyCompactList}\small\item\em This subroutine essentially just prints the static input and then initializes the header files with their header lines. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacestatic_a6429b3a218b0e96282940fa9f8573cff}{statichf}}
+\begin{DoxyCompactList}\small\item\em This is the principal routine for the static iterations. It applies the gradient step repeatedly until convergence is achieved or the maximum number of iterations is reached. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacestatic_ac009061bd66f4ecd0ecedfc3195ef394}{grstep}} (nst, iq, spe, denerg, psin)
+\begin{DoxyCompactList}\small\item\em This subroutine applies the damped gradient step to a wave function {\ttfamily psi}. Its index is {\ttfamily nst} and isospin {\ttfamily iq} -\/ these data are needed for the construction of the Hamiltonian matrix {\ttfamily hmatr}. The argument {\ttfamily spe} $ \rightarrow\epsilon $ represents the single-\/particle energy which is used a an energy shift in the calculation. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacestatic_a8fc2fc5ec7d1e7932a73664556b37785}{diagstep}} (iq, nlin)
+\begin{DoxyCompactList}\small\item\em This subroutine performs a diagonalization of the single-\/particle Hamiltonian using the L\+A\+P\+A\+CK routine {\ttfamily Z\+H\+E\+E\+VD}. This is of course done separately for protons and neutrons indexed by {\ttfamily iq}. The matrix {\ttfamily hmatr} is produced in {\ttfamily grstep}. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacestatic_a4414bd66d5a02faadc9bca95de6630e6}{sinfo}}
+\begin{DoxyCompactList}\small\item\em This subroutine computes the data that are not needed for the calculation itself, but only for informative output and writes them onto the appropriate output files. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacestatic_a567e41f470e7ceb65e1820519b13bf5f}{harmosc}}
+\begin{DoxyCompactList}\small\item\em This subroutine initializes all wave function with harmonic oscillator states. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+logical \mbox{\hyperlink{namespacestatic_a02053607d91051521724b6d73caa35e4}{tdiag}} =.F\+A\+L\+S\+E.
+\begin{DoxyCompactList}\small\item\em if {\ttfamily true}, there is a diagonalization of the Hamiltonian during the later (after the 20th) static iterations. The 20 is hard coded in {\ttfamily \mbox{\hyperlink{static_8f90}{static.\+f90}}}. \end{DoxyCompactList}\item 
+logical \mbox{\hyperlink{namespacestatic_ae48d61c855e561751a112a5d392a728d}{tlarge}} =.F\+A\+L\+S\+E.
+\begin{DoxyCompactList}\small\item\em if {\ttfamily true}, during the diagonalization the new wave functions are temporarily written on disk to avoid \end{DoxyCompactList}\item 
+logical \mbox{\hyperlink{namespacestatic_a0b0a2ff8e5c6872e60c3ed0dfbed39c4}{tvaryx\+\_\+0}} =.F\+A\+L\+S\+E.
+\begin{DoxyCompactList}\small\item\em it {\ttfamily .T\+R\+UE.} the parameter $ x_0 $ is changed in every iteration in order to achieve faster convergence. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacestatic_a0a40f66c0ff0224e36ec56c3ac25e492}{maxiter}}
+\begin{DoxyCompactList}\small\item\em maximum number of iterations allowed. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacestatic_ad30ae4cf1ce4900bd6dc12ebb31b2d5b}{radinx}}
+\begin{DoxyCompactList}\small\item\em radius parameters (x-\/direction) used in the harmonic-\/oscillator initialization (see subroutine {\ttfamily harmosc}). \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacestatic_a337a93cb9cb1213411d7e5e9ee020de3}{radiny}}
+\begin{DoxyCompactList}\small\item\em radius parameters (y-\/direction) used in the harmonic-\/oscillator initialization (see subroutine {\ttfamily harmosc}). \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacestatic_aecffa108dc9fb276021f14ec6be1ab8d}{radinz}}
+\begin{DoxyCompactList}\small\item\em radius parameters (z-\/direction) used in the harmonic-\/oscillator initialization (see subroutine {\ttfamily harmosc}). \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacestatic_a9f397c6a24a7072aec2d2b22df3b0516}{serr}}
+\begin{DoxyCompactList}\small\item\em convergence criterion. Iterations are stopped if the fluctuation in single-\/particle energies falls below this value (see near the end of subroutines \{{\ttfamily statichf}). \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacestatic_a4bcc54d2fc7d8da0a476932ae0d56671}{delesum}}
+\begin{DoxyCompactList}\small\item\em used to sum up the changes in single-\/particle energies during one iteration; it is calculated in {\ttfamily statichf} but printed in {\ttfamily sinfo} so that it is a module variable. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacestatic_a4fa3bb53bc9f36f4064876373e806d4b}{x0dmp}} =0.\+2D0
+\begin{DoxyCompactList}\small\item\em corresponds to the parameter $ x_0 $ appearing in the damped gradient iteration. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacestatic_ad60f84483bcf8e28fe2132e5ccfedae6}{e0dmp}} =100.D0
+\begin{DoxyCompactList}\small\item\em corresponds to the parameter $ E_0 $ appearing in the damped gradient iteration. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacestatic_ac715209896dd2373428688296794408c}{x0dmpmin}} =0.\+2d0
+\begin{DoxyCompactList}\small\item\em corresponds to minimal value of $ x_0 $ appearing in the damped gradient iteration, if tvaryx\+\_\+0 is set to {\ttfamily .T\+R\+UE.}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+This module contains the routines needed for the static iterations. All the logic needed for this case is concentrated here; all other modules except for {\ttfamily External} are equally used in the dynamic calculation. 
+
+\doxysubsubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespacestatic_a8fc2fc5ec7d1e7932a73664556b37785}\label{namespacestatic_a8fc2fc5ec7d1e7932a73664556b37785}} 
+\index{static@{static}!diagstep@{diagstep}}
+\index{diagstep@{diagstep}!static@{static}}
+\doxyparagraph{\texorpdfstring{diagstep()}{diagstep()}}
+{\footnotesize\ttfamily subroutine static\+::diagstep (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{iq,  }\item[{integer, intent(in)}]{nlin }\end{DoxyParamCaption})}
+
+
+
+This subroutine performs a diagonalization of the single-\/particle Hamiltonian using the L\+A\+P\+A\+CK routine {\ttfamily Z\+H\+E\+E\+VD}. This is of course done separately for protons and neutrons indexed by {\ttfamily iq}. The matrix {\ttfamily hmatr} is produced in {\ttfamily grstep}. 
+
+We do not give excessive detail here but summarize the main points, which should be easy to analyze. The steps are\+:
+
+
+\begin{DoxyItemize}
+\item {\bfseries{Step 1}}\+: the matrix is copied into array {\ttfamily unitary}. The {\ttfamily Z\+H\+E\+E\+VD} is called, which leaves as main results the vector of eigenvalues {\ttfamily eigen} and the unitary matrix {\ttfamily unitary} describing the transformation from the original states to the diagonalized ones. The latter matrix is stored in lower-\/diagonal form.
+\item {\bfseries{Step 2\+: transform states}}\+: the matrix {\ttfamily unitary} is used to form the appropriate linear combinations of the original single-\/particle states. If {\ttfamily tlarge} is true, each state if formed independently and written onto a scratch file, otherwise an intermediate array {\ttfamily ps1}, dimensioned to hold either only protons or only neutrons (number of states through the argument {\ttfamily nlin}), is allocated to receive the new states, which are then copied back into {\ttfamily psi}.
+\end{DoxyItemize}
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em iq} & I\+N\+T\+E\+G\+ER, takes tisospin. \\
+\hline
+\mbox{\texttt{ in}}  & {\em nlin} & I\+N\+T\+E\+G\+ER, takes the number of particles with isospin {\ttfamily iq}. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacestatic_a0819e22b12fb490f7e3d309592b6b6b7}\label{namespacestatic_a0819e22b12fb490f7e3d309592b6b6b7}} 
+\index{static@{static}!getin\_static@{getin\_static}}
+\index{getin\_static@{getin\_static}!static@{static}}
+\doxyparagraph{\texorpdfstring{getin\_static()}{getin\_static()}}
+{\footnotesize\ttfamily subroutine static\+::getin\+\_\+static}
+
+
+
+This routine reads the input for the static calculation using namelist {\ttfamily static}. 
+
+This includes the module variables of this module, but also the numbers of particles, which are input quantities only in the static mode if initialization is not done via fragment files. In the case of user initialization they are also needed to correctly allocate the fields; only the wave functions are then calculated in {\ttfamily user\+\_\+init}. The values given in the input are overwritten by fragment data otherwise.
+
+Thus only if {\ttfamily nof$<$=0} the input numbers are used. If {\ttfamily npsi} is not given in the input, the values of {\ttfamily nneut} and {\ttfamily nprot} are used for the number of wave functions, except for the pairing case, when they are computed from a formula.
+
+The variables {\ttfamily charge\+\_\+number} and {\ttfamily mass\+\_\+number} are also set for this case. \mbox{\Hypertarget{namespacestatic_ac009061bd66f4ecd0ecedfc3195ef394}\label{namespacestatic_ac009061bd66f4ecd0ecedfc3195ef394}} 
+\index{static@{static}!grstep@{grstep}}
+\index{grstep@{grstep}!static@{static}}
+\doxyparagraph{\texorpdfstring{grstep()}{grstep()}}
+{\footnotesize\ttfamily subroutine static\+::grstep (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{nst,  }\item[{integer, intent(in)}]{iq,  }\item[{real(db), intent(inout)}]{spe,  }\item[{real(db), intent(out)}]{denerg,  }\item[{complex(db), dimension(\+:,\+:,\+:,\+:), intent(inout)}]{psin }\end{DoxyParamCaption})}
+
+
+
+This subroutine applies the damped gradient step to a wave function {\ttfamily psi}. Its index is {\ttfamily nst} and isospin {\ttfamily iq} -\/ these data are needed for the construction of the Hamiltonian matrix {\ttfamily hmatr}. The argument {\ttfamily spe} $ \rightarrow\epsilon $ represents the single-\/particle energy which is used a an energy shift in the calculation. 
+
+The work is done in the following steps\+:
+\begin{DoxyEnumerate}
+\item apply $ \hat h-\epsilon $ to the wave function {\ttfamily psin} to obtain {\ttfamily ps1}.
+\item calculate the diagonal matrix element of $ \hat h $ \[ {\tt xnormb}=\langle {\tt psin}|{\tt ps1}\rangle=\langle {\tt psin}|\hat h|{\tt psin}\rangle\] and the squared norm of {\ttfamily psin} (in {\ttfamily xnorm}). The expression {\ttfamily xnormb/xnorm} thus corresponds to the expectation value $ \|\hat h\| $ in {\ttfamily psin}.
+
+Then the matrix elements of $ \hat h $ with all other states of the same isospin are calculated and inserted into {\ttfamily hmatr}; in the diagonal matrix elements the energy shift $ \epsilon $ is added back.
+\item for the calculation of the fluctuation in the single-\/particle energy, the quantity \[ {\tt exph2}=\langle {\tt psin}|\hat h^2|{\tt psin}\rangle \] is used to compute \[ {\tt sp\_efluct1}=\sqrt{\|\hat h^2\|-\|\hat h\|^2} \] and the squared norm \[ {\tt varh2}=\|\hat h\,{\tt psin}\|^2 \] similarly for the second fluctuation measure \[ {\tt sp\_efluct2}=\sqrt{\|\hat h\,{\tt psin}\|^2/\|{\tt psin}\|^2-\|\hat h\|^2}. \] They are calculated only for time steps with output turned on.
+\item now the damping is performed. We first compute \[ |{\tt ps1}\rangle-{\tt xnormb}\,|{\tt psin}\rangle=\left(\hat h -\langle {\tt psin}|\hat h|{\tt psin}\rangle\right)\,|{\tt psin}\rangle \] replacing {\ttfamily ps1}, on which then the real damping operator acts. If {\ttfamily F\+FT} is being used for the derivatives, we use the routine {\ttfamily laplace} from module {\ttfamily levels} to compute \[ \frac{x_{0\rm dmp}}{E_{0\rm inv}+\hat t}\,|{\tt ps1}\rangle. \] If derivatives are to done by matrices, the damping matrices {\ttfamily cdmpx} etc. are used (see subroutine {\ttfamily setdmc} in module {\ttfamily Grids}. ~\newline
+ The factors {\ttfamily x0dmp} and {\ttfamily e0dmp} have to be manipulated a bit in this case. Finally we subtract this result multiplied by {\ttfamily x0act} from the original wave function to get the damped one.
+\item the single-\/particle energy is calculated from its new expectation value with the energy shift restore, and the comparison with the initial value yields the relative change {\ttfamily denerg}, which is passed back to the caller.
+\end{DoxyEnumerate}
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em nst} & I\+N\+T\+E\+G\+ER, takes the index of the wave function. \\
+\hline
+\mbox{\texttt{ in}}  & {\em iq} & I\+N\+T\+E\+G\+ER, takes the isospin. \\
+\hline
+\mbox{\texttt{ in,out}}  & {\em spe} & R\+E\+A\+L(db), takes and returns single-\/particle energy. \\
+\hline
+\mbox{\texttt{ out}}  & {\em denerg} & R\+E\+A\+L(db), returns the difference in energy of the particle before and after the iteration. \\
+\hline
+\mbox{\texttt{ in,out}}  & {\em psin} & R\+E\+A\+L(db), array, wave function to be iterated. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacestatic_a567e41f470e7ceb65e1820519b13bf5f}\label{namespacestatic_a567e41f470e7ceb65e1820519b13bf5f}} 
+\index{static@{static}!harmosc@{harmosc}}
+\index{harmosc@{harmosc}!static@{static}}
+\doxyparagraph{\texorpdfstring{harmosc()}{harmosc()}}
+{\footnotesize\ttfamily subroutine static\+::harmosc}
+
+
+
+This subroutine initializes all wave function with harmonic oscillator states. 
+
+As a first step it calculates the first state, which is a Gaussian. In the second step the other wave functions are obtained by multiplying the Gaussian with polynomials. The subroutine does not return normalized states. In combination with {\ttfamily schmid} the normalized lowest oscillator states are obtained. \mbox{\Hypertarget{namespacestatic_afa74b74b5f0d14e753aea12e1f5a3015}\label{namespacestatic_afa74b74b5f0d14e753aea12e1f5a3015}} 
+\index{static@{static}!init\_static@{init\_static}}
+\index{init\_static@{init\_static}!static@{static}}
+\doxyparagraph{\texorpdfstring{init\_static()}{init\_static()}}
+{\footnotesize\ttfamily subroutine static\+::init\+\_\+static}
+
+
+
+This subroutine essentially just prints the static input and then initializes the header files with their header lines. 
+
+This is not included in {\ttfamily getin\+\_\+static}, because the particle and state numbers may have been changed by fragment input.
+
+In addition, the damping matrices are constructed by calling {\ttfamily setup\+\_\+damping}. Finally for some Skyrme forces the effective mass is changed to account for the center-\/of-\/mass correction. This should only be used if necessary and not in dynamic calculations. \mbox{\Hypertarget{namespacestatic_a4414bd66d5a02faadc9bca95de6630e6}\label{namespacestatic_a4414bd66d5a02faadc9bca95de6630e6}} 
+\index{static@{static}!sinfo@{sinfo}}
+\index{sinfo@{sinfo}!static@{static}}
+\doxyparagraph{\texorpdfstring{sinfo()}{sinfo()}}
+{\footnotesize\ttfamily subroutine static\+::sinfo}
+
+
+
+This subroutine computes the data that are not needed for the calculation itself, but only for informative output and writes them onto the appropriate output files. 
+
+First {\ttfamily moments}, {\ttfamily integ\+\_\+energy}, and {\ttfamily sum\+\_\+energy} are called to compute the relevant physical quantities. Output lines are added to {\ttfamily converfile}, {\ttfamily dipolesfile}, {\ttfamily momentafile}, and {\ttfamily spinfile}. Information on the current energy {\ttfamily ehf}, the total kinetic energy {\ttfamily tke}, the relative change in energy over the last iteration {\ttfamily delesum}, the fluctuations in single-\/particle energy, and the energy corrections are printed on standard output.
+
+At intervals of {\ttfamily mplot} iterations the density printer plot is produced and the {\ttfamily  $\ast$.tdd} file containing the densities written.
+
+Finally, on standard output more detailed output is given\+: an overview of the different contributions to the energy, a list of single-\/particle state properties, and a listing of various moments using {\ttfamily moment\+\_\+print}. \mbox{\Hypertarget{namespacestatic_a6429b3a218b0e96282940fa9f8573cff}\label{namespacestatic_a6429b3a218b0e96282940fa9f8573cff}} 
+\index{static@{static}!statichf@{statichf}}
+\index{statichf@{statichf}!static@{static}}
+\doxyparagraph{\texorpdfstring{statichf()}{statichf()}}
+{\footnotesize\ttfamily subroutine static\+::statichf}
+
+
+
+This is the principal routine for the static iterations. It applies the gradient step repeatedly until convergence is achieved or the maximum number of iterations is reached. 
+
+The following local variables are worth defining\+:
+\begin{DoxyItemize}
+\item {\bfseries{{\ttfamily sumflu}}} keeps track of the fluctuations in single-\/particle energies summed over the states. It is used as the convergence criterion.
+\item {\bfseries{{\ttfamily addnew}, {\ttfamily addco}}} are simple factors with standard values 0.\+2 and 0.\+8 used for relaxation (see Step 8). They are defined as parameter variables so they can be changed easily if desired.
+\item {\bfseries{{\ttfamily denerg}}} is used as an argument to {\ttfamily grstep} to contain the relative change in energy of the single-\/particle state.
+\end{DoxyItemize}
+
+
+\begin{DoxyItemize}
+\item {\bfseries{ Step 1\+: Initialization}}\+: if this is a restart, the number of the initial iteration is set to the value of {\ttfamily  iter+1} obtained from {\ttfamily wffile}. In this case the single-\/particle quantities do not have to be set to zero and orthogonalization is not necessary. If this is not a restart, the initialization is done as zeroth iteration and the first iteration number for the loop is set to one. some variables are initialized to zero and the matrix for the diagonalization {\ttfamily hmatr} is allocated. Then {\ttfamily schmid} is called for initial orthogonalization.
+\item {\bfseries{ Step2\+: calculating densities and mean fields}}\+: the densities are reset to zero and then in a loop over states the contributions of the single-\/particle states are added up. The subroutine {\ttfamily skyrme} is called to compute the mean-\/field components.
+\item {\bfseries{ Step 3\+: initial gradient step}}\+: in a loop over the single-\/particle wave functions the gradient step is applied -\/ see subroutine {\ttfamily grstep}. The sum of relative changes in single-\/particle energies and fluctuations are accumulated in {\ttfamily delesum} and {\ttfamily sumflu}. This loop is followed by the pairing calculation (which needs the single-\/particle energies calculated in the gradient step) and renewed orthogonalization. Then the detailed single-\/particle properties and energies are calculated using {\ttfamily sp\+\_\+properties\}} and {\ttfamily sinfo}.
+\item {\bfseries{ Step 4\+: start iteration}}\+: this is the principal loop for the static calculation. The iteration number is printed.
+\item {\bfseries{ Step 5\+: gradient step}}\+: this is identical to the initial gradient step in \char`\"{}\+Step 3\char`\"{}.
+\item {\bfseries{ Step 6\+: diagonalization}}\+: after 20 iterations and only if the switch {\ttfamily tdiag} is true, {\ttfamily diagstep} is called to diagonalize the single-\/particle Hamiltonian.
+\item {\bfseries{ Step 7\+: pairing and orthogonalization}}\+: these are called for the new wave functions.
+\item {\bfseries{ Step 8\+: calculate densities and fields with relaxation}}\+: the old density {\ttfamily rho} and kinetic energy density {\ttfamily tau} are saved in {\ttfamily upot} and {\ttfamily bmass}, which are here used purely as work arrays. Then the new densities are accumulated from the wave functions and for {\ttfamily rho} and {\ttfamily tau} they are mixed with the old densities in a ratio given by {\ttfamily addnew} and {\ttfamily addco}, if this is turned on by {\ttfamily taddnew}. {\ttfamily skyrme} is called to calculate the new fields. Then the detailed single-\/particle properties and energies are calculated and printed using {\ttfamily sp\+\_\+properties\}} and {\ttfamily sinfo}.
+\item {\bfseries{ Step 9\+: finalizing the loop}}\+: convergence is checked by comparing {\ttfamily sumflu} per particle to {\ttfamily serr}, if it is smaller, the job terminates after writing the final wave functions. Otherwise, the wave functions are written if indicated by {\ttfamily mrest}.
+\end{DoxyItemize}
+
+and the loop continues. 
+
+\doxysubsubsection{Variable Documentation}
+\mbox{\Hypertarget{namespacestatic_a4bcc54d2fc7d8da0a476932ae0d56671}\label{namespacestatic_a4bcc54d2fc7d8da0a476932ae0d56671}} 
+\index{static@{static}!delesum@{delesum}}
+\index{delesum@{delesum}!static@{static}}
+\doxyparagraph{\texorpdfstring{delesum}{delesum}}
+{\footnotesize\ttfamily real(db) static\+::delesum}
+
+
+
+used to sum up the changes in single-\/particle energies during one iteration; it is calculated in {\ttfamily statichf} but printed in {\ttfamily sinfo} so that it is a module variable. 
+
+\mbox{\Hypertarget{namespacestatic_ad60f84483bcf8e28fe2132e5ccfedae6}\label{namespacestatic_ad60f84483bcf8e28fe2132e5ccfedae6}} 
+\index{static@{static}!e0dmp@{e0dmp}}
+\index{e0dmp@{e0dmp}!static@{static}}
+\doxyparagraph{\texorpdfstring{e0dmp}{e0dmp}}
+{\footnotesize\ttfamily real(db) static\+::e0dmp =100.D0}
+
+
+
+corresponds to the parameter $ E_0 $ appearing in the damped gradient iteration. 
+
+\mbox{\Hypertarget{namespacestatic_a0a40f66c0ff0224e36ec56c3ac25e492}\label{namespacestatic_a0a40f66c0ff0224e36ec56c3ac25e492}} 
+\index{static@{static}!maxiter@{maxiter}}
+\index{maxiter@{maxiter}!static@{static}}
+\doxyparagraph{\texorpdfstring{maxiter}{maxiter}}
+{\footnotesize\ttfamily integer static\+::maxiter}
+
+
+
+maximum number of iterations allowed. 
+
+\mbox{\Hypertarget{namespacestatic_ad30ae4cf1ce4900bd6dc12ebb31b2d5b}\label{namespacestatic_ad30ae4cf1ce4900bd6dc12ebb31b2d5b}} 
+\index{static@{static}!radinx@{radinx}}
+\index{radinx@{radinx}!static@{static}}
+\doxyparagraph{\texorpdfstring{radinx}{radinx}}
+{\footnotesize\ttfamily real(db) static\+::radinx}
+
+
+
+radius parameters (x-\/direction) used in the harmonic-\/oscillator initialization (see subroutine {\ttfamily harmosc}). 
+
+\mbox{\Hypertarget{namespacestatic_a337a93cb9cb1213411d7e5e9ee020de3}\label{namespacestatic_a337a93cb9cb1213411d7e5e9ee020de3}} 
+\index{static@{static}!radiny@{radiny}}
+\index{radiny@{radiny}!static@{static}}
+\doxyparagraph{\texorpdfstring{radiny}{radiny}}
+{\footnotesize\ttfamily real(db) static\+::radiny}
+
+
+
+radius parameters (y-\/direction) used in the harmonic-\/oscillator initialization (see subroutine {\ttfamily harmosc}). 
+
+\mbox{\Hypertarget{namespacestatic_aecffa108dc9fb276021f14ec6be1ab8d}\label{namespacestatic_aecffa108dc9fb276021f14ec6be1ab8d}} 
+\index{static@{static}!radinz@{radinz}}
+\index{radinz@{radinz}!static@{static}}
+\doxyparagraph{\texorpdfstring{radinz}{radinz}}
+{\footnotesize\ttfamily real(db) static\+::radinz}
+
+
+
+radius parameters (z-\/direction) used in the harmonic-\/oscillator initialization (see subroutine {\ttfamily harmosc}). 
+
+\mbox{\Hypertarget{namespacestatic_a9f397c6a24a7072aec2d2b22df3b0516}\label{namespacestatic_a9f397c6a24a7072aec2d2b22df3b0516}} 
+\index{static@{static}!serr@{serr}}
+\index{serr@{serr}!static@{static}}
+\doxyparagraph{\texorpdfstring{serr}{serr}}
+{\footnotesize\ttfamily real(db) static\+::serr}
+
+
+
+convergence criterion. Iterations are stopped if the fluctuation in single-\/particle energies falls below this value (see near the end of subroutines \{{\ttfamily statichf}). 
+
+\mbox{\Hypertarget{namespacestatic_a02053607d91051521724b6d73caa35e4}\label{namespacestatic_a02053607d91051521724b6d73caa35e4}} 
+\index{static@{static}!tdiag@{tdiag}}
+\index{tdiag@{tdiag}!static@{static}}
+\doxyparagraph{\texorpdfstring{tdiag}{tdiag}}
+{\footnotesize\ttfamily logical static\+::tdiag =.F\+A\+L\+S\+E.}
+
+
+
+if {\ttfamily true}, there is a diagonalization of the Hamiltonian during the later (after the 20th) static iterations. The 20 is hard coded in {\ttfamily \mbox{\hyperlink{static_8f90}{static.\+f90}}}. 
+
+\mbox{\Hypertarget{namespacestatic_ae48d61c855e561751a112a5d392a728d}\label{namespacestatic_ae48d61c855e561751a112a5d392a728d}} 
+\index{static@{static}!tlarge@{tlarge}}
+\index{tlarge@{tlarge}!static@{static}}
+\doxyparagraph{\texorpdfstring{tlarge}{tlarge}}
+{\footnotesize\ttfamily logical static\+::tlarge =.F\+A\+L\+S\+E.}
+
+
+
+if {\ttfamily true}, during the diagonalization the new wave functions are temporarily written on disk to avoid 
+
+\mbox{\Hypertarget{namespacestatic_a0b0a2ff8e5c6872e60c3ed0dfbed39c4}\label{namespacestatic_a0b0a2ff8e5c6872e60c3ed0dfbed39c4}} 
+\index{static@{static}!tvaryx\_0@{tvaryx\_0}}
+\index{tvaryx\_0@{tvaryx\_0}!static@{static}}
+\doxyparagraph{\texorpdfstring{tvaryx\_0}{tvaryx\_0}}
+{\footnotesize\ttfamily logical static\+::tvaryx\+\_\+0 =.F\+A\+L\+S\+E.}
+
+
+
+it {\ttfamily .T\+R\+UE.} the parameter $ x_0 $ is changed in every iteration in order to achieve faster convergence. 
+
+\mbox{\Hypertarget{namespacestatic_a4fa3bb53bc9f36f4064876373e806d4b}\label{namespacestatic_a4fa3bb53bc9f36f4064876373e806d4b}} 
+\index{static@{static}!x0dmp@{x0dmp}}
+\index{x0dmp@{x0dmp}!static@{static}}
+\doxyparagraph{\texorpdfstring{x0dmp}{x0dmp}}
+{\footnotesize\ttfamily real(db) static\+::x0dmp =0.\+2D0}
+
+
+
+corresponds to the parameter $ x_0 $ appearing in the damped gradient iteration. 
+
+\mbox{\Hypertarget{namespacestatic_ac715209896dd2373428688296794408c}\label{namespacestatic_ac715209896dd2373428688296794408c}} 
+\index{static@{static}!x0dmpmin@{x0dmpmin}}
+\index{x0dmpmin@{x0dmpmin}!static@{static}}
+\doxyparagraph{\texorpdfstring{x0dmpmin}{x0dmpmin}}
+{\footnotesize\ttfamily real(db) static\+::x0dmpmin =0.\+2d0}
+
+
+
+corresponds to minimal value of $ x_0 $ appearing in the damped gradient iteration, if tvaryx\+\_\+0 is set to {\ttfamily .T\+R\+UE.}. 
+

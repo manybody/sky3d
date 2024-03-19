@@ -1,0 +1,38 @@
+\hypertarget{main3d_8f90}{}\doxysubsection{main3d.\+f90 File Reference}
+\label{main3d_8f90}\index{main3d.f90@{main3d.f90}}
+\doxysubsubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+program \mbox{\hyperlink{main3d_8f90_a72cb7b0082e8c7516990891276639b4a}{tdhf3d}}
+\begin{DoxyCompactList}\small\item\em This is the main program that organizes the reading of the input and funnels the calculation into the correct subroutines. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{main3d_8f90_a72cb7b0082e8c7516990891276639b4a}\label{main3d_8f90_a72cb7b0082e8c7516990891276639b4a}} 
+\index{main3d.f90@{main3d.f90}!tdhf3d@{tdhf3d}}
+\index{tdhf3d@{tdhf3d}!main3d.f90@{main3d.f90}}
+\doxyparagraph{\texorpdfstring{tdhf3d()}{tdhf3d()}}
+{\footnotesize\ttfamily program tdhf3d}
+
+
+
+This is the main program that organizes the reading of the input and funnels the calculation into the correct subroutines. 
+
+It consists of a number of simple steps. They are\+:
+\begin{DoxyEnumerate}
+\item initialize {\ttfamily M\+PI} in case of an {\ttfamily M\+PI} parallel job. Start reading from standard input beginning with namelist files for any changes in the file names.
+\item read the definition of the force to be used and set it up.
+\item read namelist main, which contains the overall controlling parameters. The choice of {\ttfamily imode} is used to set up {\ttfamily tstatic} and {\ttfamily tdynamic} as logical variables. In addition, if this is a restart, the number of fragments is set to one. The properties of this one fragment are then filled in in subroutine {\ttfamily getin\+\_\+fragments}.
+\item read the grid definition. With the dimensions known, all grid-\/based arrays (but not the wave functions) can be allocated and the initialization of the {\ttfamily F\+F\+TW} system can be done.
+\item the appropriate namelist is read for the static or dynamic case, defining some parameters in those modules.
+\item determine wave function numbers. The way this is done depends on the choice of {\ttfamily nof}. For positive {\ttfamily nof}, the fragment files are consulted to find out the properties of each and add up the numbers. For {\ttfamily nof=0} the numbers are taken from namelist {\ttfamily static}, which was read before. If {\ttfamily nof$<$0}, they are also given in namelist {\ttfamily static}, but the wave functions will be replaced by user-\/calculated ones.
+\item now that the numbers are known, the wave function distribution over nodes is computed or set to trivial for a sequential calculation, and the the arrays related with wave functions are allocated.
+\item the initial values of the wave functions are calculated. For {\ttfamily nof$>$0} the wave functions are read from the fragment files and inserted into the proper positions. For {\ttfamily nof=0} the routine {\ttfamily harmosc} in module {\ttfamily Static} is called to calculate harmonic-\/oscillator wave function, and for {\ttfamily nof$<$0} the routine {\ttfamily init\+\_\+user} does an arbitrary user initialization.
+\item the mean-\/field arrays are zeroed and the Coulomb solver is initialized.
+\item the calculation branches into either static or dynamic mode.
+
+In the static calculation, {\ttfamily init\+\_\+static} just prints some information and sets up damping and {\ttfamily statichf} does the real calculation.
+
+In the dynamic case, the subroutine {\ttfamily dynamichf} does all the work.
+\item finally the {\ttfamily M\+PI} system is terminated. 
+\end{DoxyEnumerate}

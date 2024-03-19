@@ -1,0 +1,26 @@
+var energies_8f90 =
+[
+    [ "integ_energy", "energies_8f90.html#a47469577c715eca0c72defc0a5f85e80", null ],
+    [ "sum_energy", "energies_8f90.html#a1dc9b0b174ca7597ab4902cf0c555d94", null ],
+    [ "e3corr", "energies_8f90.html#aecadb782f719c4fc6ec83c3b6dd67075", null ],
+    [ "ecorc", "energies_8f90.html#ad541b3a6b5aae689804b3925c1dc07c2", null ],
+    [ "efluct1", "energies_8f90.html#ab922db6c411fb14183f539bda998ed7f", null ],
+    [ "efluct1prev", "energies_8f90.html#a48e7e347bd7794bcab1dd242d03bed05", null ],
+    [ "efluct2", "energies_8f90.html#af4ca6757e5e8b4ee7f7c901d3a02c46c", null ],
+    [ "efluct2prev", "energies_8f90.html#aa184158199792d60d9531a9a9423cdb5", null ],
+    [ "ehf", "energies_8f90.html#a34dfdf648f42651eb98ea289a868f38e", null ],
+    [ "ehf0", "energies_8f90.html#a3251ecec6a0b63723af61c7685901d25", null ],
+    [ "ehf1", "energies_8f90.html#aa52a6553cfc05aeaf47edd9e8a30f6aa", null ],
+    [ "ehf2", "energies_8f90.html#ab21bd10d10d08fbcf92d19759a3d4843", null ],
+    [ "ehf3", "energies_8f90.html#acebaf7c503b002c4800bd08db1a884b5", null ],
+    [ "ehfc", "energies_8f90.html#a083ad73c74fbe5c4b7500a043e820f05", null ],
+    [ "ehfint", "energies_8f90.html#a953fd5ffbce1d8b78376ff93ba3dba7f", null ],
+    [ "ehfls", "energies_8f90.html#a7553f445959c19a7c2e79ca50ae0e39b", null ],
+    [ "ehflsodd", "energies_8f90.html#a556a0f62dc6795d838890ba645951436", null ],
+    [ "ehfprev", "energies_8f90.html#a44df4dbddbe4d01a0cb464d7fc785d38", null ],
+    [ "ehft", "energies_8f90.html#af49c2ea47c112ebf5708597558e8b126", null ],
+    [ "orbital", "energies_8f90.html#a54bd9b1846ee408649cbbb61d667c7b4", null ],
+    [ "spin", "energies_8f90.html#a6e3f3e3910a90fea6b99afbd304ba45d", null ],
+    [ "tke", "energies_8f90.html#af66172cd3a87dae1c3a78b36eb49b80f", null ],
+    [ "total_angmom", "energies_8f90.html#a03ec2c71e84562b89c7d838171d9dcfa", null ]
+];

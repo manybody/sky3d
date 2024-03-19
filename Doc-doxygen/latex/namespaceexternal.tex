@@ -1,0 +1,244 @@
+\hypertarget{namespaceexternal}{}\doxysubsection{external Module Reference}
+\label{namespaceexternal}\index{external@{external}}
+
+
+This module allows the coupling of the nucleonic wave functions to an external field.  
+
+
+\doxysubsubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespaceexternal_a7b6a22a5df2618253961de7bfac3edc3}{getin\+\_\+external}}
+\begin{DoxyCompactList}\small\item\em It reads in all the parameters of the external field. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceexternal_a9f9008155aa9c3456e709e0667dcb7ed}{init\+\_\+external}}
+\begin{DoxyCompactList}\small\item\em It does some consistency checks of the external parameters and initializes the external field. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceexternal_a6598d81653c164baa56a1c63176c7a22}{extfld}} (time)
+\begin{DoxyCompactList}\small\item\em This is again a very straightforward routine. It calculates the time-\/dependent prefactor {\ttfamily time\+\_\+factor} depending on the parameters, and adds the time-\/independent field {\ttfamily extfield} multiplied by this factor to {\ttfamily upot}. The physical time is here given as an argument, because it needs to be evaluated at both full and half time steps. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceexternal_acc1caf7a333063d49ee27956462ee531}{extboost}} (noboostflag)
+\begin{DoxyCompactList}\small\item\em This performs the initial boost on all single-\/particle wave functions. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceexternal_af39bcf0867c7a8aebddd6865341fbdbb}{print\+\_\+extfield}} ()
+\begin{DoxyCompactList}\small\item\em This subroutine calculates the expectation of the coupling energy to the external field,. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+integer, private \mbox{\hyperlink{namespaceexternal_a78cd193c1f66b79b1a8496431e8a6db0}{isoext}} =0
+\begin{DoxyCompactList}\small\item\em isospin behavior of the external field\+: {\ttfamily isoext} denotes the same action on protons and neutrons, {\ttfamily  isoext=1 } that with opposing signs. \end{DoxyCompactList}\item 
+integer, private \mbox{\hyperlink{namespaceexternal_a0410fea857fe9ab1bf4e5dd867a503ea}{ipulse}} =0
+\begin{DoxyCompactList}\small\item\em type of pulse. {\ttfamily  ipulse=0} denotes the initial boost configuration, {\ttfamily  ipulse=1 } a Gaussian pulse and {\ttfamily  ipulse=2 } a cosine squared behavior. \end{DoxyCompactList}\item 
+real(db), dimension(\+:,\+:,\+:,\+:), allocatable, private \mbox{\hyperlink{namespaceexternal_ad762cc8c4ba4c1feff9bab357a55c47e}{extfield}}
+\begin{DoxyCompactList}\small\item\em this is the time-\/independent field generated according to the parameters {\ttfamily amplq0}, {\ttfamily textfield\+\_\+periodic} and depending on the latter, possibly {\ttfamily radext} and {\ttfamily widext}. It is used either to calculate the initial boost or is added to the mean field multiplied with the time-\/dependent factor. \end{DoxyCompactList}\item 
+real(db), private \mbox{\hyperlink{namespaceexternal_a9b38afd4ab0a5d9eb2832d7ab2339d18}{amplq0}} =0.D0
+\begin{DoxyCompactList}\small\item\em a strength parameter for the perturbation. Its numerical magnitude is usually not important by itself, but varying it allows studying the effects of different strengths of the excitation. \end{DoxyCompactList}\item 
+real(db), private \mbox{\hyperlink{namespaceexternal_a307bd6147b6d044f25b5db58079f17f3}{radext}} =100.D0
+\begin{DoxyCompactList}\small\item\em parameter $r_0$ for the cutoff of the field in fm. \end{DoxyCompactList}\item 
+real(db), private \mbox{\hyperlink{namespaceexternal_af3c78da7cadd7f1cfb81f7b612b6a7e2}{widext}} =1.D0
+\begin{DoxyCompactList}\small\item\em parameter $\Delta_0$ for the cutoff of the field in fm. \end{DoxyCompactList}\item 
+real(db), private \mbox{\hyperlink{namespaceexternal_ade752705f2ad6796fdd2c327535a75c6}{omega}} =0.D0
+\begin{DoxyCompactList}\small\item\em parameter $ \omega $ for time-\/dependent excitation \end{DoxyCompactList}\item 
+real(db), private \mbox{\hyperlink{namespaceexternal_a0c039ebdad0a07c53dc48268135f0d75}{taut}}
+\begin{DoxyCompactList}\small\item\em parameter $ \Delta\tau $ for time-\/dependent excitation \end{DoxyCompactList}\item 
+real(db), private \mbox{\hyperlink{namespaceexternal_abee73b55e270275118af5f5b0a7b8a94}{tau0}}
+\begin{DoxyCompactList}\small\item\em parameter $ \tau_0 $ for time-\/dependent excitation \end{DoxyCompactList}\item 
+logical, private \mbox{\hyperlink{namespaceexternal_a14f5363ccffa9ace7f49d9354106a5a1}{textfield\+\_\+periodic}} =.false.
+\begin{DoxyCompactList}\small\item\em if this is set to {\ttfamily true}, the external field is made periodic by substituting $ x^2\rightarrow\sin^2\left(\pi x/x_L\right) $, otherwise a damping factor is used $ F_q(\vec r) \rightarrow \frac{F_q(\vec r)}{1+e^{(r-r_0)/\Delta r}} $. \end{DoxyCompactList}\item 
+integer, private \mbox{\hyperlink{namespaceexternal_a58321273277630e218505f8f0fc3ea2f}{l\+\_\+val}} =0
+\begin{DoxyCompactList}\small\item\em paramter $L_{val}$, the orbital angular quantum number(\+L) used in the definition of spherical harmoninc ( $Y_{L}^{M}$) which is used while defining the external field \end{DoxyCompactList}\item 
+integer, private \mbox{\hyperlink{namespaceexternal_ac4255a781f779432088d52a94c3d5479}{m\+\_\+val}} =0
+\begin{DoxyCompactList}\small\item\em paramter $M_{val}$, the projection quantum number(\+M) used in the definition of spherical harmoninc ( $Y_{L}^{M}$) which is used while defining the external field \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+This module allows the coupling of the nucleonic wave functions to an external field. 
+
+This can be done either by adding a time-\/dependent external (i.\+e., not self-\/consistent) potential to the single-\/particle Hamiltonian. The time-\/dependence can be of Gaussian form \[ f(t)=\exp\left(-(t-\tau_0)^2/\Delta\tau^2\right)\cos(\omega(\tau-\tau_0)) \] or cosine squared form \[ f(t)=\cos\left(\frac\pi{2}\left(\frac{t-\tau_0}{\Delta\tau}\right)^2\right) \theta\left(\Delta\tau-|t-\tau_0|\right)\cos(\omega(\tau-\tau_0)) \] or by giving an initial \char`\"{}boost\char`\"{} \[ \psi_k(\vec r,s,t\!=\!0)= \psi_{k,0}(\vec r,s)\,\exp\left(-\I \eta F_q(\vec r)\right) \] to each wave function. Since this is very easy to modify and will probably have to be adjusted for most applications, the present version just contains a sample for a quadrupole coupling. The logic for different time-\/dependence assumptions and the isospin are however, fully functional and should be useful in many cases.
+
+The operator $ F_q $ is the excitation operator which can be of any form from monopole to dipole, quadrupole, octupole and so on. However to avoid the spurious states in the strength the definition in the case of dipole (L=1) is different than all the other as \[ F_{1M} = (r^3 - \frac{5}{3}<r^2> r)Y_{1M} \] where $ <r^2> $ is the average value of $r^2$ given as input (r2\+\_\+avg) for this case. For all orger cases $ F_q $ is defined as \[ F_{LM} = \sqrt{2L+1} r^L Y_{LM} \] where $ Y_{LM} $ are the spherical harmonics. 
+
+\doxysubsubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespaceexternal_acc1caf7a333063d49ee27956462ee531}\label{namespaceexternal_acc1caf7a333063d49ee27956462ee531}} 
+\index{external@{external}!extboost@{extboost}}
+\index{extboost@{extboost}!external@{external}}
+\doxyparagraph{\texorpdfstring{extboost()}{extboost()}}
+{\footnotesize\ttfamily subroutine external\+::extboost (\begin{DoxyParamCaption}\item[{logical, intent(out)}]{noboostflag }\end{DoxyParamCaption})}
+
+
+
+This performs the initial boost on all single-\/particle wave functions. 
+
+Note that it is always called from {\ttfamily dynamichf} and checks itself whether {\ttfamily ipulse} is zero. This enables {\ttfamily ipulse} to also be made a private variable. Its argument is used to communicate whether it has actually done anything\+: if it has applied a boost, it sets its argument to {\ttfamily }.F\+A\+L\+SE. so that in {\ttfamily dynamichf} the variable {\ttfamily text\+\_\+timedep} makes it possible to distinguish this case.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em noboostflag} & L\+O\+G\+I\+C\+AL, returns if boost has to be performed. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespaceexternal_a6598d81653c164baa56a1c63176c7a22}\label{namespaceexternal_a6598d81653c164baa56a1c63176c7a22}} 
+\index{external@{external}!extfld@{extfld}}
+\index{extfld@{extfld}!external@{external}}
+\doxyparagraph{\texorpdfstring{extfld()}{extfld()}}
+{\footnotesize\ttfamily subroutine external\+::extfld (\begin{DoxyParamCaption}\item[{real(db), intent(in)}]{time }\end{DoxyParamCaption})}
+
+
+
+This is again a very straightforward routine. It calculates the time-\/dependent prefactor {\ttfamily time\+\_\+factor} depending on the parameters, and adds the time-\/independent field {\ttfamily extfield} multiplied by this factor to {\ttfamily upot}. The physical time is here given as an argument, because it needs to be evaluated at both full and half time steps. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em time} & R\+E\+A\+L(db), takes the current time. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespaceexternal_a7b6a22a5df2618253961de7bfac3edc3}\label{namespaceexternal_a7b6a22a5df2618253961de7bfac3edc3}} 
+\index{external@{external}!getin\_external@{getin\_external}}
+\index{getin\_external@{getin\_external}!external@{external}}
+\doxyparagraph{\texorpdfstring{getin\_external()}{getin\_external()}}
+{\footnotesize\ttfamily subroutine external\+::getin\+\_\+external}
+
+
+
+It reads in all the parameters of the external field. 
+
+\mbox{\Hypertarget{namespaceexternal_a9f9008155aa9c3456e709e0667dcb7ed}\label{namespaceexternal_a9f9008155aa9c3456e709e0667dcb7ed}} 
+\index{external@{external}!init\_external@{init\_external}}
+\index{init\_external@{init\_external}!external@{external}}
+\doxyparagraph{\texorpdfstring{init\_external()}{init\_external()}}
+{\footnotesize\ttfamily subroutine external\+::init\+\_\+external}
+
+
+
+It does some consistency checks of the external parameters and initializes the external field. 
+
+The relative strength for the neutron and proton fields is set equal for {\ttfamily  isoext=0 } but reduced by the corresponding number of particles in the {\ttfamily  isoext=1 }. This avoids a shift of the center of mass in this case.
+
+Then the array {\ttfamily extfield} is allocated and the time-\/independent spatial potential calculated for both isospin cases and in either the periodic or damped versions, depending on the value of {\ttfamily textfield\+\_\+periodic.\+This} is just an illustrative sample field of type $ Q_{zz} $; in a real calculation there is no need to provide both versions. T\+O\+DO\+: This routine is not documented correctly in the \char`\"{}old\char`\"{} pdf manual!!! \mbox{\Hypertarget{namespaceexternal_af39bcf0867c7a8aebddd6865341fbdbb}\label{namespaceexternal_af39bcf0867c7a8aebddd6865341fbdbb}} 
+\index{external@{external}!print\_extfield@{print\_extfield}}
+\index{print\_extfield@{print\_extfield}!external@{external}}
+\doxyparagraph{\texorpdfstring{print\_extfield()}{print\_extfield()}}
+{\footnotesize\ttfamily subroutine external\+::print\+\_\+extfield}
+
+
+
+This subroutine calculates the expectation of the coupling energy to the external field,. 
+
+\[ \sum_q\int\,\D^3r\,\rho_q(\vec r)F_q(\vec r) \] and prints one line containing the present time and this value onto the file {\ttfamily extfieldfile}. 
+
+\doxysubsubsection{Variable Documentation}
+\mbox{\Hypertarget{namespaceexternal_a9b38afd4ab0a5d9eb2832d7ab2339d18}\label{namespaceexternal_a9b38afd4ab0a5d9eb2832d7ab2339d18}} 
+\index{external@{external}!amplq0@{amplq0}}
+\index{amplq0@{amplq0}!external@{external}}
+\doxyparagraph{\texorpdfstring{amplq0}{amplq0}}
+{\footnotesize\ttfamily real(db), private external\+::amplq0 =0.D0\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+a strength parameter for the perturbation. Its numerical magnitude is usually not important by itself, but varying it allows studying the effects of different strengths of the excitation. 
+
+\mbox{\Hypertarget{namespaceexternal_ad762cc8c4ba4c1feff9bab357a55c47e}\label{namespaceexternal_ad762cc8c4ba4c1feff9bab357a55c47e}} 
+\index{external@{external}!extfield@{extfield}}
+\index{extfield@{extfield}!external@{external}}
+\doxyparagraph{\texorpdfstring{extfield}{extfield}}
+{\footnotesize\ttfamily real(db), dimension(\+:,\+:,\+:,\+:), allocatable, private external\+::extfield\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+this is the time-\/independent field generated according to the parameters {\ttfamily amplq0}, {\ttfamily textfield\+\_\+periodic} and depending on the latter, possibly {\ttfamily radext} and {\ttfamily widext}. It is used either to calculate the initial boost or is added to the mean field multiplied with the time-\/dependent factor. 
+
+\mbox{\Hypertarget{namespaceexternal_a0410fea857fe9ab1bf4e5dd867a503ea}\label{namespaceexternal_a0410fea857fe9ab1bf4e5dd867a503ea}} 
+\index{external@{external}!ipulse@{ipulse}}
+\index{ipulse@{ipulse}!external@{external}}
+\doxyparagraph{\texorpdfstring{ipulse}{ipulse}}
+{\footnotesize\ttfamily integer, private external\+::ipulse =0\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+type of pulse. {\ttfamily  ipulse=0} denotes the initial boost configuration, {\ttfamily  ipulse=1 } a Gaussian pulse and {\ttfamily  ipulse=2 } a cosine squared behavior. 
+
+\mbox{\Hypertarget{namespaceexternal_a78cd193c1f66b79b1a8496431e8a6db0}\label{namespaceexternal_a78cd193c1f66b79b1a8496431e8a6db0}} 
+\index{external@{external}!isoext@{isoext}}
+\index{isoext@{isoext}!external@{external}}
+\doxyparagraph{\texorpdfstring{isoext}{isoext}}
+{\footnotesize\ttfamily integer, private external\+::isoext =0\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+isospin behavior of the external field\+: {\ttfamily isoext} denotes the same action on protons and neutrons, {\ttfamily  isoext=1 } that with opposing signs. 
+
+\mbox{\Hypertarget{namespaceexternal_a58321273277630e218505f8f0fc3ea2f}\label{namespaceexternal_a58321273277630e218505f8f0fc3ea2f}} 
+\index{external@{external}!l\_val@{l\_val}}
+\index{l\_val@{l\_val}!external@{external}}
+\doxyparagraph{\texorpdfstring{l\_val}{l\_val}}
+{\footnotesize\ttfamily integer, private external\+::l\+\_\+val =0\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+paramter $L_{val}$, the orbital angular quantum number(\+L) used in the definition of spherical harmoninc ( $Y_{L}^{M}$) which is used while defining the external field 
+
+\mbox{\Hypertarget{namespaceexternal_ac4255a781f779432088d52a94c3d5479}\label{namespaceexternal_ac4255a781f779432088d52a94c3d5479}} 
+\index{external@{external}!m\_val@{m\_val}}
+\index{m\_val@{m\_val}!external@{external}}
+\doxyparagraph{\texorpdfstring{m\_val}{m\_val}}
+{\footnotesize\ttfamily integer, private external\+::m\+\_\+val =0\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+paramter $M_{val}$, the projection quantum number(\+M) used in the definition of spherical harmoninc ( $Y_{L}^{M}$) which is used while defining the external field 
+
+\mbox{\Hypertarget{namespaceexternal_ade752705f2ad6796fdd2c327535a75c6}\label{namespaceexternal_ade752705f2ad6796fdd2c327535a75c6}} 
+\index{external@{external}!omega@{omega}}
+\index{omega@{omega}!external@{external}}
+\doxyparagraph{\texorpdfstring{omega}{omega}}
+{\footnotesize\ttfamily real(db), private external\+::omega =0.D0\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+parameter $ \omega $ for time-\/dependent excitation 
+
+\mbox{\Hypertarget{namespaceexternal_a307bd6147b6d044f25b5db58079f17f3}\label{namespaceexternal_a307bd6147b6d044f25b5db58079f17f3}} 
+\index{external@{external}!radext@{radext}}
+\index{radext@{radext}!external@{external}}
+\doxyparagraph{\texorpdfstring{radext}{radext}}
+{\footnotesize\ttfamily real(db), private external\+::radext =100.D0\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+parameter $r_0$ for the cutoff of the field in fm. 
+
+\mbox{\Hypertarget{namespaceexternal_abee73b55e270275118af5f5b0a7b8a94}\label{namespaceexternal_abee73b55e270275118af5f5b0a7b8a94}} 
+\index{external@{external}!tau0@{tau0}}
+\index{tau0@{tau0}!external@{external}}
+\doxyparagraph{\texorpdfstring{tau0}{tau0}}
+{\footnotesize\ttfamily real(db), private external\+::tau0\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+parameter $ \tau_0 $ for time-\/dependent excitation 
+
+\mbox{\Hypertarget{namespaceexternal_a0c039ebdad0a07c53dc48268135f0d75}\label{namespaceexternal_a0c039ebdad0a07c53dc48268135f0d75}} 
+\index{external@{external}!taut@{taut}}
+\index{taut@{taut}!external@{external}}
+\doxyparagraph{\texorpdfstring{taut}{taut}}
+{\footnotesize\ttfamily real(db), private external\+::taut\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+parameter $ \Delta\tau $ for time-\/dependent excitation 
+
+\mbox{\Hypertarget{namespaceexternal_a14f5363ccffa9ace7f49d9354106a5a1}\label{namespaceexternal_a14f5363ccffa9ace7f49d9354106a5a1}} 
+\index{external@{external}!textfield\_periodic@{textfield\_periodic}}
+\index{textfield\_periodic@{textfield\_periodic}!external@{external}}
+\doxyparagraph{\texorpdfstring{textfield\_periodic}{textfield\_periodic}}
+{\footnotesize\ttfamily logical, private external\+::textfield\+\_\+periodic =.false.\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+if this is set to {\ttfamily true}, the external field is made periodic by substituting $ x^2\rightarrow\sin^2\left(\pi x/x_L\right) $, otherwise a damping factor is used $ F_q(\vec r) \rightarrow \frac{F_q(\vec r)}{1+e^{(r-r_0)/\Delta r}} $. 
+
+\mbox{\Hypertarget{namespaceexternal_af3c78da7cadd7f1cfb81f7b612b6a7e2}\label{namespaceexternal_af3c78da7cadd7f1cfb81f7b612b6a7e2}} 
+\index{external@{external}!widext@{widext}}
+\index{widext@{widext}!external@{external}}
+\doxyparagraph{\texorpdfstring{widext}{widext}}
+{\footnotesize\ttfamily real(db), private external\+::widext =1.D0\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+parameter $\Delta_0$ for the cutoff of the field in fm. 
+

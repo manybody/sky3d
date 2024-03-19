@@ -1,0 +1,300 @@
+\hypertarget{namespaceparallel}{}\doxysubsection{parallel Module Reference}
+\label{namespaceparallel}\index{parallel@{parallel}}
+
+
+This module organizes the execution on distributed-\/memory machines using {\ttfamily M\+PI}. Its interface is made such that on sequential machines {\ttfamily \mbox{\hyperlink{parallel_8f90}{parallel.\+f90}}} can simply be replaced by a special version {\ttfamily \mbox{\hyperlink{sequential_8f90}{sequential.\+f90}}} which contains a definition of this module generating trivial data.  
+
+
+\doxysubsubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespaceparallel_af4d1baf7c89b4eb0a8ea52b0d0dffa04}{alloc\+\_\+nodes}}
+\begin{DoxyCompactList}\small\item\em This subroutine merely allocates the internal arrays of module {\ttfamily Parallel}. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceparallel_aa3a47cbcb6f4f85c1cf754b1d85a088b}{init\+\_\+all\+\_\+mpi}}
+\begin{DoxyCompactList}\small\item\em {\ttfamily init\+\_\+all\+\_\+mpi} This subroutine initializes {\ttfamily M\+PI} and finds out the number of processors {\ttfamily mpi\+\_\+nprocs} as well as the index of the current one {\ttfamily mpi\+\_\+myproc}. The flag {\ttfamily wflag} is set to true only for the processor numbered 0. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceparallel_aac16d0a02c718c0fb956e02b986b638d}{associate\+\_\+nodes}}
+\begin{DoxyCompactList}\small\item\em The first loop in this subroutine distributes the wave functions over the nodes. This is done by looping over the wave functions and assigning one to each processor in turn. When the number of processors has been reached, it restarts from processor 0. This way of allocation is to some extent arbitrary and can be changed. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceparallel_a1608a6c6b47142227f92bf4cc49e8268}{collect\+\_\+densities}}
+\begin{DoxyCompactList}\small\item\em This subroutine uses the {\ttfamily M\+PI} routine {\ttfamily mpi\+\_\+allreduce} to sum up the partial densities from the different nodes, using temporary arrays {\ttfamily tmp\+\_\+rho} and {\ttfamily tmp\+\_\+current} (depending on whether it is a scalar or vector field) in the process. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceparallel_a0a509a54da5b66697fd0276110148543}{collect\+\_\+sp\+\_\+properties}}
+\begin{DoxyCompactList}\small\item\em This subroutine collects the single-\/particle properties calculated from the wave functions and thus available only for the local wave functions on each node. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceparallel_a23978d1e63ec00b9bd3dd670eaf2a599}{finish\+\_\+mpi}}
+\begin{DoxyCompactList}\small\item\em This is just a wrapper for the {\ttfamily M\+PI} finalization call. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceparallel_a5274b306c0464a4e2ff54c06fee5cf43}{mpi\+\_\+init}} (ierror)
+\begin{DoxyCompactList}\small\item\em dummy function for the M\+PI routine \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceparallel_a72000f1fe30f921830c34726bfc48d57}{mpi\+\_\+comm\+\_\+size}} (comm\+\_\+world, nprocs, ierror)
+\begin{DoxyCompactList}\small\item\em dummy function for the M\+PI routine \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceparallel_ae96c33bcbbf241f5e3ef41b525d44f36}{mpi\+\_\+comm\+\_\+rank}} (comm\+\_\+world, myproc, ierror)
+\begin{DoxyCompactList}\small\item\em dummy function for the M\+PI routine \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceparallel_a74c997f5a6f0b3d6cee5447c8e7a287a}{mpi\+\_\+get\+\_\+processor\+\_\+name}} (\mbox{\hyperlink{namespaceparallel_a37d1ce75101788b75c2ed15cae88dcf5}{processor\+\_\+name}}, \mbox{\hyperlink{namespaceparallel_afe3fc05e32b34e42b81fab02f26bbd57}{proc\+\_\+namelen}}, ierror)
+\begin{DoxyCompactList}\small\item\em dummy function for the M\+PI routine \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceparallel_a2b5b4fe98b4e7c2af82404aa78215255}{mpi\+\_\+barrier}} (comm\+\_\+world, ierror)
+\begin{DoxyCompactList}\small\item\em dummy function for the M\+PI routine \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceparallel_a88b2a7834b1887a9e74cf410e6362af9}{mpi\+\_\+allreduce}} (rho, tmp\+\_\+rho, length, i\+\_\+double\+\_\+precision, sum, comm\+\_\+world, ierror)
+\begin{DoxyCompactList}\small\item\em dummy function for the M\+PI routine \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+logical, parameter \mbox{\hyperlink{namespaceparallel_aea8cd29f6c725f7bf461446bee12cbe4}{tmpi}} =.T\+R\+U\+E.
+\begin{DoxyCompactList}\small\item\em a logical variable set to true if {\ttfamily M\+PI} parallelization is activated. It is used to turn the calling of all the {\ttfamily M\+PI} routines in the code on or off. \end{DoxyCompactList}\item 
+integer, dimension(\+:), allocatable \mbox{\hyperlink{namespaceparallel_ac01189091dd5785f0aa2cd2eccf49da5}{node}}
+\begin{DoxyCompactList}\small\item\em For the single-\/particle state with index {\ttfamily i} the wave function is stored on computing node {\ttfamily node(i)}. \end{DoxyCompactList}\item 
+integer, dimension(\+:), allocatable \mbox{\hyperlink{namespaceparallel_a61bcbe51b5127c46aa0860c387408293}{localindex}}
+\begin{DoxyCompactList}\small\item\em For the single-\/particle state with index {\ttfamily i} the wave function is stored on computing node {\ttfamily node(i)} and its index on that node is {\ttfamily localindex(i)}. \end{DoxyCompactList}\item 
+integer, dimension(\+:), allocatable \mbox{\hyperlink{namespaceparallel_a01015d2108512a98792e7f4c8a968974}{globalindex}}
+\begin{DoxyCompactList}\small\item\em tells the index of the single-\/particle state in the whole array of {\ttfamily nstmax} states (it could be dimensioned {\ttfamily nstloc} but is dimensioned as {\ttfamily nstmax} to make its allocation simpler). So for wave function index {\ttfamily i} {\itshape  on the local node}, {\ttfamily  i=1..nstloc}, the single-\/particle energy must be obtained using {\ttfamily  sp\+\_\+energy(globalindex(i))}. ~\newline
+ \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespaceparallel_ade61ceedeca3207434bc1cd4d9547063}{mpi\+\_\+nprocs}}
+\begin{DoxyCompactList}\small\item\em number of M\+PI processes. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespaceparallel_a941ffc085ec1201ea3d7f16de8aeea08}{mpi\+\_\+ierror}}
+\begin{DoxyCompactList}\small\item\em varable for error output of M\+PI routines. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespaceparallel_ae3a0e84f3cb12698da32ceb07d09647e}{mpi\+\_\+myproc}}
+\begin{DoxyCompactList}\small\item\em the number of the local M\+PI process \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespaceparallel_a37d1ce75101788b75c2ed15cae88dcf5}{processor\+\_\+name}}
+\item 
+integer \mbox{\hyperlink{namespaceparallel_afe3fc05e32b34e42b81fab02f26bbd57}{proc\+\_\+namelen}}
+\item 
+integer \mbox{\hyperlink{namespaceparallel_aefce06d5c67ff6bf57317a43977b50d8}{mpi\+\_\+comm\+\_\+world}}
+\item 
+integer \mbox{\hyperlink{namespaceparallel_a161a973634596e8f992dddec0ffb7dc9}{mpi\+\_\+sum}}
+\item 
+integer \mbox{\hyperlink{namespaceparallel_a14bf7e02e0c33115d9058ffd60561f8e}{mpi\+\_\+double\+\_\+precision}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+This module organizes the execution on distributed-\/memory machines using {\ttfamily M\+PI}. Its interface is made such that on sequential machines {\ttfamily \mbox{\hyperlink{parallel_8f90}{parallel.\+f90}}} can simply be replaced by a special version {\ttfamily \mbox{\hyperlink{sequential_8f90}{sequential.\+f90}}} which contains a definition of this module generating trivial data. 
+
+contains the same routines as in file {\ttfamily \mbox{\hyperlink{parallel_8f90}{parallel.\+f90}}}, but with mostly empty functions to enable sequential running.
+
+{\ttfamily M\+PI} parallelization is based on distributing the wave functions onto the different nodes. Thus all operations acting directly on the wave functions can be done in parallel, not only the time evolution by the application of the single-\/particle Hamiltonian, but also the summing up of the densities and currents over those wave function stored on the node. This means that only the final summation of the densities and the calculations done with them have to be communicated across the nodes.
+
+It is important that the single-\/particle properties also defined in {\ttfamily Levels}, e.\+g. {\ttfamily sp\+\_\+energy} are not split up up for the nodes but the full set is present on each node. The values are communicated by summing from all nodes with zeroes in those index positions not present on a particular one. This method of handling them avoids having to communicate many small arrays.
+
+Since an efficient way of dealing with Gram-\/\+Schmidt orthogonalization in this case was yet not found, at present the code can be run in {\ttfamily M\+PI} parallel mode only for the dynamic case. 
+
+\doxysubsubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespaceparallel_af4d1baf7c89b4eb0a8ea52b0d0dffa04}\label{namespaceparallel_af4d1baf7c89b4eb0a8ea52b0d0dffa04}} 
+\index{parallel@{parallel}!alloc\_nodes@{alloc\_nodes}}
+\index{alloc\_nodes@{alloc\_nodes}!parallel@{parallel}}
+\doxyparagraph{\texorpdfstring{alloc\_nodes()}{alloc\_nodes()}}
+{\footnotesize\ttfamily subroutine parallel\+::alloc\+\_\+nodes}
+
+
+
+This subroutine merely allocates the internal arrays of module {\ttfamily Parallel}. 
+
+\mbox{\Hypertarget{namespaceparallel_aac16d0a02c718c0fb956e02b986b638d}\label{namespaceparallel_aac16d0a02c718c0fb956e02b986b638d}} 
+\index{parallel@{parallel}!associate\_nodes@{associate\_nodes}}
+\index{associate\_nodes@{associate\_nodes}!parallel@{parallel}}
+\doxyparagraph{\texorpdfstring{associate\_nodes()}{associate\_nodes()}}
+{\footnotesize\ttfamily subroutine parallel\+::associate\+\_\+nodes}
+
+
+
+The first loop in this subroutine distributes the wave functions over the nodes. This is done by looping over the wave functions and assigning one to each processor in turn. When the number of processors has been reached, it restarts from processor 0. This way of allocation is to some extent arbitrary and can be changed. 
+
+The second loop then calculates which wave functions are present on the local node and records their index {\ttfamily gobalindex} in the complete sequence. The third loop sets up the reverse pointers {\ttfamily localindex}, which has to be done in a loop over all processors to set up the information for the proper global indices. \mbox{\Hypertarget{namespaceparallel_a1608a6c6b47142227f92bf4cc49e8268}\label{namespaceparallel_a1608a6c6b47142227f92bf4cc49e8268}} 
+\index{parallel@{parallel}!collect\_densities@{collect\_densities}}
+\index{collect\_densities@{collect\_densities}!parallel@{parallel}}
+\doxyparagraph{\texorpdfstring{collect\_densities()}{collect\_densities()}}
+{\footnotesize\ttfamily subroutine parallel\+::collect\+\_\+densities}
+
+
+
+This subroutine uses the {\ttfamily M\+PI} routine {\ttfamily mpi\+\_\+allreduce} to sum up the partial densities from the different nodes, using temporary arrays {\ttfamily tmp\+\_\+rho} and {\ttfamily tmp\+\_\+current} (depending on whether it is a scalar or vector field) in the process. 
+
+\mbox{\Hypertarget{namespaceparallel_a0a509a54da5b66697fd0276110148543}\label{namespaceparallel_a0a509a54da5b66697fd0276110148543}} 
+\index{parallel@{parallel}!collect\_sp\_properties@{collect\_sp\_properties}}
+\index{collect\_sp\_properties@{collect\_sp\_properties}!parallel@{parallel}}
+\doxyparagraph{\texorpdfstring{collect\_sp\_properties()}{collect\_sp\_properties()}}
+{\footnotesize\ttfamily subroutine parallel\+::collect\+\_\+sp\+\_\+properties}
+
+
+
+This subroutine collects the single-\/particle properties calculated from the wave functions and thus available only for the local wave functions on each node. 
+
+It uses a simple trick\+: the arrays like {\ttfamily sp\+\_\+energy} are defined for the full set of indices but set to zero before the calculation of these properties. On each node then the local values are calculated but inserted at the proper index for the full set of wave functions. In this subroutine the results from all the nodes are added up using {\ttfamily mpi\+\_\+reduce}, so that effectively for each index one node contributes the correct value and the others zeroes. This process sounds inefficient but considering the small size of the arrays that does not matter. \mbox{\Hypertarget{namespaceparallel_a23978d1e63ec00b9bd3dd670eaf2a599}\label{namespaceparallel_a23978d1e63ec00b9bd3dd670eaf2a599}} 
+\index{parallel@{parallel}!finish\_mpi@{finish\_mpi}}
+\index{finish\_mpi@{finish\_mpi}!parallel@{parallel}}
+\doxyparagraph{\texorpdfstring{finish\_mpi()}{finish\_mpi()}}
+{\footnotesize\ttfamily subroutine parallel\+::finish\+\_\+mpi}
+
+
+
+This is just a wrapper for the {\ttfamily M\+PI} finalization call. 
+
+\mbox{\Hypertarget{namespaceparallel_aa3a47cbcb6f4f85c1cf754b1d85a088b}\label{namespaceparallel_aa3a47cbcb6f4f85c1cf754b1d85a088b}} 
+\index{parallel@{parallel}!init\_all\_mpi@{init\_all\_mpi}}
+\index{init\_all\_mpi@{init\_all\_mpi}!parallel@{parallel}}
+\doxyparagraph{\texorpdfstring{init\_all\_mpi()}{init\_all\_mpi()}}
+{\footnotesize\ttfamily subroutine parallel\+::init\+\_\+all\+\_\+mpi}
+
+
+
+{\ttfamily init\+\_\+all\+\_\+mpi} This subroutine initializes {\ttfamily M\+PI} and finds out the number of processors {\ttfamily mpi\+\_\+nprocs} as well as the index of the current one {\ttfamily mpi\+\_\+myproc}. The flag {\ttfamily wflag} is set to true only for the processor numbered 0. 
+
+\mbox{\Hypertarget{namespaceparallel_a88b2a7834b1887a9e74cf410e6362af9}\label{namespaceparallel_a88b2a7834b1887a9e74cf410e6362af9}} 
+\index{parallel@{parallel}!mpi\_allreduce@{mpi\_allreduce}}
+\index{mpi\_allreduce@{mpi\_allreduce}!parallel@{parallel}}
+\doxyparagraph{\texorpdfstring{mpi\_allreduce()}{mpi\_allreduce()}}
+{\footnotesize\ttfamily subroutine parallel\+::mpi\+\_\+allreduce (\begin{DoxyParamCaption}\item[{real(db), dimension($\ast$), intent(in)}]{rho,  }\item[{real(db), dimension($\ast$), intent(in)}]{tmp\+\_\+rho,  }\item[{integer}]{length,  }\item[{integer}]{i\+\_\+double\+\_\+precision,  }\item[{integer}]{sum,  }\item[{integer}]{comm\+\_\+world,  }\item[{integer}]{ierror }\end{DoxyParamCaption})}
+
+
+
+dummy function for the M\+PI routine 
+
+\mbox{\Hypertarget{namespaceparallel_a2b5b4fe98b4e7c2af82404aa78215255}\label{namespaceparallel_a2b5b4fe98b4e7c2af82404aa78215255}} 
+\index{parallel@{parallel}!mpi\_barrier@{mpi\_barrier}}
+\index{mpi\_barrier@{mpi\_barrier}!parallel@{parallel}}
+\doxyparagraph{\texorpdfstring{mpi\_barrier()}{mpi\_barrier()}}
+{\footnotesize\ttfamily subroutine parallel\+::mpi\+\_\+barrier (\begin{DoxyParamCaption}\item[{integer}]{comm\+\_\+world,  }\item[{integer}]{ierror }\end{DoxyParamCaption})}
+
+
+
+dummy function for the M\+PI routine 
+
+\mbox{\Hypertarget{namespaceparallel_ae96c33bcbbf241f5e3ef41b525d44f36}\label{namespaceparallel_ae96c33bcbbf241f5e3ef41b525d44f36}} 
+\index{parallel@{parallel}!mpi\_comm\_rank@{mpi\_comm\_rank}}
+\index{mpi\_comm\_rank@{mpi\_comm\_rank}!parallel@{parallel}}
+\doxyparagraph{\texorpdfstring{mpi\_comm\_rank()}{mpi\_comm\_rank()}}
+{\footnotesize\ttfamily subroutine parallel\+::mpi\+\_\+comm\+\_\+rank (\begin{DoxyParamCaption}\item[{integer}]{comm\+\_\+world,  }\item[{integer}]{myproc,  }\item[{integer}]{ierror }\end{DoxyParamCaption})}
+
+
+
+dummy function for the M\+PI routine 
+
+\mbox{\Hypertarget{namespaceparallel_a72000f1fe30f921830c34726bfc48d57}\label{namespaceparallel_a72000f1fe30f921830c34726bfc48d57}} 
+\index{parallel@{parallel}!mpi\_comm\_size@{mpi\_comm\_size}}
+\index{mpi\_comm\_size@{mpi\_comm\_size}!parallel@{parallel}}
+\doxyparagraph{\texorpdfstring{mpi\_comm\_size()}{mpi\_comm\_size()}}
+{\footnotesize\ttfamily subroutine parallel\+::mpi\+\_\+comm\+\_\+size (\begin{DoxyParamCaption}\item[{integer}]{comm\+\_\+world,  }\item[{integer}]{nprocs,  }\item[{integer}]{ierror }\end{DoxyParamCaption})}
+
+
+
+dummy function for the M\+PI routine 
+
+\mbox{\Hypertarget{namespaceparallel_a74c997f5a6f0b3d6cee5447c8e7a287a}\label{namespaceparallel_a74c997f5a6f0b3d6cee5447c8e7a287a}} 
+\index{parallel@{parallel}!mpi\_get\_processor\_name@{mpi\_get\_processor\_name}}
+\index{mpi\_get\_processor\_name@{mpi\_get\_processor\_name}!parallel@{parallel}}
+\doxyparagraph{\texorpdfstring{mpi\_get\_processor\_name()}{mpi\_get\_processor\_name()}}
+{\footnotesize\ttfamily subroutine parallel\+::mpi\+\_\+get\+\_\+processor\+\_\+name (\begin{DoxyParamCaption}\item[{integer}]{processor\+\_\+name,  }\item[{integer}]{proc\+\_\+namelen,  }\item[{integer}]{ierror }\end{DoxyParamCaption})}
+
+
+
+dummy function for the M\+PI routine 
+
+\mbox{\Hypertarget{namespaceparallel_a5274b306c0464a4e2ff54c06fee5cf43}\label{namespaceparallel_a5274b306c0464a4e2ff54c06fee5cf43}} 
+\index{parallel@{parallel}!mpi\_init@{mpi\_init}}
+\index{mpi\_init@{mpi\_init}!parallel@{parallel}}
+\doxyparagraph{\texorpdfstring{mpi\_init()}{mpi\_init()}}
+{\footnotesize\ttfamily subroutine parallel\+::mpi\+\_\+init (\begin{DoxyParamCaption}\item[{integer}]{ierror }\end{DoxyParamCaption})}
+
+
+
+dummy function for the M\+PI routine 
+
+
+
+\doxysubsubsection{Variable Documentation}
+\mbox{\Hypertarget{namespaceparallel_a01015d2108512a98792e7f4c8a968974}\label{namespaceparallel_a01015d2108512a98792e7f4c8a968974}} 
+\index{parallel@{parallel}!globalindex@{globalindex}}
+\index{globalindex@{globalindex}!parallel@{parallel}}
+\doxyparagraph{\texorpdfstring{globalindex}{globalindex}}
+{\footnotesize\ttfamily integer, dimension(\+:), allocatable parallel\+::globalindex}
+
+
+
+tells the index of the single-\/particle state in the whole array of {\ttfamily nstmax} states (it could be dimensioned {\ttfamily nstloc} but is dimensioned as {\ttfamily nstmax} to make its allocation simpler). So for wave function index {\ttfamily i} {\itshape  on the local node}, {\ttfamily  i=1..nstloc}, the single-\/particle energy must be obtained using {\ttfamily  sp\+\_\+energy(globalindex(i))}. ~\newline
+ 
+
+\mbox{\Hypertarget{namespaceparallel_a61bcbe51b5127c46aa0860c387408293}\label{namespaceparallel_a61bcbe51b5127c46aa0860c387408293}} 
+\index{parallel@{parallel}!localindex@{localindex}}
+\index{localindex@{localindex}!parallel@{parallel}}
+\doxyparagraph{\texorpdfstring{localindex}{localindex}}
+{\footnotesize\ttfamily integer, dimension(\+:), allocatable parallel\+::localindex}
+
+
+
+For the single-\/particle state with index {\ttfamily i} the wave function is stored on computing node {\ttfamily node(i)} and its index on that node is {\ttfamily localindex(i)}. 
+
+\mbox{\Hypertarget{namespaceparallel_aefce06d5c67ff6bf57317a43977b50d8}\label{namespaceparallel_aefce06d5c67ff6bf57317a43977b50d8}} 
+\index{parallel@{parallel}!mpi\_comm\_world@{mpi\_comm\_world}}
+\index{mpi\_comm\_world@{mpi\_comm\_world}!parallel@{parallel}}
+\doxyparagraph{\texorpdfstring{mpi\_comm\_world}{mpi\_comm\_world}}
+{\footnotesize\ttfamily integer parallel\+::mpi\+\_\+comm\+\_\+world}
+
+\mbox{\Hypertarget{namespaceparallel_a14bf7e02e0c33115d9058ffd60561f8e}\label{namespaceparallel_a14bf7e02e0c33115d9058ffd60561f8e}} 
+\index{parallel@{parallel}!mpi\_double\_precision@{mpi\_double\_precision}}
+\index{mpi\_double\_precision@{mpi\_double\_precision}!parallel@{parallel}}
+\doxyparagraph{\texorpdfstring{mpi\_double\_precision}{mpi\_double\_precision}}
+{\footnotesize\ttfamily integer parallel\+::mpi\+\_\+double\+\_\+precision}
+
+\mbox{\Hypertarget{namespaceparallel_a941ffc085ec1201ea3d7f16de8aeea08}\label{namespaceparallel_a941ffc085ec1201ea3d7f16de8aeea08}} 
+\index{parallel@{parallel}!mpi\_ierror@{mpi\_ierror}}
+\index{mpi\_ierror@{mpi\_ierror}!parallel@{parallel}}
+\doxyparagraph{\texorpdfstring{mpi\_ierror}{mpi\_ierror}}
+{\footnotesize\ttfamily integer parallel\+::mpi\+\_\+ierror}
+
+
+
+varable for error output of M\+PI routines. 
+
+\mbox{\Hypertarget{namespaceparallel_ae3a0e84f3cb12698da32ceb07d09647e}\label{namespaceparallel_ae3a0e84f3cb12698da32ceb07d09647e}} 
+\index{parallel@{parallel}!mpi\_myproc@{mpi\_myproc}}
+\index{mpi\_myproc@{mpi\_myproc}!parallel@{parallel}}
+\doxyparagraph{\texorpdfstring{mpi\_myproc}{mpi\_myproc}}
+{\footnotesize\ttfamily integer parallel\+::mpi\+\_\+myproc}
+
+
+
+the number of the local M\+PI process 
+
+\mbox{\Hypertarget{namespaceparallel_ade61ceedeca3207434bc1cd4d9547063}\label{namespaceparallel_ade61ceedeca3207434bc1cd4d9547063}} 
+\index{parallel@{parallel}!mpi\_nprocs@{mpi\_nprocs}}
+\index{mpi\_nprocs@{mpi\_nprocs}!parallel@{parallel}}
+\doxyparagraph{\texorpdfstring{mpi\_nprocs}{mpi\_nprocs}}
+{\footnotesize\ttfamily integer parallel\+::mpi\+\_\+nprocs}
+
+
+
+number of M\+PI processes. 
+
+\mbox{\Hypertarget{namespaceparallel_a161a973634596e8f992dddec0ffb7dc9}\label{namespaceparallel_a161a973634596e8f992dddec0ffb7dc9}} 
+\index{parallel@{parallel}!mpi\_sum@{mpi\_sum}}
+\index{mpi\_sum@{mpi\_sum}!parallel@{parallel}}
+\doxyparagraph{\texorpdfstring{mpi\_sum}{mpi\_sum}}
+{\footnotesize\ttfamily integer parallel\+::mpi\+\_\+sum}
+
+\mbox{\Hypertarget{namespaceparallel_ac01189091dd5785f0aa2cd2eccf49da5}\label{namespaceparallel_ac01189091dd5785f0aa2cd2eccf49da5}} 
+\index{parallel@{parallel}!node@{node}}
+\index{node@{node}!parallel@{parallel}}
+\doxyparagraph{\texorpdfstring{node}{node}}
+{\footnotesize\ttfamily integer, dimension(\+:), allocatable parallel\+::node}
+
+
+
+For the single-\/particle state with index {\ttfamily i} the wave function is stored on computing node {\ttfamily node(i)}. 
+
+\mbox{\Hypertarget{namespaceparallel_afe3fc05e32b34e42b81fab02f26bbd57}\label{namespaceparallel_afe3fc05e32b34e42b81fab02f26bbd57}} 
+\index{parallel@{parallel}!proc\_namelen@{proc\_namelen}}
+\index{proc\_namelen@{proc\_namelen}!parallel@{parallel}}
+\doxyparagraph{\texorpdfstring{proc\_namelen}{proc\_namelen}}
+{\footnotesize\ttfamily integer parallel\+::proc\+\_\+namelen}
+
+\mbox{\Hypertarget{namespaceparallel_a37d1ce75101788b75c2ed15cae88dcf5}\label{namespaceparallel_a37d1ce75101788b75c2ed15cae88dcf5}} 
+\index{parallel@{parallel}!processor\_name@{processor\_name}}
+\index{processor\_name@{processor\_name}!parallel@{parallel}}
+\doxyparagraph{\texorpdfstring{processor\_name}{processor\_name}}
+{\footnotesize\ttfamily integer parallel\+::processor\+\_\+name}
+
+\mbox{\Hypertarget{namespaceparallel_aea8cd29f6c725f7bf461446bee12cbe4}\label{namespaceparallel_aea8cd29f6c725f7bf461446bee12cbe4}} 
+\index{parallel@{parallel}!tmpi@{tmpi}}
+\index{tmpi@{tmpi}!parallel@{parallel}}
+\doxyparagraph{\texorpdfstring{tmpi}{tmpi}}
+{\footnotesize\ttfamily logical parameter parallel\+::tmpi =.T\+R\+U\+E.}
+
+
+
+a logical variable set to true if {\ttfamily M\+PI} parallelization is activated. It is used to turn the calling of all the {\ttfamily M\+PI} routines in the code on or off. 
+

@@ -1,0 +1,218 @@
+\hypertarget{namespaceinout}{}\doxysubsection{inout Module Reference}
+\label{namespaceinout}\index{inout@{inout}}
+
+
+This module contains the procedures for binary input and output of the larger fields.  
+
+
+\doxysubsubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespaceinout_a9d5fd84daf7280d1429a1cc639a77e1b}{write\+\_\+wavefunctions}}
+\begin{DoxyCompactList}\small\item\em This subroutine writes the wave functions to the disk and has two modes of operation depending on whether the code runs on distributed-\/memory systems in {\ttfamily M\+PI} mode or on a shared-\/memory or single-\/processor machine. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceinout_a106b9c386384f988c48ef5ac7780283e}{write\+\_\+densities}}
+\begin{DoxyCompactList}\small\item\em This subroutine produces a file {\ttfamily iter.\+tdd} with density and current data for the present time step or iteration with number {\ttfamily iter}. In the file name {\ttfamily iter} is given in 6 decimal digits. \end{DoxyCompactList}\item 
+subroutine, private \mbox{\hyperlink{namespaceinout_a30aedba153613f9688e3911420485cdd}{write\+\_\+one\+\_\+density}} (name, values)
+\begin{DoxyCompactList}\small\item\em This subroutines does the actual output for {\ttfamily write\+\_\+densities} in the case of a scalar field. Its functioning should be clear from the description above. \end{DoxyCompactList}\item 
+subroutine, private \mbox{\hyperlink{namespaceinout_ae5e01e6139174c3213653d9d426393be}{write\+\_\+vec\+\_\+density}} (name, values)
+\begin{DoxyCompactList}\small\item\em This also does the actual output for subroutines {\ttfamily write\+\_\+densities} for the case of a vector field. Its functioning should be clear from the description above. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceinout_a674610dcc3ea10a3bacbc06cf120c257}{plot\+\_\+density}}
+\begin{DoxyCompactList}\small\item\em Produces a simple printer plot of the density distribution in the reaction plane. This is not supposed to replace better plotting codes, but simply allows a quick glance at what is happening in the code, even while it is running. \end{DoxyCompactList}\item 
+pure real(db) function \mbox{\hyperlink{namespaceinout_a12702257d10a7c3db099de11a2a7eb78}{bplina}} (n, m, xar, zar, fun, xcu, zcu)
+\begin{DoxyCompactList}\small\item\em Does a bilinear interpolation of fun(nx,nz), on xar(n) and zar(m) \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceinout_a9a96b0fa1f4abbf1b4a2da1b9064af9f}{sp\+\_\+properties}}
+\begin{DoxyCompactList}\small\item\em In this routine the kinetic energy, orbital and spin angular momenta expectation values, {\ttfamily sp\+\_\+kinetic}, {\ttfamily sp\+\_\+orbital\}} and {\ttfamily sp\+\_\+spin} of the single-\/particle states are calculated. The latter are both three-\/dimensional vectors. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceinout_a66b3c7249f196c6a18b17f073ffc4b21}{start\+\_\+protocol}} (filename, header)
+\begin{DoxyCompactList}\small\item\em This is given a file name and a character string for a header line to start the file contents. It is used for the {\ttfamily $\ast$.res} files. If the file already exists, nothing is done, since this probably a restart job and output should just be added at the end of the file. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+This module contains the procedures for binary input and output of the larger fields. 
+
+There are two variants, both of which are written at regular intervals\+: the wave function file {\ttfamily wffile} and the files containing the densities and currents. Since the former is extremely space-\/consuming, each output normally overwrites the previous one. These files are intended to be used for a restart, as initialization input (static solution for one fragment) for another run, or for a final analysis of the wave functions.
+
+The densities, on the other hand, are written on a series of file {\ttfamily  nnnnnn.\+tdd}, where {\ttfamily nnnnnn} is the number of the time step or iteration. This is useful for later graphical or other types of analysis.
+
+{\bfseries{Note\+:}} where the variable name {\ttfamily wffile} is used inside file names in the following, it should not be taken literally but is replaced by the character string it contains.
+
+In addition the routine for printer plots, {\ttfamily plot\+\_\+density}, is included in this module, as well as the subroutines {\ttfamily sp\+\_\+properties} and {\ttfamily start\+\_\+protocol}, which do not completely match the purpose of this module but are placed here for convenience. 
+
+\doxysubsubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespaceinout_a12702257d10a7c3db099de11a2a7eb78}\label{namespaceinout_a12702257d10a7c3db099de11a2a7eb78}} 
+\index{inout@{inout}!bplina@{bplina}}
+\index{bplina@{bplina}!inout@{inout}}
+\doxyparagraph{\texorpdfstring{bplina()}{bplina()}}
+{\footnotesize\ttfamily pure real(db) function inout\+::bplina (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{n,  }\item[{integer, intent(in)}]{m,  }\item[{real(db), dimension(n), intent(in)}]{xar,  }\item[{real(db), dimension(m), intent(in)}]{zar,  }\item[{real(db), dimension(n,m), intent(in)}]{fun,  }\item[{real(db), intent(in)}]{xcu,  }\item[{real(db), intent(in)}]{zcu }\end{DoxyParamCaption})}
+
+
+
+Does a bilinear interpolation of fun(nx,nz), on xar(n) and zar(m) 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em n} & I\+N\+T\+E\+G\+ER, takes the number of grid points in x-\/direction. \\
+\hline
+\mbox{\texttt{ in}}  & {\em m} & I\+N\+T\+E\+G\+ER, takes the number of grid points in z-\/direction. \\
+\hline
+\mbox{\texttt{ in}}  & {\em xar} & R\+E\+A\+L(db), array, takes coordinates in x direction. \\
+\hline
+\mbox{\texttt{ in}}  & {\em zar} & R\+E\+A\+L(db), array, takes coordinates in z direction. \\
+\hline
+\mbox{\texttt{ in}}  & {\em fun} & R\+E\+A\+L(db), array, takes the function. \\
+\hline
+\mbox{\texttt{ in}}  & {\em xcu} & R\+E\+A\+L(db), takes the x-\/value at which the interpolation is performed \\
+\hline
+\mbox{\texttt{ in}}  & {\em zcu} & R\+E\+A\+L(db), takes the z-\/value at which the interpolation is performed ~\newline
+ \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespaceinout_a674610dcc3ea10a3bacbc06cf120c257}\label{namespaceinout_a674610dcc3ea10a3bacbc06cf120c257}} 
+\index{inout@{inout}!plot\_density@{plot\_density}}
+\index{plot\_density@{plot\_density}!inout@{inout}}
+\doxyparagraph{\texorpdfstring{plot\_density()}{plot\_density()}}
+{\footnotesize\ttfamily subroutine inout\+::plot\+\_\+density}
+
+
+
+Produces a simple printer plot of the density distribution in the reaction plane. This is not supposed to replace better plotting codes, but simply allows a quick glance at what is happening in the code, even while it is running. 
+
+It is based on a very old routine found at O\+R\+NL and was translated into modern Fortran. It uses helper function {\ttfamily bplina} for interpolation. ~\newline
+ \mbox{\Hypertarget{namespaceinout_a9a96b0fa1f4abbf1b4a2da1b9064af9f}\label{namespaceinout_a9a96b0fa1f4abbf1b4a2da1b9064af9f}} 
+\index{inout@{inout}!sp\_properties@{sp\_properties}}
+\index{sp\_properties@{sp\_properties}!inout@{inout}}
+\doxyparagraph{\texorpdfstring{sp\_properties()}{sp\_properties()}}
+{\footnotesize\ttfamily subroutine inout\+::sp\+\_\+properties}
+
+
+
+In this routine the kinetic energy, orbital and spin angular momenta expectation values, {\ttfamily sp\+\_\+kinetic}, {\ttfamily sp\+\_\+orbital\}} and {\ttfamily sp\+\_\+spin} of the single-\/particle states are calculated. The latter are both three-\/dimensional vectors. 
+
+Note that the single-\/particle energy {\ttfamily sp\+\_\+energy} itself is not calculated here but in the main static and dynamic routines, since it is obtained by applying the single-\/particle Hamiltonian, which is done more conveniently there.
+
+The procedure is quite simple\+: in a loop over wave functions the active one is copied into {\ttfamily pst} for convenience. Then its three directional derivatives {\ttfamily psx}, {\ttfamily psy}, and {\ttfamily psz} and Laplacian {\ttfamily psw} are calculated. In the big loop over the grid they are combined to the desired matrix elements; the only technical point to remark is that since the result must be real, efficiency can be achieved by formulating the complex products in an explicit way. Then {\ttfamily kin} contains the kinetic energy (without the $ \hbar^2/2m $), {\ttfamily cc} the orbital and {\ttfamily ss} then spin matrix elements.
+
+Finally only the volume element, the factor of one half for the spin ad the prefactor of the kinetic energy are added. \mbox{\Hypertarget{namespaceinout_a66b3c7249f196c6a18b17f073ffc4b21}\label{namespaceinout_a66b3c7249f196c6a18b17f073ffc4b21}} 
+\index{inout@{inout}!start\_protocol@{start\_protocol}}
+\index{start\_protocol@{start\_protocol}!inout@{inout}}
+\doxyparagraph{\texorpdfstring{start\_protocol()}{start\_protocol()}}
+{\footnotesize\ttfamily subroutine inout\+::start\+\_\+protocol (\begin{DoxyParamCaption}\item[{character($\ast$), intent(in)}]{filename,  }\item[{character($\ast$), intent(in)}]{header }\end{DoxyParamCaption})}
+
+
+
+This is given a file name and a character string for a header line to start the file contents. It is used for the {\ttfamily $\ast$.res} files. If the file already exists, nothing is done, since this probably a restart job and output should just be added at the end of the file. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em filename} & C\+H\+A\+R\+A\+C\+T\+ER, array, takes the filename. \\
+\hline
+\mbox{\texttt{ in}}  & {\em header} & C\+H\+A\+R\+A\+C\+T\+ER, array, takes the intended header for the file. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespaceinout_a106b9c386384f988c48ef5ac7780283e}\label{namespaceinout_a106b9c386384f988c48ef5ac7780283e}} 
+\index{inout@{inout}!write\_densities@{write\_densities}}
+\index{write\_densities@{write\_densities}!inout@{inout}}
+\doxyparagraph{\texorpdfstring{write\_densities()}{write\_densities()}}
+{\footnotesize\ttfamily subroutine inout\+::write\+\_\+densities}
+
+
+
+This subroutine produces a file {\ttfamily iter.\+tdd} with density and current data for the present time step or iteration with number {\ttfamily iter}. In the file name {\ttfamily iter} is given in 6 decimal digits. 
+
+The record structure is as follows\+:
+
+
+\begin{DoxyItemize}
+\item {\itshape Record 1\+:} this contains the variables {\ttfamily  iter, time, nx, ny, and nz to define the dimensions of the fields.}
+\item {\itshape Record 2\+:} contains the variables {\ttfamily  dx, dy, dz, wxyz, x, y, and z } to allow proper labelling of axes in plots, etc.
+\item {\itshape Further records\+:} for each field to be written, a record is produced with the following information\+:
+\begin{DoxyEnumerate}
+\item Name of the field with up to 10 characters
+\item Logical value {\ttfamily scalar} to indicate whether it is a scalar ({\ttfamily }.F\+A\+L\+SE.) or a vector field ({\ttfamily }.T\+R\+UE.).
+\item Logical value {\ttfamily write\+\_\+isospin} to indicate whether the field is summed over protons and neutrons (({\ttfamily }.F\+A\+L\+SE. or not ({\ttfamily }.T\+R\+UE.). In the latter case the field has a last index running from 1 to 2 for neutrons and protons, respectively. {\bfseries{ This selection applies to all fields equally (except the Coulomb potential)}}.
+\end{DoxyEnumerate}
+\end{DoxyItemize}
+
+After this identification record, the corresponding field itself is written. The dimension varies in the following way\+: \hypertarget{namespaceinout_multi_row}{}
+\tabulinesep=1mm
+\begin{longtabu}spread 0pt [c]{*{3}{|X[-1]}|}
+\caption{Dimensions of arrays}\label{namespaceinout_multi_row}\\
+\hline
+\cellcolor{\tableheadbgcolor}\textbf{ scalar}&\cellcolor{\tableheadbgcolor}\textbf{ write\+\_\+isospin}&\cellcolor{\tableheadbgcolor}\textbf{ dimension }\\\cline{1-3}
+\endfirsthead
+\hline
+\endfoot
+\hline
+\cellcolor{\tableheadbgcolor}\textbf{ scalar}&\cellcolor{\tableheadbgcolor}\textbf{ write\+\_\+isospin}&\cellcolor{\tableheadbgcolor}\textbf{ dimension }\\\cline{1-3}
+\endhead
+.F\+A\+L\+SE.&.F\+A\+L\+SE.&(nx,ny,nz) \\\cline{1-3}
+.F\+A\+L\+SE.&.T\+R\+UE.&(nx,ny,nz,2) \\\cline{1-3}
+.T\+R\+UE.&.F\+A\+L\+SE.&(nx,ny,nz,3) \\\cline{1-3}
+.T\+R\+UE.&.T\+R\+UE.&(nx,ny,nz,3,2) \\\cline{1-3}
+\end{longtabu}
+The {\bfseries{ selection of fields to be output }} is handled through variable {\ttfamily writeselect} consisting of {\ttfamily nselect} characters. Each field is selected by a one-\/character code, where both lower and upper case are acceptable. At present the choices are\+: -\/{\bfseries{R}}\+: density {\ttfamily rho} (scalar). Name {\ttfamily Rho}. -\/{\bfseries{T}}\+: kinetic energy density {\ttfamily tau} (scalar). Name {\ttfamily Tau} -\/{\bfseries{U}}\+: local mean field {\ttfamily upot}. Name {\ttfamily Upot}. -\/{\bfseries{W}}\+: Coulomb potential {\ttfamily wcoul} (scalar). This has to be handled specially, since it has no isospin index. Name {\ttfamily Wcoul}. -\/{\bfseries{C}}\+: current density {\ttfamily current} (vector). Name {\ttfamily Current}. -\/{\bfseries{S}}\+: spin density {\ttfamily sdens} (vector). Name {\ttfamily Spindens}. -\/{\bfseries{O}}\+: spin-\/orbit density {\ttfamily sodens}. Name {\ttfamily s-\/o-\/\+Dens}.
+
+This system is set up to be easily modified for writing additional fields. \mbox{\Hypertarget{namespaceinout_a30aedba153613f9688e3911420485cdd}\label{namespaceinout_a30aedba153613f9688e3911420485cdd}} 
+\index{inout@{inout}!write\_one\_density@{write\_one\_density}}
+\index{write\_one\_density@{write\_one\_density}!inout@{inout}}
+\doxyparagraph{\texorpdfstring{write\_one\_density()}{write\_one\_density()}}
+{\footnotesize\ttfamily subroutine, private inout\+::write\+\_\+one\+\_\+density (\begin{DoxyParamCaption}\item[{character($\ast$), intent(in)}]{name,  }\item[{real(db), dimension(nx,ny,nz,2), intent(in)}]{values }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+This subroutines does the actual output for {\ttfamily write\+\_\+densities} in the case of a scalar field. Its functioning should be clear from the description above. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em name} & I\+N\+T\+E\+G\+ER, takes the name of the density. \\
+\hline
+\mbox{\texttt{ in}}  & {\em values} & R\+E\+A\+L(db), takes the density. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespaceinout_ae5e01e6139174c3213653d9d426393be}\label{namespaceinout_ae5e01e6139174c3213653d9d426393be}} 
+\index{inout@{inout}!write\_vec\_density@{write\_vec\_density}}
+\index{write\_vec\_density@{write\_vec\_density}!inout@{inout}}
+\doxyparagraph{\texorpdfstring{write\_vec\_density()}{write\_vec\_density()}}
+{\footnotesize\ttfamily subroutine, private inout\+::write\+\_\+vec\+\_\+density (\begin{DoxyParamCaption}\item[{character($\ast$), intent(in)}]{name,  }\item[{real(db), dimension(nx,ny,nz,3,2), intent(in)}]{values }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+This also does the actual output for subroutines {\ttfamily write\+\_\+densities} for the case of a vector field. Its functioning should be clear from the description above. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em name} & I\+N\+T\+E\+G\+ER, takes the name of the density. \\
+\hline
+\mbox{\texttt{ in}}  & {\em values} & R\+E\+A\+L(db), takes the vector density. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespaceinout_a9d5fd84daf7280d1429a1cc639a77e1b}\label{namespaceinout_a9d5fd84daf7280d1429a1cc639a77e1b}} 
+\index{inout@{inout}!write\_wavefunctions@{write\_wavefunctions}}
+\index{write\_wavefunctions@{write\_wavefunctions}!inout@{inout}}
+\doxyparagraph{\texorpdfstring{write\_wavefunctions()}{write\_wavefunctions()}}
+{\footnotesize\ttfamily subroutine inout\+::write\+\_\+wavefunctions}
+
+
+
+This subroutine writes the wave functions to the disk and has two modes of operation depending on whether the code runs on distributed-\/memory systems in {\ttfamily M\+PI} mode or on a shared-\/memory or single-\/processor machine. 
+
+In both cases it first determines the number of filled single-\/particle states {\ttfamily  number(iq)}, which need not be the same as either the number of particles or the number of states, since pairing may lead to partial occupation and in addition there can be empty states.
+
+
+\begin{DoxyItemize}
+\item {\bfseries{ Sequential operation\+:}} this case is recognized recognized by {\ttfamily  mpi\+\_\+nprocs==1}. Open {\ttfamily wffile}, then write four records containing general information.
+\begin{DoxyItemize}
+\item {\itshape Record 1\+:} {\ttfamily  iter, nstmax, nneut, nprot, number, npsi, charge\+\_\+number, mass\+\_\+number, cm.}
+\item {\itshape Record 2\+:} {\ttfamily  nx, ny, nz, dx, dy, dz, wxyz.}
+\item {\itshape Record 3\+:} {\ttfamily  x, y, z.}
+\item {\itshape Record 4\+:} {\ttfamily  wocc, sp\+\_\+energy, sp\+\_\+parity, sp\+\_\+norm, sp\+\_\+kinetic, sp\+\_\+efluct1.}
+\end{DoxyItemize}
+\end{DoxyItemize}
+
+These are followed by one record containing information for the {\ttfamily M\+PI} case, which is included here only for compatibility\+: {\ttfamily node}, {\ttfamily localindex}. This is then followed by a series of {\ttfamily nstloc} records (in the sequential case, {\ttfamily nstloc} equals {\ttfamily nstmax}), containing the array of {\ttfamily  nx$\ast$ny$\ast$nz$\ast$2} wave function values for each single-\/particle state (including spin).
+
+
+\begin{DoxyItemize}
+\item {\bfseries{ M\+PI operation\+:}} in this case processor \#0 writes the same general data as in the sequential case onto file {\ttfamily wffile}, which is then closed. The purpose of record 5 in this case is to record for each wave function (in global index space) which node it is in and what the index on that node is. Since each node produces a separate output file with only its wave functions, this allows reading any wave function correctly from the set of files.
+
+Each processor thus only writes the wave function data for its locally stored set of {\ttfamily nstloc} wave functions onto files with the names composed (in variable {\ttfamily rsf\}}) of the number of the processor and {\ttfamily wffile} in the form {\ttfamily nnn.\+wffile}. For example, if {\ttfamily wffile} has the value \textquotesingle{}Ca40\textquotesingle{}, these files will be {\ttfamily 000.\+Ca40}, {\ttfamily 001.\+Ca40}, {\ttfamily 002.\+Ca40}, etc. up to the number of processors. 
+\end{DoxyItemize}

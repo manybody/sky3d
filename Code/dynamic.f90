@@ -184,20 +184,24 @@ CONTAINS
             '#    Time    N(n)    N(p)       E(sum)        E(integ)      Ekin &
             &      Ecoll(n)     Ecoll(p)')
        CALL start_protocol(monopolesfile, &
-            '#    Time      rms_n     rms_p   rms_tot   rms_n-rms_p')
+            '#    Time      Monopole(n+p)')
        CALL start_protocol(dipolesfile, &
-            '# Iter    c.m. x-y-z                                  Isovector&
-            &dipoles x-y-z')
+            '# Iter &
+            &dipoles (n+p)')
        CALL start_protocol(quadrupolesfile, &
-            '#     Time     Q(n)          Q(p)         Q(n+p)        x²(n)         &
-            &y²(n)         z²(n)         x²(p)         y²(p)         z²(p)')
+            '#     Time    Q(n+p)    ')
+
+       CALL start_protocol(octupolesfile, '#     Time     Oct(n+p)      ')
+       CALL start_protocol(hexadecapolesfile, '#     Time     HexaDeca(n+p)')
+       CALL start_protocol(diatriacontapolesfile, '#     Time     DiaTriaConta(n+p)')
+
        CALL start_protocol(spinfile, &
             '# Iter      Lx        Ly        Lz        Sx        Sy        &
             &Sz        Jx        Jy        Jz')
        CALL start_protocol(momentafile, &
             '#     Time      Px            Py            Pz')
        IF(texternal) CALL start_protocol(extfieldfile, &
-            '#   time       average_extfield')
+            '#   time       average_extfield      ampl_ext   L    M')
 
     END IF
     ! calculate densities and currents
@@ -442,15 +446,16 @@ CONTAINS
        CALL twobody_analysis(.FALSE.) ! get distance in separated case
     ENDIF
     ! Step 3: moments calculated
-    CALL moments
+    print*,'L = ',L_val,'M = ',M_val,'external ampl',ampl_ext
+    CALL moments(L_val,M_val)
     IF(printnow.AND.wflag) THEN
-       OPEN(unit=scratch,file=dipolesfile,POSITION='APPEND')  
-       WRITE(scratch,'(1x,i5,6E14.4)') iter,cmtot,cm(:,2)-cm(:,1)
-       CLOSE(unit=scratch)
+      !  OPEN(unit=scratch,file=dipolesfile,POSITION='APPEND')  
+      !  WRITE(scratch,'(1x,i5,6E14.4)') iter,cmtot,cm(:,2)-cm(:,1)
+      !  CLOSE(unit=scratch)
        OPEN(unit=scratch,file=momentafile, POSITION='APPEND')  
        WRITE(scratch,'(1x,f10.2,3g14.6)') time,pcm(:,1)+pcm(:,2)
        CLOSE(unit=scratch)
-       CALL moment_shortprint
+       CALL moment_shortprint(ampl_ext)
        IF(texternal) CALL print_extfield()
     ENDIF
     ! Step 4: single-particle properties

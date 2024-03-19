@@ -1,0 +1,146 @@
+\hypertarget{namespacedensities}{}\doxysubsection{densities Module Reference}
+\label{namespacedensities}\index{densities@{densities}}
+
+
+This module has two purposes\+: it defines and allocates the densities and currents making up the mean field, and also contains the subroutine {\ttfamily add\+\_\+density} which accumulates the basic densities over the single-\/particle wave functions. Subroutine {\ttfamily skyrme} in module {\ttfamily Meanfield} then uses these densities to build up the components of the single-\/particle Hamiltonian.  
+
+
+\doxysubsubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespacedensities_a6f80e11dd07b8c4f22dcf74f0721072f}{alloc\+\_\+densities}}
+\begin{DoxyCompactList}\small\item\em This is simply a short routine to allocate all the arrays defined in this module. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacedensities_ab8ae0afd697a04489301a0b4ef54ffc1}{add\+\_\+density}} (iq, weight, psin, lrho, ltau, lcurrent, lsdens, lsodens)
+\begin{DoxyCompactList}\small\item\em This subroutine is given a single-\/particle wave function {\ttfamily psin} with its isospin index {\ttfamily iq} and occupation $ w_\alpha^2= $ {\ttfamily weight} and adds its contribution to the density arrays. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{Indent}\textbf{ Scalar densities\+:}\par
+{\em These are dimensioned {\ttfamily (nx,ny,nz,2)}, where the last index is 1 for neutrons and 2 for protons. }\begin{DoxyCompactItemize}
+\item 
+real(db), dimension(\+:,\+:,\+:,\+:), allocatable \mbox{\hyperlink{namespacedensities_a48037b3a5426577742a92370d444c2e4}{rho}}
+\begin{DoxyCompactList}\small\item\em the density, separately for each isospin (in ${\rm fm}^{-3} $). The definition is\+: \end{DoxyCompactList}\item 
+real(db), dimension(\+:,\+:,\+:,\+:), allocatable \mbox{\hyperlink{namespacedensities_a0b6801014c9a122d2672009675eedc4a}{tau}}
+\begin{DoxyCompactList}\small\item\em the kinetic energy density, separately for each isospin. It is defined as the sum of the spin contributions and all particles of the given isospin \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Vector densities\+:}\par
+{\em These are dimensioned {\ttfamily (nx,ny,nz,3,2)}, where the last index is 1 for neutrons and 2 for protons, and the next-\/to-\/last stands for the Cartesian direction. }\begin{DoxyCompactItemize}
+\item 
+real(db), dimension(\+:,\+:,\+:,\+:,\+:), allocatable \mbox{\hyperlink{namespacedensities_a66634aa8189873880d82031b179afbee}{current}}
+\begin{DoxyCompactList}\small\item\em this is the total probability current density, defined in the familiar way as \end{DoxyCompactList}\item 
+real(db), dimension(\+:,\+:,\+:,\+:,\+:), allocatable \mbox{\hyperlink{namespacedensities_aa48602f6693fad468577e4da057d21a2}{sdens}}
+\begin{DoxyCompactList}\small\item\em the spin density. It is defined as \end{DoxyCompactList}\item 
+real(db), dimension(\+:,\+:,\+:,\+:,\+:), allocatable \mbox{\hyperlink{namespacedensities_a7d52d254fb667eea432179bab9a1e32b}{sodens}}
+\begin{DoxyCompactList}\small\item\em the spin-\/orbit density, defined as \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+
+
+\doxysubsubsection{Detailed Description}
+This module has two purposes\+: it defines and allocates the densities and currents making up the mean field, and also contains the subroutine {\ttfamily add\+\_\+density} which accumulates the basic densities over the single-\/particle wave functions. Subroutine {\ttfamily skyrme} in module {\ttfamily Meanfield} then uses these densities to build up the components of the single-\/particle Hamiltonian. 
+
+\doxysubsubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespacedensities_ab8ae0afd697a04489301a0b4ef54ffc1}\label{namespacedensities_ab8ae0afd697a04489301a0b4ef54ffc1}} 
+\index{densities@{densities}!add\_density@{add\_density}}
+\index{add\_density@{add\_density}!densities@{densities}}
+\doxyparagraph{\texorpdfstring{add\_density()}{add\_density()}}
+{\footnotesize\ttfamily subroutine densities\+::add\+\_\+density (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{iq,  }\item[{real(db), intent(in)}]{weight,  }\item[{complex(db), dimension(nx,ny,nz,2), intent(inout)}]{psin,  }\item[{real(db), dimension(\+:,\+:,\+:,\+:), intent(inout)}]{lrho,  }\item[{real(db), dimension(\+:,\+:,\+:,\+:), intent(inout)}]{ltau,  }\item[{real(db), dimension(\+:,\+:,\+:,\+:,\+:), intent(inout)}]{lcurrent,  }\item[{real(db), dimension(\+:,\+:,\+:,\+:,\+:), intent(inout)}]{lsdens,  }\item[{real(db), dimension(\+:,\+:,\+:,\+:,\+:), intent(inout)}]{lsodens }\end{DoxyParamCaption})}
+
+
+
+This subroutine is given a single-\/particle wave function {\ttfamily psin} with its isospin index {\ttfamily iq} and occupation $ w_\alpha^2= $ {\ttfamily weight} and adds its contribution to the density arrays. 
+
+The reason for not including the loop over states in the subroutine is that in the dynamic code, the contribution of a new single-\/particle wave function (calculated by tstep) to the densities is added without saving that wave function, eliminating the requirement for a second huge wave-\/function array.
+
+It may seem strange that {\ttfamily add\+\_\+density} has the densities themselves as parameters, which are readily available in the module. The reason for this is {\ttfamily O\+P\+E\+N\+MP} parallelization. The loop over wave functions is done in parallel under {\ttfamily O\+P\+E\+N\+MP}. Since any of the parallel tasks must add up the contributions of its assigned wave functions, each task must have a copy of the densities to work on; otherwise they would try to update the same density at the same time. The separate copies are then combined using the {\ttfamily O\+P\+E\+N\+MP} {\ttfamily R\+E\+D\+U\+CE(+)} directive.
+
+The local copies of the densities passed as arrays are denoted with the prefixed letter \char`\"{}l\char`\"{} for {\itshape local}; they are {\ttfamily lrho}, {\ttfamily ltau}, {\ttfamily lcurrent}, {\ttfamily lsdens}, and {\ttfamily lsodens}.
+
+If the weight is zero, there is nothing to do and the subroutine returns immediately. Otherwise, the contributions not involving derivatives are first computed and added to the affected densities, i.$\sim$e., number and spin density.
+
+After this the derivative terms are evaluated by computing each Cartesian direction separately. In all three cases the derivative is evaluated first and put into {\ttfamily ps1}, after which the contributions are added straightforwardly. They involve the wave function itself, the derivative, and for the spin-\/orbit density also a Pauli matrix, so that different spin projections have to be combined properly.
+
+The complex products always in the end evaluate to something real and the expressions are simplified to take this into account. For example, the following transformation is done\+: \begin{eqnarray*} \frac{1}{2\I}(\psi^*\nabla\psi-\psi\nabla\psi^*)&=& \frac{1}{2\I}\left(\psi^*\nabla\psi-(\psi^*\nabla\psi)^*\right)\\ &=&\frac{1}{2\I}\left(2\I\Im(\psi^*\nabla\psi)\right)\\ &\rightarrow&{\tt AIMAG(CONJG(psin)*psi1)} \end{eqnarray*} and similarly for the other expressions.
+
+The efficiency of this relies on the F\+O\+R\+T\+R\+AN compiler recognizing that only the imaginary part of the complex product is needed and not computing the real part at all. This seems to be the case with all present compilers.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em iq} & I\+N\+T\+E\+G\+ER, takes the isospin of the wave function. \\
+\hline
+\mbox{\texttt{ in}}  & {\em weight} & R\+E\+A\+L(db), takes the B\+CS weight of the wave function. \\
+\hline
+\mbox{\texttt{ in,out}}  & {\em psin} & C\+M\+P\+L\+E\+X(db), array, takes wave function . \\
+\hline
+\mbox{\texttt{ in,out}}  & {\em lrho} & R\+E\+A\+L(db), array, takes and adds the density. \\
+\hline
+\mbox{\texttt{ in,out}}  & {\em ltau} & R\+E\+A\+L(db), array, takes and adds the kinetic density. \\
+\hline
+\mbox{\texttt{ in,out}}  & {\em lcurrent} & R\+E\+A\+L(db), array, takes and adds the current density. \\
+\hline
+\mbox{\texttt{ in,out}}  & {\em lsdens} & R\+E\+A\+L(db), array, takes and adds the spin density. \\
+\hline
+\mbox{\texttt{ in,out}}  & {\em lsodens} & R\+E\+A\+L(db), array, takes and adds the spin-\/orbit density. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacedensities_a6f80e11dd07b8c4f22dcf74f0721072f}\label{namespacedensities_a6f80e11dd07b8c4f22dcf74f0721072f}} 
+\index{densities@{densities}!alloc\_densities@{alloc\_densities}}
+\index{alloc\_densities@{alloc\_densities}!densities@{densities}}
+\doxyparagraph{\texorpdfstring{alloc\_densities()}{alloc\_densities()}}
+{\footnotesize\ttfamily subroutine densities\+::alloc\+\_\+densities}
+
+
+
+This is simply a short routine to allocate all the arrays defined in this module. 
+
+
+
+\doxysubsubsection{Variable Documentation}
+\mbox{\Hypertarget{namespacedensities_a66634aa8189873880d82031b179afbee}\label{namespacedensities_a66634aa8189873880d82031b179afbee}} 
+\index{densities@{densities}!current@{current}}
+\index{current@{current}!densities@{densities}}
+\doxyparagraph{\texorpdfstring{current}{current}}
+{\footnotesize\ttfamily real(db), dimension(\+:,\+:,\+:,\+:,\+:), allocatable densities\+::current}
+
+
+
+this is the total probability current density, defined in the familiar way as 
+
+\[ \vec\jmath_q(\vec r) = \frac{1}{2\I}\sum_{\alpha\in q}w_\alpha^2 \sum_s\left(\psi_\alpha^*(\vec r,s)\nabla\psi_\alpha(\vec r,s)-\psi_\alpha(\vec r,s) \nabla\psi_\alpha^*(\vec r,s)\right). \] Note that the factor $ \frac{\hbar}{m} $ is not included. Its units are therefore $ {\rm fm}^{-4} $. \mbox{\Hypertarget{namespacedensities_a48037b3a5426577742a92370d444c2e4}\label{namespacedensities_a48037b3a5426577742a92370d444c2e4}} 
+\index{densities@{densities}!rho@{rho}}
+\index{rho@{rho}!densities@{densities}}
+\doxyparagraph{\texorpdfstring{rho}{rho}}
+{\footnotesize\ttfamily real(db), dimension(\+:,\+:,\+:,\+:), allocatable densities\+::rho}
+
+
+
+the density, separately for each isospin (in ${\rm fm}^{-3} $). The definition is\+: 
+
+\[ \rho_q(\vec r)=\sum_{k\in q}w_k^2\sum_s|\phi_k(\vec r,s)|^2,\qquad q=n,p \] \mbox{\Hypertarget{namespacedensities_aa48602f6693fad468577e4da057d21a2}\label{namespacedensities_aa48602f6693fad468577e4da057d21a2}} 
+\index{densities@{densities}!sdens@{sdens}}
+\index{sdens@{sdens}!densities@{densities}}
+\doxyparagraph{\texorpdfstring{sdens}{sdens}}
+{\footnotesize\ttfamily real(db), dimension(\+:,\+:,\+:,\+:,\+:), allocatable densities\+::sdens}
+
+
+
+the spin density. It is defined as 
+
+\[ \vec\sigma_q(\vec r)=\sum_{\alpha\in q} w_\alpha^2 \sum_{ss\textnormal{\textquotesingle}}\psi_\alpha^*(\vec r,s)\,\sigma_{ss\textnormal{\textquotesingle}} \,\psi_\alpha(\vec r,s\textnormal{\textquotesingle}).\] Note that it does not include the factor $ \hbar/2 $. Units\+: $ {\rm fm}^{-3} $. \mbox{\Hypertarget{namespacedensities_a7d52d254fb667eea432179bab9a1e32b}\label{namespacedensities_a7d52d254fb667eea432179bab9a1e32b}} 
+\index{densities@{densities}!sodens@{sodens}}
+\index{sodens@{sodens}!densities@{densities}}
+\doxyparagraph{\texorpdfstring{sodens}{sodens}}
+{\footnotesize\ttfamily real(db), dimension(\+:,\+:,\+:,\+:,\+:), allocatable densities\+::sodens}
+
+
+
+the spin-\/orbit density, defined as 
+
+\[ \vec J_q(\vec r)=\frac{1}\I\sum_{\alpha\in q}w_\alpha^2 \sum_{ss\textnormal{\textquotesingle}}\left(\psi_\alpha^*(\vec r,s)\nabla\times\sigma_{ss\textnormal{\textquotesingle}} \psi_\alpha(\vec r,s\textnormal{\textquotesingle})\right).\] Its units are also $ {\rm fm}^{-4} $. \mbox{\Hypertarget{namespacedensities_a0b6801014c9a122d2672009675eedc4a}\label{namespacedensities_a0b6801014c9a122d2672009675eedc4a}} 
+\index{densities@{densities}!tau@{tau}}
+\index{tau@{tau}!densities@{densities}}
+\doxyparagraph{\texorpdfstring{tau}{tau}}
+{\footnotesize\ttfamily real(db), dimension(\+:,\+:,\+:,\+:), allocatable densities\+::tau}
+
+
+
+the kinetic energy density, separately for each isospin. It is defined as the sum of the spin contributions and all particles of the given isospin 
+
+\[ \tau_q(\vec r)=\sum_{k\in q}w_k^2\sum_s|\nabla\phi_k(\vec r,s)|^2, \qquad q=n,p\] Note that it does not include the factor $ \hbar^2/2m $. Units\+: 

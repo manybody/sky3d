@@ -1,0 +1,26 @@
+var files_dup =
+[
+    [ "coulomb.f90", "coulomb_8f90.html", "coulomb_8f90" ],
+    [ "densities.f90", "densities_8f90.html", "densities_8f90" ],
+    [ "dynamic.f90", "dynamic_8f90.html", "dynamic_8f90" ],
+    [ "energies.f90", "energies_8f90.html", "energies_8f90" ],
+    [ "external.f90", "external_8f90.html", "external_8f90" ],
+    [ "forces.f90", "forces_8f90.html", "forces_8f90" ],
+    [ "fourier.f90", "fourier_8f90.html", "fourier_8f90" ],
+    [ "fragments.f90", "fragments_8f90.html", "fragments_8f90" ],
+    [ "grids.f90", "grids_8f90.html", "grids_8f90" ],
+    [ "inout.f90", "inout_8f90.html", "inout_8f90" ],
+    [ "levels.f90", "levels_8f90.html", "levels_8f90" ],
+    [ "main3d.f90", "main3d_8f90.html", "main3d_8f90" ],
+    [ "meanfield.f90", "meanfield_8f90.html", "meanfield_8f90" ],
+    [ "moment.f90", "moment_8f90.html", "moment_8f90" ],
+    [ "pairs.f90", "pairs_8f90.html", "pairs_8f90" ],
+    [ "parallel.f90", "parallel_8f90.html", "parallel_8f90" ],
+    [ "params.f90", "params_8f90.html", "params_8f90" ],
+    [ "sequential.f90", "sequential_8f90.html", "sequential_8f90" ],
+    [ "static.f90", "static_8f90.html", "static_8f90" ],
+    [ "trivial.f90", "trivial_8f90.html", "trivial_8f90" ],
+    [ "twobody.f90", "twobody_8f90.html", "twobody_8f90" ],
+    [ "user.f90", "user_8f90.html", "user_8f90" ],
+    [ "user_sample.f90", "user__sample_8f90.html", "user__sample_8f90" ]
+];

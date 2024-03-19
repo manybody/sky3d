@@ -1,0 +1,118 @@
+\hypertarget{namespacefourier}{}\doxysubsection{fourier Module Reference}
+\label{namespacefourier}\index{fourier@{fourier}}
+
+
+This module initializes the {\ttfamily F\+F\+T\+W3} package for doing Fourier transforms {\bfseries [Fri05a]}. It needs the file {\ttfamily fftw3.\+f} from the {\ttfamily F\+F\+T\+W3} package to define the symbolic parameters for the initialization calls.  
+
+
+\doxysubsubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespacefourier_afa7e1d95a3da039185c4eb8c2e53b816}{init\+\_\+fft}}
+\begin{DoxyCompactList}\small\item\em In this subroutine the {\ttfamily F\+F\+TW} system is initialized. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{Indent}\textbf{ plans for full three-\/dimensional forward and backward transforms for both spin components.}\par
+\begin{DoxyCompactItemize}
+\item 
+integer(c\+\_\+long), save \mbox{\hyperlink{namespacefourier_a8bebd6391a47447ad8ead439ab25d12f}{pforward}}
+\item 
+integer(c\+\_\+long), save \mbox{\hyperlink{namespacefourier_a88bd11e961a7bd7bcc3efbde9ef48a27}{pbackward}}
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ one-\/dimensional forward and backward transform in the x-\/direction,}\par
+{\em but for all values of $ y $, $ z $, and spin $ s $. }\begin{DoxyCompactItemize}
+\item 
+integer(c\+\_\+long), save \mbox{\hyperlink{namespacefourier_a3692f357e4261fb7a042c03d9e0ac274}{xforward}}
+\item 
+integer(c\+\_\+long), save \mbox{\hyperlink{namespacefourier_a20aaa212b25ce0235f761231bf2cecda}{xbackward}}
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ one-\/dimensional forward and backward transform in the y-\/direction,}\par
+{\em but for all values of $ x $, $ z $, and spin $ s $. }\begin{DoxyCompactItemize}
+\item 
+integer(c\+\_\+long), save \mbox{\hyperlink{namespacefourier_acc329727a2f093ac309d86f3f64da946}{yforward}}
+\item 
+integer(c\+\_\+long), save \mbox{\hyperlink{namespacefourier_ab6ecb8019844c362572611811e13e5d3}{ybackward}}
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ one-\/dimensional forward and backward transform in the z-\/direction,}\par
+{\em but for all values of $ x $, $ y $, and spin $ s $. }\begin{DoxyCompactItemize}
+\item 
+integer(c\+\_\+long), save \mbox{\hyperlink{namespacefourier_af0edf18bd895322db9e4d59eb2610ff9}{zforward}}
+\item 
+integer(c\+\_\+long), save \mbox{\hyperlink{namespacefourier_af6d4db0c9cf5146488054753ee16db8a}{zbackward}}
+\end{DoxyCompactItemize}
+\end{Indent}
+
+
+\doxysubsubsection{Detailed Description}
+This module initializes the {\ttfamily F\+F\+T\+W3} package for doing Fourier transforms {\bfseries [Fri05a]}. It needs the file {\ttfamily fftw3.\+f} from the {\ttfamily F\+F\+T\+W3} package to define the symbolic parameters for the initialization calls. 
+
+Note that {\ttfamily F\+F\+TW} is used only for the complex transforms of the wave functions and the Coulomb solver; the Fourier derivatives of the real fields are handled by explicit matrix multiplication (see module {\ttfamily Trivial}, routines {\ttfamily rmulx}, {\ttfamily rmuly}, and {\ttfamily rmulz}). The definition of the plans for the Coulomb solver is contained in subroutine {\ttfamily coulinit} in module {\ttfamily Coulomb}. 
+
+\doxysubsubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespacefourier_afa7e1d95a3da039185c4eb8c2e53b816}\label{namespacefourier_afa7e1d95a3da039185c4eb8c2e53b816}} 
+\index{fourier@{fourier}!init\_fft@{init\_fft}}
+\index{init\_fft@{init\_fft}!fourier@{fourier}}
+\doxyparagraph{\texorpdfstring{init\_fft()}{init\_fft()}}
+{\footnotesize\ttfamily subroutine fourier\+::init\+\_\+fft}
+
+
+
+In this subroutine the {\ttfamily F\+F\+TW} system is initialized. 
+
+and a 2-\/wave function array {\ttfamily p} is allocated temporarily for performing the tests to make the plans efficient (we do not use dynamic allocation, since having this array on the stack may produce different results than on the heap -\/ a point which has not been tested, though).
+
+This is followed by the calls to set up the plans. These have different variations, since the way in which the index or indices over which the transform is done are intertwined with the unaffected indices is quite different for the different directions. Understanding this Section requires a thorough familiarity with the F\+F\+TW documentation and Fortran indexing.
+
+{\bfseries{ An important point to consider when modifying the code\+:}} the setting-\/up of a plan must agree with its later use with respect to whether the input and output arrays are the same (in-\/place transform) or different. This is why {\ttfamily p} sometimes has a last index of 2 in these calls\+: in the code all transforms are in-\/place except for {\ttfamily xforward}, {\ttfamily yforward}, and {\ttfamily zforward}. It was found that very strange things happen if this rule is not obeyed. 
+
+\doxysubsubsection{Variable Documentation}
+\mbox{\Hypertarget{namespacefourier_a88bd11e961a7bd7bcc3efbde9ef48a27}\label{namespacefourier_a88bd11e961a7bd7bcc3efbde9ef48a27}} 
+\index{fourier@{fourier}!pbackward@{pbackward}}
+\index{pbackward@{pbackward}!fourier@{fourier}}
+\doxyparagraph{\texorpdfstring{pbackward}{pbackward}}
+{\footnotesize\ttfamily integer(c\+\_\+long), save fourier\+::pbackward}
+
+\mbox{\Hypertarget{namespacefourier_a8bebd6391a47447ad8ead439ab25d12f}\label{namespacefourier_a8bebd6391a47447ad8ead439ab25d12f}} 
+\index{fourier@{fourier}!pforward@{pforward}}
+\index{pforward@{pforward}!fourier@{fourier}}
+\doxyparagraph{\texorpdfstring{pforward}{pforward}}
+{\footnotesize\ttfamily integer(c\+\_\+long), save fourier\+::pforward}
+
+\mbox{\Hypertarget{namespacefourier_a20aaa212b25ce0235f761231bf2cecda}\label{namespacefourier_a20aaa212b25ce0235f761231bf2cecda}} 
+\index{fourier@{fourier}!xbackward@{xbackward}}
+\index{xbackward@{xbackward}!fourier@{fourier}}
+\doxyparagraph{\texorpdfstring{xbackward}{xbackward}}
+{\footnotesize\ttfamily integer(c\+\_\+long), save fourier\+::xbackward}
+
+\mbox{\Hypertarget{namespacefourier_a3692f357e4261fb7a042c03d9e0ac274}\label{namespacefourier_a3692f357e4261fb7a042c03d9e0ac274}} 
+\index{fourier@{fourier}!xforward@{xforward}}
+\index{xforward@{xforward}!fourier@{fourier}}
+\doxyparagraph{\texorpdfstring{xforward}{xforward}}
+{\footnotesize\ttfamily integer(c\+\_\+long), save fourier\+::xforward}
+
+\mbox{\Hypertarget{namespacefourier_ab6ecb8019844c362572611811e13e5d3}\label{namespacefourier_ab6ecb8019844c362572611811e13e5d3}} 
+\index{fourier@{fourier}!ybackward@{ybackward}}
+\index{ybackward@{ybackward}!fourier@{fourier}}
+\doxyparagraph{\texorpdfstring{ybackward}{ybackward}}
+{\footnotesize\ttfamily integer(c\+\_\+long), save fourier\+::ybackward}
+
+\mbox{\Hypertarget{namespacefourier_acc329727a2f093ac309d86f3f64da946}\label{namespacefourier_acc329727a2f093ac309d86f3f64da946}} 
+\index{fourier@{fourier}!yforward@{yforward}}
+\index{yforward@{yforward}!fourier@{fourier}}
+\doxyparagraph{\texorpdfstring{yforward}{yforward}}
+{\footnotesize\ttfamily integer(c\+\_\+long), save fourier\+::yforward}
+
+\mbox{\Hypertarget{namespacefourier_af6d4db0c9cf5146488054753ee16db8a}\label{namespacefourier_af6d4db0c9cf5146488054753ee16db8a}} 
+\index{fourier@{fourier}!zbackward@{zbackward}}
+\index{zbackward@{zbackward}!fourier@{fourier}}
+\doxyparagraph{\texorpdfstring{zbackward}{zbackward}}
+{\footnotesize\ttfamily integer(c\+\_\+long), save fourier\+::zbackward}
+
+\mbox{\Hypertarget{namespacefourier_af0edf18bd895322db9e4d59eb2610ff9}\label{namespacefourier_af0edf18bd895322db9e4d59eb2610ff9}} 
+\index{fourier@{fourier}!zforward@{zforward}}
+\index{zforward@{zforward}!fourier@{fourier}}
+\doxyparagraph{\texorpdfstring{zforward}{zforward}}
+{\footnotesize\ttfamily integer(c\+\_\+long), save fourier\+::zforward}
+

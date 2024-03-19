@@ -1,0 +1,20 @@
+var searchData=
+[
+  ['scratch_725',['scratch',['../namespaceparams.html#ac2aa5c826bb3f7d2943759349793df9a',1,'params']]],
+  ['scratch2_726',['scratch2',['../namespaceparams.html#a1df949628a35feb91cf3ac694e35036c',1,'params']]],
+  ['sdens_727',['sdens',['../namespacedensities.html#aa48602f6693fad468577e4da057d21a2',1,'densities']]],
+  ['serr_728',['serr',['../namespacestatic.html#a9f397c6a24a7072aec2d2b22df3b0516',1,'static']]],
+  ['slate_729',['slate',['../namespaceforces.html#a2887e846db365afcbfe231aa939706d8',1,'forces']]],
+  ['sodens_730',['sodens',['../namespacedensities.html#a7d52d254fb667eea432179bab9a1e32b',1,'densities']]],
+  ['sp_5fefluct1_731',['sp_efluct1',['../namespacelevels.html#a2a0fe0b427a0f435f6f333c1a86def8c',1,'levels']]],
+  ['sp_5fefluct2_732',['sp_efluct2',['../namespacelevels.html#a6c85608242c262762764cbc3c0154a44',1,'levels']]],
+  ['sp_5fenergy_733',['sp_energy',['../namespacelevels.html#a84c77978b44c9f69d1e9c6795232dcc4',1,'levels']]],
+  ['sp_5fkinetic_734',['sp_kinetic',['../namespacelevels.html#ab9a96c8c6f1abfaf0af0e744973881a9',1,'levels']]],
+  ['sp_5fnorm_735',['sp_norm',['../namespacelevels.html#a531467a267291ca83f8064d7a425fe6c',1,'levels']]],
+  ['sp_5forbital_736',['sp_orbital',['../namespacelevels.html#a7425ee1aee0104d14500d9c7fec65cf3',1,'levels']]],
+  ['sp_5fparity_737',['sp_parity',['../namespacelevels.html#a0a1fe8c03bbeb0e21d2b7589df6fd9a6',1,'levels']]],
+  ['sp_5fspin_738',['sp_spin',['../namespacelevels.html#ad98ca041cc25bfa4b56627675009ac71',1,'levels']]],
+  ['spin_739',['spin',['../namespaceenergies.html#a6e3f3e3910a90fea6b99afbd304ba45d',1,'energies']]],
+  ['spinfile_740',['spinfile',['../namespaceparams.html#a91d16396473cfb488ab06e0b9681dfca',1,'params']]],
+  ['spot_741',['spot',['../namespacemeanfield.html#a896d6b3cedb68e94d1ba1b884234252a',1,'meanfield']]]
+];

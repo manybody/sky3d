@@ -27,6 +27,9 @@ MODULE Forces
      REAL(db) :: v0prot!<the strength of pairing for protons in MeV.
      REAL(db) :: v0neut!<the strength of pairing for neutrons in MeV.
      REAL(db) :: rho0pr!<the density parameter for the density-dependent delta pairing
+     REAL(db) :: mixture!<the parameter x which decides the mix type pairing if set to 0.5 
+                        !! and for x=0 the volume pairing can be recovered and for x = 1 the surface pairing is recovered. 
+
   END TYPE Pairing
   !> This contains the parameters for the Skyrme force:
   TYPE Force
@@ -124,14 +127,14 @@ CONTAINS
     REAL(db) :: t0,t1,t2,t3,t4
     REAL(db) :: x0,x1,x2,x3
     REAL(db) :: power
-    REAL(db) :: v0prot,v0neut,rho0pr
+    REAL(db) :: v0prot,v0neut,rho0pr,mixture
     INTEGER :: i
     LOGICAL :: predefined
     LOGICAL :: turnoff_zpe=.FALSE.
     ! read force definition
     NAMELIST /force/ name,pairing, &
          ex,zpe,h2m,t0,t1,t2,t3,t4,x0,x1,x2,x3,b4p,power, &
-         ipair,v0prot,v0neut,rho0pr,turnoff_zpe
+         ipair,v0prot,v0neut,rho0pr,mixture,turnoff_zpe
     ! mark force & pairing parameters as undefined
     h2m=-1.0; v0prot=-1.0; v0neut=-1.0; 
     READ(5,force)
@@ -178,7 +181,7 @@ CONTAINS
     slate=(3.0D0/pi)**(1.0D0/3.0D0)*e2
     ! now set up pairing: first case of none
     IF(TRIM(pairing)=='NONE') THEN
-       p%v0prot=0.D0; p%v0neut=0.D0; p%rho0pr=0.16D0
+       p%v0prot=0.D0; p%v0neut=0.D0; p%rho0pr=0.16D0;p%mixture=0.0D0
        ipair=0
     ELSE
        ! set predefined type of pairing
@@ -188,6 +191,7 @@ CONTAINS
        p%v0prot=v0prot
        p%v0neut=v0neut
        IF(ipair==6) p%rho0pr=rho0pr
+       IF(ipair==6) p%mixture=mixture
        ! get predefined pairing if applicable
        IF(predefined) THEN
           IF(ipair==5) p=f%vdi
@@ -207,7 +211,7 @@ CONTAINS
        WRITE(*,"(5(A6,F12.5))") "x0",f%x0,"x1",f%x1,"x2",f%x2,"x3",f%x3,"b4p",f%b4p
        WRITE(*,"(A6,F12.5)") "Power",f%power
        WRITE(*,"(A,I2)") " Pairing parameters: Option ipair:",ipair  
-       WRITE(*,"(3(A7,F12.5))") "v0prot",p%v0prot,"v0neut",p%v0neut,"rho0pr",p%rho0pr
+       WRITE(*,"(3(A7,F12.5))") "v0prot",p%v0prot,"v0neut",p%v0neut,"rho0pr",p%rho0pr,'MIX',p%mixture
     ENDIF
   END SUBROUTINE read_force
 END MODULE Forces

@@ -22,10 +22,12 @@
 !!quadrupole moments \f$ Q_{2m} \f$ with their
 !!dimensionless counterparts \f$ a_o \f$, \f$ a_2 \f$ and the deformation 
 !!parameters \f$ \beta \f$ and \f$ \gamma \f$.
+
 !------------------------------------------------------------------------------
 MODULE Moment
   USE Params
   USE Grids, ONLY: nx,ny,nz,x,y,z,wxyz
+  USE Spherical_Harmonics
   IMPLICIT NONE
   PRIVATE
   REAL(db) :: pnr(2)    !<the numbers of neutrons <tt>pnr(1)</tt>=\f$ N \f$ and 
@@ -68,15 +70,36 @@ MODULE Moment
   !!only for the total mass distribution, dimensionless
   REAL(db) :: gamma     !<the Bohr-Mottelson deformation parameter \f$ \gamma \f$. Calculated
   !!only for the total mass distribution, expressed in degrees.
+  REAL(db) :: r3(2) !< these are the avg
+  !!value of \f$r^3\f$ of neutron and proton mass distribution.  Dimension: fm\f$^3\f$.
+  REAL(db) :: r4(2) !< these are the avg
+  !!value of \f$r^4\f$ of neutron and proton mass distribution.  Dimension: fm\f$^4\f$.
+  REAL(db) :: r2tot !< these are the avg
+  !!value of \f$r^2\f$ of total mass distribution.  Dimension: fm\f$^2\f$.
+  REAL(db) :: r3tot !< these are the avg
+  !!value of \f$r^3\f$ of total mass distribution.  Dimension: fm\f$^3\f$.
+  REAL(db) :: r4tot !< these are the avg
+  !!value of \f$r^4\f$ of total mass distribution.  Dimension: fm\f$^4\f$.
+
+  REAL(db) :: Mono_tot !< The monopole moment 
+  REAL(db) :: Di_tot !< The Dipole moment 
+  REAL(db) :: Quad_tot !< The quadrupole moment 
+  REAL(db) :: Oct_tot !< The Octupole moment 
+  REAL(db) :: HexDec_tot !< The Hexadecapole moment 
+  REAL(db) :: DiaTriaConta_tot !< The DiaTriaContapole moment 
+  
+  
+
   PUBLIC :: pnr,pnrtot,cm,cmtot,pcm,rmstot,beta,gamma, &
-       moments,moment_print,moment_shortprint
+       moments,moment_print,moment_shortprint,Oct_tot, &
+       HexDec_tot,DiaTriaConta_tot,Mono_tot,Di_tot,Quad_tot,r3tot,r4tot,r2tot
 CONTAINS
 !---------------------------------------------------------------------------  
 ! DESCRIPTION: Routinename
 !> @brief
 !!This is the principal subroutine for calculating the geometric
 !!quantities. It consists of two loops, both over isospin and space, and
-!!a final analysis Section. 
+!!a final analysis Section. Along with that, it also calculates the multipole moments as a function of time.
 !>
 !> @details
 !!In detail:
@@ -95,12 +118,14 @@ CONTAINS
 !!    finally by conversion to polar coordinates the Bohr-Mottelson parameters 
 !!    \f$ \beta \f$ and \f$ \gamma \f$.
 !!  - The Cartesian and polar deformation parameters are then printed.
+
 !--------------------------------------------------------------------------- 
-  SUBROUTINE moments
+  SUBROUTINE moments(L_val,M_val)
     USE Densities, ONLY: rho,current
-    INTEGER :: ix,iy,iz,iq
-    REAL(db) :: xx(3),x2(3),vol,radius
+    INTEGER :: ix,iy,iz,iq,L_val,M_val
+    REAL(db) :: xx(3),x2(3),vol,radius,eta
     REAL(db) :: qmat(3,3,2),qmtot(3,3)
+    REAL(db) :: Mono(2),Di(2),Quad(2),Oct(2),HexaDeca(2),DiaTriaConta(2)
     pnr=0.D0
     cm=0.D0
     pcm=0.D0
@@ -127,6 +152,16 @@ CONTAINS
     rms=0.D0
     qmat=0.D0
     x2m=0.D0
+    r3=0.D0
+    r4=0.D0
+
+    Mono=0.0D0
+    Di = 0.0D0
+    Quad = 0.0d0
+    Oct = 0.0D0
+    HexaDeca = 0.0D0
+    DiaTriaConta = 0.0D0
+
     DO iq=1,2  
        DO iz=1,nz  
           xx(3)=z(iz)-cm(3,iq)  
@@ -139,6 +174,9 @@ CONTAINS
                 x2(1)=xx(1)**2  
                 vol=wxyz*rho(ix,iy,iz,iq)  
                 rms(iq)=vol*SUM(x2)+rms(iq)
+                r3(iq)=vol*(SUM(x2)**(1.5d0))+r3(iq)
+                r4(iq)=vol*(SUM(x2)**(2))+r4(iq)
+
                 qmat(1,1,iq)=qmat(1,1,iq)+vol*(x2(1)+x2(1)-x2(2)-x2(3))
                 qmat(1,2,iq)=qmat(1,2,iq)+3.D0*vol*xx(1)*xx(2)
                 qmat(1,3,iq)=qmat(1,3,iq)+3.D0*vol*xx(1)*xx(3)
@@ -146,6 +184,19 @@ CONTAINS
                 qmat(2,3,iq)=qmat(2,3,iq)+3.D0*vol*xx(2)*xx(3)
                 qmat(3,3,iq)=qmat(3,3,iq)+vol*(x2(3)+x2(3)-x2(1)-x2(2))
                 x2m(:,iq)=vol*x2(:)+x2m(:,iq)  
+
+                eta = vol*(SUM(x2))*5.0d0/3.0d0
+                Mono(iq)=vol*((0.5d0*SQRT(1.0d0/PI))*(SUM(x2)))+Mono(iq)
+            
+                Di(iq)=vol*(Y_lm(1,M_val,xx(1),xx(2),xx(3))*(SQRT(SUM(x2))**3- &
+                           SQRT(SUM(x2))*eta)*SQRT(2*1+1.0d0))+Di(iq)
+                Quad(iq)=vol*(Y_lm(2,M_val,xx(1),xx(2),xx(3))*SUM(x2)*SQRT(2*2+1.0d0))+Quad(iq)
+                Oct(iq)=vol*(Y_lm(3,M_val,xx(1),xx(2),xx(3))*(SQRT(SUM(x2))**3) &
+                           *SQRT(2*3+1.0d0))+Oct(iq)
+                HexaDeca(iq)= vol*(Y_lm(4,M_val,xx(1),xx(2),xx(3))*(SQRT(SUM(x2))**4) &
+                           *SQRT(2*4+1.0d0))+HexaDeca(iq)
+                DiaTriaConta(iq)= vol*(Y_lm(5,M_val,xx(1),xx(2),xx(3))*(SQRT(SUM(x2))**5) &
+                           *SQRT(2*5+1.0d0))+DiaTriaConta(iq)
              ENDDO
           ENDDO
        ENDDO
@@ -153,9 +204,21 @@ CONTAINS
        qmat(3,1,iq)=qmat(1,3,iq)
        qmat(3,2,iq)=qmat(2,3,iq)
     ENDDO
+    
+    r2tot=(rms(1)+rms(2))/pnrtot
     rmstot=SQRT((rms(1)+rms(2))/pnrtot)
     rms=SQRT(rms/pnr)  
     x2mtot=(x2m(:,1)+x2m(:,2))/pnrtot  
+    r3tot=(r3(1)+r3(2))/pnrtot
+    r4tot=(r4(1)+r4(2))/pnrtot
+
+    Mono_tot = Mono(1)+Mono(2)
+    Di_tot = Di(1)+Di(2)
+    Quad_tot = Quad(1)+Quad(2)
+    Oct_tot = Oct(1)+Oct(2)
+    HexDec_tot = HexaDeca(1)+HexaDeca(2)
+    DiaTriaConta_tot = DiaTriaConta(1)+DiaTriaConta(2)
+
     DO iq=1,2
        x2m(:,iq)=x2m(:,iq)/pnr(iq)
     ENDDO
@@ -183,18 +246,35 @@ CONTAINS
 ! DESCRIPTION: moment_shortprint
 !> @brief
 !!This subroutine simply prints some information into the specialized
-!!output files. \c monopolesfile receives the r.m.s. radii and also
-!!the difference of neutron minus proton radius, while \c quadrupolesfile
-!!receives the spherical quadrupole components \c q20 and \c q20tot 
-!!as well as the moments \c x2m. The physical time
+!!output files. \c monopolesfile receives the monopole moment, while \c quadrupolesfile
+!!receives the quadrupole moment and so on for other multipole files. The physical time
 !!starts each line to enable easy time-curve plotting.
 !--------------------------------------------------------------------------- 
-  SUBROUTINE moment_shortprint
+  SUBROUTINE moment_shortprint(ampl_ext)
+   REAL(db) :: ampl_ext
+
     OPEN(unit=scratch,file=monopolesfile,POSITION='APPEND')  
-    WRITE(scratch,'(4F10.2,E14.5)') time,rms,rmstot,rms(1)-rms(2)
+    WRITE(scratch,'(F25.5,2x,F25.10,2x,F15.10)') time,Mono_tot,ampl_ext
     CLOSE(unit=scratch)
+    
+    OPEN(unit=scratch,file=dipolesfile,POSITION='APPEND')  
+    WRITE(scratch,'(F25.5,2x,F25.10,2x,F15.10)') time,Di_tot,ampl_ext
+    CLOSE(unit=scratch)
+
     OPEN(unit=scratch,file=quadrupolesfile,POSITION='APPEND')  
-    WRITE(scratch,'(1x,F10.2,9G14.6)') time,q20,q20tot,x2m
+    WRITE(scratch,'(F25.5,2x,F25.10,2x,F15.10)') time,Quad_tot,ampl_ext
+    CLOSE(unit=scratch)
+    
+    OPEN(unit=scratch,file=octupolesfile,POSITION='APPEND')  
+    WRITE(scratch,'(F25.5,2x,F25.10,2x,F15.10)') time,Oct_tot,ampl_ext
+    CLOSE(unit=scratch)
+
+    OPEN(unit=scratch,file=hexadecapolesfile,POSITION='APPEND')  
+    WRITE(scratch,'(F25.5,2x,F25.10,2x,F15.10)') time,HexDec_tot,ampl_ext
+    CLOSE(unit=scratch)
+
+    OPEN(unit=scratch,file=diatriacontapolesfile,POSITION='APPEND')  
+    WRITE(scratch,'(F25.5,2x,F25.10,2x,F15.10)') time,DiaTriaConta_tot,ampl_ext
     CLOSE(unit=scratch)
   END SUBROUTINE moment_shortprint
 !---------------------------------------------------------------------------  

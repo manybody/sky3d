@@ -1,0 +1,205 @@
+\hypertarget{namespaceforces}{}\doxysubsection{forces Module Reference}
+\label{namespaceforces}\index{forces@{forces}}
+
+
+Module {\ttfamily Forces} describes the interactions used in the code. The idea is to produce a library of Skyrme forces that can be called up simply by name, but for exploratory purposes a force can also be input using individual parameter values. A force is usually fitted together with a prescription for the pairing and center-\/of-\/mass correction, so that these properties are here defined as part of the force.  
+
+
+\doxysubsubsection*{Data Types}
+\begin{DoxyCompactItemize}
+\item 
+type \mbox{\hyperlink{structforces_1_1force}{force}}
+\begin{DoxyCompactList}\small\item\em This contains the parameters for the Skyrme force\+: \end{DoxyCompactList}\item 
+type \mbox{\hyperlink{structforces_1_1pairing}{pairing}}
+\begin{DoxyCompactList}\small\item\em This contains the parameters for pairing\+: \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespaceforces_acf6aab1574325db63418eda4131075bf}{read\+\_\+force}}
+\begin{DoxyCompactList}\small\item\em The purpose of the subroutine is to read the force and pairing definitions. The {\ttfamily N\+A\+M\+E\+L\+I\+ST\}} {\ttfamily force} contains all the defining values for a Skyrme force (but now as individual variables, not in a derived type) plus a selection of pairing type and strengths (see input description). In addition there is a logical variable {\ttfamily turnoff\+\_\+zpe} which allows turning off the center-\/of-\/mass correction. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+integer \mbox{\hyperlink{namespaceforces_a5068dc7c6cc45bc03f12cf8b73e38640}{ipair}}
+\begin{DoxyCompactList}\small\item\em selects one of several pairing modes. For historical reasons the values are 0\+: no pairing, 5\+: V\+DI pairing, and 6\+: D\+D\+DI pairing. In the input the symbolic names are used so these numerical values are hidden to the user. For details see the input description and module {\ttfamily Pairs}. ~\newline
+ \end{DoxyCompactList}\item 
+type(\mbox{\hyperlink{structforces_1_1force}{force}}) \mbox{\hyperlink{namespaceforces_ad422798219457e9ffb79474afe938d0f}{f}}
+\begin{DoxyCompactList}\small\item\em this contains parameters for the Skyrme force actually used in the present calculation, packed \end{DoxyCompactList}\item 
+type(\mbox{\hyperlink{structforces_1_1pairing}{pairing}}) \mbox{\hyperlink{namespaceforces_ad2ab317bfb64d8acd75d1fe618ee57ba}{p}}
+\begin{DoxyCompactList}\small\item\em the pairing parameters used in the present calculation. This is separate from the force itself\+: the force definition usually contains suggestions for the associated pairing, but this often overridden, e.\+g, by turning off pairing. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespaceforces_a13bcc4dc75c0fe7ac9e2f8d6931655b8}{h2ma}}
+\begin{DoxyCompactList}\small\item\em the average of the two {\ttfamily h2m} values for protons and neutrons. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespaceforces_abb63d5aa09a46e77a871a5890416dc46}{nucleon\+\_\+mass}}
+\begin{DoxyCompactList}\small\item\em the mass of the nucleon (average of neutron and Proton) in MeV calculated from {\ttfamily h2ma} and {\ttfamily hbc}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ these are the coefficients actually used}\par
+{\em for the mean-\/field and single-\/particle Hamiltonian calculations in {\ttfamily skyrme} and {\ttfamily integ\+\_\+energy}. Note that only {\ttfamily b4p} is also included in the Skyrme-\/force definition; the others are derived from the {\ttfamily t} coefficients. }\begin{DoxyCompactItemize}
+\item 
+real(db) \mbox{\hyperlink{namespaceforces_a35844de3f9a6cfb226b1b8785b966f87}{b0}}
+\item 
+real(db) \mbox{\hyperlink{namespaceforces_a134d6cd47ad4aec92886b257521ac14e}{b0p}}
+\item 
+real(db) \mbox{\hyperlink{namespaceforces_ab84ce9c66a7bd5cf064a912410cc234a}{b1}}
+\item 
+real(db) \mbox{\hyperlink{namespaceforces_a015939a1b4e35a7b1e7d9fd9072ec98e}{b1p}}
+\item 
+real(db) \mbox{\hyperlink{namespaceforces_a101f9fad70d811f82446e61984796d83}{b2}}
+\item 
+real(db) \mbox{\hyperlink{namespaceforces_af127f5ea451ee9280590d119528e5979}{b2p}}
+\item 
+real(db) \mbox{\hyperlink{namespaceforces_a8c57a7c0c420e37e859a59b3dd7a4fa3}{b3}}
+\item 
+real(db) \mbox{\hyperlink{namespaceforces_a605d67826136213687b67dfbfa821cb0}{b3p}}
+\item 
+real(db) \mbox{\hyperlink{namespaceforces_ab8b0ff9570acade93ea8a4517a529e4c}{b4}}
+\item 
+real(db) \mbox{\hyperlink{namespaceforces_a7107224d3810d6ae02c9932f0aed6ed4}{b4p}}
+\item 
+real(db) \mbox{\hyperlink{namespaceforces_a2887e846db365afcbfe231aa939706d8}{slate}}
+\end{DoxyCompactItemize}
+\end{Indent}
+
+
+\doxysubsubsection{Detailed Description}
+Module {\ttfamily Forces} describes the interactions used in the code. The idea is to produce a library of Skyrme forces that can be called up simply by name, but for exploratory purposes a force can also be input using individual parameter values. A force is usually fitted together with a prescription for the pairing and center-\/of-\/mass correction, so that these properties are here defined as part of the force. 
+
+The predefined Skyrme forces are contained in {\ttfamily forces.\+data}, which contains an array {\ttfamily pforce} of {\ttfamily  T\+Y\+P\+E(\+Force) } data. This is a bit unreliable since the Fortran standard restricts the length of statements; it should be replaced by reading from a data file in case this limit causes problems. The present version is, however, still preferred as a data file would have to be replicated in every application directory (or an absolute path would have to be defined in the {\ttfamily O\+P\+EN} statement). 
+
+\doxysubsubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespaceforces_acf6aab1574325db63418eda4131075bf}\label{namespaceforces_acf6aab1574325db63418eda4131075bf}} 
+\index{forces@{forces}!read\_force@{read\_force}}
+\index{read\_force@{read\_force}!forces@{forces}}
+\doxyparagraph{\texorpdfstring{read\_force()}{read\_force()}}
+{\footnotesize\ttfamily subroutine forces\+::read\+\_\+force}
+
+
+
+The purpose of the subroutine is to read the force and pairing definitions. The {\ttfamily N\+A\+M\+E\+L\+I\+ST\}} {\ttfamily force} contains all the defining values for a Skyrme force (but now as individual variables, not in a derived type) plus a selection of pairing type and strengths (see input description). In addition there is a logical variable {\ttfamily turnoff\+\_\+zpe} which allows turning off the center-\/of-\/mass correction. 
+
+Some quantities are first set negative to see whether required input is missing. Then a predefined Skyrme force with the given name is sought; if it is found, it is simply copied into {\ttfamily f}. If no force of this name is found, a new one is composed from the numbers given in the input.
+
+If the input varable {\ttfamily turnoff\+\_\+zpe} is true, the indicator {\ttfamily  f\%zpe } is set to 1, which implies not doing anything about the center-\/of-\/mass correction. Actually, in the current version this affects only one statement in the static module.
+
+Now the \char`\"{}b\char`\"{} coefficients are calculated straightforwardly. There is one additional coefficient {\ttfamily slate} used for the Slater approximation to the Coulomb exchange term. This is not a free parameter, but precomputed for convenience in {\ttfamily \mbox{\hyperlink{forces_8f90}{forces.\+f90}}}. The $ b $ and $ b\textnormal{\textquotesingle} $ coefficients are used in subroutine {\ttfamily skyrme} (module {\ttfamily Meanfield}) and {\ttfamily energy} (module {\ttfamily Energies}).
+
+The variable {\ttfamily pairing} from the namelist then determines the pairing. If it is set to {\ttfamily \textquotesingle{}N\+O\+NE\textquotesingle{}}, no pairing is included. Otherwise the strength parameters are taken from the input or from the predefined force. If this process does not find a reasonable pairing combination, stop with an error message.
+
+Finally the routine calculates the values of {\ttfamily nucleon\+\_\+mass} and {\ttfamily h2ma}. It then prints out a description of the force and pairing parameters. 
+
+\doxysubsubsection{Variable Documentation}
+\mbox{\Hypertarget{namespaceforces_a35844de3f9a6cfb226b1b8785b966f87}\label{namespaceforces_a35844de3f9a6cfb226b1b8785b966f87}} 
+\index{forces@{forces}!b0@{b0}}
+\index{b0@{b0}!forces@{forces}}
+\doxyparagraph{\texorpdfstring{b0}{b0}}
+{\footnotesize\ttfamily real(db) forces\+::b0}
+
+\mbox{\Hypertarget{namespaceforces_a134d6cd47ad4aec92886b257521ac14e}\label{namespaceforces_a134d6cd47ad4aec92886b257521ac14e}} 
+\index{forces@{forces}!b0p@{b0p}}
+\index{b0p@{b0p}!forces@{forces}}
+\doxyparagraph{\texorpdfstring{b0p}{b0p}}
+{\footnotesize\ttfamily real(db) forces\+::b0p}
+
+\mbox{\Hypertarget{namespaceforces_ab84ce9c66a7bd5cf064a912410cc234a}\label{namespaceforces_ab84ce9c66a7bd5cf064a912410cc234a}} 
+\index{forces@{forces}!b1@{b1}}
+\index{b1@{b1}!forces@{forces}}
+\doxyparagraph{\texorpdfstring{b1}{b1}}
+{\footnotesize\ttfamily real(db) forces\+::b1}
+
+\mbox{\Hypertarget{namespaceforces_a015939a1b4e35a7b1e7d9fd9072ec98e}\label{namespaceforces_a015939a1b4e35a7b1e7d9fd9072ec98e}} 
+\index{forces@{forces}!b1p@{b1p}}
+\index{b1p@{b1p}!forces@{forces}}
+\doxyparagraph{\texorpdfstring{b1p}{b1p}}
+{\footnotesize\ttfamily real(db) forces\+::b1p}
+
+\mbox{\Hypertarget{namespaceforces_a101f9fad70d811f82446e61984796d83}\label{namespaceforces_a101f9fad70d811f82446e61984796d83}} 
+\index{forces@{forces}!b2@{b2}}
+\index{b2@{b2}!forces@{forces}}
+\doxyparagraph{\texorpdfstring{b2}{b2}}
+{\footnotesize\ttfamily real(db) forces\+::b2}
+
+\mbox{\Hypertarget{namespaceforces_af127f5ea451ee9280590d119528e5979}\label{namespaceforces_af127f5ea451ee9280590d119528e5979}} 
+\index{forces@{forces}!b2p@{b2p}}
+\index{b2p@{b2p}!forces@{forces}}
+\doxyparagraph{\texorpdfstring{b2p}{b2p}}
+{\footnotesize\ttfamily real(db) forces\+::b2p}
+
+\mbox{\Hypertarget{namespaceforces_a8c57a7c0c420e37e859a59b3dd7a4fa3}\label{namespaceforces_a8c57a7c0c420e37e859a59b3dd7a4fa3}} 
+\index{forces@{forces}!b3@{b3}}
+\index{b3@{b3}!forces@{forces}}
+\doxyparagraph{\texorpdfstring{b3}{b3}}
+{\footnotesize\ttfamily real(db) forces\+::b3}
+
+\mbox{\Hypertarget{namespaceforces_a605d67826136213687b67dfbfa821cb0}\label{namespaceforces_a605d67826136213687b67dfbfa821cb0}} 
+\index{forces@{forces}!b3p@{b3p}}
+\index{b3p@{b3p}!forces@{forces}}
+\doxyparagraph{\texorpdfstring{b3p}{b3p}}
+{\footnotesize\ttfamily real(db) forces\+::b3p}
+
+\mbox{\Hypertarget{namespaceforces_ab8b0ff9570acade93ea8a4517a529e4c}\label{namespaceforces_ab8b0ff9570acade93ea8a4517a529e4c}} 
+\index{forces@{forces}!b4@{b4}}
+\index{b4@{b4}!forces@{forces}}
+\doxyparagraph{\texorpdfstring{b4}{b4}}
+{\footnotesize\ttfamily real(db) forces\+::b4}
+
+\mbox{\Hypertarget{namespaceforces_a7107224d3810d6ae02c9932f0aed6ed4}\label{namespaceforces_a7107224d3810d6ae02c9932f0aed6ed4}} 
+\index{forces@{forces}!b4p@{b4p}}
+\index{b4p@{b4p}!forces@{forces}}
+\doxyparagraph{\texorpdfstring{b4p}{b4p}}
+{\footnotesize\ttfamily real(db) forces\+::b4p}
+
+\mbox{\Hypertarget{namespaceforces_ad422798219457e9ffb79474afe938d0f}\label{namespaceforces_ad422798219457e9ffb79474afe938d0f}} 
+\index{forces@{forces}!f@{f}}
+\index{f@{f}!forces@{forces}}
+\doxyparagraph{\texorpdfstring{f}{f}}
+{\footnotesize\ttfamily type(\mbox{\hyperlink{structforces_1_1force}{force}}) forces\+::f}
+
+
+
+this contains parameters for the Skyrme force actually used in the present calculation, packed 
+
+\mbox{\Hypertarget{namespaceforces_a13bcc4dc75c0fe7ac9e2f8d6931655b8}\label{namespaceforces_a13bcc4dc75c0fe7ac9e2f8d6931655b8}} 
+\index{forces@{forces}!h2ma@{h2ma}}
+\index{h2ma@{h2ma}!forces@{forces}}
+\doxyparagraph{\texorpdfstring{h2ma}{h2ma}}
+{\footnotesize\ttfamily real(db) forces\+::h2ma}
+
+
+
+the average of the two {\ttfamily h2m} values for protons and neutrons. 
+
+\mbox{\Hypertarget{namespaceforces_a5068dc7c6cc45bc03f12cf8b73e38640}\label{namespaceforces_a5068dc7c6cc45bc03f12cf8b73e38640}} 
+\index{forces@{forces}!ipair@{ipair}}
+\index{ipair@{ipair}!forces@{forces}}
+\doxyparagraph{\texorpdfstring{ipair}{ipair}}
+{\footnotesize\ttfamily integer forces\+::ipair}
+
+
+
+selects one of several pairing modes. For historical reasons the values are 0\+: no pairing, 5\+: V\+DI pairing, and 6\+: D\+D\+DI pairing. In the input the symbolic names are used so these numerical values are hidden to the user. For details see the input description and module {\ttfamily Pairs}. ~\newline
+ 
+
+\mbox{\Hypertarget{namespaceforces_abb63d5aa09a46e77a871a5890416dc46}\label{namespaceforces_abb63d5aa09a46e77a871a5890416dc46}} 
+\index{forces@{forces}!nucleon\_mass@{nucleon\_mass}}
+\index{nucleon\_mass@{nucleon\_mass}!forces@{forces}}
+\doxyparagraph{\texorpdfstring{nucleon\_mass}{nucleon\_mass}}
+{\footnotesize\ttfamily real(db) forces\+::nucleon\+\_\+mass}
+
+
+
+the mass of the nucleon (average of neutron and Proton) in MeV calculated from {\ttfamily h2ma} and {\ttfamily hbc}. 
+
+\mbox{\Hypertarget{namespaceforces_ad2ab317bfb64d8acd75d1fe618ee57ba}\label{namespaceforces_ad2ab317bfb64d8acd75d1fe618ee57ba}} 
+\index{forces@{forces}!p@{p}}
+\index{p@{p}!forces@{forces}}
+\doxyparagraph{\texorpdfstring{p}{p}}
+{\footnotesize\ttfamily type(\mbox{\hyperlink{structforces_1_1pairing}{pairing}}) forces\+::p}
+
+
+
+the pairing parameters used in the present calculation. This is separate from the force itself\+: the force definition usually contains suggestions for the associated pairing, but this often overridden, e.\+g, by turning off pairing. 
+
+\mbox{\Hypertarget{namespaceforces_a2887e846db365afcbfe231aa939706d8}\label{namespaceforces_a2887e846db365afcbfe231aa939706d8}} 
+\index{forces@{forces}!slate@{slate}}
+\index{slate@{slate}!forces@{forces}}
+\doxyparagraph{\texorpdfstring{slate}{slate}}
+{\footnotesize\ttfamily real(db) forces\+::slate}
+

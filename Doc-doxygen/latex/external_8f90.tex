@@ -1,0 +1,47 @@
+\hypertarget{external_8f90}{}\doxysubsection{external.\+f90 File Reference}
+\label{external_8f90}\index{external.f90@{external.f90}}
+\doxysubsubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \mbox{\hyperlink{namespaceexternal}{external}}
+\begin{DoxyCompactList}\small\item\em This module allows the coupling of the nucleonic wave functions to an external field. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespaceexternal_a7b6a22a5df2618253961de7bfac3edc3}{external\+::getin\+\_\+external}}
+\begin{DoxyCompactList}\small\item\em It reads in all the parameters of the external field. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceexternal_a9f9008155aa9c3456e709e0667dcb7ed}{external\+::init\+\_\+external}}
+\begin{DoxyCompactList}\small\item\em It does some consistency checks of the external parameters and initializes the external field. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceexternal_a6598d81653c164baa56a1c63176c7a22}{external\+::extfld}} (time)
+\begin{DoxyCompactList}\small\item\em This is again a very straightforward routine. It calculates the time-\/dependent prefactor {\ttfamily time\+\_\+factor} depending on the parameters, and adds the time-\/independent field {\ttfamily extfield} multiplied by this factor to {\ttfamily upot}. The physical time is here given as an argument, because it needs to be evaluated at both full and half time steps. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceexternal_acc1caf7a333063d49ee27956462ee531}{external\+::extboost}} (noboostflag)
+\begin{DoxyCompactList}\small\item\em This performs the initial boost on all single-\/particle wave functions. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceexternal_af39bcf0867c7a8aebddd6865341fbdbb}{external\+::print\+\_\+extfield}} ()
+\begin{DoxyCompactList}\small\item\em This subroutine calculates the expectation of the coupling energy to the external field,. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+integer, private \mbox{\hyperlink{namespaceexternal_a78cd193c1f66b79b1a8496431e8a6db0}{external\+::isoext}} =0
+\begin{DoxyCompactList}\small\item\em isospin behavior of the external field\+: {\ttfamily isoext} denotes the same action on protons and neutrons, {\ttfamily  isoext=1 } that with opposing signs. \end{DoxyCompactList}\item 
+integer, private \mbox{\hyperlink{namespaceexternal_a0410fea857fe9ab1bf4e5dd867a503ea}{external\+::ipulse}} =0
+\begin{DoxyCompactList}\small\item\em type of pulse. {\ttfamily  ipulse=0} denotes the initial boost configuration, {\ttfamily  ipulse=1 } a Gaussian pulse and {\ttfamily  ipulse=2 } a cosine squared behavior. \end{DoxyCompactList}\item 
+real(db), dimension(\+:,\+:,\+:,\+:), allocatable, private \mbox{\hyperlink{namespaceexternal_ad762cc8c4ba4c1feff9bab357a55c47e}{external\+::extfield}}
+\begin{DoxyCompactList}\small\item\em this is the time-\/independent field generated according to the parameters {\ttfamily amplq0}, {\ttfamily textfield\+\_\+periodic} and depending on the latter, possibly {\ttfamily radext} and {\ttfamily widext}. It is used either to calculate the initial boost or is added to the mean field multiplied with the time-\/dependent factor. \end{DoxyCompactList}\item 
+real(db), private \mbox{\hyperlink{namespaceexternal_a9b38afd4ab0a5d9eb2832d7ab2339d18}{external\+::amplq0}} =0.D0
+\begin{DoxyCompactList}\small\item\em a strength parameter for the perturbation. Its numerical magnitude is usually not important by itself, but varying it allows studying the effects of different strengths of the excitation. \end{DoxyCompactList}\item 
+real(db), private \mbox{\hyperlink{namespaceexternal_a307bd6147b6d044f25b5db58079f17f3}{external\+::radext}} =100.D0
+\begin{DoxyCompactList}\small\item\em parameter $r_0$ for the cutoff of the field in fm. \end{DoxyCompactList}\item 
+real(db), private \mbox{\hyperlink{namespaceexternal_af3c78da7cadd7f1cfb81f7b612b6a7e2}{external\+::widext}} =1.D0
+\begin{DoxyCompactList}\small\item\em parameter $\Delta_0$ for the cutoff of the field in fm. \end{DoxyCompactList}\item 
+real(db), private \mbox{\hyperlink{namespaceexternal_ade752705f2ad6796fdd2c327535a75c6}{external\+::omega}} =0.D0
+\begin{DoxyCompactList}\small\item\em parameter $ \omega $ for time-\/dependent excitation \end{DoxyCompactList}\item 
+real(db), private \mbox{\hyperlink{namespaceexternal_a0c039ebdad0a07c53dc48268135f0d75}{external\+::taut}}
+\begin{DoxyCompactList}\small\item\em parameter $ \Delta\tau $ for time-\/dependent excitation \end{DoxyCompactList}\item 
+real(db), private \mbox{\hyperlink{namespaceexternal_abee73b55e270275118af5f5b0a7b8a94}{external\+::tau0}}
+\begin{DoxyCompactList}\small\item\em parameter $ \tau_0 $ for time-\/dependent excitation \end{DoxyCompactList}\item 
+logical, private \mbox{\hyperlink{namespaceexternal_a14f5363ccffa9ace7f49d9354106a5a1}{external\+::textfield\+\_\+periodic}} =.false.
+\begin{DoxyCompactList}\small\item\em if this is set to {\ttfamily true}, the external field is made periodic by substituting $ x^2\rightarrow\sin^2\left(\pi x/x_L\right) $, otherwise a damping factor is used $ F_q(\vec r) \rightarrow \frac{F_q(\vec r)}{1+e^{(r-r_0)/\Delta r}} $. \end{DoxyCompactList}\item 
+integer, private \mbox{\hyperlink{namespaceexternal_a58321273277630e218505f8f0fc3ea2f}{external\+::l\+\_\+val}} =0
+\begin{DoxyCompactList}\small\item\em paramter $L_{val}$, the orbital angular quantum number(\+L) used in the definition of spherical harmoninc ( $Y_{L}^{M}$) which is used while defining the external field \end{DoxyCompactList}\item 
+integer, private \mbox{\hyperlink{namespaceexternal_ac4255a781f779432088d52a94c3d5479}{external\+::m\+\_\+val}} =0
+\begin{DoxyCompactList}\small\item\em paramter $M_{val}$, the projection quantum number(\+M) used in the definition of spherical harmoninc ( $Y_{L}^{M}$) which is used while defining the external field \end{DoxyCompactList}\end{DoxyCompactItemize}

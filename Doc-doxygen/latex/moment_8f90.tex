@@ -1,0 +1,55 @@
+\hypertarget{moment_8f90}{}\doxysubsection{moment.\+f90 File Reference}
+\label{moment_8f90}\index{moment.f90@{moment.f90}}
+\doxysubsubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \mbox{\hyperlink{namespacemoment}{moment}}
+\begin{DoxyCompactList}\small\item\em In this module various moments of the density distribution are calculated. Most of them come in two versions\+: an isospin-\/dependent one characterized by a final isospin index of dimension$\sim$2, and a summed one distinguished by the ending \char`\"{}\textbackslash{}c tot\char`\"{} in its name. Thus, e.\+g., three variants of center of mass are stored\+: that of the neutrons {\ttfamily  cm(1\+:3,1) }, of the protons {\ttfamily  cm(1\+:3,2)}, and of the total mass distribution {\ttfamily  cmtot(1\+:3) }. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine, public \mbox{\hyperlink{namespacemoment_ad0b1971e58cfe0d960b16fcfa520128f}{moment\+::moments}}
+\begin{DoxyCompactList}\small\item\em This is the principal subroutine for calculating the geometric quantities. It consists of two loops, both over isospin and space, and a final analysis Section. \end{DoxyCompactList}\item 
+subroutine, public \mbox{\hyperlink{namespacemoment_af754908d836b5bcc966661d09179481e}{moment\+::moment\+\_\+shortprint}}
+\begin{DoxyCompactList}\small\item\em This subroutine simply prints some information into the specialized output files. {\ttfamily monopolesfile} receives the r.\+m.\+s. radii and also the difference of neutron minus proton radius, while {\ttfamily quadrupolesfile} receives the spherical quadrupole components {\ttfamily q20} and {\ttfamily q20tot} as well as the moments {\ttfamily x2m}. The physical time starts each line to enable easy time-\/curve plotting. \end{DoxyCompactList}\item 
+subroutine, public \mbox{\hyperlink{namespacemoment_af61f299e6f0b1b21cdbd0b613d7bb283}{moment\+::moment\+\_\+print}}
+\begin{DoxyCompactList}\small\item\em This subroutine prints a somewhat more detailed information. Particle number , r.\+m.\+s. radius, $ Q_{20} $, {\ttfamily x2m}, and center-\/of-\/mass are printed for the total distribution and also separately for neutrons and protons. This output goes to the regular output unit. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacemoment_a0763df6402fc6e10b5f9751a8e08449b}{moment\+::q2diag}} (q\+\_\+mat, q20x, q22x, title)
+\begin{DoxyCompactList}\small\item\em his subroutine diagonalizes the Cartesian quadrupole tensor. To this purpose it calls the {\ttfamily L\+A\+P\+A\+CK} routine {\ttfamily D\+S\+Y\+EV}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+real(db), dimension(2), public \mbox{\hyperlink{namespacemoment_a63f7601553b63cc249ac187c580f6cd6}{moment\+::pnr}}
+\begin{DoxyCompactList}\small\item\em the numbers of neutrons {\ttfamily pnr(1)}= $ N $ and protons {\ttfamily pnr(2)}= $ Z $. These are obtained by a simple integration of the densities {\ttfamily rho}. \end{DoxyCompactList}\item 
+real(db), public \mbox{\hyperlink{namespacemoment_ab993913e898eefe73b553b2ca714868c}{moment\+::pnrtot}}
+\begin{DoxyCompactList}\small\item\em the total particle number {\ttfamily  pnrtot}= $ A $. These are obtained by a simple integration of the densities {\ttfamily rho}. \end{DoxyCompactList}\item 
+real(db), dimension(3, 2), public \mbox{\hyperlink{namespacemoment_ac9d844f3c67965f44d539bca0385dae4}{moment\+::cm}}
+\begin{DoxyCompactList}\small\item\em the center of mass vectors of the neutron and proton $ \vec R_n $, $ \vec R_p $. Dimension\+: fm. \end{DoxyCompactList}\item 
+real(db), dimension(3), public \mbox{\hyperlink{namespacemoment_a1a8a91ec65f3a390a998bf1a1acd9c87}{moment\+::cmtot}}
+\begin{DoxyCompactList}\small\item\em the center of mass vectors of the total mass distribution $ \vec R $. Dimension\+: fm. \end{DoxyCompactList}\item 
+real(db), dimension(3, 2), public \mbox{\hyperlink{namespacemoment_a88b71d38ea6ac092875d4d1ad359e43b}{moment\+::pcm}}
+\begin{DoxyCompactList}\small\item\em the integrated momentum vectors, not containing the nucleon mass. They thus correspond to an integral over the current density only and have a dimension of velocity\+: $ c $. \end{DoxyCompactList}\item 
+real(db), dimension(2) \mbox{\hyperlink{namespacemoment_a22a1c7e871e32a11f43db5d3353711e0}{moment\+::rms}}
+\begin{DoxyCompactList}\small\item\em these are the root mean-\/square radii of neutron and proton mass distribution. Dimension\+: fm. \end{DoxyCompactList}\item 
+real(db), public \mbox{\hyperlink{namespacemoment_a58d0f9ff7d4fb18f41ca9b49b25e60d8}{moment\+::rmstot}}
+\begin{DoxyCompactList}\small\item\em these are the root mean-\/square radii of the total mass distribution. Dimension\+: fm. \end{DoxyCompactList}\item 
+real(db), dimension(2) \mbox{\hyperlink{namespacemoment_a5fd6d4696889af435f7a65829274f289}{moment\+::q20}}
+\begin{DoxyCompactList}\small\item\em the $ m=0 $ components of the spherical quadrupole tensor $ Q_{20} $ in the principal-\/axes frame for neutrons and protons. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacemoment_a7347a1b0aa3897afd03bab40741be2df}{moment\+::q20tot}}
+\begin{DoxyCompactList}\small\item\em the $ m=0 $ components of the spherical quadrupole tensor $ Q_{20} $ in the principal-\/axes frame for the total mass distribution. \end{DoxyCompactList}\item 
+real(db), dimension(2) \mbox{\hyperlink{namespacemoment_a33c65177798d8345c7a0a204f6008c86}{moment\+::q22}}
+\begin{DoxyCompactList}\small\item\em the $ m=2 $ components of the spherical quadrupole tensor $ Q_{22} $ in the principal-\/axes frame for neutrons and protons. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacemoment_a3217f0f147074033b9ec153a10018851}{moment\+::q22tot}}
+\begin{DoxyCompactList}\small\item\em the $ m=2 $ components of the spherical quadrupole tensor $ Q_{20} $ in the principal-\/axes frame for the total mass distribution. \end{DoxyCompactList}\item 
+real(db), dimension(3, 2) \mbox{\hyperlink{namespacemoment_a527577287260e1e4d8f61a824e0c9454}{moment\+::x2m}}
+\begin{DoxyCompactList}\small\item\em the vectors of second moments of the radii in the three coordinate directions, i.\+e., \end{DoxyCompactList}\item 
+real(db), dimension(3) \mbox{\hyperlink{namespacemoment_ac6094460d06bef472f2e5a0283b57c8b}{moment\+::x2mtot}}
+\begin{DoxyCompactList}\small\item\em the vectors of second moments of the radii in the three coordinate directions, i.\+e., \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacemoment_a68cd179aea538601a10f76c944f4c301}{moment\+::beta20tot}}
+\begin{DoxyCompactList}\small\item\em the quadrupole deformation parameters $ a_0 $. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacemoment_a9f9ce1baa7c8167a1b2da4d07a52f236}{moment\+::beta22tot}}
+\begin{DoxyCompactList}\small\item\em the quadrupole deformation parameters $ a_2 $. \end{DoxyCompactList}\item 
+real(db), public \mbox{\hyperlink{namespacemoment_a3ac0a23a571b936cccd4bf83f4dda095}{moment\+::beta}}
+\begin{DoxyCompactList}\small\item\em the Bohr-\/\+Mottelson deformation parameter $ \beta $. Calculated only for the total mass distribution, dimensionless \end{DoxyCompactList}\item 
+real(db), public \mbox{\hyperlink{namespacemoment_a1ad95a139dbe044938e2a2c26a7b36b2}{moment\+::gamma}}
+\begin{DoxyCompactList}\small\item\em the Bohr-\/\+Mottelson deformation parameter $ \gamma $. Calculated only for the total mass distribution, expressed in degrees. \end{DoxyCompactList}\end{DoxyCompactItemize}

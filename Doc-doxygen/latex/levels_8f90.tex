@@ -1,0 +1,69 @@
+\hypertarget{levels_8f90}{}\doxysubsection{levels.\+f90 File Reference}
+\label{levels_8f90}\index{levels.f90@{levels.f90}}
+\doxysubsubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \mbox{\hyperlink{namespacelevels}{levels}}
+\begin{DoxyCompactList}\small\item\em This module is concerned with the wave function data\+: definition of the pertinent arrays, allocating their storage and simple operations on them. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespacelevels_a91122d97fbfea678bfd7de364a7e591c}{levels\+::alloc\+\_\+levels}}
+\begin{DoxyCompactList}\small\item\em This subroutine allocates all the arrays associated with single-\/particle wave functions. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacelevels_ad72540f7f5faebfcf257c2526d54ce14}{levels\+::cdervx}} (psin, d1psout, d2psout)
+\begin{DoxyCompactList}\small\item\em This routine calculates derivatives of wave functions using the F\+FT method, in the $ x $-\/direction. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacelevels_a67465a7ef970491e7e5a2570711ef73f}{levels\+::cdervy}} (psin, d1psout, d2psout)
+\begin{DoxyCompactList}\small\item\em This routine calculates derivatives of wave functions using the F\+FT method, in the $ y $-\/direction. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacelevels_ae27a63466deecdb22b35190126283886}{levels\+::cdervz}} (psin, d1psout, d2psout)
+\begin{DoxyCompactList}\small\item\em This routine calculates derivatives of wave functions using the F\+FT method, in the $ z $-\/direction. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacelevels_a4b9efaa3b0f2318fd68a64399808c2fe}{levels\+::laplace}} (psin, psout, e0inv)
+\begin{DoxyCompactList}\small\item\em depending on the presence of the third argument {\ttfamily e0inv}, it can calculate two things using F\+FT methods\+: \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacelevels_ad3cc938ee1823b4dde878016248e7c8b}{levels\+::schmid}}
+\begin{DoxyCompactList}\small\item\em This performs a Gram-\/\+Schmidt orthogonalization of the single particle levels in the straightforward way\+: loop over states and subtract the components of all lower-\/indexed states from a wave function. the static calculations. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+integer \mbox{\hyperlink{namespacelevels_ad1176e264e6cac25a44532e28a9503e9}{levels\+::nstmax}}
+\begin{DoxyCompactList}\small\item\em is the total number of wave functions present in the calculation. For the M\+PI version only {\ttfamily nstloc} wave functions are present on each node. Note that for all other wave-\/function related arrays, such as single-\/particle energies, the full set is stored on each node. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacelevels_a0e862f01a3748859879fbc7ac6d256db}{levels\+::nstloc}}
+\begin{DoxyCompactList}\small\item\em the number of wave functions stored on the present node. In principle this should be defined in module {\ttfamily Parallel}, but this would lead to a circular module dependence. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacelevels_aa35279701a4ecc295c042671aa8ecceb}{levels\+::nneut}}
+\begin{DoxyCompactList}\small\item\em the physical numbers of neutrons. These may be smaller than the number of single-\/particle states. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacelevels_a07af295449db01b659290e9192db954f}{levels\+::nprot}}
+\begin{DoxyCompactList}\small\item\em the physical numbers of protons. These may be smaller than the number of single-\/particle states. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacelevels_a91d915fd18d47d3a68f200405b32fe89}{levels\+::charge\+\_\+number}}
+\begin{DoxyCompactList}\small\item\em the physical charge numbers. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacelevels_a8abf82cc62fcecf7fef8b664bc5ed2d2}{levels\+::mass\+\_\+number}}
+\begin{DoxyCompactList}\small\item\em the physical mass numbers. \end{DoxyCompactList}\item 
+complex(db), dimension(\+:,\+:,\+:,\+:,\+:), pointer \mbox{\hyperlink{namespacelevels_ad43f3a91d28fef20598dafaf71b5b747}{levels\+::psi}}
+\begin{DoxyCompactList}\small\item\em this is the main array for the wave functions. It has an additional last index counting the states. In the sequential case it runs from $ 1\ldots{\tt nstmax} $, in the M\+PI version each node has only {\ttfamily nstloc} wave functions. \end{DoxyCompactList}\item 
+complex(db), dimension(\+:,\+:), allocatable \mbox{\hyperlink{namespacelevels_a86c43169aa09dd5a47b2b9c21ca8729e}{levels\+::hmatr}}
+\begin{DoxyCompactList}\small\item\em this is dimensioned {\ttfamily  (nstmax,nstmax)} and is used for the single-\/particle Hamiltonian in the diagonalization step. \end{DoxyCompactList}\item 
+real(db), dimension(\+:), allocatable \mbox{\hyperlink{namespacelevels_a84c77978b44c9f69d1e9c6795232dcc4}{levels\+::sp\+\_\+energy}}
+\begin{DoxyCompactList}\small\item\em single-\/particle energy in MeV. \end{DoxyCompactList}\item 
+real(db), dimension(\+:), allocatable \mbox{\hyperlink{namespacelevels_a2a0fe0b427a0f435f6f333c1a86def8c}{levels\+::sp\+\_\+efluct1}}
+\begin{DoxyCompactList}\small\item\em single-\/particle energy fluctuation in MeV calculated as \end{DoxyCompactList}\item 
+real(db), dimension(\+:), allocatable \mbox{\hyperlink{namespacelevels_ab9a96c8c6f1abfaf0af0e744973881a9}{levels\+::sp\+\_\+kinetic}}
+\begin{DoxyCompactList}\small\item\em single-\/particle kinetic energy in units of MeV. \end{DoxyCompactList}\item 
+real(db), dimension(\+:), allocatable \mbox{\hyperlink{namespacelevels_a531467a267291ca83f8064d7a425fe6c}{levels\+::sp\+\_\+norm}}
+\begin{DoxyCompactList}\small\item\em norm of single-\/particle wave function; should be unity normally. \end{DoxyCompactList}\item 
+real(db), dimension(\+:), allocatable \mbox{\hyperlink{namespacelevels_a6c85608242c262762764cbc3c0154a44}{levels\+::sp\+\_\+efluct2}}
+\begin{DoxyCompactList}\small\item\em single-\/particle energy fluctuation in MeV calculated as \end{DoxyCompactList}\item 
+real(db), dimension(\+:), allocatable \mbox{\hyperlink{namespacelevels_a0a1fe8c03bbeb0e21d2b7589df6fd9a6}{levels\+::sp\+\_\+parity}}
+\begin{DoxyCompactList}\small\item\em single-\/particle parity w.\+r.\+t. three-\/dimensional reflection at the origin; calculated as \end{DoxyCompactList}\item 
+real(db), dimension(\+:), allocatable \mbox{\hyperlink{namespacelevels_afe1baa4191930bbeffd8c4bc5a2620fb}{levels\+::wocc}}
+\begin{DoxyCompactList}\small\item\em occupation probability of single-\/particle state, may be fractional because of pairing. In the equations this is usually denoted as $ w_k^2 $, the square added because of the pairing notation. \end{DoxyCompactList}\item 
+real(db), dimension(\+:,\+:), allocatable \mbox{\hyperlink{namespacelevels_a7425ee1aee0104d14500d9c7fec65cf3}{levels\+::sp\+\_\+orbital}}
+\begin{DoxyCompactList}\small\item\em dimensioned {\ttfamily  (3,nstmax)}\+: expectation values of three components of single-\/particle orbital angular momentum, in units of $ \hbar $. \end{DoxyCompactList}\item 
+real(db), dimension(\+:,\+:), allocatable \mbox{\hyperlink{namespacelevels_ad98ca041cc25bfa4b56627675009ac71}{levels\+::sp\+\_\+spin}}
+\begin{DoxyCompactList}\small\item\em dimensioned {\ttfamily  (3,nstmax)}\+: expectation values of three components of single-\/particle spin, in units of $ \hbar $. \end{DoxyCompactList}\item 
+integer, dimension(\+:), allocatable \mbox{\hyperlink{namespacelevels_aed7946ee74cd100fb2efa62fc76e3925}{levels\+::isospin}}
+\begin{DoxyCompactList}\small\item\em keeps track of isospin of particle, 1=neutron, 2=proton. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ neutron and proton start and ending indices}\par
+{\em The neutron states are numbered {\ttfamily  npmin(1)} through {\ttfamily  npsi(1)} and the proton states run from {\ttfamily  npmin(2)} through {\ttfamily  npsi(2)}. Protons follow neutrons, so {\ttfamily  npmin(1)=1} and {\ttfamily  npmin(2)=npsi(1)+1}. {\itshape Note that for each particle type the number of states can be larger than the particle number, as states may be fractionally occupied or even empty.} If initialization is not from fragments, {\ttfamily  npsi(2)} {\itshape  as an input value} refers to the total number of proton states, it is later updated (in {\ttfamily  init.\+f90}) to its normal meaning as the final index for proton states, which coincides with the total number of states, {\ttfamily  npsi(2)=nstmax}. }\begin{DoxyCompactItemize}
+\item 
+integer, dimension(2) \mbox{\hyperlink{namespacelevels_ab9d800833c7fd19361f71a493fa0fbf6}{levels\+::npmin}}
+\item 
+integer, dimension(2) \mbox{\hyperlink{namespacelevels_aa9870c52b50461dd864875bf5572da11}{levels\+::npsi}}
+\end{DoxyCompactItemize}
+\end{Indent}

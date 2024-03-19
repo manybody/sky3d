@@ -1,0 +1,45 @@
+\hypertarget{fourier_8f90}{}\doxysubsection{fourier.\+f90 File Reference}
+\label{fourier_8f90}\index{fourier.f90@{fourier.f90}}
+\doxysubsubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \mbox{\hyperlink{namespacefourier}{fourier}}
+\begin{DoxyCompactList}\small\item\em This module initializes the {\ttfamily F\+F\+T\+W3} package for doing Fourier transforms {\bfseries [Fri05a]}. It needs the file {\ttfamily fftw3.\+f} from the {\ttfamily F\+F\+T\+W3} package to define the symbolic parameters for the initialization calls. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespacefourier_afa7e1d95a3da039185c4eb8c2e53b816}{fourier\+::init\+\_\+fft}}
+\begin{DoxyCompactList}\small\item\em In this subroutine the {\ttfamily F\+F\+TW} system is initialized. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{Indent}\textbf{ plans for full three-\/dimensional forward and backward transforms for both spin components.}\par
+\begin{DoxyCompactItemize}
+\item 
+integer(c\+\_\+long), save \mbox{\hyperlink{namespacefourier_a8bebd6391a47447ad8ead439ab25d12f}{fourier\+::pforward}}
+\item 
+integer(c\+\_\+long), save \mbox{\hyperlink{namespacefourier_a88bd11e961a7bd7bcc3efbde9ef48a27}{fourier\+::pbackward}}
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ one-\/dimensional forward and backward transform in the x-\/direction,}\par
+{\em but for all values of $ y $, $ z $, and spin $ s $. }\begin{DoxyCompactItemize}
+\item 
+integer(c\+\_\+long), save \mbox{\hyperlink{namespacefourier_a3692f357e4261fb7a042c03d9e0ac274}{fourier\+::xforward}}
+\item 
+integer(c\+\_\+long), save \mbox{\hyperlink{namespacefourier_a20aaa212b25ce0235f761231bf2cecda}{fourier\+::xbackward}}
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ one-\/dimensional forward and backward transform in the y-\/direction,}\par
+{\em but for all values of $ x $, $ z $, and spin $ s $. }\begin{DoxyCompactItemize}
+\item 
+integer(c\+\_\+long), save \mbox{\hyperlink{namespacefourier_acc329727a2f093ac309d86f3f64da946}{fourier\+::yforward}}
+\item 
+integer(c\+\_\+long), save \mbox{\hyperlink{namespacefourier_ab6ecb8019844c362572611811e13e5d3}{fourier\+::ybackward}}
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ one-\/dimensional forward and backward transform in the z-\/direction,}\par
+{\em but for all values of $ x $, $ y $, and spin $ s $. }\begin{DoxyCompactItemize}
+\item 
+integer(c\+\_\+long), save \mbox{\hyperlink{namespacefourier_af0edf18bd895322db9e4d59eb2610ff9}{fourier\+::zforward}}
+\item 
+integer(c\+\_\+long), save \mbox{\hyperlink{namespacefourier_af6d4db0c9cf5146488054753ee16db8a}{fourier\+::zbackward}}
+\end{DoxyCompactItemize}
+\end{Indent}

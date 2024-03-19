@@ -1,0 +1,165 @@
+\hypertarget{namespacecoulomb}{}\doxysubsection{coulomb Module Reference}
+\label{namespacecoulomb}\index{coulomb@{coulomb}}
+
+
+This module offers the subroutine {\ttfamily poisson}, which calculates the Coulomb potential from the proton density. The two boundary conditions allowed are distinguished by the value of the variable periodic. If it is true, the mesh is assumed to be periodic in all three directions and the Poisson equation is solved using the $\frac{1}{k^2}$ Green’s function in momentum space and assuming a homogeneous negative background annulling the total charge (jellium approximation). Otherwise the boundary condition is for an isolated charge distribution. In this case the potential is calculated by the method of doubling the grid in all directions with zero density, folding with the 1/r-\/potential in momentum space and then restricting to the physical region.  
+
+
+\doxysubsubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine, public \mbox{\hyperlink{namespacecoulomb_a5f0400055fa5aa4cbfc054c9e1bf565b}{poisson}} (rhocharge)
+\begin{DoxyCompactList}\small\item\em This subroutine solves the Poisson equation by the Fourier method. \end{DoxyCompactList}\item 
+subroutine, public \mbox{\hyperlink{namespacecoulomb_a74649b61a8f2de130fb95edb9a62d498}{coulinit}}
+\begin{DoxyCompactList}\small\item\em This subroutine does the necessary initialization. \end{DoxyCompactList}\item 
+subroutine, private \mbox{\hyperlink{namespacecoulomb_aee5145182fc0abb626eaa2850a87826c}{initiq}} (n, d, iq)
+\begin{DoxyCompactList}\small\item\em This subroutine calculates the contributions of each Cartesian index to $r^2$ and $k^{-2}$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+real(db), dimension(\+:,\+:,\+:), allocatable, save, public \mbox{\hyperlink{namespacecoulomb_a26740de741e0c1efe01fe26e5c996135}{wcoul}}
+\begin{DoxyCompactList}\small\item\em ~\newline
+ \end{DoxyCompactList}\item 
+complex(db), dimension(\+:,\+:,\+:), allocatable, save, private \mbox{\hyperlink{namespacecoulomb_ad9f62c9032d70f15617f01a0c9ecb0c7}{q}}
+\begin{DoxyCompactList}\small\item\em array for the complex Green’s function (isolated) or array of 1/r values. Its dimension also depends on the boundary condition. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ Dimensions of the grid on which the Fourier transform is calculated.}\par
+{\em For the periodic case they are identical to the regular dimensions, for the isolated case they are doubled. }\begin{DoxyCompactItemize}
+\item 
+integer, private \mbox{\hyperlink{namespacecoulomb_a821f17159bc941612225823801555733}{nx2}}
+\item 
+integer, private \mbox{\hyperlink{namespacecoulomb_aec5bb921ae0a248b7ce45c157e9d793d}{ny2}}
+\item 
+integer, private \mbox{\hyperlink{namespacecoulomb_a0de0e5b7d18f4ce88eeb7ea25839149a}{nz2}}
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Plans for F\+F\+TW complex forward and reverse transforms}\par
+{\em with array dimensions depending on the boundary condition. }\begin{DoxyCompactItemize}
+\item 
+integer(c\+\_\+long), save, private \mbox{\hyperlink{namespacecoulomb_a20877fe904a19406549cfc1e10b30128}{coulplan1}}
+\item 
+integer(c\+\_\+long), save, private \mbox{\hyperlink{namespacecoulomb_abfd1cdc755ebb2f0adcd1d1ce1cf4503}{coulplan2}}
+\end{DoxyCompactItemize}
+\end{Indent}
+
+
+\doxysubsubsection{Detailed Description}
+This module offers the subroutine {\ttfamily poisson}, which calculates the Coulomb potential from the proton density. The two boundary conditions allowed are distinguished by the value of the variable periodic. If it is true, the mesh is assumed to be periodic in all three directions and the Poisson equation is solved using the $\frac{1}{k^2}$ Green’s function in momentum space and assuming a homogeneous negative background annulling the total charge (jellium approximation). Otherwise the boundary condition is for an isolated charge distribution. In this case the potential is calculated by the method of doubling the grid in all directions with zero density, folding with the 1/r-\/potential in momentum space and then restricting to the physical region. 
+
+The Coulomb solver follows the ideas of {\bfseries [Eas79]}. We summarize here the way it is realized in the code without detailed proofs.
+
+Two grids are used. We will call them here $\mathcal{G}_1$ and $\mathcal{G}_2$. The grid $\mathcal{G}_1$ is our standard working grid. We repeat here the essentials \begin{eqnarray*} \mathcal{G}_1:\;& \nu_x=1,...,{\tt nx}\;,\; \nu_y=1,...,{\tt ny}\;,\; \nu_z=1,...,{\tt nz}\;;\; \\& \mbox{coordinate spacing: } {\tt dx}, {\tt dy}, {\tt dz}; \\& \mbox{momentum spacing: } {\tt dk}_x = \frac{2\pi}{{\tt nx}\!\cdot\!{\tt dx}}, {\tt dk}_y = \frac{2\pi}{{\tt ny}\!\cdot\!{\tt dy}}, {\tt dk}_z = \frac{2\pi}{{\tt nz}\!\cdot\!{\tt dz}}; \end{eqnarray*} The second grid amounts to a doubled box in each direction, thus \begin{eqnarray*} \mathcal{G}_2:\;& \nu_x=1,...,2{\tt nx}\;,\; \nu_y=1,...,2{\tt ny}\;,\; \nu_z=1,...,2{\tt nz}\;;\; \\& x_{\nu_x}=(\nu_x\!-\!{\tt nx}){\tt dx}\,,\, y_{\nu_y}=(\nu_y\!-\!{\tt ny}){\tt dy}\,,\, z_{\nu_z}=(\nu_z\!-\!{\tt nz}){\tt dz}\,; \\& \mbox{momentum spacing: } {\tt dk}_x = \frac{2\pi}{{2\tt nx}\!\cdot\!{\tt dx}}, {\tt dk}_y = \frac{2\pi}{{2\tt ny}\!\cdot\!{\tt dy}}, {\tt dk}_z = \frac{2\pi}{{2\tt nz}\!\cdot\!{\tt dz}}; \end{eqnarray*} The momenta $k_{n_i}$ in $\mathcal{G}_2$ are arranged around $k=0$ similar as in $\mathcal{G}_1$, but with half spacing ${\tt dk}_i$. For simplicity, we will use compact notation $\mathbf{r}_{\bnu}=\left(x_{\nu_x},y_{\nu_y},z_{\nu_z}\right)$ and similarly for $\mathbf{k}_\mathbf{n}$.
+
+First, the Coulomb solver has to be initialized by defining the appropriate Greens function which is done on $\mathcal{G}_2$. The two necessary steps are\+:
+\begin{DoxyEnumerate}
+\item Prepare the Greens function in r-\/space as \[ G(\mathbf{r}_{\bnu})=\frac{e^2}{|\mathbf{r}_{\bnu}|} \] Special consideration has to be given to the singularity of the $ 1/r $ potential. In the discretized version, the value at $ \vec r=0 $ should be replaced by the average of $ 1/r $ over a cuboid of size $\Delta x\times\Delta y\times\Delta z $. For equal spacing in all three directions this would lead to a value of $ 2.38/\Delta x $. Practical experimentation, however, showed that the underlying assumption of a point charge can be improved by some smeared-\/out density for nuclear applications; a value of $ 2.84/\Delta x $ was found to be optimal. ~\newline
+ We use the expression \[ G(0) = \frac{2.84\sqrt{3}}{\sqrt{{\tt dx}^2+{\tt dy}^2+{\tt dz}^2}} \quad.\]
+\item Prepare the Greens function in $ k $-\/space by 3D fast Fourier transformation (F\+FT) on the double grid $\mathcal{G}_2$. $\tilde{G}(\mathbf{k}_{\bmu})={\tt FFT}\{G(\mathbf{r}_{\bnu})\}$. The array $ \tilde{G}(\mathbf{k}_{\bmu}) $ is stored for further continued use.
+\end{DoxyEnumerate}
+
+Once properly prepared, the practical steps for computing the Coulomb field $ U_\mathrm{Coul}(\mathbf{r}_{\bnu}) $ for a density $\rho(\mathbf{r}_{\bnu})$ given on $\mathcal{G}_1$ are
+\begin{DoxyEnumerate}
+\item Extend $ \rho_{\bnu} $ from $ \mathcal{G}_1 $ to $ \mathcal{G}_2 $ by zero padding\+: \[ \rho_2(\mathbf{r}_{\bnu}) = \left\{\begin{array}{lcl} \rho(\mathbf{r}_{\bnu}) &\mbox{ if }& 1\leq \nu_i \leq {\tt n}i \mbox{ for } i\in\{x,y,z\}\\ 0 &\mbox{ else }\end{array}\right. \]
+\item Fourier transform the density in $ \mathcal{G}_2 $\+: \[ \rho_2(\mathbf{r}_{\bnu})\ \longrightarrow\ \tilde{\rho}_2(\mathbf{k}_{\bmu})={\tt FFT}\{\rho_2(\mathbf{r}_{\bnu})\} \]
+\item Compute solution in $ k $-\/space by multiplication with the formerly prepared Greens function \[ \tilde{U}_2(\mathbf{k}_{\bmu}) =\tilde{G}_2(\mathbf{k}_{\bmu})\tilde{\rho}_2(\mathbf{k}_{\bmu}) \]
+\item Compute solution in $ r $-\/space by Fourier back transformation in $\mathcal{G}_2$\+: \[ {U}_2(\mathbf{r}_{\bnu})={\tt FFT}^{-1}\{\tilde{U}_2(\mathbf{k}_{\bmu})\} \]
+\item Map to standard grid $ \mathcal{G}_1 $\+: \[ {U}_\mathrm{Coul}(\mathbf{r}_{\bnu})=U_2(\mathbf{r}_{\bnu})\quad\mbox{for}\quad\bnu\in\mathcal{G}_1 \]
+\end{DoxyEnumerate}
+
+\doxysubsubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespacecoulomb_a74649b61a8f2de130fb95edb9a62d498}\label{namespacecoulomb_a74649b61a8f2de130fb95edb9a62d498}} 
+\index{coulomb@{coulomb}!coulinit@{coulinit}}
+\index{coulinit@{coulinit}!coulomb@{coulomb}}
+\doxyparagraph{\texorpdfstring{coulinit()}{coulinit()}}
+{\footnotesize\ttfamily subroutine, public coulomb\+::coulinit}
+
+
+
+This subroutine does the necessary initialization. 
+
+It calculates the dimension for the Fourier transform depending on the boundary condition, allocates the necessary arrays and sets up the F\+F\+TW plans. Then it composes the array {\ttfamily q}. For the periodic case this contains the values of the Green\textquotesingle{}s function $ 1/k^2 $, with zero at the origin, while for the isolated case it first calculates the inverse shortest distance \$1/r\$ from the origin with indices (1,1,1), replaces the value at the origin and then Fourier-\/transforms this to use it for folding the density with the coordinate-\/space Green\textquotesingle{}s function. ~\newline
+ \mbox{\Hypertarget{namespacecoulomb_aee5145182fc0abb626eaa2850a87826c}\label{namespacecoulomb_aee5145182fc0abb626eaa2850a87826c}} 
+\index{coulomb@{coulomb}!initiq@{initiq}}
+\index{initiq@{initiq}!coulomb@{coulomb}}
+\doxyparagraph{\texorpdfstring{initiq()}{initiq()}}
+{\footnotesize\ttfamily subroutine, private coulomb\+::initiq (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{n,  }\item[{real(db), intent(in)}]{d,  }\item[{real(db), dimension(\+:), intent(out)}]{iq }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+This subroutine calculates the contributions of each Cartesian index to $r^2$ and $k^{-2}$. 
+
+This depends on the boundary condition. For the periodic case, the values of the momenta are given by \[ k_i=\frac{2\pi}{n\Delta x}\bigl(0,\;1,\;2,\;\ldots \frac{n}2-1,\; -\frac{n}2,\;-\frac{n}2+1,\;\ldots -1\bigr).\] For an isolated distribution the shortest distances to the point with index 1 are calculated (periodicity used)\+: \[ d_i=d\bigl(0,\;1,\;2,\;\ldots \frac{n}2-1,\; -\frac{n}2,-\frac{n}2+1,\;\;\ldots 1\bigr).\] The input is the dimension along the coordinate direction given, the output is the one-\/dimensional array {\ttfamily iq} containing these values squared.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em n} & I\+N\+T\+E\+G\+ER, takes the number of grid points. \\
+\hline
+\mbox{\texttt{ in}}  & {\em d} & R\+E\+A\+L(db), takes the grid spacing. \\
+\hline
+\mbox{\texttt{ out}}  & {\em iq} & R\+E\+A\+L(db), array, returns the values for $r^2$ and $k^{-2}$. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacecoulomb_a5f0400055fa5aa4cbfc054c9e1bf565b}\label{namespacecoulomb_a5f0400055fa5aa4cbfc054c9e1bf565b}} 
+\index{coulomb@{coulomb}!poisson@{poisson}}
+\index{poisson@{poisson}!coulomb@{coulomb}}
+\doxyparagraph{\texorpdfstring{poisson()}{poisson()}}
+{\footnotesize\ttfamily subroutine, public coulomb\+::poisson (\begin{DoxyParamCaption}\item[{real(db), dimension(nx,ny,nz), intent(in)}]{rhocharge }\end{DoxyParamCaption})}
+
+
+
+This subroutine solves the Poisson equation by the Fourier method. 
+
+For the periodic case, this means to just Fourier transform, multiply by $1/k^2$, and the transform back. Note that the coefficient for momentum zero must be zero also\+: this means that the total charge in the box vanishes, corresponding to the jellium approximation. In the non-\/periodic case we use use the trick of doubling the box size in every direction and then folding with $1/r$ my multiplying the Fourier transforms. The result in the physical box is then the correct solution for the boundary condition of zero potential at infinity. The key to success is not to use simply $1/k^2$ for the Fourier transform of $1/r$, but to compute it on the actual grid the same way as the densities and potentials are transformed 
+
+\doxysubsubsection{Variable Documentation}
+\mbox{\Hypertarget{namespacecoulomb_a20877fe904a19406549cfc1e10b30128}\label{namespacecoulomb_a20877fe904a19406549cfc1e10b30128}} 
+\index{coulomb@{coulomb}!coulplan1@{coulplan1}}
+\index{coulplan1@{coulplan1}!coulomb@{coulomb}}
+\doxyparagraph{\texorpdfstring{coulplan1}{coulplan1}}
+{\footnotesize\ttfamily integer(c\+\_\+long), save, private coulomb\+::coulplan1\hspace{0.3cm}{\ttfamily [private]}}
+
+\mbox{\Hypertarget{namespacecoulomb_abfd1cdc755ebb2f0adcd1d1ce1cf4503}\label{namespacecoulomb_abfd1cdc755ebb2f0adcd1d1ce1cf4503}} 
+\index{coulomb@{coulomb}!coulplan2@{coulplan2}}
+\index{coulplan2@{coulplan2}!coulomb@{coulomb}}
+\doxyparagraph{\texorpdfstring{coulplan2}{coulplan2}}
+{\footnotesize\ttfamily integer(c\+\_\+long), save, private coulomb\+::coulplan2\hspace{0.3cm}{\ttfamily [private]}}
+
+\mbox{\Hypertarget{namespacecoulomb_a821f17159bc941612225823801555733}\label{namespacecoulomb_a821f17159bc941612225823801555733}} 
+\index{coulomb@{coulomb}!nx2@{nx2}}
+\index{nx2@{nx2}!coulomb@{coulomb}}
+\doxyparagraph{\texorpdfstring{nx2}{nx2}}
+{\footnotesize\ttfamily integer, private coulomb\+::nx2\hspace{0.3cm}{\ttfamily [private]}}
+
+\mbox{\Hypertarget{namespacecoulomb_aec5bb921ae0a248b7ce45c157e9d793d}\label{namespacecoulomb_aec5bb921ae0a248b7ce45c157e9d793d}} 
+\index{coulomb@{coulomb}!ny2@{ny2}}
+\index{ny2@{ny2}!coulomb@{coulomb}}
+\doxyparagraph{\texorpdfstring{ny2}{ny2}}
+{\footnotesize\ttfamily integer, private coulomb\+::ny2\hspace{0.3cm}{\ttfamily [private]}}
+
+\mbox{\Hypertarget{namespacecoulomb_a0de0e5b7d18f4ce88eeb7ea25839149a}\label{namespacecoulomb_a0de0e5b7d18f4ce88eeb7ea25839149a}} 
+\index{coulomb@{coulomb}!nz2@{nz2}}
+\index{nz2@{nz2}!coulomb@{coulomb}}
+\doxyparagraph{\texorpdfstring{nz2}{nz2}}
+{\footnotesize\ttfamily integer, private coulomb\+::nz2\hspace{0.3cm}{\ttfamily [private]}}
+
+\mbox{\Hypertarget{namespacecoulomb_ad9f62c9032d70f15617f01a0c9ecb0c7}\label{namespacecoulomb_ad9f62c9032d70f15617f01a0c9ecb0c7}} 
+\index{coulomb@{coulomb}!q@{q}}
+\index{q@{q}!coulomb@{coulomb}}
+\doxyparagraph{\texorpdfstring{q}{q}}
+{\footnotesize\ttfamily complex(db), dimension(\+:,\+:,\+:), allocatable, save, private coulomb\+::q\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+array for the complex Green’s function (isolated) or array of 1/r values. Its dimension also depends on the boundary condition. 
+
+\mbox{\Hypertarget{namespacecoulomb_a26740de741e0c1efe01fe26e5c996135}\label{namespacecoulomb_a26740de741e0c1efe01fe26e5c996135}} 
+\index{coulomb@{coulomb}!wcoul@{wcoul}}
+\index{wcoul@{wcoul}!coulomb@{coulomb}}
+\doxyparagraph{\texorpdfstring{wcoul}{wcoul}}
+{\footnotesize\ttfamily real(db), dimension(\+:,\+:,\+:), allocatable, save, public coulomb\+::wcoul}
+
+
+
+~\newline
+ 
+
+the Coulomb potential as a three-\/dimensional array. Units\+: MeV. 

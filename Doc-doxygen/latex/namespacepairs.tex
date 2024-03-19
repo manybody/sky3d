@@ -1,0 +1,185 @@
+\hypertarget{namespacepairs}{}\doxysubsection{pairs Module Reference}
+\label{namespacepairs}\index{pairs@{pairs}}
+
+
+The principal part of this module is the subroutine {\ttfamily pair}, which computes the pairing solution based on the B\+CS model. It is the only public part of this module. The other subroutines are helper routines that directly use the single-\/particle properties defined in module {\ttfamily Levels}. The module variable {\ttfamily iq} controls whether the solution is sought for neutrons ({\ttfamily  iq=1 } or protons {\ttfamily  iq=2 } and accordingly the single-\/particle levels from {\ttfamily  npmin(iq) } to {\ttfamily  npsi(iq) } are affected.  
+
+
+\doxysubsubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine, public \mbox{\hyperlink{namespacepairs_ac8694dc544ae812f2f869cbf14c428fd}{pair}}
+\begin{DoxyCompactList}\small\item\em This is the only routine visible from outside the module. It solves the pairing problem and prints out summary information. The principal results used in the rest of the code are the B\+CS occupation numbers $ v_k^2\rightarrow {\tt wocc} $ and the pairing energies {\ttfamily epair}. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacepairs_a7c2431ffd1557afa02f0c9a176e915ef}{pairgap}}
+\begin{DoxyCompactList}\small\item\em This subroutine calculates the pairing gaps $ \Delta_k $ stored in the array {\ttfamily deltaf} for all single-\/particle states. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacepairs_a441ef2eae46f5af49f393c98a761ab2f}{pairdn}} (particle\+\_\+number)
+\begin{DoxyCompactList}\small\item\em The subroutine {\ttfamily pairdn} determines the pairing solution by using {\ttfamily rbrent} to find the correct Fermi energy for the given particle number. After that a few averaged or integral quantities are calculated. \end{DoxyCompactList}\item 
+real(db) function \mbox{\hyperlink{namespacepairs_a8db3773f533823b3f6847833b721a349}{rbrent}} (particle\+\_\+number)
+\begin{DoxyCompactList}\small\item\em This subroutine is an adapted version of the {\itshape  Van Wijngaarden-\/\+Dekker-\/\+Brent} method for finding the root of a function (see {\bfseries [Pre92aB]} ). Given the desired particle number as an argument, it searches for the value of the Fermi energy that makes this particle number agree with that returned by {\ttfamily bcs\+\_\+occupation}. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacepairs_a9b69f1dbee78573a5e136e5bc13aa442}{bcs\+\_\+occupation}} (efermi, bcs\+\_\+partnum)
+\begin{DoxyCompactList}\small\item\em For a given Fermi energy $ \epsilon_F $ passed as argument {\ttfamily efermi}, this subroutine evaluates the particle number that would result with such a Fermi energy and returns it as its second argument, {\ttfamily bcs\+\_\+partnum}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+integer \mbox{\hyperlink{namespacepairs_afb437f116fbaed9632a22d7d2d5c8d07}{iq}}
+\begin{DoxyCompactList}\small\item\em Index labeling the isospin. \end{DoxyCompactList}\item 
+real(db), dimension(2), save \mbox{\hyperlink{namespacepairs_ac16f79935af718cf65355d27efbc9368}{eferm}}
+\begin{DoxyCompactList}\small\item\em Fermi energy in MeV for the two isospins. \end{DoxyCompactList}\item 
+real(db), dimension(2), save, public \mbox{\hyperlink{namespacepairs_ab9b18b29c64456ece2c660791fe9d26e}{epair}}
+\begin{DoxyCompactList}\small\item\em Pairing energy in MeV for the two isospins. It is given by. \end{DoxyCompactList}\item 
+real(db), dimension(2), save \mbox{\hyperlink{namespacepairs_a78993b1f56f566702b152ccbacec8a48}{avdelt}}
+\begin{DoxyCompactList}\small\item\em Average gap in MeV for the two isospins. It is given by. \end{DoxyCompactList}\item 
+real(db), dimension(2), save \mbox{\hyperlink{namespacepairs_a335ba4c0f8f79719ec51d80e08832660}{avg}}
+\begin{DoxyCompactList}\small\item\em The average pairing force for each isospin, given by. \end{DoxyCompactList}\item 
+real(db), dimension(\+:), allocatable, save \mbox{\hyperlink{namespacepairs_a360ac97176e3d6a4e86e16cd7a321e10}{deltaf}}
+\begin{DoxyCompactList}\small\item\em single-\/particle gap in MeV for each single-\/particle state. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+The principal part of this module is the subroutine {\ttfamily pair}, which computes the pairing solution based on the B\+CS model. It is the only public part of this module. The other subroutines are helper routines that directly use the single-\/particle properties defined in module {\ttfamily Levels}. The module variable {\ttfamily iq} controls whether the solution is sought for neutrons ({\ttfamily  iq=1 } or protons {\ttfamily  iq=2 } and accordingly the single-\/particle levels from {\ttfamily  npmin(iq) } to {\ttfamily  npsi(iq) } are affected. 
+
+The principal procedure followed is to first calculate the pairing gap for each single-\/particle state. This determines the occupation numbers {\ttfamily wocc}, which of course are used throughout the program. Then the Fermi energy for the given isospin is determined such that the correct particle number results.
+
+{\bfseries{ Note that there is a factor of one half in many formulas compared to what is usually found in textbooks. This is because here the sum over states $ \sum_k\ldots $ runs over all states, while in textbooks the sum is over pairs, giving half of that result.}} 
+
+\doxysubsubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespacepairs_a9b69f1dbee78573a5e136e5bc13aa442}\label{namespacepairs_a9b69f1dbee78573a5e136e5bc13aa442}} 
+\index{pairs@{pairs}!bcs\_occupation@{bcs\_occupation}}
+\index{bcs\_occupation@{bcs\_occupation}!pairs@{pairs}}
+\doxyparagraph{\texorpdfstring{bcs\_occupation()}{bcs\_occupation()}}
+{\footnotesize\ttfamily subroutine pairs\+::bcs\+\_\+occupation (\begin{DoxyParamCaption}\item[{real(db), intent(in)}]{efermi,  }\item[{real(db), intent(out)}]{bcs\+\_\+partnum }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+For a given Fermi energy $ \epsilon_F $ passed as argument {\ttfamily efermi}, this subroutine evaluates the particle number that would result with such a Fermi energy and returns it as its second argument, {\ttfamily bcs\+\_\+partnum}. 
+
+The isospin is controlled by module variable {\ttfamily iq}. First the occupation probabilities are calculated using the standard B\+CS expression \[ v_k^2=\frac1{2}\left(1-\frac{\epsilon_k-\epsilon_F} {\sqrt{(\epsilon_k-\epsilon_F)^2+\Delta_k^2}}\right). \] They are stored in {\ttfamily wocc}. A small correction is added, so that they are not exactly identical to 1 or0. The particle number is finally obtained as $ N=\sum_k v_k^2 $.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em efermi} & R\+E\+A\+L\+D(db), takes the fermi energy. \\
+\hline
+\mbox{\texttt{ out}}  & {\em bcs\+\_\+partnum} & R\+E\+A\+L(db), returns the oarticle number \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacepairs_ac8694dc544ae812f2f869cbf14c428fd}\label{namespacepairs_ac8694dc544ae812f2f869cbf14c428fd}} 
+\index{pairs@{pairs}!pair@{pair}}
+\index{pair@{pair}!pairs@{pairs}}
+\doxyparagraph{\texorpdfstring{pair()}{pair()}}
+{\footnotesize\ttfamily subroutine, public pairs\+::pair}
+
+
+
+This is the only routine visible from outside the module. It solves the pairing problem and prints out summary information. The principal results used in the rest of the code are the B\+CS occupation numbers $ v_k^2\rightarrow {\tt wocc} $ and the pairing energies {\ttfamily epair}. 
+
+The subroutine is structured straightforwardly\+: it first calculates the pairing gaps {\ttfamily deltaf} by calling {\ttfamily pairgap}. Then for the two isospin values {\ttfamily pairdn} is called with the correct particle number as argument. This does the real work of solving the equations. Finally summary information is printed. \mbox{\Hypertarget{namespacepairs_a441ef2eae46f5af49f393c98a761ab2f}\label{namespacepairs_a441ef2eae46f5af49f393c98a761ab2f}} 
+\index{pairs@{pairs}!pairdn@{pairdn}}
+\index{pairdn@{pairdn}!pairs@{pairs}}
+\doxyparagraph{\texorpdfstring{pairdn()}{pairdn()}}
+{\footnotesize\ttfamily subroutine pairs\+::pairdn (\begin{DoxyParamCaption}\item[{real(db), intent(in)}]{particle\+\_\+number }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+The subroutine {\ttfamily pairdn} determines the pairing solution by using {\ttfamily rbrent} to find the correct Fermi energy for the given particle number. After that a few averaged or integral quantities are calculated. 
+
+As the starting value for the Fermi energy the one for gap zero is used, i. e., the average of the first unfilled and last filled single-\/particle energies. Then {\ttfamily rbrent} is called to calculate the correct solution, after which there is a loop for a straightforward evaluation of the module variables {\ttfamily epair}, {\ttfamily avdelt}, and {\ttfamily avg}. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em particle\+\_\+number} & R\+E\+A\+L(db), takes the particle number. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacepairs_a7c2431ffd1557afa02f0c9a176e915ef}\label{namespacepairs_a7c2431ffd1557afa02f0c9a176e915ef}} 
+\index{pairs@{pairs}!pairgap@{pairgap}}
+\index{pairgap@{pairgap}!pairs@{pairs}}
+\doxyparagraph{\texorpdfstring{pairgap()}{pairgap()}}
+{\footnotesize\ttfamily subroutine pairs\+::pairgap\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+This subroutine calculates the pairing gaps $ \Delta_k $ stored in the array {\ttfamily deltaf} for all single-\/particle states. 
+
+First a simplified version is returned if {\ttfamily  ipair=1 } or for the initial {\ttfamily  itrsin } (at present set to 10) iterations of a static calculation. All gaps are set equal to $ 11.2\,{\rm MeV}/\sqrt{A} $ in this case.
+
+In the general case, there is a loop over the two isospin values {\ttfamily iq}. The pairing density is obtained by evaluation of \[ {\tt work}(\vec r)=\sum_k u_kv_k\left|\phi_k(\vec r)\right|^2 \] where the simple conversion \[ u_kv_k=v_k\sqrt{1-v_k^2}=\sqrt{v_k^2(1-v_k^2)}=\sqrt{{\tt wocc}-{\tt wocc}^2} \] is used.
+
+The isospin-\/dependent pairing strength {\ttfamily v0act} is obtained from the force definition. The pairing field $ V_P(\vec r) $ is then given by two different expressions\+: for {\ttfamily V\+DI} pairing ({\ttfamily  ipair=5 }), the pairing density is simply multiplied by {\ttfamily v0act}, while for {\ttfamily D\+D\+DI} pairing ({\ttfamily  ipair=6}) it is \[ V_P(\vec r)={\tt v0act}\cdot{\tt work}\cdot (1-\rho(\vec r))/{\tt rho0pr} \] involving the {\itshape  total } density $ \rho $ and the parameter \[ rho0pr \] from the pairing force definition.
+
+In the final step the gaps are computed as the expectation values of the pairing field, \[ \Delta_k=\int\D^3r V_P(\vec r)\left|\phi_k(\vec r)\right|^2. \] \mbox{\Hypertarget{namespacepairs_a8db3773f533823b3f6847833b721a349}\label{namespacepairs_a8db3773f533823b3f6847833b721a349}} 
+\index{pairs@{pairs}!rbrent@{rbrent}}
+\index{rbrent@{rbrent}!pairs@{pairs}}
+\doxyparagraph{\texorpdfstring{rbrent()}{rbrent()}}
+{\footnotesize\ttfamily real(db) function pairs\+::rbrent (\begin{DoxyParamCaption}\item[{real(db), intent(in)}]{particle\+\_\+number }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+This subroutine is an adapted version of the {\itshape  Van Wijngaarden-\/\+Dekker-\/\+Brent} method for finding the root of a function (see {\bfseries [Pre92aB]} ). Given the desired particle number as an argument, it searches for the value of the Fermi energy that makes this particle number agree with that returned by {\ttfamily bcs\+\_\+occupation}. 
+
+It is clear that this subroutine is in a very antiquated style of Fortran; it will be replaced at some time in the future.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em particle\+\_\+number} & R\+E\+A\+L(db), takes the particle number. \\
+\hline
+\end{DoxyParams}
+
+
+\doxysubsubsection{Variable Documentation}
+\mbox{\Hypertarget{namespacepairs_a78993b1f56f566702b152ccbacec8a48}\label{namespacepairs_a78993b1f56f566702b152ccbacec8a48}} 
+\index{pairs@{pairs}!avdelt@{avdelt}}
+\index{avdelt@{avdelt}!pairs@{pairs}}
+\doxyparagraph{\texorpdfstring{avdelt}{avdelt}}
+{\footnotesize\ttfamily real(db), dimension(2), save pairs\+::avdelt\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Average gap in MeV for the two isospins. It is given by. 
+
+\[ \frac{\sum_k\Delta_ku_kv_k}{\sum_k u_kv_k} \] where the sum is over states with the given isospin. \mbox{\Hypertarget{namespacepairs_a335ba4c0f8f79719ec51d80e08832660}\label{namespacepairs_a335ba4c0f8f79719ec51d80e08832660}} 
+\index{pairs@{pairs}!avg@{avg}}
+\index{avg@{avg}!pairs@{pairs}}
+\doxyparagraph{\texorpdfstring{avg}{avg}}
+{\footnotesize\ttfamily real(db), dimension(2), save pairs\+::avg\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+The average pairing force for each isospin, given by. 
+
+\[ \frac{E_{\rm pair}}{\sum_k u_k v_k/2}.\] \mbox{\Hypertarget{namespacepairs_a360ac97176e3d6a4e86e16cd7a321e10}\label{namespacepairs_a360ac97176e3d6a4e86e16cd7a321e10}} 
+\index{pairs@{pairs}!deltaf@{deltaf}}
+\index{deltaf@{deltaf}!pairs@{pairs}}
+\doxyparagraph{\texorpdfstring{deltaf}{deltaf}}
+{\footnotesize\ttfamily real(db), dimension(\+:), allocatable, save pairs\+::deltaf\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+single-\/particle gap in MeV for each single-\/particle state. 
+
+\mbox{\Hypertarget{namespacepairs_ac16f79935af718cf65355d27efbc9368}\label{namespacepairs_ac16f79935af718cf65355d27efbc9368}} 
+\index{pairs@{pairs}!eferm@{eferm}}
+\index{eferm@{eferm}!pairs@{pairs}}
+\doxyparagraph{\texorpdfstring{eferm}{eferm}}
+{\footnotesize\ttfamily real(db), dimension(2), save pairs\+::eferm\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Fermi energy in MeV for the two isospins. 
+
+\mbox{\Hypertarget{namespacepairs_ab9b18b29c64456ece2c660791fe9d26e}\label{namespacepairs_ab9b18b29c64456ece2c660791fe9d26e}} 
+\index{pairs@{pairs}!epair@{epair}}
+\index{epair@{epair}!pairs@{pairs}}
+\doxyparagraph{\texorpdfstring{epair}{epair}}
+{\footnotesize\ttfamily real(db), dimension(2), save, public pairs\+::epair}
+
+
+
+Pairing energy in MeV for the two isospins. It is given by. 
+
+\[ E_{\rm pair}=\frac1{2}\sum_k \Delta_k u_k v_k. \] This is a public variable and the sum of the two values is subtracted from the \mbox{\Hypertarget{namespacepairs_afb437f116fbaed9632a22d7d2d5c8d07}\label{namespacepairs_afb437f116fbaed9632a22d7d2d5c8d07}} 
+\index{pairs@{pairs}!iq@{iq}}
+\index{iq@{iq}!pairs@{pairs}}
+\doxyparagraph{\texorpdfstring{iq}{iq}}
+{\footnotesize\ttfamily integer pairs\+::iq\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Index labeling the isospin. 
+

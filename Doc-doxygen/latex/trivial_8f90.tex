@@ -1,0 +1,26 @@
+\hypertarget{trivial_8f90}{}\doxysubsection{trivial.\+f90 File Reference}
+\label{trivial_8f90}\index{trivial.f90@{trivial.f90}}
+\doxysubsubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \mbox{\hyperlink{namespacetrivial}{trivial}}
+\begin{DoxyCompactList}\small\item\em This module contains some basic calculations with wave functions and densities, which are similar enough to be grouped together. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+pure subroutine \mbox{\hyperlink{namespacetrivial_ad99e2ba23bf3a8e32808a945931932dc}{trivial\+::cmulx}} (xmat, pinn, pout, ifadd)
+\begin{DoxyCompactList}\small\item\em The routine does a matrix multiplication of a real matrix with a complex wave function along the x-\/direction. {\ttfamily ifadd} allows accumulating results but is not used in the present code. \end{DoxyCompactList}\item 
+pure subroutine \mbox{\hyperlink{namespacetrivial_ac100e58f8f8789ec83e5f8621f510601}{trivial\+::cmuly}} (ymat, pinn, pout, ifadd)
+\begin{DoxyCompactList}\small\item\em The routine does a matrix multiplication of a real matrix with a complex wave function along the y-\/direction. {\ttfamily ifadd} allows accumulating results but is not used in the present code. \end{DoxyCompactList}\item 
+pure subroutine \mbox{\hyperlink{namespacetrivial_a243661d8508f72313a919706a2c26625}{trivial\+::cmulz}} (zmat, pinn, pout, ifadd)
+\begin{DoxyCompactList}\small\item\em The routine does a matrix multiplication of a real matrix with a complex wave function along the z-\/direction. {\ttfamily ifadd} allows accumulating results but is not used in the present code. \end{DoxyCompactList}\item 
+pure real(db) function \mbox{\hyperlink{namespacetrivial_a34769580d54109e0070186feb150dfc0}{trivial\+::rpsnorm}} (ps)
+\begin{DoxyCompactList}\small\item\em This function with one argument calculates the norm of a wave function. \end{DoxyCompactList}\item 
+pure complex(db) function \mbox{\hyperlink{namespacetrivial_a3f458ad8429d9bc562bbbd15095bed75}{trivial\+::overlap}} (pl, pr)
+\begin{DoxyCompactList}\small\item\em This calculates the overlap of two wave functions $ psi_L $ and $ psi_R $. \end{DoxyCompactList}\item 
+pure subroutine \mbox{\hyperlink{namespacetrivial_a709f609007f308ec3ef3228f0d9c9096}{trivial\+::rmulx}} (xmat, finn, fout, ifadd)
+\begin{DoxyCompactList}\small\item\em The routine does a matrix multiplication of a real matrix with a real field along the x-\/direction. {\ttfamily ifadd} allows accumulating or substracting results. \end{DoxyCompactList}\item 
+pure subroutine \mbox{\hyperlink{namespacetrivial_ac00c799e850a49fb3288523658177649}{trivial\+::rmuly}} (ymat, finn, fout, ifadd)
+\begin{DoxyCompactList}\small\item\em The routine does a matrix multiplication of a real matrix with a real field along the y-\/direction. {\ttfamily ifadd} allows accumulating or substracting results. \end{DoxyCompactList}\item 
+pure subroutine \mbox{\hyperlink{namespacetrivial_afd24333775edb22cf43e7c1c17c4523f}{trivial\+::rmulz}} (zmat, finn, fout, ifadd)
+\begin{DoxyCompactList}\small\item\em The routine does a matrix multiplication of a real matrix with a real field along the z-\/direction. {\ttfamily ifadd} allows accumulating or substracting results. \end{DoxyCompactList}\end{DoxyCompactItemize}

@@ -1,0 +1,420 @@
+\hypertarget{namespacegrids}{}\doxysubsection{grids Module Reference}
+\label{namespacegrids}\index{grids@{grids}}
+
+
+This module deals with the definition of the spatial grid and associated operations.  
+
+
+\doxysubsubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespacegrids_af351ed23e4e4a2c78d7c2f174eb554a0}{init\+\_\+grid}}
+\begin{DoxyCompactList}\small\item\em This subroutine is called during the initialization for both static and dynamic calculations. It reads the grid dimension and spacing information using namelist {\ttfamily Grid}, allocates the necessary arrays, and calculates the coordinate values and the derivative and damping matrices. \end{DoxyCompactList}\item 
+subroutine, private \mbox{\hyperlink{namespacegrids_a66aa6d859bf3ff3d0787adbe60aad329}{init\+\_\+coord}} (name, nv, dv, v, der1v, der2v, cdmpv)
+\begin{DoxyCompactList}\small\item\em In this subroutine the defining information for a grid direction (generically called {\ttfamily v}, which can be replaced by {\ttfamily x}, {\ttfamily y}, or {\ttfamily z}) in the form of the number of points {\ttfamily nv} and the spacing {\ttfamily dv} is used to generate the associated data. The arrays of coordinate values, derivative and damping matrices are allocated. Since all the quantities that are later used in the code are passed as arguments, this subroutine can handle all three directions in a unified way. To print the information intelligibly, it is also passed the name of the coordinate as {\ttfamily name}. \end{DoxyCompactList}\item 
+pure subroutine, private \mbox{\hyperlink{namespacegrids_aa7ed547cbef1c8d28519de2d92358cea}{sder}} (der, nmax, d)
+\begin{DoxyCompactList}\small\item\em This subroutine calculates the matrix for the first derivative. \end{DoxyCompactList}\item 
+pure subroutine, private \mbox{\hyperlink{namespacegrids_a87bbfe353c847495b92eed76eb00eef5}{sder2}} (der, nmax, d)
+\begin{DoxyCompactList}\small\item\em This subroutine calculates the matrix for the second derivative. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacegrids_a0bd6055739e816177563ff2afd1ab299}{setup\+\_\+damping}} (e0dmp)
+\begin{DoxyCompactList}\small\item\em This sets up the damping matrices by calls to {\ttfamily setdmc} for each coordinate direction. \end{DoxyCompactList}\item 
+pure subroutine, private \mbox{\hyperlink{namespacegrids_a1b47f0a07a5f99091fb9fe9298fb7f91}{setdmc}} (der2, nmax, cdmp, e0dmp)
+\begin{DoxyCompactList}\small\item\em This subroutine calculates the matrices corresponding to the one-\/dimensional operators. \end{DoxyCompactList}\item 
+pure subroutine, private \mbox{\hyperlink{namespacegrids_ae1c1c2dcdbe47dc3ff4ee7869ac2baff}{gauss}} (a, b, n)
+\begin{DoxyCompactList}\small\item\em This is a Fortran 95 implementation of the standard Gauss algorithm with pivoting. It is simplified for the special case of computing $ B=B^{-1}A $ with both matrices dimensioned {\ttfamily  (n,n) }. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+integer \mbox{\hyperlink{namespacegrids_abd63e98b6a8210092338397ebc67f55e}{nx}}
+\begin{DoxyCompactList}\small\item\em Number of points in x-\/direction. Must be even to preserve reflection symmetry. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacegrids_a55c453793c1fe6d9f6f5626c2edb9c58}{ny}}
+\begin{DoxyCompactList}\small\item\em Number of points in y-\/direction. Must be even to preserve reflection symmetry. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacegrids_a8218d2b317477aa520e58de2b75669dc}{nz}}
+\begin{DoxyCompactList}\small\item\em Number of points in z-\/direction. Must be even to preserve reflection symmetry. \end{DoxyCompactList}\item 
+logical \mbox{\hyperlink{namespacegrids_abd211270655e2d6851f12820d5bfe410}{periodic}}
+\begin{DoxyCompactList}\small\item\em logical variable indicating whether the situation is triply periodic in three-\/dimensional space. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacegrids_a97e2a9a948190a3c924b6b9524ba541d}{dx}}
+\begin{DoxyCompactList}\small\item\em The spacing between grid points (in fm) in x-\/directions. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacegrids_a7ddd42fc3414b10894802dece62c281a}{dy}}
+\begin{DoxyCompactList}\small\item\em The spacing between grid points (in fm) in y-\/directions. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacegrids_a18bc260adbec4648ccb922b0308f58aa}{dz}}
+\begin{DoxyCompactList}\small\item\em The spacing between grid points (in fm) in z-\/directions. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacegrids_a7c3dd6f359d029b19fef601b26bd80b2}{wxyz}}
+\begin{DoxyCompactList}\small\item\em the volume element {\ttfamily  wxyz=dx$\ast$dy$\ast$dz}. \end{DoxyCompactList}\item 
+real(db), dimension(\+:), pointer \mbox{\hyperlink{namespacegrids_a1efa4de2d1ad2d9982bdc6ad836aef29}{x}}
+\begin{DoxyCompactList}\small\item\em array containing the actual x-\/coordinate values in fm, dimensioned as {\ttfamily x(nx)} and allocated dynamically, thus allowing dynamic dimensioning through input values of {\ttfamily nx}. \end{DoxyCompactList}\item 
+real(db), dimension(\+:), pointer \mbox{\hyperlink{namespacegrids_aa0184ba4195c1ec4f41681076ea12d69}{y}}
+\begin{DoxyCompactList}\small\item\em array containing the actual y-\/coordinate values in fm, dimensioned as {\ttfamily x(ny)} and allocated dynamically, thus allowing dynamic dimensioning through input values of {\ttfamily ny}. \end{DoxyCompactList}\item 
+real(db), dimension(\+:), pointer \mbox{\hyperlink{namespacegrids_a5b672ce0803b9da4df712e160542fb35}{z}}
+\begin{DoxyCompactList}\small\item\em array containing the actual z-\/coordinate values in fm, dimensioned as {\ttfamily x(nz)} and allocated dynamically, thus allowing dynamic dimensioning through input values of {\ttfamily nz}. \end{DoxyCompactList}\item 
+real(db), dimension(\+:,\+:), pointer \mbox{\hyperlink{namespacegrids_a6d24a2961aae7de832cbec5fcf58b50e}{der1x}}
+\begin{DoxyCompactList}\small\item\em matrices describing the first spatial derivatives in the x-\/direction, \end{DoxyCompactList}\item 
+real(db), dimension(\+:,\+:), pointer \mbox{\hyperlink{namespacegrids_ac411a48b0133f22906e95b2525b2b294}{der2x}}
+\begin{DoxyCompactList}\small\item\em matrices describing the second spatial derivatives in the x-\/direction, \end{DoxyCompactList}\item 
+real(db), dimension(\+:,\+:), pointer \mbox{\hyperlink{namespacegrids_aedf7b26d884d80850d99cc3d303b9269}{cdmpx}}
+\begin{DoxyCompactList}\small\item\em matrices describing the damping operation in the x-\/direction, \end{DoxyCompactList}\item 
+real(db), dimension(\+:,\+:), pointer \mbox{\hyperlink{namespacegrids_a4586c0ed2f5a266196921e8cf884237c}{der1y}}
+\begin{DoxyCompactList}\small\item\em matrices describing the first spatial derivatives in the y-\/direction, \end{DoxyCompactList}\item 
+real(db), dimension(\+:,\+:), pointer \mbox{\hyperlink{namespacegrids_ab5015355f55a54802f13d32c21805daa}{der2y}}
+\begin{DoxyCompactList}\small\item\em matrices describing the second spatial derivatives in the y-\/direction, \end{DoxyCompactList}\item 
+real(db), dimension(\+:,\+:), pointer \mbox{\hyperlink{namespacegrids_a7254ffa450cfba006c2d4230726f17df}{cdmpy}}
+\begin{DoxyCompactList}\small\item\em matrices describing the damping operation in the y-\/direction, \end{DoxyCompactList}\item 
+real(db), dimension(\+:,\+:), pointer \mbox{\hyperlink{namespacegrids_a072cf749cb5cb8d9a121283cf2e497fd}{der1z}}
+\begin{DoxyCompactList}\small\item\em matrices describing the first spatial derivatives in the z-\/direction, \end{DoxyCompactList}\item 
+real(db), dimension(\+:,\+:), pointer \mbox{\hyperlink{namespacegrids_a3269f5e3941a3e0c700dc5b034d29f01}{der2z}}
+\begin{DoxyCompactList}\small\item\em matrices describing the second spatial derivatives in the z-\/direction, \end{DoxyCompactList}\item 
+real(db), dimension(\+:,\+:), pointer \mbox{\hyperlink{namespacegrids_a0da6ba383ca44e3bd9158acc0185796b}{cdmpz}}
+\begin{DoxyCompactList}\small\item\em matrices describing the damping operation in the z-\/direction, \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+This module deals with the definition of the spatial grid and associated operations. 
+
+\doxysubsubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespacegrids_ae1c1c2dcdbe47dc3ff4ee7869ac2baff}\label{namespacegrids_ae1c1c2dcdbe47dc3ff4ee7869ac2baff}} 
+\index{grids@{grids}!gauss@{gauss}}
+\index{gauss@{gauss}!grids@{grids}}
+\doxyparagraph{\texorpdfstring{gauss()}{gauss()}}
+{\footnotesize\ttfamily pure subroutine, private grids\+::gauss (\begin{DoxyParamCaption}\item[{real(db), dimension(n,n), intent(in)}]{a,  }\item[{real(db), dimension(n,n), intent(inout)}]{b,  }\item[{integer, intent(in)}]{n }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+This is a Fortran 95 implementation of the standard Gauss algorithm with pivoting. It is simplified for the special case of computing $ B=B^{-1}A $ with both matrices dimensioned {\ttfamily  (n,n) }. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em a} & R\+E\+A\+L(db), array, takes the matrix a. \\
+\hline
+\mbox{\texttt{ in,out}}  & {\em b} & R\+E\+A\+L(db), array, takes and returns the matrix b. \\
+\hline
+\mbox{\texttt{ in}}  & {\em n} & I\+N\+T\+E\+G\+ER, takes the number of grid points. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacegrids_a66aa6d859bf3ff3d0787adbe60aad329}\label{namespacegrids_a66aa6d859bf3ff3d0787adbe60aad329}} 
+\index{grids@{grids}!init\_coord@{init\_coord}}
+\index{init\_coord@{init\_coord}!grids@{grids}}
+\doxyparagraph{\texorpdfstring{init\_coord()}{init\_coord()}}
+{\footnotesize\ttfamily subroutine, private grids\+::init\+\_\+coord (\begin{DoxyParamCaption}\item[{character($\ast$), intent(in)}]{name,  }\item[{integer, intent(in)}]{nv,  }\item[{real(db), intent(in)}]{dv,  }\item[{real(db), dimension(\+:), pointer}]{v,  }\item[{real(db), dimension(\+:,\+:), pointer}]{der1v,  }\item[{real(db), dimension(\+:,\+:), pointer}]{der2v,  }\item[{real(db), dimension(\+:,\+:), pointer}]{cdmpv }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+In this subroutine the defining information for a grid direction (generically called {\ttfamily v}, which can be replaced by {\ttfamily x}, {\ttfamily y}, or {\ttfamily z}) in the form of the number of points {\ttfamily nv} and the spacing {\ttfamily dv} is used to generate the associated data. The arrays of coordinate values, derivative and damping matrices are allocated. Since all the quantities that are later used in the code are passed as arguments, this subroutine can handle all three directions in a unified way. To print the information intelligibly, it is also passed the name of the coordinate as {\ttfamily name}. 
+
+It is assumed that the coordinate zero is in the center of the grid, i.\+e., since the dimension is even the number of points to each side of zero is equal andthe origin is in the center of a cell. The special position of the origin is used in static calculations, e.\+g., for the parity determination. In other situations, the position of the center of mass is more important, this is defined in module {\ttfamily Moment}.
+
+If a difference location of the origin in the grid is desired, it can be done by changing the statement generating the values of {\ttfamily v}.
+
+Finally the derivative matrices and damping matrix are computed using {\ttfamily sder}, {\ttfamily sder2}, and {\ttfamily setdmc}.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em name} & C\+H\+A\+R\+A\+C\+T\+ER, array, takes x, y, or z as sirection. \\
+\hline
+\mbox{\texttt{ in}}  & {\em nv} & I\+N\+T\+E\+G\+ER, takes the number of grid points. \\
+\hline
+\mbox{\texttt{ in}}  & {\em dv} & R\+E\+A\+L(db), takes the grid spacing. \\
+\hline
+\mbox{\texttt{ out}}  & {\em v} & R\+E\+A\+L(db), array, returns the coordinates. \\
+\hline
+\mbox{\texttt{ out}}  & {\em der1v} & R\+E\+A\+L(db), array, returns matrix for first derivative. \\
+\hline
+\mbox{\texttt{ out}}  & {\em der2v} & R\+E\+A\+L(db), array, returns matrix for second derivative. \\
+\hline
+\mbox{\texttt{ out}}  & {\em cdmpv} & R\+E\+A\+L(db), array, returns matrix for damping. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacegrids_af351ed23e4e4a2c78d7c2f174eb554a0}\label{namespacegrids_af351ed23e4e4a2c78d7c2f174eb554a0}} 
+\index{grids@{grids}!init\_grid@{init\_grid}}
+\index{init\_grid@{init\_grid}!grids@{grids}}
+\doxyparagraph{\texorpdfstring{init\_grid()}{init\_grid()}}
+{\footnotesize\ttfamily subroutine grids\+::init\+\_\+grid}
+
+
+
+This subroutine is called during the initialization for both static and dynamic calculations. It reads the grid dimension and spacing information using namelist {\ttfamily Grid}, allocates the necessary arrays, and calculates the coordinate values and the derivative and damping matrices. 
+
+This is done by calling the subroutine {\ttfamily init\+\_\+coord} once for each direction. It does everything needed except the calculation of the volume element. \mbox{\Hypertarget{namespacegrids_aa7ed547cbef1c8d28519de2d92358cea}\label{namespacegrids_aa7ed547cbef1c8d28519de2d92358cea}} 
+\index{grids@{grids}!sder@{sder}}
+\index{sder@{sder}!grids@{grids}}
+\doxyparagraph{\texorpdfstring{sder()}{sder()}}
+{\footnotesize\ttfamily pure subroutine, private grids\+::sder (\begin{DoxyParamCaption}\item[{real(db), dimension(\+:,\+:), intent(out)}]{der,  }\item[{integer, intent(in)}]{nmax,  }\item[{real(db), intent(in)}]{d }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+This subroutine calculates the matrix for the first derivative. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em der} & R\+E\+A\+L(db), array, returns derivative matrix. \\
+\hline
+\mbox{\texttt{ in}}  & {\em nmax} & I\+N\+T\+E\+G\+ER, takes the dimension. \\
+\hline
+\mbox{\texttt{ in}}  & {\em d} & R\+E\+A\+L(db), takes the grid spacing. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacegrids_a87bbfe353c847495b92eed76eb00eef5}\label{namespacegrids_a87bbfe353c847495b92eed76eb00eef5}} 
+\index{grids@{grids}!sder2@{sder2}}
+\index{sder2@{sder2}!grids@{grids}}
+\doxyparagraph{\texorpdfstring{sder2()}{sder2()}}
+{\footnotesize\ttfamily pure subroutine, private grids\+::sder2 (\begin{DoxyParamCaption}\item[{real(db), dimension(1\+:nmax,1\+:nmax), intent(out)}]{der,  }\item[{integer, intent(in)}]{nmax,  }\item[{real(db), intent(in)}]{d }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+This subroutine calculates the matrix for the second derivative. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em der} & R\+E\+A\+L(db), array, returns derivative matrix. \\
+\hline
+\mbox{\texttt{ in}}  & {\em nmax} & I\+N\+T\+E\+G\+ER, takes the dimension. \\
+\hline
+\mbox{\texttt{ in}}  & {\em d} & R\+E\+A\+L(db), takes the grid spacing. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacegrids_a1b47f0a07a5f99091fb9fe9298fb7f91}\label{namespacegrids_a1b47f0a07a5f99091fb9fe9298fb7f91}} 
+\index{grids@{grids}!setdmc@{setdmc}}
+\index{setdmc@{setdmc}!grids@{grids}}
+\doxyparagraph{\texorpdfstring{setdmc()}{setdmc()}}
+{\footnotesize\ttfamily pure subroutine, private grids\+::setdmc (\begin{DoxyParamCaption}\item[{real(db), dimension(\+:,\+:), intent(in)}]{der2,  }\item[{integer, intent(in)}]{nmax,  }\item[{real(db), dimension(\+:,\+:), intent(out)}]{cdmp,  }\item[{real(db), intent(in)}]{e0dmp }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+This subroutine calculates the matrices corresponding to the one-\/dimensional operators. 
+
+\[ \frac{1}{1+\hat t/E_0} {\rm~with~} \hat t=-\frac{\hbar^2}{2m}\frac{\partial^2}{\partial x^2}. \]
+
+Here $ E_0 $ is the damping parameter called {\ttfamily e0dmp} in the code. Since the kinetic energy operator $ \hat t $ contains the parameter $ \hbar^2/2m $, which is force-\/dependent, this subroutine depends on module {\ttfamily Forces}.
+
+The calculation proceeds simply by constructing the unit matrix, adding the operator to it to form the denominator, and then calculating the inverse matrix using subroutine {\ttfamily gauss}.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em der2} & R\+E\+A\+L(db), array, takes second derivative matrix. \\
+\hline
+\mbox{\texttt{ in}}  & {\em nmax} & I\+N\+T\+E\+G\+ER, takes the number of grid points \\
+\hline
+\mbox{\texttt{ out}}  & {\em cdmp} & R\+E\+A\+L(db), array, returns the damping matrix. \\
+\hline
+\mbox{\texttt{ in}}  & {\em e0dmp} & R\+E\+A\+L(db), takes the damping parameter. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacegrids_a0bd6055739e816177563ff2afd1ab299}\label{namespacegrids_a0bd6055739e816177563ff2afd1ab299}} 
+\index{grids@{grids}!setup\_damping@{setup\_damping}}
+\index{setup\_damping@{setup\_damping}!grids@{grids}}
+\doxyparagraph{\texorpdfstring{setup\_damping()}{setup\_damping()}}
+{\footnotesize\ttfamily subroutine grids\+::setup\+\_\+damping (\begin{DoxyParamCaption}\item[{real(db), intent(in)}]{e0dmp }\end{DoxyParamCaption})}
+
+
+
+This sets up the damping matrices by calls to {\ttfamily setdmc} for each coordinate direction. 
+
+The reason for not including this in {\ttfamily init\+\_\+grid} is that it used only in the static calculation and requires the damping parameter {\ttfamily e0dmp}, which is in the static module. It has to be passed as a parameter because circular dependence of modules would result otherwise.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em e0dmp} & R\+E\+A\+L(db), takes the damping parameter. \\
+\hline
+\end{DoxyParams}
+
+
+\doxysubsubsection{Variable Documentation}
+\mbox{\Hypertarget{namespacegrids_aedf7b26d884d80850d99cc3d303b9269}\label{namespacegrids_aedf7b26d884d80850d99cc3d303b9269}} 
+\index{grids@{grids}!cdmpx@{cdmpx}}
+\index{cdmpx@{cdmpx}!grids@{grids}}
+\doxyparagraph{\texorpdfstring{cdmpx}{cdmpx}}
+{\footnotesize\ttfamily real(db), dimension(\+:,\+:), pointer grids\+::cdmpx}
+
+
+
+matrices describing the damping operation in the x-\/direction, 
+
+\mbox{\Hypertarget{namespacegrids_a7254ffa450cfba006c2d4230726f17df}\label{namespacegrids_a7254ffa450cfba006c2d4230726f17df}} 
+\index{grids@{grids}!cdmpy@{cdmpy}}
+\index{cdmpy@{cdmpy}!grids@{grids}}
+\doxyparagraph{\texorpdfstring{cdmpy}{cdmpy}}
+{\footnotesize\ttfamily real(db), dimension(\+:,\+:), pointer grids\+::cdmpy}
+
+
+
+matrices describing the damping operation in the y-\/direction, 
+
+\mbox{\Hypertarget{namespacegrids_a0da6ba383ca44e3bd9158acc0185796b}\label{namespacegrids_a0da6ba383ca44e3bd9158acc0185796b}} 
+\index{grids@{grids}!cdmpz@{cdmpz}}
+\index{cdmpz@{cdmpz}!grids@{grids}}
+\doxyparagraph{\texorpdfstring{cdmpz}{cdmpz}}
+{\footnotesize\ttfamily real(db), dimension(\+:,\+:), pointer grids\+::cdmpz}
+
+
+
+matrices describing the damping operation in the z-\/direction, 
+
+\mbox{\Hypertarget{namespacegrids_a6d24a2961aae7de832cbec5fcf58b50e}\label{namespacegrids_a6d24a2961aae7de832cbec5fcf58b50e}} 
+\index{grids@{grids}!der1x@{der1x}}
+\index{der1x@{der1x}!grids@{grids}}
+\doxyparagraph{\texorpdfstring{der1x}{der1x}}
+{\footnotesize\ttfamily real(db), dimension(\+:,\+:), pointer grids\+::der1x}
+
+
+
+matrices describing the first spatial derivatives in the x-\/direction, 
+
+\mbox{\Hypertarget{namespacegrids_a4586c0ed2f5a266196921e8cf884237c}\label{namespacegrids_a4586c0ed2f5a266196921e8cf884237c}} 
+\index{grids@{grids}!der1y@{der1y}}
+\index{der1y@{der1y}!grids@{grids}}
+\doxyparagraph{\texorpdfstring{der1y}{der1y}}
+{\footnotesize\ttfamily real(db), dimension(\+:,\+:), pointer grids\+::der1y}
+
+
+
+matrices describing the first spatial derivatives in the y-\/direction, 
+
+\mbox{\Hypertarget{namespacegrids_a072cf749cb5cb8d9a121283cf2e497fd}\label{namespacegrids_a072cf749cb5cb8d9a121283cf2e497fd}} 
+\index{grids@{grids}!der1z@{der1z}}
+\index{der1z@{der1z}!grids@{grids}}
+\doxyparagraph{\texorpdfstring{der1z}{der1z}}
+{\footnotesize\ttfamily real(db), dimension(\+:,\+:), pointer grids\+::der1z}
+
+
+
+matrices describing the first spatial derivatives in the z-\/direction, 
+
+\mbox{\Hypertarget{namespacegrids_ac411a48b0133f22906e95b2525b2b294}\label{namespacegrids_ac411a48b0133f22906e95b2525b2b294}} 
+\index{grids@{grids}!der2x@{der2x}}
+\index{der2x@{der2x}!grids@{grids}}
+\doxyparagraph{\texorpdfstring{der2x}{der2x}}
+{\footnotesize\ttfamily real(db), dimension(\+:,\+:), pointer grids\+::der2x}
+
+
+
+matrices describing the second spatial derivatives in the x-\/direction, 
+
+\mbox{\Hypertarget{namespacegrids_ab5015355f55a54802f13d32c21805daa}\label{namespacegrids_ab5015355f55a54802f13d32c21805daa}} 
+\index{grids@{grids}!der2y@{der2y}}
+\index{der2y@{der2y}!grids@{grids}}
+\doxyparagraph{\texorpdfstring{der2y}{der2y}}
+{\footnotesize\ttfamily real(db), dimension(\+:,\+:), pointer grids\+::der2y}
+
+
+
+matrices describing the second spatial derivatives in the y-\/direction, 
+
+\mbox{\Hypertarget{namespacegrids_a3269f5e3941a3e0c700dc5b034d29f01}\label{namespacegrids_a3269f5e3941a3e0c700dc5b034d29f01}} 
+\index{grids@{grids}!der2z@{der2z}}
+\index{der2z@{der2z}!grids@{grids}}
+\doxyparagraph{\texorpdfstring{der2z}{der2z}}
+{\footnotesize\ttfamily real(db), dimension(\+:,\+:), pointer grids\+::der2z}
+
+
+
+matrices describing the second spatial derivatives in the z-\/direction, 
+
+\mbox{\Hypertarget{namespacegrids_a97e2a9a948190a3c924b6b9524ba541d}\label{namespacegrids_a97e2a9a948190a3c924b6b9524ba541d}} 
+\index{grids@{grids}!dx@{dx}}
+\index{dx@{dx}!grids@{grids}}
+\doxyparagraph{\texorpdfstring{dx}{dx}}
+{\footnotesize\ttfamily real(db) grids\+::dx}
+
+
+
+The spacing between grid points (in fm) in x-\/directions. 
+
+\mbox{\Hypertarget{namespacegrids_a7ddd42fc3414b10894802dece62c281a}\label{namespacegrids_a7ddd42fc3414b10894802dece62c281a}} 
+\index{grids@{grids}!dy@{dy}}
+\index{dy@{dy}!grids@{grids}}
+\doxyparagraph{\texorpdfstring{dy}{dy}}
+{\footnotesize\ttfamily real(db) grids\+::dy}
+
+
+
+The spacing between grid points (in fm) in y-\/directions. 
+
+\mbox{\Hypertarget{namespacegrids_a18bc260adbec4648ccb922b0308f58aa}\label{namespacegrids_a18bc260adbec4648ccb922b0308f58aa}} 
+\index{grids@{grids}!dz@{dz}}
+\index{dz@{dz}!grids@{grids}}
+\doxyparagraph{\texorpdfstring{dz}{dz}}
+{\footnotesize\ttfamily real(db) grids\+::dz}
+
+
+
+The spacing between grid points (in fm) in z-\/directions. 
+
+\mbox{\Hypertarget{namespacegrids_abd63e98b6a8210092338397ebc67f55e}\label{namespacegrids_abd63e98b6a8210092338397ebc67f55e}} 
+\index{grids@{grids}!nx@{nx}}
+\index{nx@{nx}!grids@{grids}}
+\doxyparagraph{\texorpdfstring{nx}{nx}}
+{\footnotesize\ttfamily integer grids\+::nx}
+
+
+
+Number of points in x-\/direction. Must be even to preserve reflection symmetry. 
+
+\mbox{\Hypertarget{namespacegrids_a55c453793c1fe6d9f6f5626c2edb9c58}\label{namespacegrids_a55c453793c1fe6d9f6f5626c2edb9c58}} 
+\index{grids@{grids}!ny@{ny}}
+\index{ny@{ny}!grids@{grids}}
+\doxyparagraph{\texorpdfstring{ny}{ny}}
+{\footnotesize\ttfamily integer grids\+::ny}
+
+
+
+Number of points in y-\/direction. Must be even to preserve reflection symmetry. 
+
+\mbox{\Hypertarget{namespacegrids_a8218d2b317477aa520e58de2b75669dc}\label{namespacegrids_a8218d2b317477aa520e58de2b75669dc}} 
+\index{grids@{grids}!nz@{nz}}
+\index{nz@{nz}!grids@{grids}}
+\doxyparagraph{\texorpdfstring{nz}{nz}}
+{\footnotesize\ttfamily integer grids\+::nz}
+
+
+
+Number of points in z-\/direction. Must be even to preserve reflection symmetry. 
+
+\mbox{\Hypertarget{namespacegrids_abd211270655e2d6851f12820d5bfe410}\label{namespacegrids_abd211270655e2d6851f12820d5bfe410}} 
+\index{grids@{grids}!periodic@{periodic}}
+\index{periodic@{periodic}!grids@{grids}}
+\doxyparagraph{\texorpdfstring{periodic}{periodic}}
+{\footnotesize\ttfamily logical grids\+::periodic}
+
+
+
+logical variable indicating whether the situation is triply periodic in three-\/dimensional space. 
+
+\mbox{\Hypertarget{namespacegrids_a7c3dd6f359d029b19fef601b26bd80b2}\label{namespacegrids_a7c3dd6f359d029b19fef601b26bd80b2}} 
+\index{grids@{grids}!wxyz@{wxyz}}
+\index{wxyz@{wxyz}!grids@{grids}}
+\doxyparagraph{\texorpdfstring{wxyz}{wxyz}}
+{\footnotesize\ttfamily real(db) grids\+::wxyz}
+
+
+
+the volume element {\ttfamily  wxyz=dx$\ast$dy$\ast$dz}. 
+
+\mbox{\Hypertarget{namespacegrids_a1efa4de2d1ad2d9982bdc6ad836aef29}\label{namespacegrids_a1efa4de2d1ad2d9982bdc6ad836aef29}} 
+\index{grids@{grids}!x@{x}}
+\index{x@{x}!grids@{grids}}
+\doxyparagraph{\texorpdfstring{x}{x}}
+{\footnotesize\ttfamily real(db), dimension(\+:), pointer grids\+::x}
+
+
+
+array containing the actual x-\/coordinate values in fm, dimensioned as {\ttfamily x(nx)} and allocated dynamically, thus allowing dynamic dimensioning through input values of {\ttfamily nx}. 
+
+\mbox{\Hypertarget{namespacegrids_aa0184ba4195c1ec4f41681076ea12d69}\label{namespacegrids_aa0184ba4195c1ec4f41681076ea12d69}} 
+\index{grids@{grids}!y@{y}}
+\index{y@{y}!grids@{grids}}
+\doxyparagraph{\texorpdfstring{y}{y}}
+{\footnotesize\ttfamily real(db), dimension(\+:), pointer grids\+::y}
+
+
+
+array containing the actual y-\/coordinate values in fm, dimensioned as {\ttfamily x(ny)} and allocated dynamically, thus allowing dynamic dimensioning through input values of {\ttfamily ny}. 
+
+\mbox{\Hypertarget{namespacegrids_a5b672ce0803b9da4df712e160542fb35}\label{namespacegrids_a5b672ce0803b9da4df712e160542fb35}} 
+\index{grids@{grids}!z@{z}}
+\index{z@{z}!grids@{grids}}
+\doxyparagraph{\texorpdfstring{z}{z}}
+{\footnotesize\ttfamily real(db), dimension(\+:), pointer grids\+::z}
+
+
+
+array containing the actual z-\/coordinate values in fm, dimensioned as {\ttfamily x(nz)} and allocated dynamically, thus allowing dynamic dimensioning through input values of {\ttfamily nz}. 
+

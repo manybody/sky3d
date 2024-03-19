@@ -1,0 +1,330 @@
+\hypertarget{namespaceenergies}{}\doxysubsection{energies Module Reference}
+\label{namespaceenergies}\index{energies@{energies}}
+
+
+This module computes the total energy and the various contributions to it in two ways. The first method evaluates the density functional, by direct integration to compute the {\itshape  integrated energy} {\ttfamily ehfint}. The second method uses the sum of single-\/particle energies plus the rearrangement energies, $ E_{3,\rm corr} $ for the density dependent part and $ E_{C,\rm corr} $ for Coulomb exchange.  
+
+
+\doxysubsubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespaceenergies_a47469577c715eca0c72defc0a5f85e80}{integ\+\_\+energy}}
+\begin{DoxyCompactList}\small\item\em The purpose of this subroutine is to calculate the integrated energy. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespaceenergies_a1dc9b0b174ca7597ab4902cf0c555d94}{sum\+\_\+energy}}
+\begin{DoxyCompactList}\small\item\em This subroutine mainly computes the Koopman sum, but also sums up a number of other single-\/particle properties. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+real(db) \mbox{\hyperlink{namespaceenergies_af49c2ea47c112ebf5708597558e8b126}{ehft}}
+\begin{DoxyCompactList}\small\item\em kinetic energy \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespaceenergies_a3251ecec6a0b63723af61c7685901d25}{ehf0}}
+\begin{DoxyCompactList}\small\item\em t0 contribution \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespaceenergies_aa52a6553cfc05aeaf47edd9e8a30f6aa}{ehf1}}
+\begin{DoxyCompactList}\small\item\em b1 contribution (current part) \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespaceenergies_ab21bd10d10d08fbcf92d19759a3d4843}{ehf2}}
+\begin{DoxyCompactList}\small\item\em b2 contribution (Laplacian part) \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespaceenergies_acebaf7c503b002c4800bd08db1a884b5}{ehf3}}
+\begin{DoxyCompactList}\small\item\em t3 contribution which models density dependence \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespaceenergies_a7553f445959c19a7c2e79ca50ae0e39b}{ehfls}}
+\begin{DoxyCompactList}\small\item\em spin-\/orbit contribution (time even) \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespaceenergies_a556a0f62dc6795d838890ba645951436}{ehflsodd}}
+\begin{DoxyCompactList}\small\item\em spin-\/orbit contribution (odd-\/odd) \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespaceenergies_a083ad73c74fbe5c4b7500a043e820f05}{ehfc}}
+\begin{DoxyCompactList}\small\item\em Coulomb contribution. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespaceenergies_ad541b3a6b5aae689804b3925c1dc07c2}{ecorc}}
+\begin{DoxyCompactList}\small\item\em Slater \& Koopman exchange. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespaceenergies_a953fd5ffbce1d8b78376ff93ba3dba7f}{ehfint}}
+\begin{DoxyCompactList}\small\item\em integrated total energy \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespaceenergies_ab922db6c411fb14183f539bda998ed7f}{efluct1}}
+\begin{DoxyCompactList}\small\item\em energyfluctuation $ \hat{h}^2 $ \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespaceenergies_a48e7e347bd7794bcab1dd242d03bed05}{efluct1prev}}
+\begin{DoxyCompactList}\small\item\em energyfluctuation $ \hat{h}^2 $ of previous iteration \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespaceenergies_af4ca6757e5e8b4ee7f7c901d3a02c46c}{efluct2}}
+\begin{DoxyCompactList}\small\item\em fluctuation $ \hat{h}\cdot {\tt efluct}$ \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespaceenergies_aa184158199792d60d9531a9a9423cdb5}{efluct2prev}}
+\begin{DoxyCompactList}\small\item\em fluctuation $ \hat{h}\cdot {\tt efluct}$ of previous iteration \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespaceenergies_af66172cd3a87dae1c3a78b36eb49b80f}{tke}}
+\begin{DoxyCompactList}\small\item\em kinetic energy summed \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespaceenergies_a34dfdf648f42651eb98ea289a868f38e}{ehf}}
+\begin{DoxyCompactList}\small\item\em Hartree-\/\+Fock energy from s.\+p. levels. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespaceenergies_a44df4dbddbe4d01a0cb464d7fc785d38}{ehfprev}}
+\begin{DoxyCompactList}\small\item\em Hartree-\/\+Fock energy from s.\+p. levels of previous iteration. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespaceenergies_aecadb782f719c4fc6ec83c3b6dd67075}{e3corr}}
+\begin{DoxyCompactList}\small\item\em rearrangement energy \end{DoxyCompactList}\item 
+real(db), dimension(3) \mbox{\hyperlink{namespaceenergies_a54bd9b1846ee408649cbbb61d667c7b4}{orbital}}
+\begin{DoxyCompactList}\small\item\em the three components of the total orbital angular momentum in units of $ \hbar $. \end{DoxyCompactList}\item 
+real(db), dimension(3) \mbox{\hyperlink{namespaceenergies_a6e3f3e3910a90fea6b99afbd304ba45d}{spin}}
+\begin{DoxyCompactList}\small\item\em the three components of the total spin in units of $ \hbar $. \end{DoxyCompactList}\item 
+real(db), dimension(3) \mbox{\hyperlink{namespaceenergies_a03ec2c71e84562b89c7d838171d9dcfa}{total\+\_\+angmom}}
+\begin{DoxyCompactList}\small\item\em the three components of the total angular momentum in units of $ \hbar $. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+This module computes the total energy and the various contributions to it in two ways. The first method evaluates the density functional, by direct integration to compute the {\itshape  integrated energy} {\ttfamily ehfint}. The second method uses the sum of single-\/particle energies plus the rearrangement energies, $ E_{3,\rm corr} $ for the density dependent part and $ E_{C,\rm corr} $ for Coulomb exchange. 
+
+The two ways of calculating the energy are assigned to the subroutines {\ttfamily integ\+\_\+energy}, which also calculates the rearrangement energies, and {\ttfamily sum\+\_\+energy}. Note that since {\ttfamily integ\+\_\+energy} is always called briefly before {\ttfamily sum\+\_\+energy}, the rearrangement energies are correctly available.
+
+In addition subroutine {\ttfamily sum\+\_\+energies} also calculates the summed spin, orbital, and total angular momenta.
+
+The different contribution to the total energy are
+\begin{DoxyItemize}
+\item $ T $\+: the total kinetic energy calculated as \[ T=\sum_q \frac{\hbar^2}{2m_q}\int\D^3 r\, \tau_q \] with $ \tau_q $ the isospin-\/specific kinetic density.
+\item $ E_0 $\+: The $ b_0 $ and $ b\textnormal{\textquotesingle}_0 $-\/dependent part is \[ E_0=\int \D^3\!r\,\left(\frac{b_0}{2}\rho^2-\frac{b_0\textnormal{\textquotesingle}}{2}\sum_q\rho_q^2\right). \]
+\item $ E_{1}$\+: kinetic terms containing the coefficients $ b_1 $ and $ b_1\textnormal{\textquotesingle} $\+: \[ E_1=\int \D^3\!r\,\left(b_1[\rho\tau-{\vec\jmath\,}{}^2] -b_1\textnormal{\textquotesingle}\sum_q[\rho_q\tau_q-{\vec\jmath_q}{}^2]\right).\]
+\item $ E_{2} $\+: terms containing the coefficients $ b_2 $ and $ b_2\textnormal{\textquotesingle} $. They involve the Laplacians of the densities. \[ E_2=\int \D^3\!r\,\left(-\frac{b_2}{2}\rho\Delta\rho +\frac{b_2\textnormal{\textquotesingle}}{2}\sum_q\rho_q\Delta\rho_q\right). \]
+\item $ E_{3} $\+: The many-\/body contribution is given by \[ E_{3}=\int \D^3\!r\,\left(\frac{b_3}{3}\rho^{\alpha+2} -\frac{b_3\textnormal{\textquotesingle}}{3}\rho^\alpha\sum_q\rho_q^2\right). \]
+\item $ E_\mathrm{ls} $\+: the spin-\/orbit energy \[ E_\mathrm{ls}=\int \D^3\!r\,\biggl( -b_4[\rho\nabla\cdot\vec J+ \vec s\cdot(\nabla\times\vec\jmath)]-b_4\textnormal{\textquotesingle}\sum_q[\rho_q\nabla\cdot\vec J_q+ \vec s_q\cdot(\nabla\times\vec\jmath_q)]\biggr) \]
+\item $ E_\mathrm{C} $\+: the Coulomb energy. It consists of the standard expression for a charge distribution in its own field (Hartree term) plus the exchange term in the Slater approximation. The formula is \[ E_\mathrm{C} = \frac{e^2}{2}\int \D^3\!r \D^3\!r\textnormal{\textquotesingle} \frac{\rho_p(\vec{r})\rho_p(\vec{r\textnormal{\textquotesingle}})}{|\vec{r}-\vec{r\textnormal{\textquotesingle}}|} -\int \D^3\!r\,\frac{3e^2}{4}\left(\frac3{\pi}\right)^{\tfrac1{3}}\rho_p^{4/3} \] where $ e $ is the elementary charge with $ e^2=1.43989 $ MeV $ \cdot $fm.
+\item $ E_\mathrm{pair} $\+: the pairing energy. It consists of a contact pairing interaction involving the pairing densities $ \xi_q $ augmented by an optional density dependence. The formula is \[ E_{\rm pair} = \frac{1}{4} \sum_{q\in\{p,n\}}V_\mathrm{pair,q} \int \D^3r |\xi_q|^2 \left[1 -\frac{\rho}{\rho_{0,\mathrm{pair}}}\right]\;. \] It contains a continuous switch, the parameter $ \rho_{0,\mathrm{pair}} $. A pure $ \delta $-\/interaction (DI), also called volume pairing, is recovered for $ \rho_{0,\mathrm{pair}}\longrightarrow\infty $. The general case is the density dependent $ \delta $-\/interaction (D\+D\+DI). A typical value near matter equilibrium density $ \rho_{0,\mathrm{pair}}=0.16 $ fm $ ^{-3} $ concentrates pairing to the surface. The most flexible choice is to consider $ \rho_{0,\mathrm{pair}} $ as an additional free parameter. Actual adjustments with this option deliver a form of the pairing functional which stays in between the extremes of volume and surface pairing. 
+\end{DoxyItemize}
+
+\doxysubsubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespaceenergies_a47469577c715eca0c72defc0a5f85e80}\label{namespaceenergies_a47469577c715eca0c72defc0a5f85e80}} 
+\index{energies@{energies}!integ\_energy@{integ\_energy}}
+\index{integ\_energy@{integ\_energy}!energies@{energies}}
+\doxyparagraph{\texorpdfstring{integ\_energy()}{integ\_energy()}}
+{\footnotesize\ttfamily subroutine energies\+::integ\+\_\+energy}
+
+
+
+The purpose of this subroutine is to calculate the integrated energy. 
+
+This is implemented pretty straightforwardly. The only programming technique worth noting is that intermediate variables such as {\ttfamily rhot} for the total density are used to avoid repeating the lengthy index lists. Compilers will eliminate these by optimization.
+
+In principle the integration loops in the subroutine could be combined, but some space is saved by using the array {\ttfamily worka} for different purposes in different loops.
+
+The calculation proceeds in the following steps\+:
+\begin{DoxyItemize}
+\item {\bfseries{ Step 1\+:}} the Laplacian of the densities is calculated in {\ttfamily worka}, then the integrals for {\ttfamily ehf0},{\ttfamily ehf2}, and {\ttfamily ehf3} are performed. After the loop the result for {\ttfamily ehf3} is also used to calculate {\ttfamily e3corr}.
+\item {\bfseries{ Step 2\+:}} the integral for {\ttfamily ehf1} is evaluated using {\ttfamily worka} for the $ \vec\jmath_q{}^2 $ term.
+\item {\bfseries{ Step 3\+:}} the spin-\/orbit contribution of {\ttfamily ehfls} is calculated using {\ttfamily worka} as storage for $ \nabla\cdot\vec J_q $.
+\item {\bfseries{ Step 4\+:}} the Coulomb energy {\ttfamily ehfc} is evaluated with the Slater correction taken into account if the force\textquotesingle{}s {\ttfamily ex} is nonzero. At the same time the Coulomb correction for the summed energy is calculated and stored in {\ttfamily ecorc}. It will be used in the subroutine {\ttfamily sum\+\_\+energy}.
+\item {\bfseries{ Step 5\+: }} the kinetic energy is integrated for {\ttfamily ehft}. Note that only at this point the correct prefactor $ \hbar^2/2m $ is added; the use of {\ttfamily tau} in other expressions assumes its absence.
+\item {\bfseries{ Step 6\+: }} Finally all terms are added to produce the total energy, {\ttfamily efundet}, from which the pairing energies are subtracted. 
+\end{DoxyItemize}\mbox{\Hypertarget{namespaceenergies_a1dc9b0b174ca7597ab4902cf0c555d94}\label{namespaceenergies_a1dc9b0b174ca7597ab4902cf0c555d94}} 
+\index{energies@{energies}!sum\_energy@{sum\_energy}}
+\index{sum\_energy@{sum\_energy}!energies@{energies}}
+\doxyparagraph{\texorpdfstring{sum\_energy()}{sum\_energy()}}
+{\footnotesize\ttfamily subroutine energies\+::sum\+\_\+energy}
+
+
+
+This subroutine mainly computes the Koopman sum, but also sums up a number of other single-\/particle properties. 
+
+For systematics, the latter should be done in a different place, but at present is left here.
+
+The summation of the total energy uses {\ttfamily spenerg} to compute \[ \sum_k (\epsilon_k-\tfrac1{2}v_k)=\tfrac1{2}\sum_k(2t_k+v_k)= \tfrac1{2}\sum_k(t_k+\epsilon_k). \] The last sum is calculated, the rearrangement corrections are added and the pairing energies subtracted.
+
+The subroutine then sums up the single-\/particle energy fluctuation {\ttfamily sp\+\_\+efluct1} and {\ttfamily sp\+\_\+efluct2}, dividing them by the nucleon number. Finally the orbital and spin angular momentum components are summed to form the total ones. 
+
+\doxysubsubsection{Variable Documentation}
+\mbox{\Hypertarget{namespaceenergies_aecadb782f719c4fc6ec83c3b6dd67075}\label{namespaceenergies_aecadb782f719c4fc6ec83c3b6dd67075}} 
+\index{energies@{energies}!e3corr@{e3corr}}
+\index{e3corr@{e3corr}!energies@{energies}}
+\doxyparagraph{\texorpdfstring{e3corr}{e3corr}}
+{\footnotesize\ttfamily real(db) energies\+::e3corr}
+
+
+
+rearrangement energy 
+
+\mbox{\Hypertarget{namespaceenergies_ad541b3a6b5aae689804b3925c1dc07c2}\label{namespaceenergies_ad541b3a6b5aae689804b3925c1dc07c2}} 
+\index{energies@{energies}!ecorc@{ecorc}}
+\index{ecorc@{ecorc}!energies@{energies}}
+\doxyparagraph{\texorpdfstring{ecorc}{ecorc}}
+{\footnotesize\ttfamily real(db) energies\+::ecorc}
+
+
+
+Slater \& Koopman exchange. 
+
+\mbox{\Hypertarget{namespaceenergies_ab922db6c411fb14183f539bda998ed7f}\label{namespaceenergies_ab922db6c411fb14183f539bda998ed7f}} 
+\index{energies@{energies}!efluct1@{efluct1}}
+\index{efluct1@{efluct1}!energies@{energies}}
+\doxyparagraph{\texorpdfstring{efluct1}{efluct1}}
+{\footnotesize\ttfamily real(db) energies\+::efluct1}
+
+
+
+energyfluctuation $ \hat{h}^2 $ 
+
+\mbox{\Hypertarget{namespaceenergies_a48e7e347bd7794bcab1dd242d03bed05}\label{namespaceenergies_a48e7e347bd7794bcab1dd242d03bed05}} 
+\index{energies@{energies}!efluct1prev@{efluct1prev}}
+\index{efluct1prev@{efluct1prev}!energies@{energies}}
+\doxyparagraph{\texorpdfstring{efluct1prev}{efluct1prev}}
+{\footnotesize\ttfamily real(db) energies\+::efluct1prev}
+
+
+
+energyfluctuation $ \hat{h}^2 $ of previous iteration 
+
+\mbox{\Hypertarget{namespaceenergies_af4ca6757e5e8b4ee7f7c901d3a02c46c}\label{namespaceenergies_af4ca6757e5e8b4ee7f7c901d3a02c46c}} 
+\index{energies@{energies}!efluct2@{efluct2}}
+\index{efluct2@{efluct2}!energies@{energies}}
+\doxyparagraph{\texorpdfstring{efluct2}{efluct2}}
+{\footnotesize\ttfamily real(db) energies\+::efluct2}
+
+
+
+fluctuation $ \hat{h}\cdot {\tt efluct}$ 
+
+\mbox{\Hypertarget{namespaceenergies_aa184158199792d60d9531a9a9423cdb5}\label{namespaceenergies_aa184158199792d60d9531a9a9423cdb5}} 
+\index{energies@{energies}!efluct2prev@{efluct2prev}}
+\index{efluct2prev@{efluct2prev}!energies@{energies}}
+\doxyparagraph{\texorpdfstring{efluct2prev}{efluct2prev}}
+{\footnotesize\ttfamily real(db) energies\+::efluct2prev}
+
+
+
+fluctuation $ \hat{h}\cdot {\tt efluct}$ of previous iteration 
+
+\mbox{\Hypertarget{namespaceenergies_a34dfdf648f42651eb98ea289a868f38e}\label{namespaceenergies_a34dfdf648f42651eb98ea289a868f38e}} 
+\index{energies@{energies}!ehf@{ehf}}
+\index{ehf@{ehf}!energies@{energies}}
+\doxyparagraph{\texorpdfstring{ehf}{ehf}}
+{\footnotesize\ttfamily real(db) energies\+::ehf}
+
+
+
+Hartree-\/\+Fock energy from s.\+p. levels. 
+
+\mbox{\Hypertarget{namespaceenergies_a3251ecec6a0b63723af61c7685901d25}\label{namespaceenergies_a3251ecec6a0b63723af61c7685901d25}} 
+\index{energies@{energies}!ehf0@{ehf0}}
+\index{ehf0@{ehf0}!energies@{energies}}
+\doxyparagraph{\texorpdfstring{ehf0}{ehf0}}
+{\footnotesize\ttfamily real(db) energies\+::ehf0}
+
+
+
+t0 contribution 
+
+\mbox{\Hypertarget{namespaceenergies_aa52a6553cfc05aeaf47edd9e8a30f6aa}\label{namespaceenergies_aa52a6553cfc05aeaf47edd9e8a30f6aa}} 
+\index{energies@{energies}!ehf1@{ehf1}}
+\index{ehf1@{ehf1}!energies@{energies}}
+\doxyparagraph{\texorpdfstring{ehf1}{ehf1}}
+{\footnotesize\ttfamily real(db) energies\+::ehf1}
+
+
+
+b1 contribution (current part) 
+
+\mbox{\Hypertarget{namespaceenergies_ab21bd10d10d08fbcf92d19759a3d4843}\label{namespaceenergies_ab21bd10d10d08fbcf92d19759a3d4843}} 
+\index{energies@{energies}!ehf2@{ehf2}}
+\index{ehf2@{ehf2}!energies@{energies}}
+\doxyparagraph{\texorpdfstring{ehf2}{ehf2}}
+{\footnotesize\ttfamily real(db) energies\+::ehf2}
+
+
+
+b2 contribution (Laplacian part) 
+
+\mbox{\Hypertarget{namespaceenergies_acebaf7c503b002c4800bd08db1a884b5}\label{namespaceenergies_acebaf7c503b002c4800bd08db1a884b5}} 
+\index{energies@{energies}!ehf3@{ehf3}}
+\index{ehf3@{ehf3}!energies@{energies}}
+\doxyparagraph{\texorpdfstring{ehf3}{ehf3}}
+{\footnotesize\ttfamily real(db) energies\+::ehf3}
+
+
+
+t3 contribution which models density dependence 
+
+\mbox{\Hypertarget{namespaceenergies_a083ad73c74fbe5c4b7500a043e820f05}\label{namespaceenergies_a083ad73c74fbe5c4b7500a043e820f05}} 
+\index{energies@{energies}!ehfc@{ehfc}}
+\index{ehfc@{ehfc}!energies@{energies}}
+\doxyparagraph{\texorpdfstring{ehfc}{ehfc}}
+{\footnotesize\ttfamily real(db) energies\+::ehfc}
+
+
+
+Coulomb contribution. 
+
+\mbox{\Hypertarget{namespaceenergies_a953fd5ffbce1d8b78376ff93ba3dba7f}\label{namespaceenergies_a953fd5ffbce1d8b78376ff93ba3dba7f}} 
+\index{energies@{energies}!ehfint@{ehfint}}
+\index{ehfint@{ehfint}!energies@{energies}}
+\doxyparagraph{\texorpdfstring{ehfint}{ehfint}}
+{\footnotesize\ttfamily real(db) energies\+::ehfint}
+
+
+
+integrated total energy 
+
+\mbox{\Hypertarget{namespaceenergies_a7553f445959c19a7c2e79ca50ae0e39b}\label{namespaceenergies_a7553f445959c19a7c2e79ca50ae0e39b}} 
+\index{energies@{energies}!ehfls@{ehfls}}
+\index{ehfls@{ehfls}!energies@{energies}}
+\doxyparagraph{\texorpdfstring{ehfls}{ehfls}}
+{\footnotesize\ttfamily real(db) energies\+::ehfls}
+
+
+
+spin-\/orbit contribution (time even) 
+
+\mbox{\Hypertarget{namespaceenergies_a556a0f62dc6795d838890ba645951436}\label{namespaceenergies_a556a0f62dc6795d838890ba645951436}} 
+\index{energies@{energies}!ehflsodd@{ehflsodd}}
+\index{ehflsodd@{ehflsodd}!energies@{energies}}
+\doxyparagraph{\texorpdfstring{ehflsodd}{ehflsodd}}
+{\footnotesize\ttfamily real(db) energies\+::ehflsodd}
+
+
+
+spin-\/orbit contribution (odd-\/odd) 
+
+\mbox{\Hypertarget{namespaceenergies_a44df4dbddbe4d01a0cb464d7fc785d38}\label{namespaceenergies_a44df4dbddbe4d01a0cb464d7fc785d38}} 
+\index{energies@{energies}!ehfprev@{ehfprev}}
+\index{ehfprev@{ehfprev}!energies@{energies}}
+\doxyparagraph{\texorpdfstring{ehfprev}{ehfprev}}
+{\footnotesize\ttfamily real(db) energies\+::ehfprev}
+
+
+
+Hartree-\/\+Fock energy from s.\+p. levels of previous iteration. 
+
+\mbox{\Hypertarget{namespaceenergies_af49c2ea47c112ebf5708597558e8b126}\label{namespaceenergies_af49c2ea47c112ebf5708597558e8b126}} 
+\index{energies@{energies}!ehft@{ehft}}
+\index{ehft@{ehft}!energies@{energies}}
+\doxyparagraph{\texorpdfstring{ehft}{ehft}}
+{\footnotesize\ttfamily real(db) energies\+::ehft}
+
+
+
+kinetic energy 
+
+\mbox{\Hypertarget{namespaceenergies_a54bd9b1846ee408649cbbb61d667c7b4}\label{namespaceenergies_a54bd9b1846ee408649cbbb61d667c7b4}} 
+\index{energies@{energies}!orbital@{orbital}}
+\index{orbital@{orbital}!energies@{energies}}
+\doxyparagraph{\texorpdfstring{orbital}{orbital}}
+{\footnotesize\ttfamily real(db), dimension(3) energies\+::orbital}
+
+
+
+the three components of the total orbital angular momentum in units of $ \hbar $. 
+
+\mbox{\Hypertarget{namespaceenergies_a6e3f3e3910a90fea6b99afbd304ba45d}\label{namespaceenergies_a6e3f3e3910a90fea6b99afbd304ba45d}} 
+\index{energies@{energies}!spin@{spin}}
+\index{spin@{spin}!energies@{energies}}
+\doxyparagraph{\texorpdfstring{spin}{spin}}
+{\footnotesize\ttfamily real(db), dimension(3) energies\+::spin}
+
+
+
+the three components of the total spin in units of $ \hbar $. 
+
+\mbox{\Hypertarget{namespaceenergies_af66172cd3a87dae1c3a78b36eb49b80f}\label{namespaceenergies_af66172cd3a87dae1c3a78b36eb49b80f}} 
+\index{energies@{energies}!tke@{tke}}
+\index{tke@{tke}!energies@{energies}}
+\doxyparagraph{\texorpdfstring{tke}{tke}}
+{\footnotesize\ttfamily real(db) energies\+::tke}
+
+
+
+kinetic energy summed 
+
+\mbox{\Hypertarget{namespaceenergies_a03ec2c71e84562b89c7d838171d9dcfa}\label{namespaceenergies_a03ec2c71e84562b89c7d838171d9dcfa}} 
+\index{energies@{energies}!total\_angmom@{total\_angmom}}
+\index{total\_angmom@{total\_angmom}!energies@{energies}}
+\doxyparagraph{\texorpdfstring{total\_angmom}{total\_angmom}}
+{\footnotesize\ttfamily real(db), dimension(3) energies\+::total\+\_\+angmom}
+
+
+
+the three components of the total angular momentum in units of $ \hbar $. 
+

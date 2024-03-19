@@ -1,0 +1,33 @@
+\hypertarget{densities_8f90}{}\doxysubsection{densities.\+f90 File Reference}
+\label{densities_8f90}\index{densities.f90@{densities.f90}}
+\doxysubsubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \mbox{\hyperlink{namespacedensities}{densities}}
+\begin{DoxyCompactList}\small\item\em This module has two purposes\+: it defines and allocates the densities and currents making up the mean field, and also contains the subroutine {\ttfamily add\+\_\+density} which accumulates the basic densities over the single-\/particle wave functions. Subroutine {\ttfamily skyrme} in module {\ttfamily Meanfield} then uses these densities to build up the components of the single-\/particle Hamiltonian. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespacedensities_a6f80e11dd07b8c4f22dcf74f0721072f}{densities\+::alloc\+\_\+densities}}
+\begin{DoxyCompactList}\small\item\em This is simply a short routine to allocate all the arrays defined in this module. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacedensities_ab8ae0afd697a04489301a0b4ef54ffc1}{densities\+::add\+\_\+density}} (iq, weight, psin, lrho, ltau, lcurrent, lsdens, lsodens)
+\begin{DoxyCompactList}\small\item\em This subroutine is given a single-\/particle wave function {\ttfamily psin} with its isospin index {\ttfamily iq} and occupation $ w_\alpha^2= $ {\ttfamily weight} and adds its contribution to the density arrays. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{Indent}\textbf{ Scalar densities\+:}\par
+{\em These are dimensioned {\ttfamily (nx,ny,nz,2)}, where the last index is 1 for neutrons and 2 for protons. }\begin{DoxyCompactItemize}
+\item 
+real(db), dimension(\+:,\+:,\+:,\+:), allocatable \mbox{\hyperlink{namespacedensities_a48037b3a5426577742a92370d444c2e4}{densities\+::rho}}
+\begin{DoxyCompactList}\small\item\em the density, separately for each isospin (in ${\rm fm}^{-3} $). The definition is\+: \end{DoxyCompactList}\item 
+real(db), dimension(\+:,\+:,\+:,\+:), allocatable \mbox{\hyperlink{namespacedensities_a0b6801014c9a122d2672009675eedc4a}{densities\+::tau}}
+\begin{DoxyCompactList}\small\item\em the kinetic energy density, separately for each isospin. It is defined as the sum of the spin contributions and all particles of the given isospin \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Vector densities\+:}\par
+{\em These are dimensioned {\ttfamily (nx,ny,nz,3,2)}, where the last index is 1 for neutrons and 2 for protons, and the next-\/to-\/last stands for the Cartesian direction. }\begin{DoxyCompactItemize}
+\item 
+real(db), dimension(\+:,\+:,\+:,\+:,\+:), allocatable \mbox{\hyperlink{namespacedensities_a66634aa8189873880d82031b179afbee}{densities\+::current}}
+\begin{DoxyCompactList}\small\item\em this is the total probability current density, defined in the familiar way as \end{DoxyCompactList}\item 
+real(db), dimension(\+:,\+:,\+:,\+:,\+:), allocatable \mbox{\hyperlink{namespacedensities_aa48602f6693fad468577e4da057d21a2}{densities\+::sdens}}
+\begin{DoxyCompactList}\small\item\em the spin density. It is defined as \end{DoxyCompactList}\item 
+real(db), dimension(\+:,\+:,\+:,\+:,\+:), allocatable \mbox{\hyperlink{namespacedensities_a7d52d254fb667eea432179bab9a1e32b}{densities\+::sodens}}
+\begin{DoxyCompactList}\small\item\em the spin-\/orbit density, defined as \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}

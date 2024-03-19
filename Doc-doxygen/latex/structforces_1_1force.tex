@@ -1,0 +1,193 @@
+\hypertarget{structforces_1_1force}{}\doxysubsection{forces\+::force Type Reference}
+\label{structforces_1_1force}\index{forces::force@{forces::force}}
+
+
+This contains the parameters for the Skyrme force\+:  
+
+
+\doxysubsubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+character(8) \mbox{\hyperlink{structforces_1_1force_a33e8ede1e77f90a5df3a15204b089389}{name}}
+\begin{DoxyCompactList}\small\item\em the name of the force used to identify it. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{structforces_1_1force_a4f1664b7d8c5ff5cb74c277eb3b34dfe}{ex}}
+\begin{DoxyCompactList}\small\item\em some forces are fitted excluding the Coulomb exchange term. For {\ttfamily  ex=1 } it is included (this is the normal case), for {\ttfamily  ex=0 } not. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{structforces_1_1force_ab12dd09d85ca9416bf9440fdd3d68737}{zpe}}
+\begin{DoxyCompactList}\small\item\em index for the treatment of the center-\/of-\/mass correction \end{DoxyCompactList}\item 
+real(db), dimension(2) \mbox{\hyperlink{structforces_1_1force_ad48e786ffaccabf70cbfcf5774949e41}{h2m}}
+\begin{DoxyCompactList}\small\item\em value of $ \frac{\hbar^2}{2m} $, separately for neutrons and protons. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{structforces_1_1force_a4341a78d26c1b4e40a4a758fa49736cc}{power}}
+\begin{DoxyCompactList}\small\item\em exponent in the nonlinear (originally three-\/body) term. \end{DoxyCompactList}\item 
+type(\mbox{\hyperlink{structforces_1_1pairing}{pairing}}) \mbox{\hyperlink{structforces_1_1force_a36da1a03b8e220a38059fa172b62fc9f}{vdi}}
+\begin{DoxyCompactList}\small\item\em parameter set for the volume-\/delta pairing case. \end{DoxyCompactList}\item 
+type(\mbox{\hyperlink{structforces_1_1pairing}{pairing}}) \mbox{\hyperlink{structforces_1_1force_ac0673ae13e2e26687e34d334e17c810a}{dddi}}
+\begin{DoxyCompactList}\small\item\em parameter set for the density-\/dependent delta pairing case. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ Skyrme parameters.}\par
+\begin{DoxyCompactItemize}
+\item 
+real(db) \mbox{\hyperlink{structforces_1_1force_a2e74ed16cfdf5625a05558b6f86f1793}{t0}}
+\item 
+real(db) \mbox{\hyperlink{structforces_1_1force_ad72d5c6589888b0c73ade6d5f06914d3}{t1}}
+\item 
+real(db) \mbox{\hyperlink{structforces_1_1force_ad6f7b1eba6dfeefc83ff36d5f5a88437}{t2}}
+\item 
+real(db) \mbox{\hyperlink{structforces_1_1force_a66b10853c0130c9234a9df3e31d614d2}{t3}}
+\item 
+real(db) \mbox{\hyperlink{structforces_1_1force_a8ec4233a5fd3b6d23ca4ad1feed7d0a9}{t4}}
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Skyrme exchange parameters.}\par
+\begin{DoxyCompactItemize}
+\item 
+real(db) \mbox{\hyperlink{structforces_1_1force_a6949bf50fa29dd997ad7b2caea17b9f9}{x0}}
+\item 
+real(db) \mbox{\hyperlink{structforces_1_1force_a15cfae19bc4318e071efffbeb32d5c8b}{x1}}
+\item 
+real(db) \mbox{\hyperlink{structforces_1_1force_aba6ff31da8b8a961be9ae42e4fa6e9b0}{x2}}
+\item 
+real(db) \mbox{\hyperlink{structforces_1_1force_abba2953cdd32995abcac8ee3984749f8}{x3}}
+\item 
+real(db) \mbox{\hyperlink{structforces_1_1force_a10e9769e95e1631acbd0f3c1c6269053}{b4p}}
+\end{DoxyCompactItemize}
+\end{Indent}
+
+
+\doxysubsubsection{Detailed Description}
+This contains the parameters for the Skyrme force\+: 
+
+\doxysubsubsection{Member Data Documentation}
+\mbox{\Hypertarget{structforces_1_1force_a10e9769e95e1631acbd0f3c1c6269053}\label{structforces_1_1force_a10e9769e95e1631acbd0f3c1c6269053}} 
+\index{forces::force@{forces::force}!b4p@{b4p}}
+\index{b4p@{b4p}!forces::force@{forces::force}}
+\doxyparagraph{\texorpdfstring{b4p}{b4p}}
+{\footnotesize\ttfamily real(db) forces\+::force\+::b4p}
+
+\mbox{\Hypertarget{structforces_1_1force_ac0673ae13e2e26687e34d334e17c810a}\label{structforces_1_1force_ac0673ae13e2e26687e34d334e17c810a}} 
+\index{forces::force@{forces::force}!dddi@{dddi}}
+\index{dddi@{dddi}!forces::force@{forces::force}}
+\doxyparagraph{\texorpdfstring{dddi}{dddi}}
+{\footnotesize\ttfamily type(\mbox{\hyperlink{structforces_1_1pairing}{pairing}}) forces\+::force\+::dddi}
+
+
+
+parameter set for the density-\/dependent delta pairing case. 
+
+\mbox{\Hypertarget{structforces_1_1force_a4f1664b7d8c5ff5cb74c277eb3b34dfe}\label{structforces_1_1force_a4f1664b7d8c5ff5cb74c277eb3b34dfe}} 
+\index{forces::force@{forces::force}!ex@{ex}}
+\index{ex@{ex}!forces::force@{forces::force}}
+\doxyparagraph{\texorpdfstring{ex}{ex}}
+{\footnotesize\ttfamily integer forces\+::force\+::ex}
+
+
+
+some forces are fitted excluding the Coulomb exchange term. For {\ttfamily  ex=1 } it is included (this is the normal case), for {\ttfamily  ex=0 } not. 
+
+\mbox{\Hypertarget{structforces_1_1force_ad48e786ffaccabf70cbfcf5774949e41}\label{structforces_1_1force_ad48e786ffaccabf70cbfcf5774949e41}} 
+\index{forces::force@{forces::force}!h2m@{h2m}}
+\index{h2m@{h2m}!forces::force@{forces::force}}
+\doxyparagraph{\texorpdfstring{h2m}{h2m}}
+{\footnotesize\ttfamily real(db), dimension(2) forces\+::force\+::h2m}
+
+
+
+value of $ \frac{\hbar^2}{2m} $, separately for neutrons and protons. 
+
+\mbox{\Hypertarget{structforces_1_1force_a33e8ede1e77f90a5df3a15204b089389}\label{structforces_1_1force_a33e8ede1e77f90a5df3a15204b089389}} 
+\index{forces::force@{forces::force}!name@{name}}
+\index{name@{name}!forces::force@{forces::force}}
+\doxyparagraph{\texorpdfstring{name}{name}}
+{\footnotesize\ttfamily character(8) forces\+::force\+::name}
+
+
+
+the name of the force used to identify it. 
+
+\mbox{\Hypertarget{structforces_1_1force_a4341a78d26c1b4e40a4a758fa49736cc}\label{structforces_1_1force_a4341a78d26c1b4e40a4a758fa49736cc}} 
+\index{forces::force@{forces::force}!power@{power}}
+\index{power@{power}!forces::force@{forces::force}}
+\doxyparagraph{\texorpdfstring{power}{power}}
+{\footnotesize\ttfamily real(db) forces\+::force\+::power}
+
+
+
+exponent in the nonlinear (originally three-\/body) term. 
+
+\mbox{\Hypertarget{structforces_1_1force_a2e74ed16cfdf5625a05558b6f86f1793}\label{structforces_1_1force_a2e74ed16cfdf5625a05558b6f86f1793}} 
+\index{forces::force@{forces::force}!t0@{t0}}
+\index{t0@{t0}!forces::force@{forces::force}}
+\doxyparagraph{\texorpdfstring{t0}{t0}}
+{\footnotesize\ttfamily real(db) forces\+::force\+::t0}
+
+\mbox{\Hypertarget{structforces_1_1force_ad72d5c6589888b0c73ade6d5f06914d3}\label{structforces_1_1force_ad72d5c6589888b0c73ade6d5f06914d3}} 
+\index{forces::force@{forces::force}!t1@{t1}}
+\index{t1@{t1}!forces::force@{forces::force}}
+\doxyparagraph{\texorpdfstring{t1}{t1}}
+{\footnotesize\ttfamily real(db) forces\+::force\+::t1}
+
+\mbox{\Hypertarget{structforces_1_1force_ad6f7b1eba6dfeefc83ff36d5f5a88437}\label{structforces_1_1force_ad6f7b1eba6dfeefc83ff36d5f5a88437}} 
+\index{forces::force@{forces::force}!t2@{t2}}
+\index{t2@{t2}!forces::force@{forces::force}}
+\doxyparagraph{\texorpdfstring{t2}{t2}}
+{\footnotesize\ttfamily real(db) forces\+::force\+::t2}
+
+\mbox{\Hypertarget{structforces_1_1force_a66b10853c0130c9234a9df3e31d614d2}\label{structforces_1_1force_a66b10853c0130c9234a9df3e31d614d2}} 
+\index{forces::force@{forces::force}!t3@{t3}}
+\index{t3@{t3}!forces::force@{forces::force}}
+\doxyparagraph{\texorpdfstring{t3}{t3}}
+{\footnotesize\ttfamily real(db) forces\+::force\+::t3}
+
+\mbox{\Hypertarget{structforces_1_1force_a8ec4233a5fd3b6d23ca4ad1feed7d0a9}\label{structforces_1_1force_a8ec4233a5fd3b6d23ca4ad1feed7d0a9}} 
+\index{forces::force@{forces::force}!t4@{t4}}
+\index{t4@{t4}!forces::force@{forces::force}}
+\doxyparagraph{\texorpdfstring{t4}{t4}}
+{\footnotesize\ttfamily real(db) forces\+::force\+::t4}
+
+\mbox{\Hypertarget{structforces_1_1force_a36da1a03b8e220a38059fa172b62fc9f}\label{structforces_1_1force_a36da1a03b8e220a38059fa172b62fc9f}} 
+\index{forces::force@{forces::force}!vdi@{vdi}}
+\index{vdi@{vdi}!forces::force@{forces::force}}
+\doxyparagraph{\texorpdfstring{vdi}{vdi}}
+{\footnotesize\ttfamily type(\mbox{\hyperlink{structforces_1_1pairing}{pairing}}) forces\+::force\+::vdi}
+
+
+
+parameter set for the volume-\/delta pairing case. 
+
+\mbox{\Hypertarget{structforces_1_1force_a6949bf50fa29dd997ad7b2caea17b9f9}\label{structforces_1_1force_a6949bf50fa29dd997ad7b2caea17b9f9}} 
+\index{forces::force@{forces::force}!x0@{x0}}
+\index{x0@{x0}!forces::force@{forces::force}}
+\doxyparagraph{\texorpdfstring{x0}{x0}}
+{\footnotesize\ttfamily real(db) forces\+::force\+::x0}
+
+\mbox{\Hypertarget{structforces_1_1force_a15cfae19bc4318e071efffbeb32d5c8b}\label{structforces_1_1force_a15cfae19bc4318e071efffbeb32d5c8b}} 
+\index{forces::force@{forces::force}!x1@{x1}}
+\index{x1@{x1}!forces::force@{forces::force}}
+\doxyparagraph{\texorpdfstring{x1}{x1}}
+{\footnotesize\ttfamily real(db) forces\+::force\+::x1}
+
+\mbox{\Hypertarget{structforces_1_1force_aba6ff31da8b8a961be9ae42e4fa6e9b0}\label{structforces_1_1force_aba6ff31da8b8a961be9ae42e4fa6e9b0}} 
+\index{forces::force@{forces::force}!x2@{x2}}
+\index{x2@{x2}!forces::force@{forces::force}}
+\doxyparagraph{\texorpdfstring{x2}{x2}}
+{\footnotesize\ttfamily real(db) forces\+::force\+::x2}
+
+\mbox{\Hypertarget{structforces_1_1force_abba2953cdd32995abcac8ee3984749f8}\label{structforces_1_1force_abba2953cdd32995abcac8ee3984749f8}} 
+\index{forces::force@{forces::force}!x3@{x3}}
+\index{x3@{x3}!forces::force@{forces::force}}
+\doxyparagraph{\texorpdfstring{x3}{x3}}
+{\footnotesize\ttfamily real(db) forces\+::force\+::x3}
+
+\mbox{\Hypertarget{structforces_1_1force_ab12dd09d85ca9416bf9440fdd3d68737}\label{structforces_1_1force_ab12dd09d85ca9416bf9440fdd3d68737}} 
+\index{forces::force@{forces::force}!zpe@{zpe}}
+\index{zpe@{zpe}!forces::force@{forces::force}}
+\doxyparagraph{\texorpdfstring{zpe}{zpe}}
+{\footnotesize\ttfamily integer forces\+::force\+::zpe}
+
+
+
+index for the treatment of the center-\/of-\/mass correction 
+
+
+
+The documentation for this type was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{forces_8f90}{forces.\+f90}}\end{DoxyCompactItemize}

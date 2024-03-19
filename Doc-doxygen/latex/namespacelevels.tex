@@ -1,0 +1,378 @@
+\hypertarget{namespacelevels}{}\doxysubsection{levels Module Reference}
+\label{namespacelevels}\index{levels@{levels}}
+
+
+This module is concerned with the wave function data\+: definition of the pertinent arrays, allocating their storage and simple operations on them.  
+
+
+\doxysubsubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespacelevels_a91122d97fbfea678bfd7de364a7e591c}{alloc\+\_\+levels}}
+\begin{DoxyCompactList}\small\item\em This subroutine allocates all the arrays associated with single-\/particle wave functions. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacelevels_ad72540f7f5faebfcf257c2526d54ce14}{cdervx}} (psin, d1psout, d2psout)
+\begin{DoxyCompactList}\small\item\em This routine calculates derivatives of wave functions using the F\+FT method, in the $ x $-\/direction. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacelevels_a67465a7ef970491e7e5a2570711ef73f}{cdervy}} (psin, d1psout, d2psout)
+\begin{DoxyCompactList}\small\item\em This routine calculates derivatives of wave functions using the F\+FT method, in the $ y $-\/direction. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacelevels_ae27a63466deecdb22b35190126283886}{cdervz}} (psin, d1psout, d2psout)
+\begin{DoxyCompactList}\small\item\em This routine calculates derivatives of wave functions using the F\+FT method, in the $ z $-\/direction. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacelevels_a4b9efaa3b0f2318fd68a64399808c2fe}{laplace}} (psin, psout, e0inv)
+\begin{DoxyCompactList}\small\item\em depending on the presence of the third argument {\ttfamily e0inv}, it can calculate two things using F\+FT methods\+: \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacelevels_ad3cc938ee1823b4dde878016248e7c8b}{schmid}}
+\begin{DoxyCompactList}\small\item\em This performs a Gram-\/\+Schmidt orthogonalization of the single particle levels in the straightforward way\+: loop over states and subtract the components of all lower-\/indexed states from a wave function. the static calculations. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+integer \mbox{\hyperlink{namespacelevels_ad1176e264e6cac25a44532e28a9503e9}{nstmax}}
+\begin{DoxyCompactList}\small\item\em is the total number of wave functions present in the calculation. For the M\+PI version only {\ttfamily nstloc} wave functions are present on each node. Note that for all other wave-\/function related arrays, such as single-\/particle energies, the full set is stored on each node. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacelevels_a0e862f01a3748859879fbc7ac6d256db}{nstloc}}
+\begin{DoxyCompactList}\small\item\em the number of wave functions stored on the present node. In principle this should be defined in module {\ttfamily Parallel}, but this would lead to a circular module dependence. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacelevels_aa35279701a4ecc295c042671aa8ecceb}{nneut}}
+\begin{DoxyCompactList}\small\item\em the physical numbers of neutrons. These may be smaller than the number of single-\/particle states. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacelevels_a07af295449db01b659290e9192db954f}{nprot}}
+\begin{DoxyCompactList}\small\item\em the physical numbers of protons. These may be smaller than the number of single-\/particle states. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacelevels_a91d915fd18d47d3a68f200405b32fe89}{charge\+\_\+number}}
+\begin{DoxyCompactList}\small\item\em the physical charge numbers. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacelevels_a8abf82cc62fcecf7fef8b664bc5ed2d2}{mass\+\_\+number}}
+\begin{DoxyCompactList}\small\item\em the physical mass numbers. \end{DoxyCompactList}\item 
+complex(db), dimension(\+:,\+:,\+:,\+:,\+:), pointer \mbox{\hyperlink{namespacelevels_ad43f3a91d28fef20598dafaf71b5b747}{psi}}
+\begin{DoxyCompactList}\small\item\em this is the main array for the wave functions. It has an additional last index counting the states. In the sequential case it runs from $ 1\ldots{\tt nstmax} $, in the M\+PI version each node has only {\ttfamily nstloc} wave functions. \end{DoxyCompactList}\item 
+complex(db), dimension(\+:,\+:), allocatable \mbox{\hyperlink{namespacelevels_a86c43169aa09dd5a47b2b9c21ca8729e}{hmatr}}
+\begin{DoxyCompactList}\small\item\em this is dimensioned {\ttfamily  (nstmax,nstmax)} and is used for the single-\/particle Hamiltonian in the diagonalization step. \end{DoxyCompactList}\item 
+real(db), dimension(\+:), allocatable \mbox{\hyperlink{namespacelevels_a84c77978b44c9f69d1e9c6795232dcc4}{sp\+\_\+energy}}
+\begin{DoxyCompactList}\small\item\em single-\/particle energy in MeV. \end{DoxyCompactList}\item 
+real(db), dimension(\+:), allocatable \mbox{\hyperlink{namespacelevels_a2a0fe0b427a0f435f6f333c1a86def8c}{sp\+\_\+efluct1}}
+\begin{DoxyCompactList}\small\item\em single-\/particle energy fluctuation in MeV calculated as \end{DoxyCompactList}\item 
+real(db), dimension(\+:), allocatable \mbox{\hyperlink{namespacelevels_ab9a96c8c6f1abfaf0af0e744973881a9}{sp\+\_\+kinetic}}
+\begin{DoxyCompactList}\small\item\em single-\/particle kinetic energy in units of MeV. \end{DoxyCompactList}\item 
+real(db), dimension(\+:), allocatable \mbox{\hyperlink{namespacelevels_a531467a267291ca83f8064d7a425fe6c}{sp\+\_\+norm}}
+\begin{DoxyCompactList}\small\item\em norm of single-\/particle wave function; should be unity normally. \end{DoxyCompactList}\item 
+real(db), dimension(\+:), allocatable \mbox{\hyperlink{namespacelevels_a6c85608242c262762764cbc3c0154a44}{sp\+\_\+efluct2}}
+\begin{DoxyCompactList}\small\item\em single-\/particle energy fluctuation in MeV calculated as \end{DoxyCompactList}\item 
+real(db), dimension(\+:), allocatable \mbox{\hyperlink{namespacelevels_a0a1fe8c03bbeb0e21d2b7589df6fd9a6}{sp\+\_\+parity}}
+\begin{DoxyCompactList}\small\item\em single-\/particle parity w.\+r.\+t. three-\/dimensional reflection at the origin; calculated as \end{DoxyCompactList}\item 
+real(db), dimension(\+:), allocatable \mbox{\hyperlink{namespacelevels_afe1baa4191930bbeffd8c4bc5a2620fb}{wocc}}
+\begin{DoxyCompactList}\small\item\em occupation probability of single-\/particle state, may be fractional because of pairing. In the equations this is usually denoted as $ w_k^2 $, the square added because of the pairing notation. \end{DoxyCompactList}\item 
+real(db), dimension(\+:,\+:), allocatable \mbox{\hyperlink{namespacelevels_a7425ee1aee0104d14500d9c7fec65cf3}{sp\+\_\+orbital}}
+\begin{DoxyCompactList}\small\item\em dimensioned {\ttfamily  (3,nstmax)}\+: expectation values of three components of single-\/particle orbital angular momentum, in units of $ \hbar $. \end{DoxyCompactList}\item 
+real(db), dimension(\+:,\+:), allocatable \mbox{\hyperlink{namespacelevels_ad98ca041cc25bfa4b56627675009ac71}{sp\+\_\+spin}}
+\begin{DoxyCompactList}\small\item\em dimensioned {\ttfamily  (3,nstmax)}\+: expectation values of three components of single-\/particle spin, in units of $ \hbar $. \end{DoxyCompactList}\item 
+integer, dimension(\+:), allocatable \mbox{\hyperlink{namespacelevels_aed7946ee74cd100fb2efa62fc76e3925}{isospin}}
+\begin{DoxyCompactList}\small\item\em keeps track of isospin of particle, 1=neutron, 2=proton. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ neutron and proton start and ending indices}\par
+{\em The neutron states are numbered {\ttfamily  npmin(1)} through {\ttfamily  npsi(1)} and the proton states run from {\ttfamily  npmin(2)} through {\ttfamily  npsi(2)}. Protons follow neutrons, so {\ttfamily  npmin(1)=1} and {\ttfamily  npmin(2)=npsi(1)+1}. {\itshape Note that for each particle type the number of states can be larger than the particle number, as states may be fractionally occupied or even empty.} If initialization is not from fragments, {\ttfamily  npsi(2)} {\itshape  as an input value} refers to the total number of proton states, it is later updated (in {\ttfamily  init.\+f90}) to its normal meaning as the final index for proton states, which coincides with the total number of states, {\ttfamily  npsi(2)=nstmax}. }\begin{DoxyCompactItemize}
+\item 
+integer, dimension(2) \mbox{\hyperlink{namespacelevels_ab9d800833c7fd19361f71a493fa0fbf6}{npmin}}
+\item 
+integer, dimension(2) \mbox{\hyperlink{namespacelevels_aa9870c52b50461dd864875bf5572da11}{npsi}}
+\end{DoxyCompactItemize}
+\end{Indent}
+
+
+\doxysubsubsection{Detailed Description}
+This module is concerned with the wave function data\+: definition of the pertinent arrays, allocating their storage and simple operations on them. 
+
+\doxysubsubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespacelevels_a91122d97fbfea678bfd7de364a7e591c}\label{namespacelevels_a91122d97fbfea678bfd7de364a7e591c}} 
+\index{levels@{levels}!alloc\_levels@{alloc\_levels}}
+\index{alloc\_levels@{alloc\_levels}!levels@{levels}}
+\doxyparagraph{\texorpdfstring{alloc\_levels()}{alloc\_levels()}}
+{\footnotesize\ttfamily subroutine levels\+::alloc\+\_\+levels}
+
+
+
+This subroutine allocates all the arrays associated with single-\/particle wave functions. 
+
+Note that while most have dimension {\ttfamily nstmax}, {\ttfamily psi} itself is dimensioned for the number {\ttfamily nstloc} of wave functions on one specific processor. It also records the isospin value. \mbox{\Hypertarget{namespacelevels_ad72540f7f5faebfcf257c2526d54ce14}\label{namespacelevels_ad72540f7f5faebfcf257c2526d54ce14}} 
+\index{levels@{levels}!cdervx@{cdervx}}
+\index{cdervx@{cdervx}!levels@{levels}}
+\doxyparagraph{\texorpdfstring{cdervx()}{cdervx()}}
+{\footnotesize\ttfamily subroutine levels\+::cdervx (\begin{DoxyParamCaption}\item[{complex(db), dimension(\+:,\+:,\+:,\+:), intent(in)}]{psin,  }\item[{complex(db), dimension(\+:,\+:,\+:,\+:), intent(out)}]{d1psout,  }\item[{complex(db), dimension(\+:,\+:,\+:,\+:), intent(out), optional}]{d2psout }\end{DoxyParamCaption})}
+
+
+
+This routine calculates derivatives of wave functions using the F\+FT method, in the $ x $-\/direction. 
+
+The last argument can be omitted and no second derivative is calculated in this case. The derivatives add the proper dimension of $ {\rm fm}^{-1} $ and $ {\rm fm}^{-2} $, respectively. Note the dependence of the $ k $ -\/value on index.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em psin} & C\+O\+M\+P\+L\+E\+X(db), array, takes the wave function to be differantiated. \\
+\hline
+\mbox{\texttt{ out}}  & {\em d1psout} & C\+O\+M\+P\+L\+E\+X(db), array, returns the first derivative. \\
+\hline
+\mbox{\texttt{ out}}  & {\em d2psout} & C\+O\+M\+P\+L\+E\+X(db), array, O\+P\+T\+I\+O\+N\+AL, returns the first derivative. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacelevels_a67465a7ef970491e7e5a2570711ef73f}\label{namespacelevels_a67465a7ef970491e7e5a2570711ef73f}} 
+\index{levels@{levels}!cdervy@{cdervy}}
+\index{cdervy@{cdervy}!levels@{levels}}
+\doxyparagraph{\texorpdfstring{cdervy()}{cdervy()}}
+{\footnotesize\ttfamily subroutine levels\+::cdervy (\begin{DoxyParamCaption}\item[{complex(db), dimension(\+:,\+:,\+:,\+:), intent(in)}]{psin,  }\item[{complex(db), dimension(\+:,\+:,\+:,\+:), intent(out)}]{d1psout,  }\item[{complex(db), dimension(\+:,\+:,\+:,\+:), intent(out), optional}]{d2psout }\end{DoxyParamCaption})}
+
+
+
+This routine calculates derivatives of wave functions using the F\+FT method, in the $ y $-\/direction. 
+
+The last argument can be omitted and no second derivative is calculated in this case. The derivatives add the proper dimension of $ {\rm fm}^{-1} $ and $ {\rm fm}^{-2} $, respectively. Note the dependence of the $ k $ -\/value on index.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em psin} & C\+O\+M\+P\+L\+E\+X(db), array, takes the wave function to be differantiated. \\
+\hline
+\mbox{\texttt{ out}}  & {\em d1psout} & C\+O\+M\+P\+L\+E\+X(db), array, returns the first derivative. \\
+\hline
+\mbox{\texttt{ out}}  & {\em d2psout} & C\+O\+M\+P\+L\+E\+X(db), array, O\+P\+T\+I\+O\+N\+AL, returns the first derivative. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacelevels_ae27a63466deecdb22b35190126283886}\label{namespacelevels_ae27a63466deecdb22b35190126283886}} 
+\index{levels@{levels}!cdervz@{cdervz}}
+\index{cdervz@{cdervz}!levels@{levels}}
+\doxyparagraph{\texorpdfstring{cdervz()}{cdervz()}}
+{\footnotesize\ttfamily subroutine levels\+::cdervz (\begin{DoxyParamCaption}\item[{complex(db), dimension(\+:,\+:,\+:,\+:), intent(in)}]{psin,  }\item[{complex(db), dimension(\+:,\+:,\+:,\+:), intent(out)}]{d1psout,  }\item[{complex(db), dimension(\+:,\+:,\+:,\+:), intent(out), optional}]{d2psout }\end{DoxyParamCaption})}
+
+
+
+This routine calculates derivatives of wave functions using the F\+FT method, in the $ z $-\/direction. 
+
+The last argument can be omitted and no second derivative is calculated in this case. The derivatives add the proper dimension of $ {\rm fm}^{-1} $ and $ {\rm fm}^{-2} $, respectively. Note the dependence of the $ k $ -\/value on index.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em psin} & C\+O\+M\+P\+L\+E\+X(db), array, takes the wave function to be differantiated. \\
+\hline
+\mbox{\texttt{ out}}  & {\em d1psout} & C\+O\+M\+P\+L\+E\+X(db), array, returns the first derivative. \\
+\hline
+\mbox{\texttt{ out}}  & {\em d2psout} & C\+O\+M\+P\+L\+E\+X(db), array, O\+P\+T\+I\+O\+N\+AL, returns the first derivative. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacelevels_a4b9efaa3b0f2318fd68a64399808c2fe}\label{namespacelevels_a4b9efaa3b0f2318fd68a64399808c2fe}} 
+\index{levels@{levels}!laplace@{laplace}}
+\index{laplace@{laplace}!levels@{levels}}
+\doxyparagraph{\texorpdfstring{laplace()}{laplace()}}
+{\footnotesize\ttfamily subroutine levels\+::laplace (\begin{DoxyParamCaption}\item[{complex(db), dimension(\+:,\+:,\+:,\+:), intent(in)}]{psin,  }\item[{complex(db), dimension(\+:,\+:,\+:,\+:), intent(out)}]{psout,  }\item[{real(db), intent(in), optional}]{e0inv }\end{DoxyParamCaption})}
+
+
+
+depending on the presence of the third argument {\ttfamily e0inv}, it can calculate two things using F\+FT methods\+: 
+
+
+\begin{DoxyItemize}
+\item if {\ttfamily e0inv} is not present, it calculates the Laplacian \[\frac{\partial^2\psi}{\partial x^2}+\frac{\partial^2\psi} {\partial y^2}+\frac{\partial^2\psi} {\partial z^2}. \]
+\item if {\ttfamily e0inv} is present and positive, it calculates \[ \frac1{E_{0\rm inv}+\hat t}\psi, \] with the kinetic-\/energy operator \[ \hat t=-\frac{\hbar^2}{2m}\left(\frac{\partial^2} {\partial x^2}+\frac{\partial^2} {\partial y^2}+\frac{\partial^2}{\partial z^2}\right), \] which is of course expressed through $ \vec k $ in momentum space.
+\end{DoxyItemize}
+
+The methods used in this routine are similar to those for the derivatives {\ttfamily cdervx} etc. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em psin} & C\+O\+M\+P\+L\+E\+X(db), array, takes wave function on which operation is performed. \\
+\hline
+\mbox{\texttt{ out}}  & {\em psout} & C\+O\+M\+P\+L\+E\+X(db), array, returns the resulting wave function. \\
+\hline
+\mbox{\texttt{ in}}  & {\em e0inv} & R\+E\+A\+L(db), O\+P\+T\+I\+O\+N\+AL, takes the damping factor. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacelevels_ad3cc938ee1823b4dde878016248e7c8b}\label{namespacelevels_ad3cc938ee1823b4dde878016248e7c8b}} 
+\index{levels@{levels}!schmid@{schmid}}
+\index{schmid@{schmid}!levels@{levels}}
+\doxyparagraph{\texorpdfstring{schmid()}{schmid()}}
+{\footnotesize\ttfamily subroutine levels\+::schmid}
+
+
+
+This performs a Gram-\/\+Schmidt orthogonalization of the single particle levels in the straightforward way\+: loop over states and subtract the components of all lower-\/indexed states from a wave function. the static calculations. 
+
+It can be parallelized under {\ttfamily Open\+MP}, albeit not very efficiently, but becomes too slow under {\ttfamily M\+PI}, so that {\ttfamily M\+PI} is not enabled for 
+
+\doxysubsubsection{Variable Documentation}
+\mbox{\Hypertarget{namespacelevels_a91d915fd18d47d3a68f200405b32fe89}\label{namespacelevels_a91d915fd18d47d3a68f200405b32fe89}} 
+\index{levels@{levels}!charge\_number@{charge\_number}}
+\index{charge\_number@{charge\_number}!levels@{levels}}
+\doxyparagraph{\texorpdfstring{charge\_number}{charge\_number}}
+{\footnotesize\ttfamily real(db) levels\+::charge\+\_\+number}
+
+
+
+the physical charge numbers. 
+
+\mbox{\Hypertarget{namespacelevels_a86c43169aa09dd5a47b2b9c21ca8729e}\label{namespacelevels_a86c43169aa09dd5a47b2b9c21ca8729e}} 
+\index{levels@{levels}!hmatr@{hmatr}}
+\index{hmatr@{hmatr}!levels@{levels}}
+\doxyparagraph{\texorpdfstring{hmatr}{hmatr}}
+{\footnotesize\ttfamily complex(db), dimension(\+:,\+:), allocatable levels\+::hmatr}
+
+
+
+this is dimensioned {\ttfamily  (nstmax,nstmax)} and is used for the single-\/particle Hamiltonian in the diagonalization step. 
+
+\mbox{\Hypertarget{namespacelevels_aed7946ee74cd100fb2efa62fc76e3925}\label{namespacelevels_aed7946ee74cd100fb2efa62fc76e3925}} 
+\index{levels@{levels}!isospin@{isospin}}
+\index{isospin@{isospin}!levels@{levels}}
+\doxyparagraph{\texorpdfstring{isospin}{isospin}}
+{\footnotesize\ttfamily integer, dimension(\+:), allocatable levels\+::isospin}
+
+
+
+keeps track of isospin of particle, 1=neutron, 2=proton. 
+
+\mbox{\Hypertarget{namespacelevels_a8abf82cc62fcecf7fef8b664bc5ed2d2}\label{namespacelevels_a8abf82cc62fcecf7fef8b664bc5ed2d2}} 
+\index{levels@{levels}!mass\_number@{mass\_number}}
+\index{mass\_number@{mass\_number}!levels@{levels}}
+\doxyparagraph{\texorpdfstring{mass\_number}{mass\_number}}
+{\footnotesize\ttfamily real(db) levels\+::mass\+\_\+number}
+
+
+
+the physical mass numbers. 
+
+\mbox{\Hypertarget{namespacelevels_aa35279701a4ecc295c042671aa8ecceb}\label{namespacelevels_aa35279701a4ecc295c042671aa8ecceb}} 
+\index{levels@{levels}!nneut@{nneut}}
+\index{nneut@{nneut}!levels@{levels}}
+\doxyparagraph{\texorpdfstring{nneut}{nneut}}
+{\footnotesize\ttfamily integer levels\+::nneut}
+
+
+
+the physical numbers of neutrons. These may be smaller than the number of single-\/particle states. 
+
+\mbox{\Hypertarget{namespacelevels_ab9d800833c7fd19361f71a493fa0fbf6}\label{namespacelevels_ab9d800833c7fd19361f71a493fa0fbf6}} 
+\index{levels@{levels}!npmin@{npmin}}
+\index{npmin@{npmin}!levels@{levels}}
+\doxyparagraph{\texorpdfstring{npmin}{npmin}}
+{\footnotesize\ttfamily integer, dimension(2) levels\+::npmin}
+
+\mbox{\Hypertarget{namespacelevels_a07af295449db01b659290e9192db954f}\label{namespacelevels_a07af295449db01b659290e9192db954f}} 
+\index{levels@{levels}!nprot@{nprot}}
+\index{nprot@{nprot}!levels@{levels}}
+\doxyparagraph{\texorpdfstring{nprot}{nprot}}
+{\footnotesize\ttfamily integer levels\+::nprot}
+
+
+
+the physical numbers of protons. These may be smaller than the number of single-\/particle states. 
+
+\mbox{\Hypertarget{namespacelevels_aa9870c52b50461dd864875bf5572da11}\label{namespacelevels_aa9870c52b50461dd864875bf5572da11}} 
+\index{levels@{levels}!npsi@{npsi}}
+\index{npsi@{npsi}!levels@{levels}}
+\doxyparagraph{\texorpdfstring{npsi}{npsi}}
+{\footnotesize\ttfamily integer, dimension(2) levels\+::npsi}
+
+\mbox{\Hypertarget{namespacelevels_a0e862f01a3748859879fbc7ac6d256db}\label{namespacelevels_a0e862f01a3748859879fbc7ac6d256db}} 
+\index{levels@{levels}!nstloc@{nstloc}}
+\index{nstloc@{nstloc}!levels@{levels}}
+\doxyparagraph{\texorpdfstring{nstloc}{nstloc}}
+{\footnotesize\ttfamily integer levels\+::nstloc}
+
+
+
+the number of wave functions stored on the present node. In principle this should be defined in module {\ttfamily Parallel}, but this would lead to a circular module dependence. 
+
+\mbox{\Hypertarget{namespacelevels_ad1176e264e6cac25a44532e28a9503e9}\label{namespacelevels_ad1176e264e6cac25a44532e28a9503e9}} 
+\index{levels@{levels}!nstmax@{nstmax}}
+\index{nstmax@{nstmax}!levels@{levels}}
+\doxyparagraph{\texorpdfstring{nstmax}{nstmax}}
+{\footnotesize\ttfamily integer levels\+::nstmax}
+
+
+
+is the total number of wave functions present in the calculation. For the M\+PI version only {\ttfamily nstloc} wave functions are present on each node. Note that for all other wave-\/function related arrays, such as single-\/particle energies, the full set is stored on each node. 
+
+\mbox{\Hypertarget{namespacelevels_ad43f3a91d28fef20598dafaf71b5b747}\label{namespacelevels_ad43f3a91d28fef20598dafaf71b5b747}} 
+\index{levels@{levels}!psi@{psi}}
+\index{psi@{psi}!levels@{levels}}
+\doxyparagraph{\texorpdfstring{psi}{psi}}
+{\footnotesize\ttfamily complex(db), dimension(\+:,\+:,\+:,\+:,\+:), pointer levels\+::psi}
+
+
+
+this is the main array for the wave functions. It has an additional last index counting the states. In the sequential case it runs from $ 1\ldots{\tt nstmax} $, in the M\+PI version each node has only {\ttfamily nstloc} wave functions. 
+
+\mbox{\Hypertarget{namespacelevels_a2a0fe0b427a0f435f6f333c1a86def8c}\label{namespacelevels_a2a0fe0b427a0f435f6f333c1a86def8c}} 
+\index{levels@{levels}!sp\_efluct1@{sp\_efluct1}}
+\index{sp\_efluct1@{sp\_efluct1}!levels@{levels}}
+\doxyparagraph{\texorpdfstring{sp\_efluct1}{sp\_efluct1}}
+{\footnotesize\ttfamily real(db), dimension(\+:), allocatable levels\+::sp\+\_\+efluct1}
+
+
+
+single-\/particle energy fluctuation in MeV calculated as 
+
+\[ \sqrt{\langle\psi|\hat h^2|\psi\rangle-\langle\psi|\hat h|\psi\rangle^2}. \] Used only as informational printout in the static part. \mbox{\Hypertarget{namespacelevels_a6c85608242c262762764cbc3c0154a44}\label{namespacelevels_a6c85608242c262762764cbc3c0154a44}} 
+\index{levels@{levels}!sp\_efluct2@{sp\_efluct2}}
+\index{sp\_efluct2@{sp\_efluct2}!levels@{levels}}
+\doxyparagraph{\texorpdfstring{sp\_efluct2}{sp\_efluct2}}
+{\footnotesize\ttfamily real(db), dimension(\+:), allocatable levels\+::sp\+\_\+efluct2}
+
+
+
+single-\/particle energy fluctuation in MeV calculated as 
+
+\[ \sqrt{\langle\hat h\psi|\hat h\psi\rangle-\langle\psi|\hat h|\psi\rangle^2}. \] Used only as informational printout in the static part. \mbox{\Hypertarget{namespacelevels_a84c77978b44c9f69d1e9c6795232dcc4}\label{namespacelevels_a84c77978b44c9f69d1e9c6795232dcc4}} 
+\index{levels@{levels}!sp\_energy@{sp\_energy}}
+\index{sp\_energy@{sp\_energy}!levels@{levels}}
+\doxyparagraph{\texorpdfstring{sp\_energy}{sp\_energy}}
+{\footnotesize\ttfamily real(db), dimension(\+:), allocatable levels\+::sp\+\_\+energy}
+
+
+
+single-\/particle energy in MeV. 
+
+\mbox{\Hypertarget{namespacelevels_ab9a96c8c6f1abfaf0af0e744973881a9}\label{namespacelevels_ab9a96c8c6f1abfaf0af0e744973881a9}} 
+\index{levels@{levels}!sp\_kinetic@{sp\_kinetic}}
+\index{sp\_kinetic@{sp\_kinetic}!levels@{levels}}
+\doxyparagraph{\texorpdfstring{sp\_kinetic}{sp\_kinetic}}
+{\footnotesize\ttfamily real(db), dimension(\+:), allocatable levels\+::sp\+\_\+kinetic}
+
+
+
+single-\/particle kinetic energy in units of MeV. 
+
+\mbox{\Hypertarget{namespacelevels_a531467a267291ca83f8064d7a425fe6c}\label{namespacelevels_a531467a267291ca83f8064d7a425fe6c}} 
+\index{levels@{levels}!sp\_norm@{sp\_norm}}
+\index{sp\_norm@{sp\_norm}!levels@{levels}}
+\doxyparagraph{\texorpdfstring{sp\_norm}{sp\_norm}}
+{\footnotesize\ttfamily real(db), dimension(\+:), allocatable levels\+::sp\+\_\+norm}
+
+
+
+norm of single-\/particle wave function; should be unity normally. 
+
+\mbox{\Hypertarget{namespacelevels_a7425ee1aee0104d14500d9c7fec65cf3}\label{namespacelevels_a7425ee1aee0104d14500d9c7fec65cf3}} 
+\index{levels@{levels}!sp\_orbital@{sp\_orbital}}
+\index{sp\_orbital@{sp\_orbital}!levels@{levels}}
+\doxyparagraph{\texorpdfstring{sp\_orbital}{sp\_orbital}}
+{\footnotesize\ttfamily real(db), dimension(\+:,\+:), allocatable levels\+::sp\+\_\+orbital}
+
+
+
+dimensioned {\ttfamily  (3,nstmax)}\+: expectation values of three components of single-\/particle orbital angular momentum, in units of $ \hbar $. 
+
+\mbox{\Hypertarget{namespacelevels_a0a1fe8c03bbeb0e21d2b7589df6fd9a6}\label{namespacelevels_a0a1fe8c03bbeb0e21d2b7589df6fd9a6}} 
+\index{levels@{levels}!sp\_parity@{sp\_parity}}
+\index{sp\_parity@{sp\_parity}!levels@{levels}}
+\doxyparagraph{\texorpdfstring{sp\_parity}{sp\_parity}}
+{\footnotesize\ttfamily real(db), dimension(\+:), allocatable levels\+::sp\+\_\+parity}
+
+
+
+single-\/particle parity w.\+r.\+t. three-\/dimensional reflection at the origin; calculated as 
+
+\[ \sum_s\int\D^3r\, \psi^*(\vec r,s)\psi_s(-\vec r,s). \] \mbox{\Hypertarget{namespacelevels_ad98ca041cc25bfa4b56627675009ac71}\label{namespacelevels_ad98ca041cc25bfa4b56627675009ac71}} 
+\index{levels@{levels}!sp\_spin@{sp\_spin}}
+\index{sp\_spin@{sp\_spin}!levels@{levels}}
+\doxyparagraph{\texorpdfstring{sp\_spin}{sp\_spin}}
+{\footnotesize\ttfamily real(db), dimension(\+:,\+:), allocatable levels\+::sp\+\_\+spin}
+
+
+
+dimensioned {\ttfamily  (3,nstmax)}\+: expectation values of three components of single-\/particle spin, in units of $ \hbar $. 
+
+\mbox{\Hypertarget{namespacelevels_afe1baa4191930bbeffd8c4bc5a2620fb}\label{namespacelevels_afe1baa4191930bbeffd8c4bc5a2620fb}} 
+\index{levels@{levels}!wocc@{wocc}}
+\index{wocc@{wocc}!levels@{levels}}
+\doxyparagraph{\texorpdfstring{wocc}{wocc}}
+{\footnotesize\ttfamily real(db), dimension(\+:), allocatable levels\+::wocc}
+
+
+
+occupation probability of single-\/particle state, may be fractional because of pairing. In the equations this is usually denoted as $ w_k^2 $, the square added because of the pairing notation. 
+

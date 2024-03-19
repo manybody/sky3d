@@ -1,0 +1,36 @@
+\hypertarget{namespaceuser}{}\doxysubsection{user Module Reference}
+\label{namespaceuser}\index{user@{user}}
+
+
+This is included as a place to insert arbitrary user initialization of the wave functions.  
+
+
+\doxysubsubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespaceuser_a159ff7be341bae73393dd9fb1b1a69f9}{init\+\_\+user}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+This is included as a place to insert arbitrary user initialization of the wave functions. 
+
+It really does the same job as subroutine {\ttfamily harmosc}, which is a relatively complicated example. For this reason a sample user initialization is also provided in the file {\ttfamily \mbox{\hyperlink{user__sample_8f90}{user\+\_\+sample.\+f90}}}. It produces Gaussian wave functions for three alpha-\/particle-\/like nuclei separated by a distance {\ttfamily d} and with radii {\ttfamily r}.
+
+The only routine that has to be defined is {\ttfamily user\+\_\+init} {\ttfamily user\+\_\+init}, but for more complicated initializations there can be any number of additional procedures accompanying it in {\ttfamily \mbox{\hyperlink{user_8f90}{user.\+f90}}}.
+
+The setup assumes that the relevant particle numbers {\ttfamily nneut} and {\ttfamily nprot} and numbers of states {\ttfamily npmin}, {\ttfamily npsi}, and {\ttfamily nstmax} are set correctly using the static input. In this case we assume {\ttfamily nprot=6}, {\ttfamily nneut=6}, {\ttfamily npmin=1,7}, {\ttfamily npsi=6,12}, and {\ttfamily nstmax=12}. Note that the occupation numbers {\ttfamily wocc} still have to be set explicitly, in this case they are all unity.
+
+The routine then reads the parameters for the setup from namelist {\ttfamily user}. This namelist can be used to read anything desired. If there is no user initialization, it is simply omitted from the input file.
+
+Now there is a loop over center positions with index {\ttfamily ic}. For each of them, the appropriate Gaussian is calculated and put into wave function \# {\ttfamily ic} in the spin-\/up component; the spin-\/down component is set to zero. Then the Gaussian is copied into index position {\ttfamily ic+3}, spin-\/down component, and finally the complete wave functions are copied to the proton indices by adding 6.
+
+There is no need to orthonormalize the wave functions, since {\ttfamily schmid} is called before the static iterations are started. User initialization for the dynamic case does not appear useful; it could be easily done without modifying the code by running one static iteration and using the wave-\/function file generated at the beginning to initialize the dynamic calculation. 
+
+\doxysubsubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespaceuser_a159ff7be341bae73393dd9fb1b1a69f9}\label{namespaceuser_a159ff7be341bae73393dd9fb1b1a69f9}} 
+\index{user@{user}!init\_user@{init\_user}}
+\index{init\_user@{init\_user}!user@{user}}
+\doxyparagraph{\texorpdfstring{init\_user()}{init\_user()}}
+{\footnotesize\ttfamily subroutine user\+::init\+\_\+user}
+

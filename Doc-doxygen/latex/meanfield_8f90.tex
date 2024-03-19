@@ -1,0 +1,34 @@
+\hypertarget{meanfield_8f90}{}\doxysubsection{meanfield.\+f90 File Reference}
+\label{meanfield_8f90}\index{meanfield.f90@{meanfield.f90}}
+\doxysubsubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \mbox{\hyperlink{namespacemeanfield}{meanfield}}
+\begin{DoxyCompactList}\small\item\em This module calculates all the ingredients needed for the energy functional and for applying the single-\/particle Hamiltonian to a wave function. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespacemeanfield_a4cb67584e46b31740ffabfcb7f5ca87a}{meanfield\+::alloc\+\_\+fields}}
+\begin{DoxyCompactList}\small\item\em This subroutine has the simple task of allocating all the fields that are local to the module {\ttfamily Meanfield}. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacemeanfield_a98c1c8da2cee7b2d1d8c2ddc451881af}{meanfield\+::skyrme}}
+\begin{DoxyCompactList}\small\item\em In this subroutine the various fields are calculated from the densities that were previously generated in module {\ttfamily Densities}. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacemeanfield_aad360aa7a912c2b6ffcb71715bd026eb}{meanfield\+::hpsi}} (iq, eshift, pinn, pout)
+\begin{DoxyCompactList}\small\item\em This subroutine applies the single-\/particle Hamiltonian to a single-\/particle wave function {\ttfamily pinn} to produce an output wave function {\ttfamily pout}. The argument {\ttfamily iq} indicates the isospin for the wave function and {\ttfamily eshift} is an energy shift which is zero in the dynamic calculation but crucial to the static algorithm (see {\ttfamily grstep} in module {\ttfamily Static}). \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+real(db), dimension(\+:,\+:,\+:,\+:), allocatable \mbox{\hyperlink{namespacemeanfield_ae33ff83f4833d75bb02e0ab18f145ecc}{meanfield\+::upot}}
+\begin{DoxyCompactList}\small\item\em this is the local part of the mean field $ U_q $. It is a scalar field with isospin index. \end{DoxyCompactList}\item 
+real(db), dimension(\+:,\+:,\+:,\+:), allocatable \mbox{\hyperlink{namespacemeanfield_a550cb619aaf736be4ffd3dd264f1d4d6}{meanfield\+::bmass}}
+\begin{DoxyCompactList}\small\item\em this is the effective mass $ B_q $. It is a scalar, isospin-\/dependent field. \end{DoxyCompactList}\item 
+real(db), dimension(\+:,\+:,\+:,\+:), allocatable, private \mbox{\hyperlink{namespacemeanfield_ab51b6b329b3e2a5a2922df8851529665}{meanfield\+::divaq}}
+\begin{DoxyCompactList}\small\item\em this is the divergence of {\ttfamily aq}, i.\+e., $ \nabla\cdot\vec A_q $. Its is a scalar, isospin-\/dependent field. \end{DoxyCompactList}\item 
+real(db), dimension(\+:,\+:,\+:,\+:,\+:), allocatable, private \mbox{\hyperlink{namespacemeanfield_a7dfa27213f417177960e263a95322dd3}{meanfield\+::aq}}
+\begin{DoxyCompactList}\small\item\em This is the vector filed $ \vec A_q $. It is a vector, isospin-\/dependent field. ~\newline
+ \end{DoxyCompactList}\item 
+real(db), dimension(\+:,\+:,\+:,\+:,\+:), allocatable \mbox{\hyperlink{namespacemeanfield_a896d6b3cedb68e94d1ba1b884234252a}{meanfield\+::spot}}
+\begin{DoxyCompactList}\small\item\em the field $ \vec{S}_q $. It is a vector, isospin-\/dependent field. \end{DoxyCompactList}\item 
+real(db), dimension(\+:,\+:,\+:,\+:,\+:), allocatable, private \mbox{\hyperlink{namespacemeanfield_acf751ae2685ad4f639428c1e8d872bd0}{meanfield\+::wlspot}}
+\begin{DoxyCompactList}\small\item\em the field $ \vec W_q $. It is a vector, isospin-\/dependent field. \end{DoxyCompactList}\item 
+real(db), dimension(\+:,\+:,\+:,\+:,\+:), allocatable, private \mbox{\hyperlink{namespacemeanfield_a63dea2736dc69161491a371cf15e587f}{meanfield\+::dbmass}}
+\begin{DoxyCompactList}\small\item\em contains the gradient of {\ttfamily bmass}. It is a vector, isospin-\/dependent field. \end{DoxyCompactList}\end{DoxyCompactItemize}

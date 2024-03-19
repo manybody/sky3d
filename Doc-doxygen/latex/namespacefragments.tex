@@ -1,0 +1,436 @@
+\hypertarget{namespacefragments}{}\doxysubsection{fragments Module Reference}
+\label{namespacefragments}\index{fragments@{fragments}}
+
+
+This module is concerned with setting up the initial condition from data files containing fragment wave functions, usually obtained in a previous static calculation.  
+
+
+\doxysubsubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine, public \mbox{\hyperlink{namespacefragments_acd40a2830b84a9a5defb0691a84747b2}{getin\+\_\+fragments}}
+\begin{DoxyCompactList}\small\item\em This subroutine reads the input variables, makes some consistency checks, and then prepares for the initialization. \end{DoxyCompactList}\item 
+subroutine, public \mbox{\hyperlink{namespacefragments_a60355fb212340bf2d5988af3d9354967}{read\+\_\+fragments}}
+\begin{DoxyCompactList}\small\item\em This subroutine prints summary information about which fragment wave functions occupy which range of indices. Then it does a loop over fragments to read in their wave functions using {\ttfamily read\+\_\+one\+\_\+fragment}, followed by applying the boost to them using {\ttfamily boost\+\_\+fragment}. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacefragments_ace60d8e2552ba0068385e7195f2876c4}{read\+\_\+one\+\_\+fragment}} (iff)
+\begin{DoxyCompactList}\small\item\em This subroutine reopens a fragment file for the fragment indexed by {\ttfamily iff} and reads the wave functions, inserting them at the correct index into the new wave function array while also moving them to the desired center-\/of-\/mass position. \end{DoxyCompactList}\item 
+subroutine, private \mbox{\hyperlink{namespacefragments_a0d43cd441c82e1ab9f347fe0076a44be}{locate}} (fileno, pos)
+\begin{DoxyCompactList}\small\item\em This has the task to position the file for reading wave functions at the correct place. It has as arguments the number of the file (corresponding to the node number in the previous calculation) and the index of the wave function in this file. The variable {\ttfamily presentfile} keeps track of which file is currently open. \end{DoxyCompactList}\item 
+pure subroutine, private \mbox{\hyperlink{namespacefragments_ac2d35fb12e37d81e53d64e078960a172}{phases}} (n, a, c)
+\begin{DoxyCompactList}\small\item\em This subroutine calculates the phase factors for a one-\/dimensional translation $ \Delta x $ as. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacefragments_a337f2244c228bf057606a5c5e0758f50}{twobody\+\_\+init}}
+\begin{DoxyCompactList}\small\item\em The purpose of this subroutine is to calculate the boost values from {\ttfamily ecm} and {\ttfamily b} in the two-\/body case. The calculation can be followed with an elementary understanding of the two-\/body system kinematics, so we just give a brief overview. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacefragments_a270483bd01ad365b6b573dcab2c5fd69}{boost\+\_\+fragment}} (iff)
+\begin{DoxyCompactList}\small\item\em This subroutine multiplies the configuration-\/space wave functions of fragment no. {\ttfamily iff} by plane-\/wave factors to give them translational motion. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacefragments_afd17da807067f85598c2cf7d9676c6aa}{errormsg}} (msg1, msg2)
+\begin{DoxyCompactList}\small\item\em Writes out error messages. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+logical \mbox{\hyperlink{namespacefragments_a135903e4b5b8010a590676f3a88e891e}{fix\+\_\+boost}}
+\begin{DoxyCompactList}\small\item\em if this is set to true, the boost (initial kinetic energy) values are used unchanged from the input; otherwise they are calculated from the initial kinetic energy of relative motion {\ttfamily ecm} and the impact parameter {\ttfamily b}. This implies a two-\/body initial configuration. The initial motion is assumed to be in the $ (x,z) $-\/plane in this case. Note that for two initial fragments {\ttfamily fix\+\_\+boost} can also be set to true for special initial conditions. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacefragments_a3a2034f9271ef927c98b9ea5a275ec25}{ecm}}
+\begin{DoxyCompactList}\small\item\em The kinetic energy of relative motion in MeV. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacefragments_a1d89da5ba132049038c8105d94063ace}{b}}
+\begin{DoxyCompactList}\small\item\em The impact parameter in fm. \end{DoxyCompactList}\item 
+character(64), dimension(mnof) \mbox{\hyperlink{namespacefragments_a6e9374105de36bffebdf008e28c2dd84}{filename}}
+\begin{DoxyCompactList}\small\item\em for each fragment this indicates the name of the file with the associated wave functions. One file can be used several times in the case of identical fragments, abut the code does not treat that as a special case. \end{DoxyCompactList}\item 
+real(db), dimension(3, mnof) \mbox{\hyperlink{namespacefragments_a3562833581ce4f2cd584e655147309c9}{fcent}}
+\begin{DoxyCompactList}\small\item\em for fragment no. {\ttfamily i} the initial three-\/dimensional position is determined by {\ttfamily  fcent(\+:,i) }. \end{DoxyCompactList}\item 
+real(db), dimension(3, mnof) \mbox{\hyperlink{namespacefragments_a58edf1cb6f994a8456ed846dc80b56de}{fboost}}
+\begin{DoxyCompactList}\small\item\em gives the initial motion {\ttfamily  fboost(\+:,i)} of fragment {\ttfamily i} in 3 dimensions. This is not a velocity, but the total kinetic energy of the fragment {\itshape  in that Cartesian direction} in MeV. The sign indicates the direction, positive or negative along the corresponding axis. The sum of absolute values thus is the total kinetic energy of the fragment. These values are used only if {\ttfamily fix\+\_\+boost} is true. \end{DoxyCompactList}\item 
+real(db), dimension(3, mnof) \mbox{\hyperlink{namespacefragments_ac9fc8d9033d9429f8d983bdc0d0131df}{fcmtot}}
+\begin{DoxyCompactList}\small\item\em Centers of mass of the fragments. \end{DoxyCompactList}\item 
+real(db), dimension(mnof) \mbox{\hyperlink{namespacefragments_a7c32760193eb33c1086c2572ff67545b}{fmass}}
+\begin{DoxyCompactList}\small\item\em Masses of the fragments. \end{DoxyCompactList}\item 
+real(db), dimension(mnof) \mbox{\hyperlink{namespacefragments_a24689bfc09ecbb7cf75cb613e8821d5b}{fcharge}}
+\begin{DoxyCompactList}\small\item\em Charges of the fragments. \end{DoxyCompactList}\item 
+integer, dimension(mnof) \mbox{\hyperlink{namespacefragments_a77d67ad7ce22e4fa726ba2a46df254a1}{fnneut}}
+\begin{DoxyCompactList}\small\item\em Neutron number of the fragments. \end{DoxyCompactList}\item 
+integer, dimension(mnof) \mbox{\hyperlink{namespacefragments_a4d65ed4cd75c50f289a92b76d7165c7a}{fnprot}}
+\begin{DoxyCompactList}\small\item\em Proton number of the fragments. \end{DoxyCompactList}\item 
+integer, dimension(mnof) \mbox{\hyperlink{namespacefragments_a43fdb4c115fabc2de7179b58d87e83d2}{fnstmax}}
+\begin{DoxyCompactList}\small\item\em Last index number of the wave functions of the fragments. \end{DoxyCompactList}\item 
+integer, dimension(2, mnof) \mbox{\hyperlink{namespacefragments_a2a6f623e09218453f325f0683479b238}{fnpmin}}
+\begin{DoxyCompactList}\small\item\em First index numbers for protons and neutrons of the fragments. \end{DoxyCompactList}\item 
+integer, dimension(2, mnof) \mbox{\hyperlink{namespacefragments_a382e921652dbd2ce11044e710de9e9d3}{fnpsi}}
+\begin{DoxyCompactList}\small\item\em Last index numbers for protons and neutrons of the fragments. \end{DoxyCompactList}\item 
+integer, dimension(2, mnof) \mbox{\hyperlink{namespacefragments_a8860efcb50f5f30f1b09b56ddbcf0593}{fnumber}}
+\begin{DoxyCompactList}\small\item\em gives the number of wave functions in the fragment for each isospin. For initialization of a dynamic calculation only wave functions with a nonzero occupation are taken into account. \end{DoxyCompactList}\item 
+integer, dimension(2, mnof) \mbox{\hyperlink{namespacefragments_a7039bb57bcdb504b17adf7afee644643}{fnewnpmin}}
+\begin{DoxyCompactList}\small\item\em are the starting indices for each fragment\textquotesingle{}s wave functions in the total set of wave functions combining all the fragments. \end{DoxyCompactList}\item 
+integer, dimension(2, mnof) \mbox{\hyperlink{namespacefragments_aea59819a3bf02055e7da3fb78204059b}{fnewnpsi}}
+\begin{DoxyCompactList}\small\item\em are the ending indices for each fragment\textquotesingle{}s wave functions in the total set of wave functions combining all the fragments. \end{DoxyCompactList}\item 
+integer, dimension(mnof) \mbox{\hyperlink{namespacefragments_a7cbd8b4a5d07380c633c2192ba583e57}{fnx}}
+\begin{DoxyCompactList}\small\item\em indicate the grid size in x-\/direction on which the fragment wave functions are defined. \end{DoxyCompactList}\item 
+integer, dimension(mnof) \mbox{\hyperlink{namespacefragments_a6b8a0d5d20c7f29c604a32d3e872f88e}{fny}}
+\begin{DoxyCompactList}\small\item\em indicate the grid size in y-\/direction on which the fragment wave functions are defined. \end{DoxyCompactList}\item 
+integer, dimension(mnof) \mbox{\hyperlink{namespacefragments_a5b0ceb837dcb0ece927f23c31c6e7277}{fnz}}
+\begin{DoxyCompactList}\small\item\em indicate the grid size in z-\/direction on which the fragment wave functions are defined. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+This module is concerned with setting up the initial condition from data files containing fragment wave functions, usually obtained in a previous static calculation. 
+
+A typical application is the initialization of a heavy-\/ion reaction. Beyond that, any number of fragments (limited by the parameter variable {\ttfamily mnof}) can be put into the grid at prescribed positions with given initial velocities. A condition is, however, that the grid they are defined in is smaller than the new grid. If they are put close to the boundary, they may have density appearing on the other side because of periodicity; this may be acceptable if the boundary condition is periodic. A calculation may be restarted on a larger grid, but this may be accompanied by some loss of accuracy, since the wave function outside the original regions is set to a constant small value.
+
+For the case of parallel {\ttfamily M\+PI} calculations, there is logic to read wave functions distributed over a series of files as described in connection with subroutine {\ttfamily write\+\_\+wavefunctions}. Since only the dynamic case can run under {\ttfamily M\+PI} at present, the only application of this is to restart a dynamic calculation. The number of processors may be different in the restart. 
+
+\doxysubsubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespacefragments_a270483bd01ad365b6b573dcab2c5fd69}\label{namespacefragments_a270483bd01ad365b6b573dcab2c5fd69}} 
+\index{fragments@{fragments}!boost\_fragment@{boost\_fragment}}
+\index{boost\_fragment@{boost\_fragment}!fragments@{fragments}}
+\doxyparagraph{\texorpdfstring{boost\_fragment()}{boost\_fragment()}}
+{\footnotesize\ttfamily subroutine fragments\+::boost\+\_\+fragment (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{iff }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+This subroutine multiplies the configuration-\/space wave functions of fragment no. {\ttfamily iff} by plane-\/wave factors to give them translational motion. 
+
+This is done by calculating the wave number vector {\ttfamily akf} from the kinetic energy. There is one subtle point\+: since the boost is applied to {\itshape  single-\/particle} wave functions, the momentum $ k $ should be the correct one for {\itshape  one nucleon }. Thus the total kinetic energy of the fragment is \[ T=A\frac{\hbar^2}{2m}k^2, \] where $ A $ is the mass number of the fragment and $ m $ the nucleon mass. Solving for $ k $ and taking the sign into account yields the expression in the code.
+
+The rest is then straightforward.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em iff} & I\+N\+T\+E\+G\+ER, takes the number of the fragment to be boosted. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacefragments_afd17da807067f85598c2cf7d9676c6aa}\label{namespacefragments_afd17da807067f85598c2cf7d9676c6aa}} 
+\index{fragments@{fragments}!errormsg@{errormsg}}
+\index{errormsg@{errormsg}!fragments@{fragments}}
+\doxyparagraph{\texorpdfstring{errormsg()}{errormsg()}}
+{\footnotesize\ttfamily subroutine fragments\+::errormsg (\begin{DoxyParamCaption}\item[{character($\ast$), intent(in)}]{msg1,  }\item[{character($\ast$), intent(in)}]{msg2 }\end{DoxyParamCaption})}
+
+
+
+Writes out error messages. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em msg1} & C\+H\+A\+R\+A\+C\+T\+ER, array, takes the first message. \\
+\hline
+\mbox{\texttt{ in}}  & {\em msg2} & C\+H\+A\+R\+A\+C\+T\+ER, array, takes the second message. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacefragments_acd40a2830b84a9a5defb0691a84747b2}\label{namespacefragments_acd40a2830b84a9a5defb0691a84747b2}} 
+\index{fragments@{fragments}!getin\_fragments@{getin\_fragments}}
+\index{getin\_fragments@{getin\_fragments}!fragments@{fragments}}
+\doxyparagraph{\texorpdfstring{getin\_fragments()}{getin\_fragments()}}
+{\footnotesize\ttfamily subroutine, public fragments\+::getin\+\_\+fragments}
+
+
+
+This subroutine reads the input variables, makes some consistency checks, and then prepares for the initialization. 
+
+A restart is set up by placing one fragment taken from {\ttfamily wffile} at the origin with zero velocity.
+
+The main loop is over fragments. The fragment files are opened a first time to obtain information about the fragments, which is stored in fragment-\/specific arrays. The checks include agreement of the forces and grid spacings as well as that the fragment grid is not larger than the new grid.
+
+The code at this point makes a distinction between static and dynamic modes\+: for a static calculation it is assumed that the data may be needed for a restart. In this case all wave functions are read in even if not occupied even fractionally. For the dynamic case only those with non-\/zero occupation are input as determined from {\ttfamily fwocc}. This yields a reduced value for {\ttfamily fnumber}.
+
+{\bfseries{ Note that at present it is assumed that the static wave functions are ordered in ascending energy, so that the occupied ones will start at index one and all empty states will be at the uppermost index positions.}}
+
+Following this, the index positions in the new wave function array are calculated in {\ttfamily fnewnpmin} and {\ttfamily fnewnpsi} by adding the numbers of wave functions of each fragment-\/specific successively. Note that at this stage the proton indices are still counted from one.
+
+After this input loop, the indices {\ttfamily npmin} and {\ttfamily npsi} as well as the total number {\ttfamily nstmax} for the combined system are calculated and finally the proton indices where the fragment wave functions should be inserted are shifted to behind the neutrons, i.\+e., starting at {\ttfamily npmin(2)}.
+
+At the end the two-\/body initialization {\ttfamily twobody\+\_\+init} is called for the dynamic case with two fragments and {\ttfamily  fix\+\_\+boost=.F\+A\+L\+SE.}. This calculates the {\ttfamily fboost} values from {\ttfamily ecm} and {\ttfamily b}. \mbox{\Hypertarget{namespacefragments_a0d43cd441c82e1ab9f347fe0076a44be}\label{namespacefragments_a0d43cd441c82e1ab9f347fe0076a44be}} 
+\index{fragments@{fragments}!locate@{locate}}
+\index{locate@{locate}!fragments@{fragments}}
+\doxyparagraph{\texorpdfstring{locate()}{locate()}}
+{\footnotesize\ttfamily subroutine, private fragments\+::locate (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{fileno,  }\item[{integer, intent(in)}]{pos }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+This has the task to position the file for reading wave functions at the correct place. It has as arguments the number of the file (corresponding to the node number in the previous calculation) and the index of the wave function in this file. The variable {\ttfamily presentfile} keeps track of which file is currently open. 
+
+If we are starting to read a new file (which is always true initially, as no wave functions are written into the header file {\ttfamily wffile} itself), it closes the present file, composes the file name for the new one and opens it. Then the proper number of records are ignored to position at the correct one. If the file has not changed, it simply returns and reading continues sequentially. The logic of course assumes that files are stored sequentially in each partial file, but the division into partial files need not be the same as in the previous run.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em fileno} & I\+N\+T\+E\+G\+ER, takes the number of the file. \\
+\hline
+\mbox{\texttt{ in}}  & {\em pos} & I\+N\+T\+E\+G\+ER, takes the index of the wave function in this file. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacefragments_ac2d35fb12e37d81e53d64e078960a172}\label{namespacefragments_ac2d35fb12e37d81e53d64e078960a172}} 
+\index{fragments@{fragments}!phases@{phases}}
+\index{phases@{phases}!fragments@{fragments}}
+\doxyparagraph{\texorpdfstring{phases()}{phases()}}
+{\footnotesize\ttfamily pure subroutine, private fragments\+::phases (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{n,  }\item[{complex(db), dimension(n), intent(out)}]{a,  }\item[{real(db), intent(in)}]{c }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+This subroutine calculates the phase factors for a one-\/dimensional translation $ \Delta x $ as. 
+
+\[ \exp\left(-\frac{2\pi\I k_j \Delta x}{L}\right). \]
+
+The shift was calculated in {\ttfamily read\+\_\+one\+\_\+fragment}, the argument {\ttfamily c} includes a denominator $ L={\tt nx*dx} $, the total length of the grid. The momentum $ k_j $ is determined in the usual way for the finite Fourier transform.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em n} & I\+N\+T\+E\+G\+ER, takes the number of grid points. \\
+\hline
+\mbox{\texttt{ out}}  & {\em a} & C\+O\+M\+P\+L\+E\+X(db), array, returns the phases. \\
+\hline
+\mbox{\texttt{ in}}  & {\em c} & R\+E\+A\+L(db), takes the shift ~\newline
+ \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacefragments_a60355fb212340bf2d5988af3d9354967}\label{namespacefragments_a60355fb212340bf2d5988af3d9354967}} 
+\index{fragments@{fragments}!read\_fragments@{read\_fragments}}
+\index{read\_fragments@{read\_fragments}!fragments@{fragments}}
+\doxyparagraph{\texorpdfstring{read\_fragments()}{read\_fragments()}}
+{\footnotesize\ttfamily subroutine, public fragments\+::read\+\_\+fragments}
+
+
+
+This subroutine prints summary information about which fragment wave functions occupy which range of indices. Then it does a loop over fragments to read in their wave functions using {\ttfamily read\+\_\+one\+\_\+fragment}, followed by applying the boost to them using {\ttfamily boost\+\_\+fragment}. 
+
+\mbox{\Hypertarget{namespacefragments_ace60d8e2552ba0068385e7195f2876c4}\label{namespacefragments_ace60d8e2552ba0068385e7195f2876c4}} 
+\index{fragments@{fragments}!read\_one\_fragment@{read\_one\_fragment}}
+\index{read\_one\_fragment@{read\_one\_fragment}!fragments@{fragments}}
+\doxyparagraph{\texorpdfstring{read\_one\_fragment()}{read\_one\_fragment()}}
+{\footnotesize\ttfamily subroutine fragments\+::read\+\_\+one\+\_\+fragment (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{iff }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+This subroutine reopens a fragment file for the fragment indexed by {\ttfamily iff} and reads the wave functions, inserting them at the correct index into the new wave function array while also moving them to the desired center-\/of-\/mass position. 
+
+The principal loop is over isospin. The index limits in the fragment file for that isospin are put into {\ttfamily il} and {\ttfamily iu}, and the new indices into {\ttfamily newil} and {\ttfamily newiu}. In the next step the grid coordinates and the single-\/particle quantities are read. The latter are copied into the new arrays and the isospin is also recorded. Then this information is printed.
+
+Once this loop is concluded, the spatial shift is prepared. The shift is calculated from the difference between the desired position {\ttfamily fcent} with respect to the origin of the new coordinates given by {\ttfamily x} etc., and the fragment center-\/of-\/mass {\ttfamily fcmtot} with respect to the origin in fragment coordinates {\ttfamily fx} etc. Subroutine {\ttfamily phases} is used to calculate essentially the shift phase factor $ \exp(-\I\vec k\cdot\Delta\vec r) $, which is a product of phases in each coordinate direction {\ttfamily akx}, {\ttfamily aky}, and {\ttfamily akz}. These have an index corresponding to $ \vec k $ in the Fourier transform.
+
+Now the index arrays {\ttfamily fnode} and {\ttfamily flocalindex} are read, which indicate where the wave functions are to be found in case of an M\+PI job. The logical variable {\ttfamily multifile} records whether this is the case by testing whether any of the wave functions was stored on other than node 0.
+
+The following loop runs over the new index positions. If the wave function is not on the current node, nothing is done except for ignoring the input record.
+
+For the case of multiple files for one fragment (which is recognized by not all the indices {\ttfamily fnode} being zero, a short subroutine {\ttfamily locate} is used to position input at the correct location.
+
+Otherwise the wave function is read from the fragment file using the fragment grid dimensions into a variable {\ttfamily ps1} defined with the full new dimension, then it is Fourier transformed, multiplied by the phase factor, and transformed back. Finally it is inserted into the total wave function array {\ttfamily psi}, where any zeroes are replaced by a small number, presently set to $ 10^{-20} $.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em iff} & I\+N\+T\+E\+G\+ER, takes the umber of the fragment which is read in. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacefragments_a337f2244c228bf057606a5c5e0758f50}\label{namespacefragments_a337f2244c228bf057606a5c5e0758f50}} 
+\index{fragments@{fragments}!twobody\_init@{twobody\_init}}
+\index{twobody\_init@{twobody\_init}!fragments@{fragments}}
+\doxyparagraph{\texorpdfstring{twobody\_init()}{twobody\_init()}}
+{\footnotesize\ttfamily subroutine fragments\+::twobody\+\_\+init\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+The purpose of this subroutine is to calculate the boost values from {\ttfamily ecm} and {\ttfamily b} in the two-\/body case. The calculation can be followed with an elementary understanding of the two-\/body system kinematics, so we just give a brief overview. 
+
+The reduced mass {\ttfamily xmu}, the relative velocity {\ttfamily vrel} and the angular momentum {\ttfamily xli} are calculated first. Then the components of the vector linking the two centers of mass {\ttfamily dix} and {\ttfamily diz} are divided by the length of this vector {\ttfamily roft} to get the direction cosines.
+
+The Coulomb energy is calculated assuming two point charges at distance {\ttfamily roft} and is subtracted from {\ttfamily ecm} to yield the kinetic energy remaining at this distance, from which the relative velocity {\ttfamily vrel\+\_\+d} is calculated. Since the total center of mass is assumed to be at rest, the velocities of the fragments {\ttfamily v1} and {\ttfamily v2} can then be simply obtained. The instantaneous impact parameter {\ttfamily b\+\_\+d} results from the angular momentum and the relative velocity, and the angle by which the two fragments need to miss each other in order to realize this impact parameter is computed in {\ttfamily sint} and {\ttfamily cost}.
+
+This now makes it possible to calculate the boost velocity components, which are converted into kinetic energies to conform to the definition of {\ttfamily fboost} as given in the input. Note that these energies are signed to indicate the direction of motion.
+
+Both velocities and energies are printed. 
+
+\doxysubsubsection{Variable Documentation}
+\mbox{\Hypertarget{namespacefragments_a1d89da5ba132049038c8105d94063ace}\label{namespacefragments_a1d89da5ba132049038c8105d94063ace}} 
+\index{fragments@{fragments}!b@{b}}
+\index{b@{b}!fragments@{fragments}}
+\doxyparagraph{\texorpdfstring{b}{b}}
+{\footnotesize\ttfamily real(db) fragments\+::b\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+The impact parameter in fm. 
+
+\mbox{\Hypertarget{namespacefragments_a3a2034f9271ef927c98b9ea5a275ec25}\label{namespacefragments_a3a2034f9271ef927c98b9ea5a275ec25}} 
+\index{fragments@{fragments}!ecm@{ecm}}
+\index{ecm@{ecm}!fragments@{fragments}}
+\doxyparagraph{\texorpdfstring{ecm}{ecm}}
+{\footnotesize\ttfamily real(db) fragments\+::ecm\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+The kinetic energy of relative motion in MeV. 
+
+\mbox{\Hypertarget{namespacefragments_a58edf1cb6f994a8456ed846dc80b56de}\label{namespacefragments_a58edf1cb6f994a8456ed846dc80b56de}} 
+\index{fragments@{fragments}!fboost@{fboost}}
+\index{fboost@{fboost}!fragments@{fragments}}
+\doxyparagraph{\texorpdfstring{fboost}{fboost}}
+{\footnotesize\ttfamily real(db), dimension(3,mnof) fragments\+::fboost\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+gives the initial motion {\ttfamily  fboost(\+:,i)} of fragment {\ttfamily i} in 3 dimensions. This is not a velocity, but the total kinetic energy of the fragment {\itshape  in that Cartesian direction} in MeV. The sign indicates the direction, positive or negative along the corresponding axis. The sum of absolute values thus is the total kinetic energy of the fragment. These values are used only if {\ttfamily fix\+\_\+boost} is true. 
+
+\mbox{\Hypertarget{namespacefragments_a3562833581ce4f2cd584e655147309c9}\label{namespacefragments_a3562833581ce4f2cd584e655147309c9}} 
+\index{fragments@{fragments}!fcent@{fcent}}
+\index{fcent@{fcent}!fragments@{fragments}}
+\doxyparagraph{\texorpdfstring{fcent}{fcent}}
+{\footnotesize\ttfamily real(db), dimension(3,mnof) fragments\+::fcent\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+for fragment no. {\ttfamily i} the initial three-\/dimensional position is determined by {\ttfamily  fcent(\+:,i) }. 
+
+\mbox{\Hypertarget{namespacefragments_a24689bfc09ecbb7cf75cb613e8821d5b}\label{namespacefragments_a24689bfc09ecbb7cf75cb613e8821d5b}} 
+\index{fragments@{fragments}!fcharge@{fcharge}}
+\index{fcharge@{fcharge}!fragments@{fragments}}
+\doxyparagraph{\texorpdfstring{fcharge}{fcharge}}
+{\footnotesize\ttfamily real(db), dimension(mnof) fragments\+::fcharge\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Charges of the fragments. 
+
+\mbox{\Hypertarget{namespacefragments_ac9fc8d9033d9429f8d983bdc0d0131df}\label{namespacefragments_ac9fc8d9033d9429f8d983bdc0d0131df}} 
+\index{fragments@{fragments}!fcmtot@{fcmtot}}
+\index{fcmtot@{fcmtot}!fragments@{fragments}}
+\doxyparagraph{\texorpdfstring{fcmtot}{fcmtot}}
+{\footnotesize\ttfamily real(db), dimension(3,mnof) fragments\+::fcmtot\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Centers of mass of the fragments. 
+
+\mbox{\Hypertarget{namespacefragments_a6e9374105de36bffebdf008e28c2dd84}\label{namespacefragments_a6e9374105de36bffebdf008e28c2dd84}} 
+\index{fragments@{fragments}!filename@{filename}}
+\index{filename@{filename}!fragments@{fragments}}
+\doxyparagraph{\texorpdfstring{filename}{filename}}
+{\footnotesize\ttfamily character(64), dimension(mnof) fragments\+::filename\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+for each fragment this indicates the name of the file with the associated wave functions. One file can be used several times in the case of identical fragments, abut the code does not treat that as a special case. 
+
+\mbox{\Hypertarget{namespacefragments_a135903e4b5b8010a590676f3a88e891e}\label{namespacefragments_a135903e4b5b8010a590676f3a88e891e}} 
+\index{fragments@{fragments}!fix\_boost@{fix\_boost}}
+\index{fix\_boost@{fix\_boost}!fragments@{fragments}}
+\doxyparagraph{\texorpdfstring{fix\_boost}{fix\_boost}}
+{\footnotesize\ttfamily logical fragments\+::fix\+\_\+boost\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+if this is set to true, the boost (initial kinetic energy) values are used unchanged from the input; otherwise they are calculated from the initial kinetic energy of relative motion {\ttfamily ecm} and the impact parameter {\ttfamily b}. This implies a two-\/body initial configuration. The initial motion is assumed to be in the $ (x,z) $-\/plane in this case. Note that for two initial fragments {\ttfamily fix\+\_\+boost} can also be set to true for special initial conditions. 
+
+\mbox{\Hypertarget{namespacefragments_a7c32760193eb33c1086c2572ff67545b}\label{namespacefragments_a7c32760193eb33c1086c2572ff67545b}} 
+\index{fragments@{fragments}!fmass@{fmass}}
+\index{fmass@{fmass}!fragments@{fragments}}
+\doxyparagraph{\texorpdfstring{fmass}{fmass}}
+{\footnotesize\ttfamily real(db), dimension(mnof) fragments\+::fmass\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Masses of the fragments. 
+
+\mbox{\Hypertarget{namespacefragments_a7039bb57bcdb504b17adf7afee644643}\label{namespacefragments_a7039bb57bcdb504b17adf7afee644643}} 
+\index{fragments@{fragments}!fnewnpmin@{fnewnpmin}}
+\index{fnewnpmin@{fnewnpmin}!fragments@{fragments}}
+\doxyparagraph{\texorpdfstring{fnewnpmin}{fnewnpmin}}
+{\footnotesize\ttfamily integer, dimension(2,mnof) fragments\+::fnewnpmin\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+are the starting indices for each fragment\textquotesingle{}s wave functions in the total set of wave functions combining all the fragments. 
+
+\mbox{\Hypertarget{namespacefragments_aea59819a3bf02055e7da3fb78204059b}\label{namespacefragments_aea59819a3bf02055e7da3fb78204059b}} 
+\index{fragments@{fragments}!fnewnpsi@{fnewnpsi}}
+\index{fnewnpsi@{fnewnpsi}!fragments@{fragments}}
+\doxyparagraph{\texorpdfstring{fnewnpsi}{fnewnpsi}}
+{\footnotesize\ttfamily integer, dimension(2,mnof) fragments\+::fnewnpsi\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+are the ending indices for each fragment\textquotesingle{}s wave functions in the total set of wave functions combining all the fragments. 
+
+\mbox{\Hypertarget{namespacefragments_a77d67ad7ce22e4fa726ba2a46df254a1}\label{namespacefragments_a77d67ad7ce22e4fa726ba2a46df254a1}} 
+\index{fragments@{fragments}!fnneut@{fnneut}}
+\index{fnneut@{fnneut}!fragments@{fragments}}
+\doxyparagraph{\texorpdfstring{fnneut}{fnneut}}
+{\footnotesize\ttfamily integer, dimension(mnof) fragments\+::fnneut\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Neutron number of the fragments. 
+
+\mbox{\Hypertarget{namespacefragments_a2a6f623e09218453f325f0683479b238}\label{namespacefragments_a2a6f623e09218453f325f0683479b238}} 
+\index{fragments@{fragments}!fnpmin@{fnpmin}}
+\index{fnpmin@{fnpmin}!fragments@{fragments}}
+\doxyparagraph{\texorpdfstring{fnpmin}{fnpmin}}
+{\footnotesize\ttfamily integer, dimension(2,mnof) fragments\+::fnpmin\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+First index numbers for protons and neutrons of the fragments. 
+
+\mbox{\Hypertarget{namespacefragments_a4d65ed4cd75c50f289a92b76d7165c7a}\label{namespacefragments_a4d65ed4cd75c50f289a92b76d7165c7a}} 
+\index{fragments@{fragments}!fnprot@{fnprot}}
+\index{fnprot@{fnprot}!fragments@{fragments}}
+\doxyparagraph{\texorpdfstring{fnprot}{fnprot}}
+{\footnotesize\ttfamily integer, dimension(mnof) fragments\+::fnprot\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Proton number of the fragments. 
+
+\mbox{\Hypertarget{namespacefragments_a382e921652dbd2ce11044e710de9e9d3}\label{namespacefragments_a382e921652dbd2ce11044e710de9e9d3}} 
+\index{fragments@{fragments}!fnpsi@{fnpsi}}
+\index{fnpsi@{fnpsi}!fragments@{fragments}}
+\doxyparagraph{\texorpdfstring{fnpsi}{fnpsi}}
+{\footnotesize\ttfamily integer, dimension(2,mnof) fragments\+::fnpsi\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Last index numbers for protons and neutrons of the fragments. 
+
+\mbox{\Hypertarget{namespacefragments_a43fdb4c115fabc2de7179b58d87e83d2}\label{namespacefragments_a43fdb4c115fabc2de7179b58d87e83d2}} 
+\index{fragments@{fragments}!fnstmax@{fnstmax}}
+\index{fnstmax@{fnstmax}!fragments@{fragments}}
+\doxyparagraph{\texorpdfstring{fnstmax}{fnstmax}}
+{\footnotesize\ttfamily integer, dimension(mnof) fragments\+::fnstmax\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Last index number of the wave functions of the fragments. 
+
+\mbox{\Hypertarget{namespacefragments_a8860efcb50f5f30f1b09b56ddbcf0593}\label{namespacefragments_a8860efcb50f5f30f1b09b56ddbcf0593}} 
+\index{fragments@{fragments}!fnumber@{fnumber}}
+\index{fnumber@{fnumber}!fragments@{fragments}}
+\doxyparagraph{\texorpdfstring{fnumber}{fnumber}}
+{\footnotesize\ttfamily integer, dimension(2,mnof) fragments\+::fnumber\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+gives the number of wave functions in the fragment for each isospin. For initialization of a dynamic calculation only wave functions with a nonzero occupation are taken into account. 
+
+\mbox{\Hypertarget{namespacefragments_a7cbd8b4a5d07380c633c2192ba583e57}\label{namespacefragments_a7cbd8b4a5d07380c633c2192ba583e57}} 
+\index{fragments@{fragments}!fnx@{fnx}}
+\index{fnx@{fnx}!fragments@{fragments}}
+\doxyparagraph{\texorpdfstring{fnx}{fnx}}
+{\footnotesize\ttfamily integer, dimension(mnof) fragments\+::fnx\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+indicate the grid size in x-\/direction on which the fragment wave functions are defined. 
+
+\mbox{\Hypertarget{namespacefragments_a6b8a0d5d20c7f29c604a32d3e872f88e}\label{namespacefragments_a6b8a0d5d20c7f29c604a32d3e872f88e}} 
+\index{fragments@{fragments}!fny@{fny}}
+\index{fny@{fny}!fragments@{fragments}}
+\doxyparagraph{\texorpdfstring{fny}{fny}}
+{\footnotesize\ttfamily integer, dimension(mnof) fragments\+::fny\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+indicate the grid size in y-\/direction on which the fragment wave functions are defined. 
+
+\mbox{\Hypertarget{namespacefragments_a5b0ceb837dcb0ece927f23c31c6e7277}\label{namespacefragments_a5b0ceb837dcb0ece927f23c31c6e7277}} 
+\index{fragments@{fragments}!fnz@{fnz}}
+\index{fnz@{fnz}!fragments@{fragments}}
+\doxyparagraph{\texorpdfstring{fnz}{fnz}}
+{\footnotesize\ttfamily integer, dimension(mnof) fragments\+::fnz\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+indicate the grid size in z-\/direction on which the fragment wave functions are defined. 
+

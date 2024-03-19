@@ -1,0 +1,51 @@
+\hypertarget{static_8f90}{}\doxysubsection{static.\+f90 File Reference}
+\label{static_8f90}\index{static.f90@{static.f90}}
+\doxysubsubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \mbox{\hyperlink{namespacestatic}{static}}
+\begin{DoxyCompactList}\small\item\em This module contains the routines needed for the static iterations. All the logic needed for this case is concentrated here; all other modules except for {\ttfamily External} are equally used in the dynamic calculation. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespacestatic_a0819e22b12fb490f7e3d309592b6b6b7}{static\+::getin\+\_\+static}}
+\begin{DoxyCompactList}\small\item\em This routine reads the input for the static calculation using namelist {\ttfamily static}. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacestatic_afa74b74b5f0d14e753aea12e1f5a3015}{static\+::init\+\_\+static}}
+\begin{DoxyCompactList}\small\item\em This subroutine essentially just prints the static input and then initializes the header files with their header lines. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacestatic_a6429b3a218b0e96282940fa9f8573cff}{static\+::statichf}}
+\begin{DoxyCompactList}\small\item\em This is the principal routine for the static iterations. It applies the gradient step repeatedly until convergence is achieved or the maximum number of iterations is reached. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacestatic_ac009061bd66f4ecd0ecedfc3195ef394}{static\+::grstep}} (nst, iq, spe, denerg, psin)
+\begin{DoxyCompactList}\small\item\em This subroutine applies the damped gradient step to a wave function {\ttfamily psi}. Its index is {\ttfamily nst} and isospin {\ttfamily iq} -\/ these data are needed for the construction of the Hamiltonian matrix {\ttfamily hmatr}. The argument {\ttfamily spe} $ \rightarrow\epsilon $ represents the single-\/particle energy which is used a an energy shift in the calculation. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacestatic_a8fc2fc5ec7d1e7932a73664556b37785}{static\+::diagstep}} (iq, nlin)
+\begin{DoxyCompactList}\small\item\em This subroutine performs a diagonalization of the single-\/particle Hamiltonian using the L\+A\+P\+A\+CK routine {\ttfamily Z\+H\+E\+E\+VD}. This is of course done separately for protons and neutrons indexed by {\ttfamily iq}. The matrix {\ttfamily hmatr} is produced in {\ttfamily grstep}. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacestatic_a4414bd66d5a02faadc9bca95de6630e6}{static\+::sinfo}}
+\begin{DoxyCompactList}\small\item\em This subroutine computes the data that are not needed for the calculation itself, but only for informative output and writes them onto the appropriate output files. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacestatic_a567e41f470e7ceb65e1820519b13bf5f}{static\+::harmosc}}
+\begin{DoxyCompactList}\small\item\em This subroutine initializes all wave function with harmonic oscillator states. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+logical \mbox{\hyperlink{namespacestatic_a02053607d91051521724b6d73caa35e4}{static\+::tdiag}} =.F\+A\+L\+S\+E.
+\begin{DoxyCompactList}\small\item\em if {\ttfamily true}, there is a diagonalization of the Hamiltonian during the later (after the 20th) static iterations. The 20 is hard coded in {\ttfamily \mbox{\hyperlink{static_8f90}{static.\+f90}}}. \end{DoxyCompactList}\item 
+logical \mbox{\hyperlink{namespacestatic_ae48d61c855e561751a112a5d392a728d}{static\+::tlarge}} =.F\+A\+L\+S\+E.
+\begin{DoxyCompactList}\small\item\em if {\ttfamily true}, during the diagonalization the new wave functions are temporarily written on disk to avoid \end{DoxyCompactList}\item 
+logical \mbox{\hyperlink{namespacestatic_a0b0a2ff8e5c6872e60c3ed0dfbed39c4}{static\+::tvaryx\+\_\+0}} =.F\+A\+L\+S\+E.
+\begin{DoxyCompactList}\small\item\em it {\ttfamily .T\+R\+UE.} the parameter $ x_0 $ is changed in every iteration in order to achieve faster convergence. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacestatic_a0a40f66c0ff0224e36ec56c3ac25e492}{static\+::maxiter}}
+\begin{DoxyCompactList}\small\item\em maximum number of iterations allowed. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacestatic_ad30ae4cf1ce4900bd6dc12ebb31b2d5b}{static\+::radinx}}
+\begin{DoxyCompactList}\small\item\em radius parameters (x-\/direction) used in the harmonic-\/oscillator initialization (see subroutine {\ttfamily harmosc}). \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacestatic_a337a93cb9cb1213411d7e5e9ee020de3}{static\+::radiny}}
+\begin{DoxyCompactList}\small\item\em radius parameters (y-\/direction) used in the harmonic-\/oscillator initialization (see subroutine {\ttfamily harmosc}). \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacestatic_aecffa108dc9fb276021f14ec6be1ab8d}{static\+::radinz}}
+\begin{DoxyCompactList}\small\item\em radius parameters (z-\/direction) used in the harmonic-\/oscillator initialization (see subroutine {\ttfamily harmosc}). \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacestatic_a9f397c6a24a7072aec2d2b22df3b0516}{static\+::serr}}
+\begin{DoxyCompactList}\small\item\em convergence criterion. Iterations are stopped if the fluctuation in single-\/particle energies falls below this value (see near the end of subroutines \{{\ttfamily statichf}). \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacestatic_a4bcc54d2fc7d8da0a476932ae0d56671}{static\+::delesum}}
+\begin{DoxyCompactList}\small\item\em used to sum up the changes in single-\/particle energies during one iteration; it is calculated in {\ttfamily statichf} but printed in {\ttfamily sinfo} so that it is a module variable. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacestatic_a4fa3bb53bc9f36f4064876373e806d4b}{static\+::x0dmp}} =0.\+2D0
+\begin{DoxyCompactList}\small\item\em corresponds to the parameter $ x_0 $ appearing in the damped gradient iteration. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacestatic_ad60f84483bcf8e28fe2132e5ccfedae6}{static\+::e0dmp}} =100.D0
+\begin{DoxyCompactList}\small\item\em corresponds to the parameter $ E_0 $ appearing in the damped gradient iteration. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacestatic_ac715209896dd2373428688296794408c}{static\+::x0dmpmin}} =0.\+2d0
+\begin{DoxyCompactList}\small\item\em corresponds to minimal value of $ x_0 $ appearing in the damped gradient iteration, if tvaryx\+\_\+0 is set to {\ttfamily .T\+R\+UE.}. \end{DoxyCompactList}\end{DoxyCompactItemize}

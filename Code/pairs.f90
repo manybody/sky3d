@@ -32,7 +32,7 @@ MODULE Pairs
   USE Levels
   IMPLICIT NONE
   PRIVATE
-  PUBLIC :: pair,epair
+  PUBLIC :: pair,epair,avdelt
   INTEGER :: iq                          !<Index labeling the isospin.
   REAL(db),SAVE :: eferm(2)              !<Fermi energy in MeV for the two isospins.
   REAL(db),SAVE :: epair(2)              !<Pairing energy in MeV for the two isospins. It is given by
@@ -110,9 +110,11 @@ CONTAINS
 !!two different expressions: for \c VDI pairing (<tt> ipair=5 </tt>),
 !!the pairing density is simply multiplied by \c v0act, while for
 !!\c DDDI pairing (<tt> ipair=6</tt>) it is
-!!\f[ V_P(\vec r)={\tt v0act}\cdot{\tt work}\cdot (1-\rho(\vec r))/{\tt rho0pr} \f]
+!!\f[ V_P(\vec r)={\tt v0act}\cdot{\tt work}\cdot (1-x\rho(\vec r)/{\tt rho0pr}) \f]
 !!involving the <em> total </em> density \f$ \rho \f$ and the parameter 
-!!\f[ rho0pr \f] from the pairing force definition.
+!!\f[ rho0pr \f] from the pairing force definition and the parameter \f$x\f$ is used to create 
+!! mix pairing when its value is set to 0.5, it is read from the pairing definition in the 
+!! forces.data file.
 !!
 !!In the final step the gaps are computed as the expectation values of
 !!the pairing field,
@@ -149,7 +151,7 @@ CONTAINS
        ENDIF
        ! now multiply with strength to obtain local pair-potential
        IF(ipair==6) THEN
-          work=v0act*work*(1D0-(rho(:,:,:,1)+rho(:,:,:,2))/p%rho0pr)
+          work=v0act*work*(1D0-p%mixture*(rho(:,:,:,1)+rho(:,:,:,2))/p%rho0pr)
        ELSE
           work=v0act*work  
        END IF

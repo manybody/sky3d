@@ -1,0 +1,59 @@
+\hypertarget{forces_8f90}{}\doxysubsection{forces.\+f90 File Reference}
+\label{forces_8f90}\index{forces.f90@{forces.f90}}
+\doxysubsubsection*{Data Types}
+\begin{DoxyCompactItemize}
+\item 
+type \mbox{\hyperlink{structforces_1_1pairing}{forces\+::pairing}}
+\begin{DoxyCompactList}\small\item\em This contains the parameters for pairing\+: \end{DoxyCompactList}\item 
+type \mbox{\hyperlink{structforces_1_1force}{forces\+::force}}
+\begin{DoxyCompactList}\small\item\em This contains the parameters for the Skyrme force\+: \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \mbox{\hyperlink{namespaceforces}{forces}}
+\begin{DoxyCompactList}\small\item\em Module {\ttfamily Forces} describes the interactions used in the code. The idea is to produce a library of Skyrme forces that can be called up simply by name, but for exploratory purposes a force can also be input using individual parameter values. A force is usually fitted together with a prescription for the pairing and center-\/of-\/mass correction, so that these properties are here defined as part of the force. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespaceforces_acf6aab1574325db63418eda4131075bf}{forces\+::read\+\_\+force}}
+\begin{DoxyCompactList}\small\item\em The purpose of the subroutine is to read the force and pairing definitions. The {\ttfamily N\+A\+M\+E\+L\+I\+ST\}} {\ttfamily force} contains all the defining values for a Skyrme force (but now as individual variables, not in a derived type) plus a selection of pairing type and strengths (see input description). In addition there is a logical variable {\ttfamily turnoff\+\_\+zpe} which allows turning off the center-\/of-\/mass correction. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+integer \mbox{\hyperlink{namespaceforces_a5068dc7c6cc45bc03f12cf8b73e38640}{forces\+::ipair}}
+\begin{DoxyCompactList}\small\item\em selects one of several pairing modes. For historical reasons the values are 0\+: no pairing, 5\+: V\+DI pairing, and 6\+: D\+D\+DI pairing. In the input the symbolic names are used so these numerical values are hidden to the user. For details see the input description and module {\ttfamily Pairs}. ~\newline
+ \end{DoxyCompactList}\item 
+type(force) \mbox{\hyperlink{namespaceforces_ad422798219457e9ffb79474afe938d0f}{forces\+::f}}
+\begin{DoxyCompactList}\small\item\em this contains parameters for the Skyrme force actually used in the present calculation, packed \end{DoxyCompactList}\item 
+type(pairing) \mbox{\hyperlink{namespaceforces_ad2ab317bfb64d8acd75d1fe618ee57ba}{forces\+::p}}
+\begin{DoxyCompactList}\small\item\em the pairing parameters used in the present calculation. This is separate from the force itself\+: the force definition usually contains suggestions for the associated pairing, but this often overridden, e.\+g, by turning off pairing. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespaceforces_a13bcc4dc75c0fe7ac9e2f8d6931655b8}{forces\+::h2ma}}
+\begin{DoxyCompactList}\small\item\em the average of the two {\ttfamily h2m} values for protons and neutrons. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespaceforces_abb63d5aa09a46e77a871a5890416dc46}{forces\+::nucleon\+\_\+mass}}
+\begin{DoxyCompactList}\small\item\em the mass of the nucleon (average of neutron and Proton) in MeV calculated from {\ttfamily h2ma} and {\ttfamily hbc}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ these are the coefficients actually used}\par
+{\em for the mean-\/field and single-\/particle Hamiltonian calculations in {\ttfamily skyrme} and {\ttfamily integ\+\_\+energy}. Note that only {\ttfamily b4p} is also included in the Skyrme-\/force definition; the others are derived from the {\ttfamily t} coefficients. }\begin{DoxyCompactItemize}
+\item 
+real(db) \mbox{\hyperlink{namespaceforces_a35844de3f9a6cfb226b1b8785b966f87}{forces\+::b0}}
+\item 
+real(db) \mbox{\hyperlink{namespaceforces_a134d6cd47ad4aec92886b257521ac14e}{forces\+::b0p}}
+\item 
+real(db) \mbox{\hyperlink{namespaceforces_ab84ce9c66a7bd5cf064a912410cc234a}{forces\+::b1}}
+\item 
+real(db) \mbox{\hyperlink{namespaceforces_a015939a1b4e35a7b1e7d9fd9072ec98e}{forces\+::b1p}}
+\item 
+real(db) \mbox{\hyperlink{namespaceforces_a101f9fad70d811f82446e61984796d83}{forces\+::b2}}
+\item 
+real(db) \mbox{\hyperlink{namespaceforces_af127f5ea451ee9280590d119528e5979}{forces\+::b2p}}
+\item 
+real(db) \mbox{\hyperlink{namespaceforces_a8c57a7c0c420e37e859a59b3dd7a4fa3}{forces\+::b3}}
+\item 
+real(db) \mbox{\hyperlink{namespaceforces_a605d67826136213687b67dfbfa821cb0}{forces\+::b3p}}
+\item 
+real(db) \mbox{\hyperlink{namespaceforces_ab8b0ff9570acade93ea8a4517a529e4c}{forces\+::b4}}
+\item 
+real(db) \mbox{\hyperlink{namespaceforces_a7107224d3810d6ae02c9932f0aed6ed4}{forces\+::b4p}}
+\item 
+real(db) \mbox{\hyperlink{namespaceforces_a2887e846db365afcbfe231aa939706d8}{forces\+::slate}}
+\end{DoxyCompactItemize}
+\end{Indent}

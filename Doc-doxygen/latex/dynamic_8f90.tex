@@ -1,0 +1,39 @@
+\hypertarget{dynamic_8f90}{}\doxysubsection{dynamic.\+f90 File Reference}
+\label{dynamic_8f90}\index{dynamic.f90@{dynamic.f90}}
+\doxysubsubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \mbox{\hyperlink{namespacedynamic}{dynamic}}
+\begin{DoxyCompactList}\small\item\em This module contains the routines needed for time propagation of the system. All the logic needed for this case is concentrated here; all other modules except for {\ttfamily External} are equally used in the static calculation. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespacedynamic_a25a35b2c3f00abafa02b49fae36b450c}{dynamic\+::getin\+\_\+dynamic}}
+\begin{DoxyCompactList}\small\item\em This is a relatively simple routine that reads the input for namelist {\ttfamily dynamic} and prints it on standard output. If {\ttfamily texternal} is true, it also calls {\ttfamily getin\+\_\+external} to read the external field parameters. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacedynamic_a05d4cb5b6f8395bbda511e5a937b317a}{dynamic\+::dynamichf}}
+\begin{DoxyCompactList}\small\item\em This subroutine performs the main time-\/integration algorithm starting at time step 0 and then iterating the desired number of steps. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacedynamic_a67d48d0e156e217e9e42654cb7189912}{dynamic\+::tstep}} (iq, mxp, psout)
+\begin{DoxyCompactList}\small\item\em In this subroutine one wave function given as the argument {\ttfamily psout} is stepped forward in time by the interval {\ttfamily dt}. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacedynamic_acc79414314504771509e8982faefe77b}{dynamic\+::tinfo}}
+\begin{DoxyCompactList}\small\item\em This subroutine is used to output various pieces of information relevant especially to the dynamic mode of the code. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacedynamic_aad225fa83cc6ff167d9a63f234e32ae1}{dynamic\+::resetcm}}
+\begin{DoxyCompactList}\small\item\em This subroutine resets the center-\/of-\/mass velocity to zero. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+integer \mbox{\hyperlink{namespacedynamic_a082deb2f0c47a60e4e2ef2dc1ce395e6}{dynamic\+::nt}}
+\begin{DoxyCompactList}\small\item\em the number of the final time step to be calculated. In case of a restart this is smaller than the total number of time steps. \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacedynamic_a2f8a4fbc7fad45d168c880b0f7fbebf9}{dynamic\+::dt}}
+\begin{DoxyCompactList}\small\item\em the physical time increment in units of fm/c. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacedynamic_ab28058983e8491350fbbeaa9cd1c03a1}{dynamic\+::mxpact}} =6
+\begin{DoxyCompactList}\small\item\em the number of terms to be taken in the expansion of the potential \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacedynamic_a22bc0055a5dfc3e92580a8697a8ab1ef}{dynamic\+::mrescm}} =0
+\begin{DoxyCompactList}\small\item\em frequency of c.\+m. motion correction \end{DoxyCompactList}\item 
+real(db) \mbox{\hyperlink{namespacedynamic_a8f66cf733898b4e6596541c4665bb503}{dynamic\+::rsep}}
+\begin{DoxyCompactList}\small\item\em the final separation distance. The calculation is stopped if there has been a reseparation into two fragments and their distance exceeds {\ttfamily rsep}. \end{DoxyCompactList}\item 
+logical \mbox{\hyperlink{namespacedynamic_a9c78ad5d4b68b5815c853cf157e875a8}{dynamic\+::texternal}} =.F\+A\+L\+S\+E.
+\begin{DoxyCompactList}\small\item\em this logical variable indicates that an external field is present. See module {\ttfamily External}. \end{DoxyCompactList}\item 
+logical \mbox{\hyperlink{namespacedynamic_a1b0110fc909c9bf8bc9878b8a0afe0cf}{dynamic\+::text\+\_\+timedep}}
+\begin{DoxyCompactList}\small\item\em this logical variable indicates that the external field is time-\/dependent and does not describe an instantaneous boost. \end{DoxyCompactList}\item 
+real(db), parameter \mbox{\hyperlink{namespacedynamic_ab70ac1e2a79efd1c86cfefc148f67593}{dynamic\+::esf}} =0.\+0\+D0
+\begin{DoxyCompactList}\small\item\em this is the energy shift for the call to {\ttfamily hpsi}. Since it is not used in the dynamics part of the code, it is here set to the constant value of zero. \end{DoxyCompactList}\end{DoxyCompactItemize}
