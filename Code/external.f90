@@ -29,7 +29,8 @@
 !! to dipole, quadrupole, octupole and so on. However to avoid the spurious states in the strength
 !! the definition in the case of isoscalar dipole (L=1) is different than all the other as
 !!\f[ F_{1M} = (r^3 - \frac{5}{3}<r^2> r)Y_{1M}  \f]
-!! where \f$ <r^2> \f$ is the average value of \f$r^2\f$ given as input (r2_avg) for this case.
+!! where \f$ <r^2> \f$ is the average value of \f$r^2\f$ which is equal to \f$r_{rms}^2\f$ and 
+!!\f$r_{rms}\f$ is given as input variable r_avg for this case.
 !! For all other cases \f$ F_q \f$ is defined as
 !! \f[ F_{LM} = \sqrt{2L+1} r^L Y_{LM} \f]
 !! where \f$ Y_{LM} \f$ are the spherical harmonics. Only damped version of boundary conditions is implemented
@@ -78,7 +79,7 @@ MODULE External
                                      !! only exciting the protons to calculate EM response. It should be used carefully
                                      !! because there is no COM correction implemented for this, however, it works fine in the 
                                      !! cases of big doubly magic nuclei like \f$^{208}Pb\f$.  
-   REAL(db) :: r2_avg=0.0d0          !< The value of \f$ <r^2> \f$ used in the case of dipole boost.
+   REAL(db) :: r_avg=0.0d0          !< The value of \f$ \sqrt{<r^2>} \f$ used in the case of dipole boost.
 
    PUBLIC ::L_val,M_val,ampl_ext
   SAVE
@@ -90,7 +91,7 @@ CONTAINS
 !--------------------------------------------------------------------------- 
   SUBROUTINE getin_external
      NAMELIST/extern/ ampl_ext,L_val,M_val,radext,widext,isoext,&
-                     ipulse,omega,tau0,taut,textfield_periodic,r2_avg,only_P
+                     ipulse,omega,tau0,taut,textfield_periodic,r_avg,only_P
     READ(5,extern)
   END SUBROUTINE getin_external
 !---------------------------------------------------------------------------  
@@ -160,9 +161,10 @@ CONTAINS
                   facr=facr*SQRT(x(ix)**2+y(iy)**2+z(iz)**2)**(2)
                else if (L_val .eq. 1)then
                   ! vol=wxyz*rho(ix,iy,iz,iq) 
+                  write(*,*)'RMS value of r for dipole case',r_avg
                   facr=facr*Y_lm(L_val,M_val,x(ix),y(iy),z(iz))
-                  dip_f = (r2_avg**2)*5.0d0/3.0d0
-                  ! write(*,*)'__DIPOLE FACTOR__',r2_avg,dip_f
+                  dip_f = (r_avg**2)*5.0d0/3.0d0
+                  ! write(*,*)'__DIPOLE FACTOR__',r_avg,dip_f
                   facr=facr*(SQRT(x(ix)**2+y(iy)**2+z(iz)**2)**3 - dip_f*SQRT(x(ix)**2+y(iy)**2+z(iz)**2))
                end if
                facr=facr/(1.0D0+EXP((SQRT(x(ix)**2+y(iy)**2+z(iz)**2)-radext)/widext)) !< Damping is done using parameters radext and widext

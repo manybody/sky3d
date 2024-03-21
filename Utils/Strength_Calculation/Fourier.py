@@ -47,13 +47,17 @@ def FileNameFromL(L):
     filenames={0:'monopoles.res',1:'dipoles.res',2:'quadrupoles.res',3:'octupoles.res',4:'hexadecapoles.res',5:'diatriacontapoles.res'}
     return filenames[L]
 
+
 if Path[-1] == '/':
+    OutPutFile = 'Strength_'+FileNameFromL(L_val).replace('res', 'out')
     ResFile = Path+FileNameFromL(L_val)
     ExtFieldFile=Path+'extfield.res'
 else:
+    OutPutFile = '/Strength_'+FileNameFromL(L_val).replace('res', 'out')
     ResFile = Path+'/'+FileNameFromL(L_val)
     ExtFieldFile=Path+'/extfield.res'
 print(ResFile,ExtFieldFile)
+print(OutPutFile)
 
 
 if L_val == 0:
@@ -69,7 +73,7 @@ elif L_val == 3:
     ylabel = r'S(E) (fm$^6$/MeV)'
     legend='Octupole Boost'
 elif L_val == 4:
-    aylabel = r'S(E) (fm$^8$/MeV)'
+    ylabel = r'S(E) (fm$^8$/MeV)'
     legend='Hexadecapole Boost'
 elif L_val == 5:
     ylabel = r'S(E) (fm$^{{{10}}}$/MeV)'
@@ -133,11 +137,10 @@ Moment1_Cos_Filter = Moment1*Filter2(nfil,time1)
 E1_Exp_fil, Spectrum_c1_exp_fil, Spectrum1_exp_fil = Fourier(Moment1_Exp_Filter, time1)
 E1_cos_fil, Spectrum_c1_cos_fil, Spectrum1_cos_fil = Fourier(Moment1_Cos_Filter, time1)
 
-
-Spectrum1_cos_fil /= division_const
-Spectrum1_exp_fil /= division_const
-Spectrum_c1_cos_fil /= division_const
-Spectrum_c1_exp_fil /= division_const
+Spectrum1_cos_fil = Spectrum1_cos_fil/division_const
+Spectrum1_exp_fil = Spectrum1_exp_fil/division_const
+Spectrum_c1_cos_fil = Spectrum_c1_cos_fil/division_const
+Spectrum_c1_exp_fil = Spectrum_c1_exp_fil/division_const
 
 
 Moment2_Exp_Filter = Moment2*Filter1(Gamma0,time2,hbarc)
@@ -146,14 +149,12 @@ Moment2_Cos_Filter = Moment2*Filter2(nfil,time2)
 E2_Exp_fil, Spectrum_c2_exp_fil, Spectrum2_exp_fil = Fourier(Moment2_Exp_Filter, time2)
 E2_cos_fil, Spectrum_c2_cos_fil, Spectrum2_cos_fil = Fourier(Moment2_Cos_Filter, time2)
 
-Spectrum2_cos_fil /= division_const
-Spectrum2_exp_fil /= division_const
-Spectrum_c2_cos_fil /= division_const
-Spectrum_c2_exp_fil /= division_const
+Spectrum2_cos_fil = Spectrum2_cos_fil/division_const
+Spectrum2_exp_fil = Spectrum2_exp_fil/division_const
+Spectrum_c2_cos_fil = Spectrum_c2_cos_fil/division_const
+Spectrum_c2_exp_fil = Spectrum_c2_exp_fil/division_const
 
 
-OutPutFile = 'Strength_'+FileNameFromL(L).replace('res','out')
-print(OutPutFile)
 
 with open(Path+OutPutFile,'w') as f:
     f.write('{:<10} \t {:<10} \t {:<10}  \n'.format('Energy(MeV)', 'Strength (Exp Filter)', 'Strength (Cos Filter)  Units = ['+ylabel[4:]+']'))
@@ -164,5 +165,6 @@ print('\n -------------------------------------------------')
 print(
     f'Strength function calculated and written in the file = {Path+OutPutFile}')
 print('--------------------------------------------------')
+
 
 
