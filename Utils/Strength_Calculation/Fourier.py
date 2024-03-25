@@ -1,10 +1,6 @@
-import matplotlib.pyplot as plt
-import matplotlib as mpl
 import numpy as np
-import scienceplots
 
 
-plt.style.use(['science', 'notebook'])
 
 hbarc = 197.3269804
 Gamma0 = 1
@@ -20,11 +16,18 @@ with open(Path+'/for005','r') as f:
     word2='M_val'
     for line in lines:
         # check if string present on a current line
-        if line.find('force') != 1:
+        if line.find('force') != -1:
             data = line.split(',')
             for d in data:
                 if d.find('force') != -1:
                     force = d.split('=')[1]
+        
+        if line.find('ampl_ext') != -1:
+            data = line.split(',')
+            print(line)
+            for d in data:
+                if d.find('ampl_ext') != -1:
+                    ampl = float(d.split('=')[1].replace('D','e'))
 
         if line.find(word1) != -1:
             # print(word, 'string exists in file')
@@ -40,7 +43,7 @@ with open(Path+'/for005','r') as f:
                     M_val = int(d.split('=')[1])
             exit
 
-print(f'L = {L_val}, M = {M_val}, force = {force}')
+print(f'L = {L_val}, M = {M_val}, force = {force}, Ext. Amplitude = {ampl:f}')
 
 
 def FileNameFromL(L):
@@ -90,8 +93,7 @@ def Read(resFile, extFile):
         for i, line in enumerate(lines):
             data = line.split()
             time1[i] = float(data[0])
-            Signal1[i] = float(data[1])
-        amplitude = float(lines[0].split()[2])
+            Signal1[i] = float(data[1])       
         Signal1=Signal1-Signal1[0]
         
     with open(extFile, 'r') as f:
@@ -102,12 +104,9 @@ def Read(resFile, extFile):
             data = line.split()
             time2[i] = float(data[0])
             Signal2[i] = float(data[1])
-        amplitude = float(lines[0].split()[2])
-        L = int(lines[0].split()[3])
-        M = int(lines[0].split()[4])
         Signal2=Signal2-Signal2[0]
     # print(time1,Signal1)
-    return time1, Signal1, time2, Signal2,L,M,amplitude
+    return time1, Signal1, time2, Signal2
 
 
 def Filter1(Gamma0, t, hbc):
@@ -127,8 +126,9 @@ def Fourier(y, t):
 
 
 
-time1, Moment1, time2, Moment2, L, M, ampl = Read(ResFile, ExtFieldFile)
+time1, Moment1, time2, Moment2 = Read(ResFile, ExtFieldFile)
 
+print(np.max(Moment1))
 division_const = ampl*hbarc*np.pi
 
 Moment1_Exp_Filter = Moment1*Filter1(Gamma0,time1,hbarc) 
@@ -154,7 +154,7 @@ Spectrum2_exp_fil = Spectrum2_exp_fil/division_const
 Spectrum_c2_cos_fil = Spectrum_c2_cos_fil/division_const
 Spectrum_c2_exp_fil = Spectrum_c2_exp_fil/division_const
 
-
+print(np.max(Spectrum1_exp_fil), np.max(Spectrum2_exp_fil))
 
 with open(Path+OutPutFile,'w') as f:
     f.write('{:<10} \t {:<10} \t {:<10}  \n'.format('Energy(MeV)', 'Strength (Exp Filter)', 'Strength (Cos Filter)  Units = ['+ylabel[4:]+']'))

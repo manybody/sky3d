@@ -446,8 +446,8 @@ CONTAINS
        CALL twobody_analysis(.FALSE.) ! get distance in separated case
     ENDIF
     ! Step 3: moments calculated
-    print*,'L = ',L_val,'M = ',M_val,'external ampl',ampl_ext
-    CALL moments(L_val,M_val)
+   
+    CALL moments(L_val,M_val,isoext)
     IF(printnow.AND.wflag) THEN
       !  OPEN(unit=scratch,file=dipolesfile,POSITION='APPEND')  
       !  WRITE(scratch,'(1x,i5,6E14.4)') iter,cmtot,cm(:,2)-cm(:,1)
@@ -455,7 +455,7 @@ CONTAINS
        OPEN(unit=scratch,file=momentafile, POSITION='APPEND')  
        WRITE(scratch,'(1x,f10.2,3g14.6)') time,pcm(:,1)+pcm(:,2)
        CLOSE(unit=scratch)
-       CALL moment_shortprint(ampl_ext)
+       CALL moment_shortprint()
        IF(texternal) CALL print_extfield()
     ENDIF
     ! Step 4: single-particle properties

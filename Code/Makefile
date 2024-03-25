@@ -56,7 +56,7 @@ clean-exec:
 OBJS   = params.o grids.o levels.o fourier.o forces.o $(PARALLEL_SKY) \
 	inout.o coulomb.o trivial.o densities.o fragments.o twobody.o \
 	energies.o static.o meanfield.o dynamic.o pairs.o moment.o \
-	main3d.o user.o external.o Ylm.o
+	main3d.o user.o external.o ylm.o
 #
 LINKERFLAGS_SKY    =  $(COMPILERFLAGS_SKY)
 #
@@ -73,9 +73,9 @@ $(EXEC_SKY):$(OBJS)
 
 user.o : user.f90 params.o grids.o levels.o Makefile
 
-Ylm.o : Ylm.f90 params.o
+ylm.o : ylm.f90 params.o
 
-external.o : external.f90 params.o $(PARALLEL_SKY) grids.o levels.o meanfield.o Ylm.o moment.o Makefile 
+external.o : external.f90 params.o $(PARALLEL_SKY) grids.o levels.o meanfield.o ylm.o moment.o Makefile 
 
 coulomb.o : coulomb.f90 params.o grids.o densities.o Makefile
 
@@ -90,7 +90,7 @@ fourier.o : fourier.f90 params.o grids.o Makefile
 
 params.o : params.f90 Makefile
 
-moment.o : moment.f90 params.o grids.o densities.o Ylm.o Makefile 
+moment.o : moment.f90 params.o grids.o densities.o ylm.o Makefile 
 
 sequential.o: sequential.f90 levels.o params.o grids.o densities.o Makefile
 

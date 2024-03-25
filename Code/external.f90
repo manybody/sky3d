@@ -44,7 +44,7 @@ MODULE External
   USE MEANFIELD, ONLY: upot
   Use Spherical_Harmonics
   IMPLICIT NONE  
-  INTEGER,PRIVATE :: isoext=0        !< isospin behavior of the external field: \c isoext
+  INTEGER :: isoext=0        !< isospin behavior of the external field: \c isoext
                                      !! denotes the same action on protons and neutrons, 
                                      !! <tt> isoext=1 </tt> that with opposing signs.
   INTEGER,PRIVATE :: ipulse=0        !< type of pulse. <tt> ipulse=0</tt> denotes the
@@ -81,7 +81,7 @@ MODULE External
                                      !! cases of big doubly magic nuclei like \f$^{208}Pb\f$.  
    REAL(db) :: r_avg=0.0d0          !< The value of \f$ \sqrt{<r^2>} \f$ used in the case of dipole boost.
 
-   PUBLIC ::L_val,M_val,ampl_ext
+   PUBLIC ::L_val,M_val,ampl_ext,isoext
   SAVE
 CONTAINS
 !---------------------------------------------------------------------------  
@@ -140,8 +140,8 @@ CONTAINS
        facn=1.0D0  
        facp=1.0D0  
     ELSE  
-       facn=-1.0D0/(mass_number-charge_number)  
-       facp=1.0D0/charge_number  
+       facn=-(charge_number/mass_number)
+       facp=(mass_number-charge_number)/mass_number
     ENDIF
     WRITE(*,*) 'EXTERNAL: ',facn,facp
     ALLOCATE(extfield(nx,ny,nz,2))
@@ -161,11 +161,19 @@ CONTAINS
                   facr=facr*SQRT(x(ix)**2+y(iy)**2+z(iz)**2)**(2)
                else if (L_val .eq. 1)then
                   ! vol=wxyz*rho(ix,iy,iz,iq) 
-                  write(*,*)'RMS value of r for dipole case',r_avg
+                  ! write(*,*)'RMS value of r for dipole case',r_avg
+                  IF(isoext==0) THEN  
                   facr=facr*Y_lm(L_val,M_val,x(ix),y(iy),z(iz))
                   dip_f = (r_avg**2)*5.0d0/3.0d0
                   ! write(*,*)'__DIPOLE FACTOR__',r_avg,dip_f
                   facr=facr*(SQRT(x(ix)**2+y(iy)**2+z(iz)**2)**3 - dip_f*SQRT(x(ix)**2+y(iy)**2+z(iz)**2))
+
+                  else if (isoext==1) then
+                  facr=facr*Y_lm(L_val,M_val,x(ix),y(iy),z(iz))
+                  facr=facr*SQRT(x(ix)**2+y(iy)**2+z(iz)**2)**(L_val)
+                  ! write(*,*)'Isovector Dipole'
+                  end if
+
                end if
                facr=facr/(1.0D0+EXP((SQRT(x(ix)**2+y(iy)**2+z(iz)**2)-radext)/widext)) !< Damping is done using parameters radext and widext
              if (only_P.eq.1)then
@@ -252,7 +260,8 @@ CONTAINS
   SUBROUTINE print_extfield()
     USE Densities, ONLY: rho
     OPEN(UNIT=scratch,file=extfieldfile,POSITION='APPEND')  
-    WRITE(scratch,'(3x,F12.3,3x,F35.15,2x,F25.18,2I5)') time,wxyz*SUM(rho*extfield)/ampl_ext,ampl_ext,L_val,M_val
+    WRITE(scratch,'(3x,F12.3,3x,F35.15,2x,F25.18,2I5)') time,wxyz*SUM(rho*extfield)/ampl_ext
+   !  print*,'External',time,wxyz*SUM(rho*extfield)/ampl_ext
     CLOSE(UNIT=scratch)
   END SUBROUTINE print_extfield
 END MODULE External

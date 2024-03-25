@@ -28,6 +28,7 @@ MODULE Moment
   USE Params
   USE Grids, ONLY: nx,ny,nz,x,y,z,wxyz
   USE Spherical_Harmonics
+
   IMPLICIT NONE
   PRIVATE
   REAL(db) :: pnr(2)    !<the numbers of neutrons <tt>pnr(1)</tt>=\f$ N \f$ and 
@@ -120,12 +121,12 @@ CONTAINS
 !!  - The Cartesian and polar deformation parameters are then printed.
 
 !--------------------------------------------------------------------------- 
-  SUBROUTINE moments(L_val,M_val)
+  SUBROUTINE moments(L_val,M_val,isoext)
     USE Densities, ONLY: rho,current
-    INTEGER :: ix,iy,iz,iq,L_val,M_val
+    INTEGER :: ix,iy,iz,iq,L_val,M_val,isoext
     REAL(db) :: xx(3),x2(3),vol,radius,eta
     REAL(db) :: qmat(3,3,2),qmtot(3,3)
-    REAL(db) :: Mono(2),Di(2),Quad(2),Oct(2),HexaDeca(2),DiaTriaConta(2)
+    REAL(db) :: Mono(2),Di(2),Quad(2),Oct(2),HexaDeca(2),DiaTriaConta(2),tmp,facn,facp
     pnr=0.D0
     cm=0.D0
     pcm=0.D0
@@ -185,11 +186,21 @@ CONTAINS
                 qmat(3,3,iq)=qmat(3,3,iq)+vol*(x2(3)+x2(3)-x2(1)-x2(2))
                 x2m(:,iq)=vol*x2(:)+x2m(:,iq)  
 
-                eta = vol*(SUM(x2))*5.0d0/3.0d0
                 Mono(iq)=vol*((0.5d0*SQRT(1.0d0/PI))*(SUM(x2)))+Mono(iq)
-            
-                Di(iq)=vol*(Y_lm(1,M_val,xx(1),xx(2),xx(3))*(SQRT(SUM(x2))**3- &
-                           SQRT(SUM(x2))*eta)*SQRT(2*1+1.0d0))+Di(iq)
+
+
+                IF(isoext==0) THEN  
+                eta = vol*(SUM(x2))*5.0d0/3.0d0
+                Di(iq)=vol*(Y_lm(1,M_val,x(ix),y(iy),z(iz))*(SQRT(x(ix)**2+y(iy)**2+z(iz)**2)**3- &
+                           SQRT(x(ix)**2+y(iy)**2+z(iz)**2)*eta)*SQRT(2*1+1.0d0))+Di(iq)
+               !  print*,'inside loop 1'
+                else if (isoext==1) THEN
+                tmp=(Y_lm(1,M_val,x(ix),y(iy),z(iz))*SQRT(3.0d0))
+                tmp = tmp*SQRT(x(ix)**2+y(iy)**2+z(iz)**2)*vol
+                Di(iq)=tmp+Di(iq)
+               !  print*,Di(iq),tmp,iq,'inside looop 2'
+                end if
+
                 Quad(iq)=vol*(Y_lm(2,M_val,xx(1),xx(2),xx(3))*SUM(x2)*SQRT(2*2+1.0d0))+Quad(iq)
                 Oct(iq)=vol*(Y_lm(3,M_val,xx(1),xx(2),xx(3))*(SQRT(SUM(x2))**3) &
                            *SQRT(2*3+1.0d0))+Oct(iq)
@@ -203,8 +214,10 @@ CONTAINS
        qmat(2,1,iq)=qmat(1,2,iq)
        qmat(3,1,iq)=qmat(1,3,iq)
        qmat(3,2,iq)=qmat(2,3,iq)
+      !  print*,Di(iq),iq
     ENDDO
     
+
     r2tot=(rms(1)+rms(2))/pnrtot
     rmstot=SQRT((rms(1)+rms(2))/pnrtot)
     rms=SQRT(rms/pnr)  
@@ -212,12 +225,24 @@ CONTAINS
     r3tot=(r3(1)+r3(2))/pnrtot
     r4tot=(r4(1)+r4(2))/pnrtot
 
-    Mono_tot = Mono(1)+Mono(2)
-    Di_tot = Di(1)+Di(2)
-    Quad_tot = Quad(1)+Quad(2)
-    Oct_tot = Oct(1)+Oct(2)
-    HexDec_tot = HexaDeca(1)+HexaDeca(2)
-    DiaTriaConta_tot = DiaTriaConta(1)+DiaTriaConta(2)
+    IF(isoext==0) THEN  
+       facn=1.0D0  
+       facp=1.0D0  
+    ELSE  
+       facn=-(pnr(2)/pnrtot)
+       facp=(pnr(1))/pnrtot
+    end if
+
+    Mono_tot = facn*Mono(1)+facp*Mono(2)
+    Di_tot = facn*Di(1)+facp*Di(2)
+
+   !  print*,'Dipole',Di_tot,Di(1),Di(2)
+
+
+    Quad_tot = facn*Quad(1)+facp*Quad(2)
+    Oct_tot = facn*Oct(1)+facp*Oct(2)
+    HexDec_tot = facn*HexaDeca(1)+facp*HexaDeca(2)
+    DiaTriaConta_tot = facn*DiaTriaConta(1)+facp*DiaTriaConta(2)
 
     DO iq=1,2
        x2m(:,iq)=x2m(:,iq)/pnr(iq)
@@ -250,31 +275,30 @@ CONTAINS
 !!receives the quadrupole moment and so on for other multipole files. The physical time
 !!starts each line to enable easy time-curve plotting.
 !--------------------------------------------------------------------------- 
-  SUBROUTINE moment_shortprint(ampl_ext)
-   REAL(db) :: ampl_ext
+  SUBROUTINE moment_shortprint()
 
     OPEN(unit=scratch,file=monopolesfile,POSITION='APPEND')  
-    WRITE(scratch,'(F25.5,2x,F25.10,2x,F15.10)') time,Mono_tot,ampl_ext
+    WRITE(scratch,'(F25.5,2x,F25.15,2x,F15.10)') time,Mono_tot
     CLOSE(unit=scratch)
     
     OPEN(unit=scratch,file=dipolesfile,POSITION='APPEND')  
-    WRITE(scratch,'(F25.5,2x,F25.10,2x,F15.10)') time,Di_tot,ampl_ext
+    WRITE(scratch,'(F25.5,2x,F25.15,2x,F15.10)') time,Di_tot
     CLOSE(unit=scratch)
 
     OPEN(unit=scratch,file=quadrupolesfile,POSITION='APPEND')  
-    WRITE(scratch,'(F25.5,2x,F25.10,2x,F15.10)') time,Quad_tot,ampl_ext
+    WRITE(scratch,'(F25.5,2x,F25.15,2x,F15.10)') time,Quad_tot
     CLOSE(unit=scratch)
     
     OPEN(unit=scratch,file=octupolesfile,POSITION='APPEND')  
-    WRITE(scratch,'(F25.5,2x,F25.10,2x,F15.10)') time,Oct_tot,ampl_ext
+    WRITE(scratch,'(F25.5,2x,F25.15,2x,F15.10)') time,Oct_tot
     CLOSE(unit=scratch)
 
     OPEN(unit=scratch,file=hexadecapolesfile,POSITION='APPEND')  
-    WRITE(scratch,'(F25.5,2x,F25.10,2x,F15.10)') time,HexDec_tot,ampl_ext
+    WRITE(scratch,'(F25.5,2x,F25.15,2x,F15.10)') time,HexDec_tot
     CLOSE(unit=scratch)
 
     OPEN(unit=scratch,file=diatriacontapolesfile,POSITION='APPEND')  
-    WRITE(scratch,'(F25.5,2x,F25.10,2x,F15.10)') time,DiaTriaConta_tot,ampl_ext
+    WRITE(scratch,'(F25.5,2x,F25.15,2x,F15.10)') time,DiaTriaConta_tot
     CLOSE(unit=scratch)
   END SUBROUTINE moment_shortprint
 !---------------------------------------------------------------------------  
