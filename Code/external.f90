@@ -140,8 +140,13 @@ CONTAINS
        facn=1.0D0  
        facp=1.0D0  
     ELSE  
+      if (L_val .eq. 1)then
        facn=-(charge_number/mass_number)
        facp=(mass_number-charge_number)/mass_number
+       else
+       facn = -1.0d0
+       facp = 1.0d0
+       end if
     ENDIF
     WRITE(*,*) 'EXTERNAL: ',facn,facp
     ALLOCATE(extfield(nx,ny,nz,2))

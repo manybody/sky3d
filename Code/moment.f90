@@ -229,8 +229,14 @@ CONTAINS
        facn=1.0D0  
        facp=1.0D0  
     ELSE  
+     if (L_val .eq. 1)then
        facn=-(pnr(2)/pnrtot)
        facp=(pnr(1))/pnrtot
+      else
+       facn=-1
+       facp=1
+       end if
+
     end if
 
     Mono_tot = facn*Mono(1)+facp*Mono(2)
