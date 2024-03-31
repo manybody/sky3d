@@ -44,12 +44,15 @@ with open(Path+'/for005','r') as f:
             exit
 
 print(f'L = {L_val}, M = {M_val}, force = {force}, Ext. Amplitude = {ampl:f}')
-
-
 def FileNameFromL(L):
     filenames={0:'monopoles.res',1:'dipoles.res',2:'quadrupoles.res',3:'octupoles.res',4:'hexadecapoles.res',5:'diatriacontapoles.res'}
     return filenames[L]
 
+
+Coupled = input('Do you want to analyse a different multipole file to that of applied boost? \n(Leave Empty of write False if answer is No)')
+if Coupled:
+    L_val = int('Which Multipole File ? Enter a Integer value to corresponding L (0:monopoles, 1:dipoles .. so on)')
+    print(f'File Chosen = {FileNameFromL(L_val)}')
 
 if Path[-1] == '/':
     OutPutFile_IS = 'IS_Strength_'+FileNameFromL(L_val).replace('res', 'out')
