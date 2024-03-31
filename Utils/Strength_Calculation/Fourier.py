@@ -52,36 +52,42 @@ def FileNameFromL(L):
 
 
 if Path[-1] == '/':
-    OutPutFile = 'Strength_'+FileNameFromL(L_val).replace('res', 'out')
+    OutPutFile_IS = 'IS_Strength_'+FileNameFromL(L_val).replace('res', 'out')
+    OutPutFile_IV = 'IV_Strength_'+FileNameFromL(L_val).replace('res', 'out')
     ResFile = Path+FileNameFromL(L_val)
-    ExtFieldFile=Path+'extfield.res'
+    ExtFieldFile = Path+'extfield.res'
 else:
-    OutPutFile = '/Strength_'+FileNameFromL(L_val).replace('res', 'out')
+    OutPutFile_IS = '/IS_Strength_'+FileNameFromL(L_val).replace('res', 'out')
+    OutPutFile_IV = '/IV_Strength_'+FileNameFromL(L_val).replace('res', 'out')
     ResFile = Path+'/'+FileNameFromL(L_val)
-    ExtFieldFile=Path+'/extfield.res'
-print(ResFile,ExtFieldFile)
-print(OutPutFile)
+    ExtFieldFile = Path+'/extfield.res'
+print(ResFile, ExtFieldFile)
+print(OutPutFile_IS, OutPutFile_IV)
 
 
-if L_val == 0:
-    ylabel = r'S(E) (fm$^4$/MeV)'
-    legend='Monopole Boost'
-elif L_val == 1:
-    ylabel = r'S(E) (fm$^6$/MeV)'
-    legend='Dipole Boost'
-elif L_val == 2:
-    ylabel = r'S(E) (fm$^4$/MeV)'
-    legend='Quadrupole Boost'
-elif L_val == 3:
-    ylabel = r'S(E) (fm$^6$/MeV)'
-    legend='Octupole Boost'
-elif L_val == 4:
-    ylabel = r'S(E) (fm$^8$/MeV)'
-    legend='Hexadecapole Boost'
-elif L_val == 5:
-    ylabel = r'S(E) (fm$^{{{10}}}$/MeV)'
-    legend='Diatriaconta (32) Boost'
-
+def GetUnits(L_val, kind):
+    if L_val == 0:
+        ylabel = r'S(E) (fm$^4$/MeV)'
+        legend = 'Monopole Boost'
+    elif L_val == 1:
+        if kind == 'IS':
+            ylabel = r'S(E) (fm$^6$/MeV)'
+        elif kind == 'IV':
+            ylabel = r'S(E) (fm$^2$/MeV)'
+        legend = 'Dipole Boost'
+    elif L_val == 2:
+        ylabel = r'S(E) (fm$^4$/MeV)'
+        legend = 'Quadrupole Boost'
+    elif L_val == 3:
+        ylabel = r'S(E) (fm$^6$/MeV)'
+        legend = 'Octupole Boost'
+    elif L_val == 4:
+        ylabel = r'S(E) (fm$^8$/MeV)'
+        legend = 'Hexadecapole Boost'
+    elif L_val == 5:
+        ylabel = r'S(E) (fm$^{{{10}}}$/MeV)'
+        legend = 'Diatriaconta (32) Boost'
+    return ylabel, legend
 
 
 def Read(resFile, extFile):
@@ -89,13 +95,16 @@ def Read(resFile, extFile):
     with open(resFile, 'r') as f:
         lines = f.readlines()[1:]
         time1 = np.zeros((len(lines)), dtype=float)
-        Signal1 = np.zeros((len(lines)), dtype=float)
+        Signal_IS = np.zeros((len(lines)), dtype=float)
+        Signal_IV = np.zeros((len(lines)), dtype=float)
         for i, line in enumerate(lines):
             data = line.split()
             time1[i] = float(data[0])
-            Signal1[i] = float(data[1])       
-        Signal1=Signal1-Signal1[0]
-        
+            Signal_IS[i] = float(data[1])
+            Signal_IV[i] = float(data[2])
+        Signal_IS = Signal_IS-Signal_IS[0]
+        Signal_IV = Signal_IV-Signal_IV[0]
+
     with open(extFile, 'r') as f:
         lines = f.readlines()[1:]
         time2 = np.zeros((len(lines)), dtype=float)
@@ -104,19 +113,21 @@ def Read(resFile, extFile):
             data = line.split()
             time2[i] = float(data[0])
             Signal2[i] = float(data[1])
-        Signal2=Signal2-Signal2[0]
+        Signal2 = Signal2-Signal2[0]
     # print(time1,Signal1)
-    return time1, Signal1, time2, Signal2
+    return time1, Signal_IS, Signal_IV, time2, Signal2
 
 
 def Filter1(Gamma0, t, hbc):
     return np.exp((-Gamma0*t)/(2.0*hbc))
 
-def Filter2(nfil,t):
+
+def Filter2(nfil, t):
     return (np.cos(0.5*np.pi*t/t[-1]))**nfil
 
 # plt.plot(time,Quad_amp*Filter(Gamma0,time,hbarc))
 # plt.show()
+
 
 def Fourier(y, t):
     Y = np.fft.rfft(y, norm='backward')*2
@@ -125,46 +136,69 @@ def Fourier(y, t):
     return freq*hbarc*2*np.pi, Y, Y.imag
 
 
+time1, Moment1_IS, Moment1_IV, time2, Moment2 = Read(ResFile, ExtFieldFile)
 
-time1, Moment1, time2, Moment2 = Read(ResFile, ExtFieldFile)
-
-print(np.max(Moment1))
 division_const = ampl*hbarc*np.pi
 
-Moment1_Exp_Filter = Moment1*Filter1(Gamma0,time1,hbarc) 
-Moment1_Cos_Filter = Moment1*Filter2(nfil,time1)
+Moment1_IS_Exp_Filter = Moment1_IS*Filter1(Gamma0, time1, hbarc)
+Moment1_IS_Cos_Filter = Moment1_IS*Filter2(nfil, time1)
+Moment1_IV_Exp_Filter = Moment1_IV*Filter1(Gamma0, time1, hbarc)
+Moment1_IV_Cos_Filter = Moment1_IV*Filter2(nfil, time1)
 
-E1_Exp_fil, Spectrum_c1_exp_fil, Spectrum1_exp_fil = Fourier(Moment1_Exp_Filter, time1)
-E1_cos_fil, Spectrum_c1_cos_fil, Spectrum1_cos_fil = Fourier(Moment1_Cos_Filter, time1)
+E1_Exp_fil_IS, Spectrum_c1_exp_fil_IS, Spectrum1_exp_fil_IS = Fourier(
+    Moment1_IS_Exp_Filter, time1)
+E1_cos_fil_IS, Spectrum_c1_cos_fil_IS, Spectrum1_cos_fil_IS = Fourier(
+    Moment1_IS_Cos_Filter, time1)
+E1_Exp_fil_IV, Spectrum_c1_exp_fil_IV, Spectrum1_exp_fil_IV = Fourier(
+    Moment1_IV_Exp_Filter, time1)
+E1_cos_fil_IV, Spectrum_c1_cos_fil_IV, Spectrum1_cos_fil_IV = Fourier(
+    Moment1_IV_Cos_Filter, time1)
 
-Spectrum1_cos_fil = Spectrum1_cos_fil/division_const
-Spectrum1_exp_fil = Spectrum1_exp_fil/division_const
-Spectrum_c1_cos_fil = Spectrum_c1_cos_fil/division_const
-Spectrum_c1_exp_fil = Spectrum_c1_exp_fil/division_const
+
+Spectrum1_cos_fil_IS = Spectrum1_cos_fil_IS/division_const
+Spectrum1_exp_fil_IS = Spectrum1_exp_fil_IS/division_const
+Spectrum_c1_cos_fil_IS = Spectrum_c1_cos_fil_IS/division_const
+Spectrum_c1_exp_fil_IS = Spectrum_c1_exp_fil_IS/division_const
+
+Spectrum1_cos_fil_IV = Spectrum1_cos_fil_IV/division_const
+Spectrum1_exp_fil_IV = Spectrum1_exp_fil_IV/division_const
+Spectrum_c1_cos_fil_IV = Spectrum_c1_cos_fil_IV/division_const
+Spectrum_c1_exp_fil_IV = Spectrum_c1_exp_fil_IV/division_const
 
 
-Moment2_Exp_Filter = Moment2*Filter1(Gamma0,time2,hbarc)
-Moment2_Cos_Filter = Moment2*Filter2(nfil,time2)
+Moment2_Exp_Filter = Moment2*Filter1(Gamma0, time2, hbarc)
+Moment2_Cos_Filter = Moment2*Filter2(nfil, time2)
 
-E2_Exp_fil, Spectrum_c2_exp_fil, Spectrum2_exp_fil = Fourier(Moment2_Exp_Filter, time2)
-E2_cos_fil, Spectrum_c2_cos_fil, Spectrum2_cos_fil = Fourier(Moment2_Cos_Filter, time2)
+E2_Exp_fil, Spectrum_c2_exp_fil, Spectrum2_exp_fil = Fourier(
+    Moment2_Exp_Filter, time2)
+E2_cos_fil, Spectrum_c2_cos_fil, Spectrum2_cos_fil = Fourier(
+    Moment2_Cos_Filter, time2)
 
 Spectrum2_cos_fil = Spectrum2_cos_fil/division_const
 Spectrum2_exp_fil = Spectrum2_exp_fil/division_const
 Spectrum_c2_cos_fil = Spectrum_c2_cos_fil/division_const
 Spectrum_c2_exp_fil = Spectrum_c2_exp_fil/division_const
 
-print(np.max(Spectrum1_exp_fil), np.max(Spectrum2_exp_fil))
 
-with open(Path+OutPutFile,'w') as f:
-    f.write('{:<10} \t {:<10} \t {:<10}  \n'.format('Energy(MeV)', 'Strength (Exp Filter)', 'Strength (Cos Filter)  Units = ['+ylabel[4:]+']'))
-    for E,S1,S2 in zip(E1_Exp_fil,Spectrum1_exp_fil,Spectrum1_cos_fil):
-        f.write('{:<12.2f} \t {:<18.7f} \t {:<12.7f} \n'.format(E,S1,S2))
+kind = 'IS'
+with open(Path+OutPutFile_IS, 'w') as f:
+    ylabel, legend = GetUnits(L_val, kind)
+    f.write('{:<10} \t {:<10} \t {:<10}  \n'.format('Energy(MeV)',
+            'IS Strength (Exp Filter)', 'IS Strength (Cos Filter)  Units = ['+ylabel[4:]+']'))
+    for E, S1, S2 in zip(E1_Exp_fil_IS, Spectrum1_exp_fil_IS, Spectrum1_cos_fil_IS):
+        f.write('{:<12.2f} \t {:<18.7f} \t {:<12.7f} \n'.format(E, S1, S2))
+kind = 'IV'
+with open(Path+OutPutFile_IV, 'w') as f:
+    ylabel, legend = GetUnits(L_val, kind)
+    f.write('{:<10} \t {:<10} \t {:<10}  \n'.format('Energy(MeV)',
+            'IV Strength (Exp Filter)', 'IV Strength (Cos Filter)  Units = ['+ylabel[4:]+']'))
+    for E, S1, S2 in zip(E1_Exp_fil_IV, Spectrum1_exp_fil_IV, Spectrum1_cos_fil_IV):
+        f.write('{:<12.2f} \t {:<18.7f} \t {:<12.7f} \n'.format(E, S1, S2))
 
 print('\n -------------------------------------------------')
 print(
-    f'Strength function calculated and written in the file = {Path+OutPutFile}')
+    f'Isoscalar Strength function calculated and written in the file = {Path+OutPutFile_IS}')
 print('--------------------------------------------------')
-
-
-
+print(
+    f'IsoVector Strength function calculated and written in the file = {Path+OutPutFile_IV}')
+print('--------------------------------------------------')

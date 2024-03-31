@@ -184,16 +184,18 @@ CONTAINS
             '#    Time    N(n)    N(p)       E(sum)        E(integ)      Ekin &
             &      Ecoll(n)     Ecoll(p)')
        CALL start_protocol(monopolesfile, &
-            '#    Time      Monopole(n+p)')
+            '#    Time      Monopole(n+p) (IS)        Monopole(n+p) (IV)')
        CALL start_protocol(dipolesfile, &
             '# Iter &
-            &dipoles (n+p)')
+            &dipoles (n+p) (IS)          dipoles (n+p) (IV)')
        CALL start_protocol(quadrupolesfile, &
-            '#     Time    Q(n+p)    ')
+            '#     Time       Q(n+p)(IS)        Q(n+p) (IV)')
 
-       CALL start_protocol(octupolesfile, '#     Time     Oct(n+p)      ')
-       CALL start_protocol(hexadecapolesfile, '#     Time     HexaDeca(n+p)')
-       CALL start_protocol(diatriacontapolesfile, '#     Time     DiaTriaConta(n+p)')
+       CALL start_protocol(octupolesfile, '# Time       Oct(n+p)(IS)      Oct(n+p)(IV)')
+       CALL start_protocol(hexadecapolesfile, '# Time     HexaDeca(n+p)(IS)&
+            &  HexaDeca(n+p) (IV)')
+       CALL start_protocol(diatriacontapolesfile, '# Time     DiaTriaConta(n+p)(IS)&
+        &   DiaTriaConta(n+p)(IV)')
 
        CALL start_protocol(spinfile, &
             '# Iter      Lx        Ly        Lz        Sx        Sy        &
@@ -447,7 +449,7 @@ CONTAINS
     ENDIF
     ! Step 3: moments calculated
    
-    CALL moments(L_val,M_val,isoext)
+    CALL moments(L_val,M_val)
     IF(printnow.AND.wflag) THEN
       !  OPEN(unit=scratch,file=dipolesfile,POSITION='APPEND')  
       !  WRITE(scratch,'(1x,i5,6E14.4)') iter,cmtot,cm(:,2)-cm(:,1)

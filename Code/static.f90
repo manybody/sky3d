@@ -600,7 +600,7 @@ CONTAINS
          header='  #  Par   v**2   var_h1   var_h2    Norm     Ekin    Energy &
          &    Lx      Ly      Lz     Sx     Sy     Sz  '   
     ! calculate static observables for printout                       *
-    CALL moments(0,0,0)
+    CALL moments(0,0)
     CALL integ_energy
     CALL sum_energy
     ! add information to summary files

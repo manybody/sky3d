@@ -82,12 +82,12 @@ MODULE Moment
   REAL(db) :: r4tot !< these are the avg
   !!value of \f$r^4\f$ of total mass distribution.  Dimension: fm\f$^4\f$.
 
-  REAL(db) :: Mono_tot !< The monopole moment 
-  REAL(db) :: Di_tot !< The Dipole moment 
-  REAL(db) :: Quad_tot !< The quadrupole moment 
-  REAL(db) :: Oct_tot !< The Octupole moment 
-  REAL(db) :: HexDec_tot !< The Hexadecapole moment 
-  REAL(db) :: DiaTriaConta_tot !< The DiaTriaContapole moment 
+  REAL(db) :: Mono_tot(2) !< The monopole moment Isoscalar at index 1 and Isovector at 2
+  REAL(db) :: Di_tot(2) !< The Dipole moment Isoscalar at index 1 and Isovector at 2
+  REAL(db) :: Quad_tot(2) !< The quadrupole moment Isoscalar at index 1 and Isovector at 2
+  REAL(db) :: Oct_tot(2) !< The Octupole moment Isoscalar at index 1 and Isovector at 2
+  REAL(db) :: HexDec_tot(2) !< The Hexadecapole moment Isoscalar at index 1 and Isovector at 2
+  REAL(db) :: DiaTriaConta_tot(2) !< The DiaTriaContapole moment Isoscalar at index 1 and Isovector at 2
   
   
 
@@ -121,12 +121,13 @@ CONTAINS
 !!  - The Cartesian and polar deformation parameters are then printed.
 
 !--------------------------------------------------------------------------- 
-  SUBROUTINE moments(L_val,M_val,isoext)
+  SUBROUTINE moments(L_val,M_val)
     USE Densities, ONLY: rho,current
-    INTEGER :: ix,iy,iz,iq,L_val,M_val,isoext
+    INTEGER :: ix,iy,iz,iq,L_val,M_val,iii
     REAL(db) :: xx(3),x2(3),vol,radius,eta
     REAL(db) :: qmat(3,3,2),qmtot(3,3)
-    REAL(db) :: Mono(2),Di(2),Quad(2),Oct(2),HexaDeca(2),DiaTriaConta(2),tmp,facn,facp
+    REAL(db) :: Mono(2),Quad(2),Oct(2),HexaDeca(2),DiaTriaConta(2),tmp,facn,facp
+    REAL(db) :: Di_is(2),Di_iv(2)
     pnr=0.D0
     cm=0.D0
     pcm=0.D0
@@ -157,7 +158,8 @@ CONTAINS
     r4=0.D0
 
     Mono=0.0D0
-    Di = 0.0D0
+    Di_is = 0.0D0
+    Di_iv = 0.0D0
     Quad = 0.0d0
     Oct = 0.0D0
     HexaDeca = 0.0D0
@@ -189,17 +191,17 @@ CONTAINS
                 Mono(iq)=vol*((0.5d0*SQRT(1.0d0/PI))*(SUM(x2)))+Mono(iq)
 
 
-                IF(isoext==0) THEN  
+                 
                 eta = vol*(SUM(x2))*5.0d0/3.0d0
-                Di(iq)=vol*(Y_lm(1,M_val,x(ix),y(iy),z(iz))*(SQRT(x(ix)**2+y(iy)**2+z(iz)**2)**3- &
-                           SQRT(x(ix)**2+y(iy)**2+z(iz)**2)*eta)*SQRT(2*1+1.0d0))+Di(iq)
+                Di_is(iq)=vol*(Y_lm(1,M_val,x(ix),y(iy),z(iz))*(SQRT(x(ix)**2+y(iy)**2+z(iz)**2)**3- &
+                           SQRT(x(ix)**2+y(iy)**2+z(iz)**2)*eta)*SQRT(2*1+1.0d0))+Di_is(iq)
                !  print*,'inside loop 1'
-                else if (isoext==1) THEN
+                
                 tmp=(Y_lm(1,M_val,x(ix),y(iy),z(iz))*SQRT(3.0d0))
                 tmp = tmp*SQRT(x(ix)**2+y(iy)**2+z(iz)**2)*vol
-                Di(iq)=tmp+Di(iq)
+                Di_iv(iq)=tmp+Di_iv(iq)
                !  print*,Di(iq),tmp,iq,'inside looop 2'
-                end if
+                
 
                 Quad(iq)=vol*(Y_lm(2,M_val,xx(1),xx(2),xx(3))*SUM(x2)*SQRT(2*2+1.0d0))+Quad(iq)
                 Oct(iq)=vol*(Y_lm(3,M_val,xx(1),xx(2),xx(3))*(SQRT(SUM(x2))**3) &
@@ -225,30 +227,27 @@ CONTAINS
     r3tot=(r3(1)+r3(2))/pnrtot
     r4tot=(r4(1)+r4(2))/pnrtot
 
-    IF(isoext==0) THEN  
-       facn=1.0D0  
-       facp=1.0D0  
-    ELSE  
-     if (L_val .eq. 1)then
-       facn=-(pnr(2)/pnrtot)
-       facp=(pnr(1))/pnrtot
-      else
-       facn=-1
-       facp=1
-       end if
-
-    end if
-
-    Mono_tot = facn*Mono(1)+facp*Mono(2)
-    Di_tot = facn*Di(1)+facp*Di(2)
-
-   !  print*,'Dipole',Di_tot,Di(1),Di(2)
-
-
-    Quad_tot = facn*Quad(1)+facp*Quad(2)
-    Oct_tot = facn*Oct(1)+facp*Oct(2)
-    HexDec_tot = facn*HexaDeca(1)+facp*HexaDeca(2)
-    DiaTriaConta_tot = facn*DiaTriaConta(1)+facp*DiaTriaConta(2)
+    do iii=1,2
+      IF(iii==1) THEN  
+         facn=1.0D0  
+         facp=1.0D0  
+         Di_tot(iii) = facn*Di_is(1)+facp*Di_is(2)
+      ELSE  
+         if (L_val .eq. 1)then
+            facn=-(pnr(2)/pnrtot)
+            facp=(pnr(1))/pnrtot
+            Di_tot(iii) = facn*Di_iv(1)+facp*Di_iv(2)
+         else
+            facn=-1
+            facp=1
+         end if
+      END IF
+      Mono_tot(iii) = facn*Mono(1)+facp*Mono(2)
+      Quad_tot(iii) = facn*Quad(1)+facp*Quad(2)
+      Oct_tot(iii) = facn*Oct(1)+facp*Oct(2)
+      HexDec_tot(iii) = facn*HexaDeca(1)+facp*HexaDeca(2)
+      DiaTriaConta_tot(iii) = facn*DiaTriaConta(1)+facp*DiaTriaConta(2)   
+    end do
 
     DO iq=1,2
        x2m(:,iq)=x2m(:,iq)/pnr(iq)
@@ -284,27 +283,27 @@ CONTAINS
   SUBROUTINE moment_shortprint()
 
     OPEN(unit=scratch,file=monopolesfile,POSITION='APPEND')  
-    WRITE(scratch,'(F25.5,2x,F25.15,2x,F15.10)') time,Mono_tot
+    WRITE(scratch,'(F25.5,2x,F25.15,2x,F25.15)') time,Mono_tot(1),Mono_tot(2)
     CLOSE(unit=scratch)
     
     OPEN(unit=scratch,file=dipolesfile,POSITION='APPEND')  
-    WRITE(scratch,'(F25.5,2x,F25.15,2x,F15.10)') time,Di_tot
+    WRITE(scratch,'(F25.5,2x,F25.15,2x,F25.15)') time,Di_tot(1),Di_tot(2)
     CLOSE(unit=scratch)
 
     OPEN(unit=scratch,file=quadrupolesfile,POSITION='APPEND')  
-    WRITE(scratch,'(F25.5,2x,F25.15,2x,F15.10)') time,Quad_tot
+    WRITE(scratch,'(F25.5,2x,F25.15,2x,F25.15)') time,Quad_tot(1),Quad_tot(2)
     CLOSE(unit=scratch)
     
     OPEN(unit=scratch,file=octupolesfile,POSITION='APPEND')  
-    WRITE(scratch,'(F25.5,2x,F25.15,2x,F15.10)') time,Oct_tot
+    WRITE(scratch,'(F25.5,2x,F25.15,2x,F25.15)') time,Oct_tot(1),Oct_tot(2)
     CLOSE(unit=scratch)
 
     OPEN(unit=scratch,file=hexadecapolesfile,POSITION='APPEND')  
-    WRITE(scratch,'(F25.5,2x,F25.15,2x,F15.10)') time,HexDec_tot
+    WRITE(scratch,'(F25.5,2x,F25.15,2x,F25.15)') time,HexDec_tot(1),HexDec_tot(2)
     CLOSE(unit=scratch)
 
     OPEN(unit=scratch,file=diatriacontapolesfile,POSITION='APPEND')  
-    WRITE(scratch,'(F25.5,2x,F25.15,2x,F15.10)') time,DiaTriaConta_tot
+    WRITE(scratch,'(F25.5,2x,F25.15,2x,F15.10)') time,DiaTriaConta_tot(1),DiaTriaConta_tot(2)
     CLOSE(unit=scratch)
   END SUBROUTINE moment_shortprint
 !---------------------------------------------------------------------------  
