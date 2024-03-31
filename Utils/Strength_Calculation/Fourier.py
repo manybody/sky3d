@@ -49,10 +49,13 @@ def FileNameFromL(L):
     return filenames[L]
 
 
-Coupled = input('Do you want to analyse a different multipole file to that of applied boost? \n(Leave Empty of write False if answer is No)')
+Coupled = input(
+    'Do you want to analyse a different multipole file to that of applied boost? \n(Leave Empty if answer is No) \n')
 if Coupled:
-    L_val = int('Which Multipole File ? Enter a Integer value to corresponding L (0:monopoles, 1:dipoles .. so on)')
+    L_val = int(input(
+        'Which Multipole File ? Enter a Integer value to corresponding L (0:monopoles, 1:dipoles .. so on)\n'))
     print(f'File Chosen = {FileNameFromL(L_val)}')
+
 
 if Path[-1] == '/':
     OutPutFile_IS = 'IS_Strength_'+FileNameFromL(L_val).replace('res', 'out')
