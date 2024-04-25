@@ -1,11 +1,11 @@
 #
 # ----- targets--------------------------------------------------------------
 #
-.PHONY : seq mpi omp debug seq_debug omp_debug mpi_debug mpi-omp ifort ifort_seq ifort_omp makeit clean clean-exec
+.PHONY : seq mpi omp debug seq_debug omp_debug mpi_debug mpi-omp ifort ifort_seq ifort_omp makeit clean clean-exec apple apple_omp
 #
 # ----- define the compiler being used---------------------------------------
 #
-seq omp seq_debug omp_debug debug  : export COMPILER_SKY = gfortran
+seq omp seq_debug omp_debug debug apple apple_omp  : export COMPILER_SKY = gfortran
 mpi mpi_debug mpi-omp              : export COMPILER_SKY = mpif90
 ifort ifort_seq ifort_omp          : export COMPILER_SKY = ifort
 #
@@ -13,6 +13,7 @@ ifort ifort_seq ifort_omp          : export COMPILER_SKY = ifort
 #
 seq omp debug seq_debug omp_debug ifort ifort_seq ifort_omp : export LIBS_SKY = -lfftw3 -llapack -lopenblas
 mpi mpi_debug mpi-omp                                       : export LIBS_SKY = -lfftw3 -lscalapack -llapack -lopenblas
+apple apple_omp                                             : export LIBS_SKY = -lfftw3 -framework Accelerate -L/opt/homebrew/lib
 #
 # ----- define compiler flags and linker flags-------------------------------
 #
@@ -22,24 +23,27 @@ seq_debug mpi_debug debug : export COMPILERFLAGS_SKY = -g -fbacktrace
 omp_debug                 : export COMPILERFLAGS_SKY = -g -fbacktrace -fopenmp
 ifort ifort_seq           : export COMPILERFLAGS_SKY = -axsse4.2 -msse4.2 -O3 -ip -no-prec-div -align all -mcmodel=large -shared-intel
 ifort_omp                 : export COMPILERFLAGS_SKY = -axsse4.2 -msse4.2 -O3 -ip -no-prec-div -align all -mcmodel=large -shared-intel -openmp
+apple                     : export COMPILERFLAGS_SKY = -O3 -ffast-math -finline-functions -funroll-loops
+apple_omp                 : export COMPILERFLAGS_SKY = -O3 -ffast-math -finline-functions -funroll-loops -fopenmp
+
 #
 # ----- which communication object file to use for building------------------
 #
-seq omp seq_debug omp_debug debug ifort ifort_seq ifort_omp : export PARALLEL_SKY = sequential.o
+seq omp seq_debug omp_debug debug ifort ifort_seq ifort_omp apple apple_omp: export PARALLEL_SKY = sequential.o
 mpi mpi_debug mpi-omp                                       : export PARALLEL_SKY = parallel.o
 #
 # ----- executables----------------------------------------------------------
 #
-seq debug seq_debug : export EXEC_SKY = sky3d.seq
-ifort ifort_seq     : export EXEC_SKY = sky3d.ifort.seq
-mpi mpi_debug       : export EXEC_SKY = sky3d.mpi
-omp omp_debug       : export EXEC_SKY = sky3d.omp
-ifort_omp           : export EXEC_SKY = sky3d.ifort.omp
-mpi-omp             : export EXEC_SKY = sky3d.mpi-omp
+seq debug seq_debug apple : export EXEC_SKY = sky3d.seq
+ifort ifort_seq           : export EXEC_SKY = sky3d.ifort.seq
+mpi mpi_debug             : export EXEC_SKY = sky3d.mpi
+omp omp_debug apple_omp   : export EXEC_SKY = sky3d.omp
+ifort_omp                 : export EXEC_SKY = sky3d.ifort.omp
+mpi-omp                   : export EXEC_SKY = sky3d.mpi-omp
 #
 # ----- restart make or clean------------------------------------------------
 #
-seq omp mpi debug seq_debug mpi_debug omp_debug mpi-omp ifort ifort_seq ifort_omp:
+seq omp mpi debug seq_debug mpi_debug omp_debug mpi-omp ifort ifort_seq ifort_omp apple apple_omp:
 	@$(MAKE) -f $(firstword $(MAKEFILE_LIST)) makeit
 
 clean:
