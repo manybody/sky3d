@@ -1,15 +1,15 @@
 MODULE User
-  USE Params
-  USE Grids
-  USE Levels
+  USE Params, ONLY: db
+  USE Levels, ONLY: wocc,psi
   IMPLICIT NONE
+  PRIVATE
 CONTAINS
   SUBROUTINE init_user
     INTEGER :: ic,ix,iy,iz
     REAL(db) :: center(3),d,r
     NAMELIST /user/ d,r
     READ(5,user)
-    center=(/-d,0.D0,d/)
+    center=[-d,0.D0,d]
     WRITE(*,'(A,F5.2,A,F5.4)') '3 alpha cluster initialization with distance ' &
          ,d,' and radii ',r
     wocc=1.D0

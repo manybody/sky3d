@@ -1,7 +1,7 @@
 !------------------------------------------------------------------------------
 ! MODULE: Modulename
 !------------------------------------------------------------------------------
-! DESCRIPTION: 
+! DESCRIPTION:
 !> @brief
 !!In this module various moments of the density distribution are
 !!calculated. Most of them come in two versions: an isospin-dependent
@@ -11,7 +11,7 @@
 !!stored: that of the neutrons <tt> cm(1:3,1) </tt>, of the protons <tt>
 !!cm(1:3,2)</tt>, and of the total mass distribution <tt> cmtot(1:3) </tt>.
 !>
-!>@details 
+!>@details
 !!Since the geometrical arrangement in space can be arbitrary with
 !!respect to the Cartesian coordinate system - this is certainly true
 !!for non-central collision situations - some quantities associated
@@ -20,22 +20,24 @@
 !!tensor and diagonalizes it to obtain the principal
 !!axes of the nucleus. In this frame then we compute the spherical
 !!quadrupole moments \f$ Q_{2m} \f$ with their
-!!dimensionless counterparts \f$ a_o \f$, \f$ a_2 \f$ and the deformation 
+!!dimensionless counterparts \f$ a_o \f$, \f$ a_2 \f$ and the deformation
 !!parameters \f$ \beta \f$ and \f$ \gamma \f$.
 
 !------------------------------------------------------------------------------
 MODULE Moment
-  USE Params
+  USE Params, ONLY: printnow, wflag, diatriacontapolesfile, dipolesfile, &
+       hexadecapolesfile, monopolesfile, octupolesfile, quadrupolesfile, &
+       scratch, time, r0, tdynamic, db, pi
   USE Grids, ONLY: nx,ny,nz,x,y,z,wxyz
-  USE Spherical_Harmonics
+  USE Spherical_Harmonics, ONLY: y_lm
 
   IMPLICIT NONE
   PRIVATE
-  REAL(db) :: pnr(2)    !<the numbers of neutrons <tt>pnr(1)</tt>=\f$ N \f$ and 
+  REAL(db) :: pnr(2)    !<the numbers of neutrons <tt>pnr(1)</tt>=\f$ N \f$ and
   !!protons <tt>pnr(2)</tt>= \f$ Z \f$. These are obtained by a simple integration
-  !!of the densities \c rho. 
-  REAL(db) :: pnrtot    !<the total particle number <tt> pnrtot</tt>=\f$ A \f$. 
-  !!These are obtained by a simple integration of the densities \c rho. 
+  !!of the densities \c rho.
+  REAL(db) :: pnrtot    !<the total particle number <tt> pnrtot</tt>=\f$ A \f$.
+  !!These are obtained by a simple integration of the densities \c rho.
   REAL(db) :: cm(3,2)   !<the center of mass vectors of
   !!the neutron and proton \f$ \vec R_n \f$, \f$ \vec R_p \f$. Dimension: fm.
   REAL(db) :: cmtot(3)  !<the center of mass vectors of
@@ -47,23 +49,23 @@ MODULE Moment
   !!mean-square radii of neutron and proton mass distribution.  Dimension: fm.
   REAL(db) :: rmstot    !< these are the root mean-square radii of the total
   !!mass distribution.  Dimension: fm.
-  REAL(db) :: q20(2)    !< the \f$ m=0 \f$ components of the spherical quadrupole tensor 
+  REAL(db) :: q20(2)    !< the \f$ m=0 \f$ components of the spherical quadrupole tensor
   !!\f$ Q_{20} \f$ in the principal-axes frame for neutrons and protons.
-  REAL(db) :: q20tot    !< the \f$ m=0 \f$ components of the spherical quadrupole tensor 
+  REAL(db) :: q20tot    !< the \f$ m=0 \f$ components of the spherical quadrupole tensor
   !!\f$ Q_{20} \f$ in the principal-axes frame for the total mass distribution.
-  REAL(db) :: q22(2)    !< the \f$ m=2 \f$ components of the spherical quadrupole tensor 
+  REAL(db) :: q22(2)    !< the \f$ m=2 \f$ components of the spherical quadrupole tensor
   !!\f$ Q_{22} \f$ in the principal-axes frame for neutrons and protons.
-  REAL(db) :: q22tot    !< the \f$ m=2 \f$ components of the spherical quadrupole tensor 
+  REAL(db) :: q22tot    !< the \f$ m=2 \f$ components of the spherical quadrupole tensor
   !!\f$ Q_{20} \f$ in the principal-axes frame for the total mass distribution.
   REAL(db) :: x2m(3,2)  !<the vectors of second moments of the radii in the three coordinate
   !!directions, i.e.,\f[ \langle r_i^2\rangle=\frac1{A} \int \D^3r\, r_i^2\rho(\vec r). \f]
   !!for neutrons and protons
-  !!They are useful to get an idea of the shape of the nucleus in static calculations. 
+  !!They are useful to get an idea of the shape of the nucleus in static calculations.
   !!Dimension: \f${\rm fm}^2 \f$
   REAL(db) :: x2mtot(3) !<the vectors of second moments of the radii in the three coordinate
   !!directions, i.e.,\f[ \langle r_i^2\rangle=\frac1{A} \int \D^3r\, r_i^2\rho(\vec r). \f]
   !!for the total mass distribution
-  !!They are useful to get an idea of the shape of the nucleus in static calculations. 
+  !!They are useful to get an idea of the shape of the nucleus in static calculations.
   !!Dimension: \f${\rm fm}^2 \f$
   REAL(db) :: beta20tot !<the quadrupole deformation parameters \f$ a_0 \f$.
   REAL(db) :: beta22tot !<the quadrupole deformation parameters \f$ a_2 \f$.
@@ -88,14 +90,14 @@ MODULE Moment
   REAL(db) :: Oct_tot(2) !< The Octupole moment Isoscalar at index 1 and Isovector at 2
   REAL(db) :: HexDec_tot(2) !< The Hexadecapole moment Isoscalar at index 1 and Isovector at 2
   REAL(db) :: DiaTriaConta_tot(2) !< The DiaTriaContapole moment Isoscalar at index 1 and Isovector at 2
-  
-  
+
+
 
   PUBLIC :: pnr,pnrtot,cm,cmtot,pcm,rmstot,beta,gamma, &
        moments,moment_print,moment_shortprint,Oct_tot, &
        HexDec_tot,DiaTriaConta_tot,Mono_tot,Di_tot,Quad_tot,r3tot,r4tot,r2tot
 CONTAINS
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: Routinename
 !> @brief
 !!This is the principal subroutine for calculating the geometric
@@ -112,18 +114,19 @@ CONTAINS
 !!    components \c qmat of the Cartesian quadrupole tensor
 !!    \f$ Q_{kl}=\int \D^3r \left(3x_kx_l-r^2\delta_{kl}\right) \rho(\vec r) \f$.
 !!  - After this, the subroutine \c q2diag is used to determine the
-!!    spherical components \f$ Q_{20} \f$ and \f$ Q_{22} \f$ in the 
+!!    spherical components \f$ Q_{20} \f$ and \f$ Q_{22} \f$ in the
 !!    principal-axes frame also generating some printout in the process.
 !!    These are then multiplied with a scale factor to yield the
-!!    dimensionless deformation parameters \f$ a_0 \f$ and \f$ a_2 \f$ and 
-!!    finally by conversion to polar coordinates the Bohr-Mottelson parameters 
+!!    dimensionless deformation parameters \f$ a_0 \f$ and \f$ a_2 \f$ and
+!!    finally by conversion to polar coordinates the Bohr-Mottelson parameters
 !!    \f$ \beta \f$ and \f$ \gamma \f$.
 !!  - The Cartesian and polar deformation parameters are then printed.
 
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE moments(L_val,M_val)
     USE Densities, ONLY: rho,current
-    INTEGER :: ix,iy,iz,iq,L_val,M_val,iii
+    INTEGER :: ix,iy,iz,iq,iii
+    INTEGER, intent(in) :: L_val,M_val
     REAL(db) :: xx(3),x2(3),vol,radius,eta
     REAL(db) :: qmat(3,3,2),qmtot(3,3)
     REAL(db) :: Mono(2),Quad(2),Oct(2),HexaDeca(2),DiaTriaConta(2),tmp,facn,facp
@@ -131,12 +134,12 @@ CONTAINS
     pnr=0.D0
     cm=0.D0
     pcm=0.D0
-    DO iq=1,2  
-       DO iz=1,nz  
-          xx(3)=z(iz)  
-          DO iy=1,ny  
-             xx(2)=y(iy)  
-             DO ix=1,nx  
+    DO iq=1,2
+       DO iz=1,nz
+          xx(3)=z(iz)
+          DO iy=1,ny
+             xx(2)=y(iy)
+             DO ix=1,nx
                 xx(1)=x(ix)
                 pnr(iq)=pnr(iq)+wxyz*rho(ix,iy,iz,iq)
                 cm(:,iq)=cm(:,iq)+wxyz*xx*rho(ix,iy,iz,iq)
@@ -145,8 +148,8 @@ CONTAINS
           ENDDO
        ENDDO
     ENDDO
-    pnrtot=pnr(1)+pnr(2)  
-    cmtot=(cm(:,1)+cm(:,2))/pnrtot  
+    pnrtot=pnr(1)+pnr(2)
+    cmtot=(cm(:,1)+cm(:,2))/pnrtot
     DO iq=1,2
        cm(:,iq)=cm(:,iq)/pnr(iq)
     ENDDO
@@ -165,17 +168,17 @@ CONTAINS
     HexaDeca = 0.0D0
     DiaTriaConta = 0.0D0
 
-    DO iq=1,2  
-       DO iz=1,nz  
-          xx(3)=z(iz)-cm(3,iq)  
-          x2(3)=xx(3)**2  
-          DO iy=1,ny  
-             xx(2)=y(iy)-cm(2,iq)  
+    DO iq=1,2
+       DO iz=1,nz
+          xx(3)=z(iz)-cm(3,iq)
+          x2(3)=xx(3)**2
+          DO iy=1,ny
+             xx(2)=y(iy)-cm(2,iq)
              x2(2)=xx(2)**2
-             DO ix=1,nx  
-                xx(1)=x(ix)-cm(1,iq)  
-                x2(1)=xx(1)**2  
-                vol=wxyz*rho(ix,iy,iz,iq)  
+             DO ix=1,nx
+                xx(1)=x(ix)-cm(1,iq)
+                x2(1)=xx(1)**2
+                vol=wxyz*rho(ix,iy,iz,iq)
                 rms(iq)=vol*SUM(x2)+rms(iq)
                 r3(iq)=vol*(SUM(x2)**(1.5d0))+r3(iq)
                 r4(iq)=vol*(SUM(x2)**(2))+r4(iq)
@@ -186,22 +189,22 @@ CONTAINS
                 qmat(2,2,iq)=qmat(2,2,iq)+vol*(x2(2)+x2(2)-x2(1)-x2(3))
                 qmat(2,3,iq)=qmat(2,3,iq)+3.D0*vol*xx(2)*xx(3)
                 qmat(3,3,iq)=qmat(3,3,iq)+vol*(x2(3)+x2(3)-x2(1)-x2(2))
-                x2m(:,iq)=vol*x2(:)+x2m(:,iq)  
+                x2m(:,iq)=vol*x2(:)+x2m(:,iq)
 
                 Mono(iq)=vol*((0.5d0*SQRT(1.0d0/PI))*(SUM(x2)))+Mono(iq)
 
 
-                 
+
                 eta = vol*(SUM(x2))*5.0d0/3.0d0
-                Di_is(iq)=vol*(Y_lm(1,M_val,x(ix),y(iy),z(iz))*(SQRT(x(ix)**2+y(iy)**2+z(iz)**2)**3- &
-                           SQRT(x(ix)**2+y(iy)**2+z(iz)**2)*eta)*SQRT(2*1+1.0d0))+Di_is(iq)
+                Di_is(iq)=vol*(Y_lm(1,M_val,x(ix),y(iy),z(iz))*(SQRT(x(ix)**2+y(iy)**2+z(iz)**2)**3&
+                     - SQRT(x(ix)**2+y(iy)**2+z(iz)**2)*eta)*SQRT(2*1+1.0d0))+Di_is(iq)
                !  print*,'inside loop 1'
-                
+
                 tmp=(Y_lm(1,M_val,x(ix),y(iy),z(iz))*SQRT(3.0d0))
                 tmp = tmp*SQRT(x(ix)**2+y(iy)**2+z(iz)**2)*vol
                 Di_iv(iq)=tmp+Di_iv(iq)
                !  print*,Di(iq),tmp,iq,'inside looop 2'
-                
+
 
                 Quad(iq)=vol*(Y_lm(2,M_val,xx(1),xx(2),xx(3))*SUM(x2)*SQRT(2*2+1.0d0))+Quad(iq)
                 Oct(iq)=vol*(Y_lm(3,M_val,xx(1),xx(2),xx(3))*(SQRT(SUM(x2))**3) &
@@ -218,22 +221,22 @@ CONTAINS
        qmat(3,2,iq)=qmat(2,3,iq)
       !  print*,Di(iq),iq
     ENDDO
-    
+
 
     r2tot=(rms(1)+rms(2))/pnrtot
     rmstot=SQRT((rms(1)+rms(2))/pnrtot)
-    rms=SQRT(rms/pnr)  
-    x2mtot=(x2m(:,1)+x2m(:,2))/pnrtot  
+    rms=SQRT(rms/pnr)
+    x2mtot=(x2m(:,1)+x2m(:,2))/pnrtot
     r3tot=(r3(1)+r3(2))/pnrtot
     r4tot=(r4(1)+r4(2))/pnrtot
 
     do iii=1,2
-      IF(iii==1) THEN  
-         facn=1.0D0  
-         facp=1.0D0  
+      IF(iii==1) THEN
+         facn=1.0D0
+         facp=1.0D0
          Di_tot(iii) = facn*Di_is(1)+facp*Di_is(2)
-      ELSE  
-         if (L_val .eq. 1)then
+      ELSE
+         if (L_val == 1)then
             facn=-(pnr(2)/pnrtot)
             facp=(pnr(1))/pnrtot
             Di_tot(iii) = facn*Di_iv(1)+facp*Di_iv(2)
@@ -246,13 +249,13 @@ CONTAINS
       Quad_tot(iii) = facn*Quad(1)+facp*Quad(2)
       Oct_tot(iii) = facn*Oct(1)+facp*Oct(2)
       HexDec_tot(iii) = facn*HexaDeca(1)+facp*HexaDeca(2)
-      DiaTriaConta_tot(iii) = facn*DiaTriaConta(1)+facp*DiaTriaConta(2)   
+      DiaTriaConta_tot(iii) = facn*DiaTriaConta(1)+facp*DiaTriaConta(2)
     end do
 
     DO iq=1,2
        x2m(:,iq)=x2m(:,iq)/pnr(iq)
     ENDDO
-    qmtot=qmat(:,:,1)+qmat(:,:,2) 
+    qmtot=qmat(:,:,1)+qmat(:,:,2)
     IF(printnow.AND.wflag) WRITE(*,'(/A)') 'Cartesian quadrupole tensor,&
          &  principal values, and axes:'
     CALL q2diag(qmat(:,:,1),q20(1),q22(1),'Neutrons ')
@@ -272,54 +275,54 @@ CONTAINS
          ' Beta20: ',beta20tot,' Beta22: ',beta22tot,' Beta: ',beta, &
          ' Gamma: ',gamma
   END SUBROUTINE moments
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: moment_shortprint
 !> @brief
 !!This subroutine simply prints some information into the specialized
 !!output files. \c monopolesfile receives the monopole moment, while \c quadrupolesfile
 !!receives the quadrupole moment and so on for other multipole files. The physical time
 !!starts each line to enable easy time-curve plotting.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE moment_shortprint()
 
-    OPEN(unit=scratch,file=monopolesfile,POSITION='APPEND')  
+    OPEN(unit=scratch,file=monopolesfile,POSITION='APPEND')
     WRITE(scratch,'(F25.5,2x,F25.15,2x,F25.15)') time,Mono_tot(1),Mono_tot(2)
     CLOSE(unit=scratch)
-    
-    OPEN(unit=scratch,file=dipolesfile,POSITION='APPEND')  
+
+    OPEN(unit=scratch,file=dipolesfile,POSITION='APPEND')
     WRITE(scratch,'(F25.5,2x,F25.15,2x,F25.15)') time,Di_tot(1),Di_tot(2)
     CLOSE(unit=scratch)
 
-    OPEN(unit=scratch,file=quadrupolesfile,POSITION='APPEND')  
+    OPEN(unit=scratch,file=quadrupolesfile,POSITION='APPEND')
     WRITE(scratch,'(F25.5,2x,F25.15,2x,F25.15)') time,Quad_tot(1),Quad_tot(2)
     CLOSE(unit=scratch)
-    
-    OPEN(unit=scratch,file=octupolesfile,POSITION='APPEND')  
+
+    OPEN(unit=scratch,file=octupolesfile,POSITION='APPEND')
     WRITE(scratch,'(F25.5,2x,F25.15,2x,F25.15)') time,Oct_tot(1),Oct_tot(2)
     CLOSE(unit=scratch)
 
-    OPEN(unit=scratch,file=hexadecapolesfile,POSITION='APPEND')  
+    OPEN(unit=scratch,file=hexadecapolesfile,POSITION='APPEND')
     WRITE(scratch,'(F25.5,2x,F25.15,2x,F25.15)') time,HexDec_tot(1),HexDec_tot(2)
     CLOSE(unit=scratch)
 
-    OPEN(unit=scratch,file=diatriacontapolesfile,POSITION='APPEND')  
+    OPEN(unit=scratch,file=diatriacontapolesfile,POSITION='APPEND')
     WRITE(scratch,'(F25.5,2x,F25.15,2x,F15.10)') time,DiaTriaConta_tot(1),DiaTriaConta_tot(2)
     CLOSE(unit=scratch)
   END SUBROUTINE moment_shortprint
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: moment_print
 !> @brief
 !!This subroutine prints a somewhat more detailed information. Particle
 !!number , r.m.s. radius, \f$ Q_{20} \f$, \c x2m, and center-of-mass are
 !!printed for the total distribution and also separately for neutrons
 !!and protons. This output goes to the regular output unit.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE moment_print
     INTEGER :: iq
-    CHARACTER(11),PARAMETER :: Name(2)=(/ '  Neutron: ','   Proton: '/)
+    CHARACTER(11),PARAMETER :: Name(2)=[ '  Neutron: ','   Proton: ']
     Write(*,'(A)') '              Part.Num.   rms-radius   q20         &
          &<x**2>      <y**2>      <z**2>        <x>            &
-         &<y>            <z>'    
+         &<y>            <z>'
     WRITE(*,'(a,2f12.4,1p,4e12.4,3e15.7)') '    Total: ',pnrtot,rmstot, &
          q20tot,x2mtot,cmtot
     DO iq=1,2
@@ -327,7 +330,7 @@ CONTAINS
             x2m(:,iq),cm(:,iq)
     ENDDO
   END SUBROUTINE moment_print
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: q2diag
 !> @brief
 !!his subroutine diagonalizes the Cartesian quadrupole tensor. To this
@@ -341,17 +344,17 @@ CONTAINS
 !!quadrupole moment:
 !!\f[ Q_{20}=\sqrt{\frac{5}{16\pi}}\,Q_{zz},\qquad
 !!Q_{22}=\sqrt{\frac{5}{96\pi}}\,\left(Q_{yy}-Q_{xx}\right). \f] They are
-!!returned in \c q20x and \c q22x. 
+!!returned in \c q20x and \c q22x.
 !>
 !> @param[in,out] q_mat
 !> REAL(db), array, takes the quadrupole matrix.
 !> @param[out] q20x
 !> REAL(db), returns the value \f$ Q_{20} \f$.
 !> @param[out] q22x
-!> REAL(db), returns the value \f$ Q_{22} \f$. 
+!> REAL(db), returns the value \f$ Q_{22} \f$.
 !> @param[in] title
-!> CHARACTER, array, takes a title for printout. 
-!--------------------------------------------------------------------------- 
+!> CHARACTER, array, takes a title for printout.
+!---------------------------------------------------------------------------
   SUBROUTINE q2diag(q_mat,q20x,q22x,title)
     REAL(db),INTENT(INOUT) :: q_mat(3,3)
     REAL(db),INTENT(OUT) :: q20x,q22x
@@ -359,7 +362,7 @@ CONTAINS
     REAL(db) :: q_eig(3),q_vec(3,3),fv1(20)
     INTEGER :: info,i, j,k
 
-    if(printnow.AND.wflag) write(*,'(3(f12.5,1x))') ((q_mat(j,k),k=1,3),j=1,3)    
+    if(printnow.AND.wflag) write(*,'(3(f12.5,1x))') ((q_mat(j,k),k=1,3),j=1,3)
     CALL DSYEV('V','U',3,q_mat,3,q_eig,fv1,20,info)
     q_vec=q_mat
     IF(info/=0) STOP 'Quadrupole diagonalization failed'

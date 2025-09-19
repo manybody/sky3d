@@ -1,7 +1,7 @@
 !------------------------------------------------------------------------------
 ! MODULE: Fourier
 !------------------------------------------------------------------------------
-! DESCRIPTION: 
+! DESCRIPTION:
 !> @brief
 !!This module initializes the \c FFTW3 package for doing Fourier
 !!transforms \cite Fri05a. It needs the file \c fftw3.f from the
@@ -19,8 +19,11 @@
 MODULE Fourier
   USE params, ONLY: db,wflag
   USE Grids, ONLY: nx,ny,nz
-  USE ISO_C_BINDING
+  USE ISO_C_BINDING, ONLY: c_long
   IMPLICIT NONE
+  PRIVATE
+  PUBLIC :: pbackward, pforward, zbackward, zforward, ybackward, yforward, &
+       xbackward, xforward
   !>@name plans for full three-dimensional forward and backward transforms for both spin components.
   !>@{
   INTEGER(C_LONG),SAVE :: pforward,pbackward
@@ -41,7 +44,7 @@ MODULE Fourier
   INTEGER(C_LONG),SAVE :: zforward,zbackward
   !>@}
 CONTAINS
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: init_fft
 !> @brief
 !!In this subroutine the \c FFTW system is initialized
@@ -67,11 +70,11 @@ CONTAINS
 !!these calls: in the code all transforms are in-place except for \c xforward,
 !!\c yforward, and \c zforward. It was found that
 !!very strange things happen if this rule is not obeyed.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE init_fft
     INCLUDE 'fftw3.f'
     COMPLEX(db),ALLOCATABLE :: p(:,:,:,:,:)
-    INTEGER,SAVE :: FFTW_planflag             
+    INTEGER,SAVE :: FFTW_planflag
 ! set option for FFTW setup here
 !    FFTW_planflag=FFTW_ESTIMATE
 !    FFTW_planflag=FFTW_MEASURE
@@ -83,22 +86,22 @@ CONTAINS
          FFTW_FORWARD, FFTW_planflag)
     CALL dfftw_plan_dft_3d(pbackward,nx,ny,nz,p(:,:,:,1,1),p(:,:,:,1,1), &
          FFTW_BACKWARD, FFTW_planflag)
-    CALL dfftw_plan_many_dft(xforward,1,(/nx/),2*ny*nz, &
+    CALL dfftw_plan_many_dft(xforward,1,[nx],2*ny*nz, &
          p(:,:,:,:,1),0,1,nx,p(:,:,:,:,2),0,1,nx, &
          FFTW_FORWARD, FFTW_planflag)
-    CALL dfftw_plan_many_dft(xbackward,1,(/nx/),2*ny*nz, &
+    CALL dfftw_plan_many_dft(xbackward,1,[nx],2*ny*nz, &
          p(:,:,:,:,1),0,1,nx,p(:,:,:,:,1),0,1,nx, &
          FFTW_BACKWARD, FFTW_planflag)
-  CALL dfftw_plan_many_dft(yforward,1,(/ny/),nx, &
+  CALL dfftw_plan_many_dft(yforward,1,[ny],nx, &
        p(:,:,:,:,1),0,nx,1,p(:,:,:,:,2),0,nx,1, &
        FFTW_FORWARD, FFTW_planflag)
-  CALL dfftw_plan_many_dft(ybackward,1,(/ny/),nx, &
+  CALL dfftw_plan_many_dft(ybackward,1,[ny],nx, &
        p(:,:,:,:,1),0,nx,1,p(:,:,:,:,1),0,nx,1, &
        FFTW_BACKWARD, FFTW_planflag)
-  CALL dfftw_plan_many_dft(zforward,1,(/nz/),nx*ny, &
+  CALL dfftw_plan_many_dft(zforward,1,[nz],nx*ny, &
        p(:,:,:,:,1),0,nx*ny,1,p(:,:,:,:,2),0,nx*ny,1, &
        FFTW_FORWARD, FFTW_planflag)
-  CALL dfftw_plan_many_dft(zbackward,1,(/nz/),nx*ny, &
+  CALL dfftw_plan_many_dft(zbackward,1,[nz],nx*ny, &
        p(:,:,:,:,1),0,nx*ny,1,p(:,:,:,:,1),0,nx*ny,1, &
        FFTW_BACKWARD, FFTW_planflag)
     IF(wflag) WRITE(*,*) '***** FFTW3 plans established *****'

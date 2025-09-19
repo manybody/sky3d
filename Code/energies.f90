@@ -1,17 +1,17 @@
 !------------------------------------------------------------------------------
 ! MODULE: Modulename
 !------------------------------------------------------------------------------
-! DESCRIPTION: 
+! DESCRIPTION:
 !> @brief
 !!This module computes the total energy and the various contributions to
-!!it in two ways. The first method evaluates the density functional, 
+!!it in two ways. The first method evaluates the density functional,
 !!by direct integration to compute the <em> integrated
 !!energy</em> \c ehfint. The second method uses the sum of
 !!single-particle energies plus the rearrangement energies, \f$ E_{3,\rm
 !!corr} \f$ for the density dependent part and \f$ E_{C,\rm corr} \f$ for
 !!Coulomb exchange.
 !>
-!>@details 
+!>@details
 !!The two ways of calculating the energy are assigned to the subroutines
 !!\c integ_energy, which also calculates the rearrangement energies,
 !!and \c sum_energy. Note that since \c integ_energy is always
@@ -53,7 +53,7 @@
 !!    contact pairing interaction involving the pairing densities \f$ \xi_q \f$
 !!    augmented by an optional density dependence. The formula is
 !!    \f[ E_{\rm pair} = \frac{1}{4} \sum_{q\in\{p,n\}}V_\mathrm{pair,q}
-!!    \int \D^3r |\xi_q|^2 \left[1 -\frac{\rho}{\rho_{0,\mathrm{pair}}}\right]\;. \f]     
+!!    \int \D^3r |\xi_q|^2 \left[1 -\frac{\rho}{\rho_{0,\mathrm{pair}}}\right]\;. \f]
 !!    It contains a continuous switch, the parameter
 !!    \f$ \rho_{0,\mathrm{pair}} \f$. A pure \f$ \delta \f$-interaction (DI), also
 !!    called volume pairing, is recovered for
@@ -69,11 +69,18 @@
 !------------------------------------------------------------------------------
 MODULE Energies
   USE Params, ONLY: db,tcoul
-  USE Forces
-  USE Densities
-  USE Levels
+  USE Forces, ONLY: f, b0, b0p, b1, b1p, b2, b2p, b3, b3p, b4, b4, b4p, slate, &
+       ipair
+  USE Densities, ONLY: rho, tau, sdens, current, sodens
+  USE Levels, ONLY: sp_kinetic, sp_energy, sp_efluct1, sp_efluct2, wocc, sp_orbital, &
+       sp_spin
+  USE Grids, ONLY: nx,ny,nz
   USE Pairs, ONLY: epair
   IMPLICIT NONE
+  PRIVATE
+  PUBLIC :: ipair, ehfprev, ehf, efluct2prev, efluct2, efluct1prev, &
+       efluct1,tke,total_angmom,spin,orbital,ehfls,ehfint,ehfc,ehf3,ehf2,ehf1, &
+       ehf0,ecorc,e3corr
   SAVE
   ! total energies calculated in subroutine "energy" and "hfenergy"
   REAL(db) :: ehft            !< kinetic energy
@@ -101,7 +108,7 @@ MODULE Energies
   REAL(db) :: total_angmom(3) !< the three components of the total
                               !!angular momentum in units of \f$ \hbar \f$.
 CONTAINS
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: integ_energy
 !> @brief
 !!The purpose of this subroutine is to calculate the integrated energy.
@@ -118,28 +125,28 @@ CONTAINS
 !!
 !!The calculation proceeds in the following steps:
 !!  - <b> Step 1:</b> the Laplacian of the densities is calculated in
-!!    \c worka, then the integrals for 
+!!    \c worka, then the integrals for
 !!    \c ehf0,\c ehf2, and \c ehf3 are performed.
 !!    After the loop the result for \c ehf3 is also used to calculate
 !!    \c e3corr.
 !!  - <b> Step 2:</b> the integral for \c ehf1 is evaluated
 !!    using \c worka for the \f$ \vec\jmath_q{}^2 \f$ term.
-!!  - <b> Step 3:</b> the spin-orbit contribution of 
+!!  - <b> Step 3:</b> the spin-orbit contribution of
 !!    \c ehfls is calculated using \c worka as storage for
 !!    \f$ \nabla\cdot\vec J_q \f$.
-!!  - <b> Step 4:</b> the Coulomb energy \c ehfc is evaluated 
+!!  - <b> Step 4:</b> the Coulomb energy \c ehfc is evaluated
 !!    with the Slater correction taken into account if the
 !!    force's \c ex is nonzero. At the same time the Coulomb correction
 !!    for the summed energy is calculated
 !!    and stored in \c ecorc. It will be used in
 !!    the subroutine \c sum_energy.
-!!  - <b> Step 5: </b> the kinetic energy is integrated for 
+!!  - <b> Step 5: </b> the kinetic energy is integrated for
 !!    \c ehft. Note that only at this point the correct prefactor
 !!    \f$ \hbar^2/2m \f$ is added; the use of \c tau in other expressions
 !!    assumes its absence.
 !!  - <b> Step 6: </b> Finally all terms are added to produce the total
 !!  energy, \c efundet, from which the pairing energies are subtracted.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE integ_energy
     USE Trivial, ONLY: rmulx,rmuly,rmulz
     USE Grids, ONLY: wxyz,der1x,der2x,der1y,der2y,der1z,der2z
@@ -234,27 +241,27 @@ CONTAINS
     ! Step 6: form total energy
     ehfint=ehft+ehf0+ehf1+ehf2+ehf3+ehfls+ehfc-epair(1)-epair(2)
   END SUBROUTINE integ_energy
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: sum_energy
 !> @brief
 !!This subroutine mainly computes the Koopman sum, but also
-!!sums up a number of other single-particle properties. 
+!!sums up a number of other single-particle properties.
 !>
 !> @details
 !!For systematics, the latter should be done in a different
 !!place, but at present is left here.
 !!
-!!The summation of the total energy uses \c spenerg to compute 
+!!The summation of the total energy uses \c spenerg to compute
 !!\f[ \sum_k (\epsilon_k-\tfrac1{2}v_k)=\tfrac1{2}\sum_k(2t_k+v_k)=
 !!\tfrac1{2}\sum_k(t_k+\epsilon_k). \f]
-!!The last sum is calculated, the rearrangement corrections 
+!!The last sum is calculated, the rearrangement corrections
 !!are added and the pairing energies subtracted.
 !!
 !!The subroutine then sums up the single-particle energy fluctuation
 !!\c sp_efluct1 and \c sp_efluct2, dividing them by the nucleon
 !!number.  Finally the orbital and spin angular
-!!momentum components are summed to form the total ones. 
-!--------------------------------------------------------------------------- 
+!!momentum components are summed to form the total ones.
+!---------------------------------------------------------------------------
   SUBROUTINE sum_energy
     USE Moment, ONLY: pnrtot
     INTEGER :: i

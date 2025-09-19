@@ -1,7 +1,7 @@
 !------------------------------------------------------------------------------
 ! MODULE: Modulename
 !------------------------------------------------------------------------------
-! DESCRIPTION: 
+! DESCRIPTION:
 !> @brief
 !!This module deals with the definition of the spatial grid and associated operations.
 !------------------------------------------------------------------------------
@@ -15,43 +15,45 @@ MODULE Grids
   !!reflection symmetry.
   INTEGER  :: nz            !<  Number of points in z-direction. Must be even to preserve
   !!reflection symmetry.
-  LOGICAL  :: periodic      !< logical variable indicating whether the situation is triply 
+  LOGICAL  :: periodic      !< logical variable indicating whether the situation is triply
   !!periodic in three-dimensional space.
   REAL(db) :: dx            !< The spacing between grid points (in fm) in x-directions.
   REAL(db) :: dy            !< The spacing between grid points (in fm) in y-directions.
   REAL(db) :: dz            !< The spacing between grid points (in fm) in z-directions.
   REAL(db) :: wxyz          !< the volume element <tt> wxyz=dx*dy*dz</tt>.
   REAL(db),POINTER :: x(:)  !<array containing the actual x-coordinate values in fm, dimensioned
-  !!as \c x(nx) and allocated dynamically, thus allowing dynamic dimensioning through input 
+  !!as \c x(nx) and allocated dynamically, thus allowing dynamic dimensioning through input
   !!values of \c nx.
   REAL(db),POINTER :: y(:)  !<array containing the actual y-coordinate values in fm, dimensioned
-  !!as \c x(ny) and allocated dynamically, thus allowing dynamic dimensioning through input 
+  !!as \c x(ny) and allocated dynamically, thus allowing dynamic dimensioning through input
   !!values of \c ny.
   REAL(db),POINTER :: z(:)  !<array containing the actual z-coordinate values in fm, dimensioned
-  !!as \c x(nz) and allocated dynamically, thus allowing dynamic dimensioning through input 
+  !!as \c x(nz) and allocated dynamically, thus allowing dynamic dimensioning through input
   !!values of \c nz.
   REAL(db),POINTER,DIMENSION(:,:) ::  &
-              der1x, &      !<matrices describing the first spatial derivatives in the x-direction, 
+              der1x, &      !<matrices describing the first spatial derivatives in the x-direction,
   !!dynamically allocated with dimensions <tt> (nx,nx) </tt> and calculated in subroutine \c sder.
-              der2x, &      !<matrices describing the second spatial derivatives in the x-direction, 
+              der2x, &      !<matrices describing the second spatial derivatives in the x-direction,
   !!dynamically allocated with dimensions <tt> (nx,nx) </tt> and calculated in subroutine \c sder2.
-              cdmpx, &      !<matrices describing the damping operation in the x-direction, 
+              cdmpx, &      !<matrices describing the damping operation in the x-direction,
   !!dynamically allocated with dimensions <tt> (nx,nx) </tt> and calculated in subroutine \c setdmc.
-              der1y, &      !<matrices describing the first spatial derivatives in the y-direction, 
+              der1y, &      !<matrices describing the first spatial derivatives in the y-direction,
   !!dynamically allocated with dimensions <tt> (ny,ny) </tt> and calculated in subroutine \c sder.
-              der2y, &      !<matrices describing the second spatial derivatives in the y-direction, 
+              der2y, &      !<matrices describing the second spatial derivatives in the y-direction,
   !!dynamically allocated with dimensions <tt> (ny,ny) </tt> and calculated in subroutine \c sder2.
-              cdmpy, &      !<matrices describing the damping operation in the y-direction, 
+              cdmpy, &      !<matrices describing the damping operation in the y-direction,
   !!dynamically allocated with dimensions <tt> (ny,ny) </tt> and calculated in subroutine \c setdmc.
-              der1z, &      !<matrices describing the first spatial derivatives in the z-direction, 
+              der1z, &      !<matrices describing the first spatial derivatives in the z-direction,
   !!dynamically allocated with dimensions <tt> (nz,nz) </tt> and calculated in subroutine \c sder.
-              der2z, &      !<matrices describing the second spatial derivatives in the z-direction, 
+              der2z, &      !<matrices describing the second spatial derivatives in the z-direction,
   !!dynamically allocated with dimensions <tt> (nz,nz) </tt> and calculated in subroutine \c sder2.
-              cdmpz         !<matrices describing the damping operation in the z-direction, 
+              cdmpz         !<matrices describing the damping operation in the z-direction,
   !!dynamically allocated with dimensions <tt> (nz,nz) </tt> and calculated in subroutine \c setdmc.
-  PRIVATE :: init_coord, sder, sder2, setdmc, gauss
+  PRIVATE
+  PUBLIC :: nx,ny,nz,wxyz,dx,dy,dz,der1x,der1y,der1z,der2x,der2y,der2z, &
+       x,y,z,periodic,cdmpx,cdmpy,cdmpz,init_grid
 CONTAINS
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: init_grid
 !> @brief
 !!This subroutine is called during the initialization for both static
@@ -63,8 +65,8 @@ CONTAINS
 !> @details
 !!This is done by calling the subroutine \c init_coord once for each
 !!direction. It does everything needed except the calculation of
-!!the volume element. 
-!--------------------------------------------------------------------------- 
+!!the volume element.
+!---------------------------------------------------------------------------
   SUBROUTINE init_grid
     NAMELIST /Grid/ nx,ny,nz,dx,dy,dz,periodic
     dx=0.D0
@@ -93,11 +95,11 @@ CONTAINS
     CALL init_coord('z',nz,dz,z,der1z,der2z,cdmpz)
     wxyz=dx*dy*dz
   END SUBROUTINE init_grid
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: Routinename
 !> @brief
 !!In this subroutine the defining information for a grid direction
-!!(generically called \c v, which can be replaced by \c x, \c y, or \c z) 
+!!(generically called \c v, which can be replaced by \c x, \c y, or \c z)
 !!in the form of the number of points \c nv and the
 !!spacing \c dv is used to generate the associated data.  The arrays
 !!of coordinate values, derivative and damping matrices are allocated.
@@ -118,7 +120,7 @@ CONTAINS
 !!be done by changing the statement generating the values of \c v.
 !!
 !!Finally the derivative matrices and damping matrix are computed using
-!!\c sder, \c sder2, and \c setdmc. 
+!!\c sder, \c sder2, and \c setdmc.
 !>
 !> @param[in] name
 !> CHARACTER, array, takes x, y, or z as sirection.
@@ -134,40 +136,38 @@ CONTAINS
 !> REAL(db), array, returns matrix for second derivative.
 !> @param[out] cdmpv
 !> REAL(db), array, returns matrix for damping.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE init_coord(name,nv,dv,v,der1v,der2v,cdmpv)
-    CHARACTER(*) :: name
-    INTEGER :: nv
-    REAL(db) :: dv
-    INTENT(IN) :: name,nv,dv
-    REAL(db),POINTER :: v(:),der1v(:,:), &
+    CHARACTER(len=1), intent(in) :: name
+    INTEGER, intent(in) :: nv
+    REAL(db), intent(in)  :: dv
+    REAL(db),POINTER, intent(out) :: v(:),der1v(:,:), &
          der2v(:,:),cdmpv(:,:)
     INTEGER :: i
     ALLOCATE(v(nv),der1v(nv,nv),der2v(nv,nv),cdmpv(nv,nv))
-    v=(/ ((i-1)*dv-0.5D0*FLOAT(nv-1)*dv,i=1,nv) /)
+    v=[ ((i-1)*dv-0.5D0*FLOAT(nv-1)*dv,i=1,nv) ]
     IF(wflag) THEN
-       WRITE(*,'(1X,A,I3,A,F8.4,2(A,F8.4))') name // ' direction: ',nv, &
+       WRITE(*,'(1X,A,I3,A,F8.4,2(A,F8.4))') trim(name) // ' direction: ',nv, &
             ' points, spacing:',dv,' ranging from ',v(1),' to ',v(nv)
     ENDIF
     CALL sder(der1v,nv,dv)
     CALL sder2(der2v,nv,dv)
   END SUBROUTINE init_coord
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: sder
 !> @brief
-!!This subroutine calculates the matrix for the first derivative. 
+!!This subroutine calculates the matrix for the first derivative.
 !> @param[out] der
 !> REAL(db), array, returns derivative matrix.
 !> @param[in] nmax
 !> INTEGER, takes the dimension.
 !> @param[in] d
-!> REAL(db), takes the grid spacing. 
-!--------------------------------------------------------------------------- 
+!> REAL(db), takes the grid spacing.
+!---------------------------------------------------------------------------
   PURE SUBROUTINE sder(der,nmax,d)
-    INTEGER :: nmax
-    REAL(db) :: d,der(:,:)
-    INTENT(IN) :: nmax,d
-    INTENT(OUT) :: der
+    INTEGER, intent(in) :: nmax
+    REAL(db), intent(in) :: d
+    REAL(db), intent(out) :: der(:,:)
     REAL(db) :: afac,sum
     INTEGER :: i,k,j,icn
     icn=(nmax+1)/2
@@ -183,22 +183,21 @@ CONTAINS
        ENDDO
     ENDDO
   END SUBROUTINE sder
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: sder2
 !> @brief
-!!This subroutine calculates the matrix for the second derivative. 
+!!This subroutine calculates the matrix for the second derivative.
 !> @param[out] der
 !> REAL(db), array, returns derivative matrix.
 !> @param[in] nmax
 !> INTEGER, takes the dimension.
 !> @param[in] d
-!> REAL(db), takes the grid spacing. 
-!--------------------------------------------------------------------------- 
+!> REAL(db), takes the grid spacing.
+!---------------------------------------------------------------------------
   PURE SUBROUTINE sder2(der,nmax,d)
-    INTEGER :: nmax
-    REAL(db) :: d,der(1:nmax,1:nmax)
-    INTENT(IN) :: nmax,d
-    INTENT(OUT) :: der
+    INTEGER, intent(in)  :: nmax
+    REAL(db), intent(in) :: d
+    REAL(db), intent(out) :: der(1:nmax,1:nmax)
     REAL(db) :: afac,sum
     INTEGER :: i,k,j,icn
     icn=(nmax+1)/2
@@ -214,35 +213,35 @@ CONTAINS
        ENDDO
     ENDDO
   END SUBROUTINE sder2
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: setup_damping
 !> @brief
 !!This sets up the damping matrices by calls to \c setdmc for each
-!!coordinate direction. 
+!!coordinate direction.
 !>
 !> @details
-!!The reason for not including this in \c init_grid 
+!!The reason for not including this in \c init_grid
 !!is that it used only in the static calculation and
 !!requires the damping parameter \c e0dmp, which is in the static
-!!module. It has to be passed as a parameter because 
+!!module. It has to be passed as a parameter because
 !!circular dependence of modules would result otherwise.
 !>
 !> @param[in] e0dmp
 !>REAL(db), takes the damping parameter.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE setup_damping(e0dmp)
     REAL(db),INTENT(IN) :: e0dmp
     CALL setdmc(der2x,nx,cdmpx,e0dmp)
     CALL setdmc(der2y,ny,cdmpy,e0dmp)
     CALL setdmc(der2z,nz,cdmpz,e0dmp)
   END SUBROUTINE setup_damping
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: setdmc
 !> @brief
 !!This subroutine calculates the matrices corresponding to the
 !!one-dimensional operators
 !!\f[ \frac{1}{1+\hat t/E_0} {\rm~with~} \hat
-!!t=-\frac{\hbar^2}{2m}\frac{\partial^2}{\partial x^2}. \f] 
+!!t=-\frac{\hbar^2}{2m}\frac{\partial^2}{\partial x^2}. \f]
 !>
 !> @details
 !!Here \f$ E_0 \f$ is
@@ -259,10 +258,10 @@ CONTAINS
 !> @param[in] nmax
 !> INTEGER, takes the number of grid points
 !> @param[out] cdmp
-!> REAL(db), array, returns the damping matrix. 
+!> REAL(db), array, returns the damping matrix.
 !> @param[in] e0dmp
 !> REAL(db), takes the damping parameter.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   PURE SUBROUTINE setdmc(der2,nmax,cdmp,e0dmp)
     USE Forces, ONLY: h2ma
     REAL(db),INTENT(IN) :: der2(:,:)
@@ -273,14 +272,14 @@ CONTAINS
     INTEGER :: i
     cdmp=0.D0
     IF(e0dmp<=0.D0) RETURN
-    unit=-h2ma*der2/e0dmp  
+    unit=-h2ma*der2/e0dmp
     FORALL(i=1:nmax)
-       unit(i,i)=1.0D0+unit(i,i)  
-       cdmp(i,i)=1.0D0  
+       unit(i,i)=1.0D0+unit(i,i)
+       cdmp(i,i)=1.0D0
     END FORALL
     CALL gauss(unit,cdmp,nmax)
   END SUBROUTINE setdmc
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: gauss
 !> @brief
 !!This is a Fortran 95 implementation of the standard Gauss algorithm
@@ -291,8 +290,8 @@ CONTAINS
 !> @param[in,out] b
 !> REAL(db), array, takes and returns the matrix b.
 !> @param[in] n
-!> INTEGER, takes the number of grid points. 
-!--------------------------------------------------------------------------- 
+!> INTEGER, takes the number of grid points.
+!---------------------------------------------------------------------------
   PURE SUBROUTINE gauss(a,b,n)
     INTEGER,INTENT(IN) :: n
     REAL(db),INTENT(IN) :: a(n,n)
@@ -313,7 +312,7 @@ CONTAINS
        ! using d as intermediate storage
        IF(k/=ks) THEN
           d(k:2*n)=c(k,k:2*n)
-          c(k,k:2*n)=c(ks,k:2*n) 
+          c(k,k:2*n)=c(ks,k:2*n)
           c(ks,k:2*n)=d(k:2*n)
        END IF
        c(k,k+1:2*n)=c(k,k+1:2*n)/c(k,k)

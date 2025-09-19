@@ -1,24 +1,29 @@
 !------------------------------------------------------------------------------
 ! MODULE: Levels
 !------------------------------------------------------------------------------
-! DESCRIPTION: 
+! DESCRIPTION:
 !> @brief
 !!This module is concerned with the wave function data: definition of
 !!the pertinent arrays, allocating their storage and simple operations on them.
 !------------------------------------------------------------------------------
 MODULE Levels
-  USE Params, ONLY: db,pi
+  USE Params, ONLY: db,pi, wflag
   USE Grids, ONLY: nx,ny,nz,dx,dy,dz
-  USE Fourier
+  USE Fourier, ONLY: pbackward, pforward, zbackward, zforward, ybackward, &
+       yforward, xbackward, xforward
   IMPLICIT NONE
+  PRIVATE
+  PUBLIC :: cdervx,cdervy,cdervz,nstmax,npsi,nstloc,sp_kinetic,sp_orbital, &
+       sp_parity,isospin,wocc,sp_norm,sp_energy,sp_efluct1,nprot,nneut,npmin, &
+       charge_number,sp_spin,mass_number,psi,sp_efluct2,laplace,hmatr
   SAVE
   INTEGER :: nstmax                        !<is the total number of wave functions
   !!present in the calculation. For the MPI version only \c nstloc
   !!wave functions are present on each node. Note that for all other
   !!wave-function related arrays, such as single-particle energies, the
   !!full set is stored on each node.
-  INTEGER :: nstloc                         !<the number of wave functions stored 
-  !!on the present node. In principle this should be defined in module 
+  INTEGER :: nstloc                         !<the number of wave functions stored
+  !!on the present node. In principle this should be defined in module
   !!\c Parallel, but this would lead to a circular module dependence.
   INTEGER :: nneut                          !<the physical numbers of
   !!neutrons. These may be smaller than the number of single-particle states.
@@ -29,7 +34,7 @@ MODULE Levels
   !!The neutron states are
   !!numbered <tt> npmin(1)</tt> through <tt> npsi(1)</tt> and the proton states
   !>run from <tt> npmin(2)</tt> through <tt> npsi(2)</tt>. Protons follow
-  !>neutrons, so <tt> npmin(1)=1</tt> and <tt> npmin(2)=npsi(1)+1</tt>. 
+  !>neutrons, so <tt> npmin(1)=1</tt> and <tt> npmin(2)=npsi(1)+1</tt>.
   !><em>Note that for each particle type the number of states can be
   !>larger than the particle number, as states may be fractionally
   !>occupied or even empty.</em>  If initialization is not from fragments,
@@ -38,8 +43,8 @@ MODULE Levels
   !>meaning as the final index for proton states, which coincides with
   !>the total number of states, <tt> npsi(2)=nstmax</tt>.
   !>@{
-  INTEGER :: npmin(2)                     
-  INTEGER :: npsi(2)                        
+  INTEGER :: npmin(2)
+  INTEGER :: npsi(2)
   !>@}
   REAL(db) :: charge_number,&               !<the physical charge numbers.
               mass_number                   !<the physical mass numbers.
@@ -47,16 +52,16 @@ MODULE Levels
   !!It has an additional last index counting the states. In the
   !!sequential case it runs from \f$ 1\ldots{\tt nstmax} \f$, in the MPI
   !!version each node has only \c nstloc wave functions.
-  COMPLEX(db), ALLOCATABLE :: hmatr(:,:)    !<this is dimensioned <tt> (nstmax,nstmax)</tt> 
+  COMPLEX(db), ALLOCATABLE :: hmatr(:,:)    !<this is dimensioned <tt> (nstmax,nstmax)</tt>
   !!and is used for the single-particle Hamiltonian in the diagonalization step.
   REAL(db), ALLOCATABLE, DIMENSION(:) :: sp_energy       !<single-particle energy in MeV.
   REAL(db), ALLOCATABLE, DIMENSION(:) :: sp_efluct1      !<single-particle energy fluctuation in MeV calculated as
-  !!\f[ \sqrt{\langle\psi|\hat h^2|\psi\rangle-\langle\psi|\hat h|\psi\rangle^2}. \f] 
+  !!\f[ \sqrt{\langle\psi|\hat h^2|\psi\rangle-\langle\psi|\hat h|\psi\rangle^2}. \f]
   !!Used only as informational printout in the static part.
   REAL(db), ALLOCATABLE, DIMENSION(:) :: sp_kinetic      !<single-particle kinetic energy in units of MeV.
   REAL(db), ALLOCATABLE, DIMENSION(:) :: sp_norm         !<norm of single-particle wave function; should be unity normally.
   REAL(db), ALLOCATABLE, DIMENSION(:) :: sp_efluct2      !<single-particle energy fluctuation in MeV calculated as
-  !!\f[ \sqrt{\langle\hat h\psi|\hat h\psi\rangle-\langle\psi|\hat h|\psi\rangle^2}. \f] 
+  !!\f[ \sqrt{\langle\hat h\psi|\hat h\psi\rangle-\langle\psi|\hat h|\psi\rangle^2}. \f]
   !!Used only as informational printout in the static part.
   REAL(db), ALLOCATABLE, DIMENSION(:) :: sp_parity       !<single-particle parity w.r.t.
   !!three-dimensional reflection at the origin; calculated as
@@ -73,31 +78,31 @@ MODULE Levels
   INTEGER, ALLOCATABLE :: isospin(:)                     !<keeps track of isospin of particle,
   !!1=neutron, 2=proton.
 CONTAINS
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: alloc_levels
 !> @brief
 !!This subroutine allocates all the arrays associated with
-!!single-particle wave functions. 
+!!single-particle wave functions.
 !>
 !> @details
 !!Note that while most have dimension
-!!\c nstmax, \c psi itself is dimensioned for the number \c nstloc of wave 
+!!\c nstmax, \c psi itself is dimensioned for the number \c nstloc of wave
 !!functions on one specific processor. It also records the isospin value.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE alloc_levels
     ALLOCATE(psi(nx,ny,nz,2,nstloc), &
-         sp_energy(nstmax),sp_efluct1(nstmax),sp_kinetic(nstmax),& 
+         sp_energy(nstmax),sp_efluct1(nstmax),sp_kinetic(nstmax),&
          sp_norm(nstmax),sp_efluct2(nstmax),sp_parity(nstmax), &
          sp_orbital(3,nstmax),sp_spin(3,nstmax),wocc(nstmax), &
          isospin(nstmax))
     isospin(1:npsi(1))=1
     isospin(npmin(2):npsi(2))=2
   END SUBROUTINE alloc_levels
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: cdervx
 !> @brief
 !!This routine calculates
-!!derivatives of wave functions using the FFT method, in the \f$ x \f$-direction. 
+!!derivatives of wave functions using the FFT method, in the \f$ x \f$-direction.
 !>
 !> @details
 !!The last argument can be omitted
@@ -111,11 +116,11 @@ CONTAINS
 !> COMPLEX(db), array, returns the first derivative.
 !> @param[out] d2psout
 !> COMPLEX(db), array, OPTIONAL, returns the first derivative.
-!--------------------------------------------------------------------------- 
-  SUBROUTINE cdervx(psin,d1psout,d2psout)  
+!---------------------------------------------------------------------------
+  SUBROUTINE cdervx(psin,d1psout,d2psout)
     COMPLEX(db), INTENT(IN) ::  psin(:,:,:,:)
     COMPLEX(db), INTENT(OUT):: d1psout(:,:,:,:)
-    COMPLEX(db), INTENT(OUT), OPTIONAL :: d2psout(:,:,:,:)  
+    COMPLEX(db), INTENT(OUT), OPTIONAL :: d2psout(:,:,:,:)
     REAL(db) :: kfac
     INTEGER :: ix
     kfac=(PI+PI)/(dx*nx)
@@ -138,11 +143,11 @@ CONTAINS
     d1psout(nx/2+1,:,:,:)=(0.D0,0.D0)
     CALL dfftw_execute_dft(xbackward,d1psout,d1psout)
   END SUBROUTINE cdervx
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: cdervy
 !> @brief
 !!This routine calculates
-!!derivatives of wave functions using the FFT method, in the \f$ y \f$-direction. 
+!!derivatives of wave functions using the FFT method, in the \f$ y \f$-direction.
 !>
 !> @details
 !!The last argument can be omitted
@@ -156,11 +161,11 @@ CONTAINS
 !> COMPLEX(db), array, returns the first derivative.
 !> @param[out] d2psout
 !> COMPLEX(db), array, OPTIONAL, returns the first derivative.
-!--------------------------------------------------------------------------- 
-  SUBROUTINE cdervy(psin,d1psout,d2psout)  
+!---------------------------------------------------------------------------
+  SUBROUTINE cdervy(psin,d1psout,d2psout)
     COMPLEX(db), INTENT(IN) :: psin(:,:,:,:)
     COMPLEX(db), INTENT(OUT):: d1psout(:,:,:,:)
-    COMPLEX(db), INTENT(OUT), OPTIONAL :: d2psout(:,:,:,:)  
+    COMPLEX(db), INTENT(OUT), OPTIONAL :: d2psout(:,:,:,:)
     REAL(db) :: kfac
     INTEGER :: iy,is,k
     kfac=(PI+PI)/(dy*ny)
@@ -195,11 +200,11 @@ CONTAINS
        END DO
     END DO
   END SUBROUTINE cdervy
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: cdervz
 !> @brief
 !!This routine calculates
-!!derivatives of wave functions using the FFT method, in the \f$ z \f$-direction. 
+!!derivatives of wave functions using the FFT method, in the \f$ z \f$-direction.
 !>
 !> @details
 !!The last argument can be omitted
@@ -213,11 +218,11 @@ CONTAINS
 !> COMPLEX(db), array, returns the first derivative.
 !> @param[out] d2psout
 !> COMPLEX(db), array, OPTIONAL, returns the first derivative.
-!--------------------------------------------------------------------------- 
-  SUBROUTINE cdervz(psin,d1psout,d2psout)  
+!---------------------------------------------------------------------------
+  SUBROUTINE cdervz(psin,d1psout,d2psout)
     COMPLEX(db), INTENT(IN) :: psin(:,:,:,:)
     COMPLEX(db), INTENT(OUT):: d1psout(:,:,:,:)
-    COMPLEX(db), INTENT(OUT), OPTIONAL :: d2psout(:,:,:,:)  
+    COMPLEX(db), INTENT(OUT), OPTIONAL :: d2psout(:,:,:,:)
     REAL(db) :: kfac
     INTEGER :: iz,is
     kfac=(PI+PI)/(dz*nz)
@@ -246,7 +251,7 @@ CONTAINS
        CALL dfftw_execute_dft(zbackward,d1psout(:,:,:,is),d1psout(:,:,:,is))
     END DO
   END SUBROUTINE cdervz
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: laplace
 !> @brief
 !!depending on the presence of the third argument \c e0inv, it can
@@ -271,8 +276,8 @@ CONTAINS
 !> COMPLEX(db), array, returns the resulting wave function.
 !> @param[in] e0inv
 !> REAL(db), OPTIONAL, takes the damping factor.
-!--------------------------------------------------------------------------- 
-  SUBROUTINE laplace(psin,psout,e0inv)  
+!---------------------------------------------------------------------------
+  SUBROUTINE laplace(psin,psout,e0inv)
     USE Forces, ONLY: h2ma
     USE Grids, ONLY: dx,dy,dz
     COMPLEX(db), INTENT(IN)   :: psin(:,:,:,:)
@@ -317,19 +322,19 @@ CONTAINS
        CALL dfftw_execute_dft(pbackward,psout(:,:,:,is),psout(:,:,:,is))
     END DO
   END SUBROUTINE laplace
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: schmid
 !> @brief
 !!This performs a Gram-Schmidt orthogonalization of the single particle
 !!levels in the straightforward way: loop over states and subtract the
-!!components of all lower-indexed states from a wave function. 
-!!the static calculations. 
+!!components of all lower-indexed states from a wave function.
+!!the static calculations.
 !>
 !> @details
 !!It can be
 !!parallelized under \c OpenMP, albeit not very efficiently, but
 !!becomes too slow under \c MPI, so that \c MPI is not enabled for
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE schmid
     USE Trivial, ONLY: rpsnorm, overlap
     COMPLEX(db) :: oij,omptemp(nx,ny,nz,2)
@@ -339,7 +344,7 @@ CONTAINS
        IF(npsi(iq)-npmin(iq)+1 /= 1) THEN
           DO nst=npmin(iq),npsi(iq)
              omptemp=0
-             !$OMP PARALLEL DO PRIVATE(j,oij) REDUCTION(+:omptemp) 
+             !$OMP PARALLEL DO PRIVATE(j,oij) REDUCTION(+:omptemp)
              DO j=npmin(iq),nst-1
                 oij=overlap(psi(:,:,:,:,j),psi(:,:,:,:,nst))
                 omptemp(:,:,:,:)=omptemp(:,:,:,:)+oij*psi(:,:,:,:,j)

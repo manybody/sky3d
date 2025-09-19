@@ -1,21 +1,24 @@
 !------------------------------------------------------------------------------
 ! MODULE: Parallel
 !------------------------------------------------------------------------------
-! DESCRIPTION: 
+! DESCRIPTION:
 !> @brief
-!!contains the same routines as in file \c parallel.f90, but with mostly empty 
-!!functions to enable sequential running. 
+!!contains the same routines as in file \c parallel.f90, but with mostly empty
+!!functions to enable sequential running.
 !------------------------------------------------------------------------------
 MODULE Parallel
   USE Params, ONLY: wflag,db
   USE Levels, ONLY: nstmax,npsi,nstloc
   IMPLICIT NONE
   SAVE
-  LOGICAL,PARAMETER :: tmpi=.FALSE. 
+  LOGICAL,PARAMETER :: tmpi=.FALSE.
   INTEGER, ALLOCATABLE :: node(:),localindex(:),globalindex(:)
   INTEGER :: mpi_nprocs,mpi_ierror,mpi_myproc, &
        processor_name,proc_namelen
   INTEGER :: mpi_comm_world,mpi_sum,mpi_double_precision
+  PRIVATE
+  PUBLIC :: node,localindex,mpi_myproc,mpi_nprocs, &
+       nstloc,globalindex,tmpi,mpi_comm_world,mpi_ierror
 CONTAINS     !  all dummy subroutines to run on a sequential machine
   !************************************************************************
   SUBROUTINE alloc_nodes
@@ -31,35 +34,35 @@ CONTAINS     !  all dummy subroutines to run on a sequential machine
   !************************************************************************
   !> dummy function for the MPI routine
   SUBROUTINE mpi_init(ierror)
-    INTEGER :: ierror
+    INTEGER, intent(in) :: ierror
     STOP ' MPI_INIT: parallel calls inhibited '
     RETURN
   END SUBROUTINE mpi_init
   !************************************************************************
   !> dummy function for the MPI routine
   SUBROUTINE mpi_comm_size(comm_world,nprocs,ierror)
-    INTEGER :: ierror, nprocs, comm_world
+    INTEGER, intent(in) :: ierror, nprocs, comm_world
     STOP ' MPI_COMM_SIZE: parallel calls inhibited '
     RETURN
   END SUBROUTINE mpi_comm_size
   !************************************************************************
   !> dummy function for the MPI routine
   SUBROUTINE mpi_comm_rank(comm_world,myproc,ierror)
-    INTEGER :: ierror, myproc, comm_world
+    INTEGER, intent(in) :: ierror, myproc, comm_world
     STOP ' parallel calls inhibited '
     RETURN
   END SUBROUTINE mpi_comm_rank
   !************************************************************************
   !> dummy function for the MPI routine
   SUBROUTINE mpi_get_processor_name(processor_name,proc_namelen,ierror)
-    INTEGER :: ierror, processor_name, proc_namelen
+    INTEGER, intent(in) :: ierror, processor_name, proc_namelen
     STOP ' parallel calls inhibited '
     RETURN
   END SUBROUTINE mpi_get_processor_name
   !************************************************************************
   !> dummy function for the MPI routine
   SUBROUTINE mpi_barrier (comm_world, ierror)
-    INTEGER :: ierror, comm_world
+    INTEGER , intent(in) :: ierror, comm_world
     STOP ' parallel calls inhibited '
     RETURN
   END SUBROUTINE mpi_barrier
@@ -68,7 +71,7 @@ CONTAINS     !  all dummy subroutines to run on a sequential machine
     INTEGER :: i
     node=0
     nstloc=nstmax
-    FORALL(i=1:nstmax) 
+    FORALL(i=1:nstmax)
        globalindex(i)=i
        localindex(i)=i
     END FORALL
@@ -78,8 +81,8 @@ CONTAINS     !  all dummy subroutines to run on a sequential machine
   SUBROUTINE mpi_allreduce(rho,tmp_rho,length,        &
        i_double_precision,sum,  &
        comm_world,ierror)
-    INTEGER :: ierror, comm_world, i_double_precision, length, sum
-    REAL(db), DIMENSION(*), INTENT(IN) :: rho,tmp_rho
+    INTEGER, intent(in) :: ierror, comm_world, i_double_precision, length, sum
+    REAL(db), DIMENSION(:), INTENT(IN) :: rho,tmp_rho
     STOP ' parallel calls inhibited '
     RETURN
   END SUBROUTINE mpi_allreduce

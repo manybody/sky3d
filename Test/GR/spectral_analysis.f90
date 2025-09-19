@@ -1,15 +1,15 @@
 PROGRAM spectral_analysis
 !
-! This program computes the spectral distribution of quadrupole 
-! oscillations produced as output on file 'quadrupoles.res'. 
+! This program computes the spectral distribution of quadrupole
+! oscillations produced as output on file 'quadrupoles.res'.
 ! Isoscalar and isovector quadrupole moments are composed from the
 ! information on x**2, y**2, and z**2 in 'quadrupoles.res'.
 ! A limiting time profile of type COS**n is multiplied to the signal
 ! to guarantee that the signal approaches zero at the end of the
 ! time interval (called time filtering, or windowing).
 ! It is assumed that the quadrupole motion was initialized by an
-! instantaneous isoscalar quadrupole boost. The spectral strength is 
-! then simply the imaginary part of the Fourier transform of the 
+! instantaneous isoscalar quadrupole boost. The spectral strength is
+! then simply the imaginary part of the Fourier transform of the
 ! isoscalar signal. The code also produces the Fourier transform
 ! of the isovector signal. This has to be taken with care because
 ! the excitation operator and the analzing operator are not the same
@@ -31,7 +31,7 @@ PROGRAM spectral_analysis
 
 
 !
-! A first quick reading to check the length and integrity of 
+! A first quick reading to check the length and integrity of
 ! the data file.
 !
   OPEN(1,file='extfield.res')
@@ -62,7 +62,7 @@ PROGRAM spectral_analysis
   READ(1,'(1x)')
   DO nt=1,ndim
     READ(1,*,ERR=29,END=29) timax,qext(nt)
-    filter = COS((nt-1)*PI/(2D0*(ndim-1)))**nfilter    
+    filter = COS((nt-1)*PI/(2D0*(ndim-1)))**nfilter
     qfilter(nt) = qext(nt)*filter
     WRITE(2,'(f10.2,4(1pg13.5))') (nt-1)*deltime,qfilter(nt)
   END DO

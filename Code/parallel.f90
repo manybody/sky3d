@@ -1,14 +1,14 @@
 !------------------------------------------------------------------------------
 ! MODULE: Parallel
 !------------------------------------------------------------------------------
-! DESCRIPTION: 
+! DESCRIPTION:
 !> @brief
 !!This module organizes the execution on distributed-memory machines
 !!using \c MPI. Its interface is made such that on sequential
 !!machines \c parallel.f90 can simply be replaced by a special
 !!version \c sequential.f90 which contains a definition of this
 !!module generating trivial data.
-!> 
+!>
 !> @details
 !!\c MPI parallelization is
 !!based on distributing the wave functions onto the different nodes.
@@ -27,13 +27,12 @@
 !!communicate many small arrays.
 !!
 !!Since an efficient way of dealing with Gram-Schmidt orthogonalization
-!!in this case was yet not found, at present the code can be run in \c MPI 
-!!parallel mode only for the dynamic case. 
+!!in this case was yet not found, at present the code can be run in \c MPI
+!!parallel mode only for the dynamic case.
 !------------------------------------------------------------------------------
 MODULE Parallel
   USE Params, ONLY : wflag
   USE Grids, ONLY: nx,ny,nz
-  USE Levels
   IMPLICIT NONE
   INCLUDE 'mpif.h'
   SAVE
@@ -47,30 +46,33 @@ MODULE Parallel
   !!\c node(i) and its index on that node is \c localindex(i).
   INTEGER, ALLOCATABLE :: globalindex(:) !<tells the index of the single-particle
   !!state in the whole array of \c nstmax states (it could be
-  !!dimensioned \c nstloc but is dimensioned as \c nstmax 
-  !!to make its allocation simpler). So for wave function index \c i 
+  !!dimensioned \c nstloc but is dimensioned as \c nstmax
+  !!to make its allocation simpler). So for wave function index \c i
   !!<em> on the local node</em>, <tt> i=1..nstloc</tt>, the
-  !!single-particle energy must be obtained using <tt> sp_energy(globalindex(i))</tt>.  
+  !!single-particle energy must be obtained using <tt> sp_energy(globalindex(i))</tt>.
   INTEGER :: mpi_nprocs                  !<number of MPI processes.
   INTEGER :: mpi_ierror                  !<varable for error output of MPI routines.
   INTEGER :: mpi_myproc                  !<the number of the local MPI process
+  PRIVATE
+  PUBLIC :: node,localindex,mpi_myproc,mpi_nprocs, &
+       nstloc,globalindex,tmpi,mpi_comm_world,mpi_ierror
 CONTAINS
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: alloc_nodes
 !> @brief This subroutine merely allocates the internal arrays of module \c Parallel.
 
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE alloc_nodes
     ALLOCATE(node(nstmax),localindex(nstmax),globalindex(nstmax))
   END SUBROUTINE alloc_nodes
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: init_all_mpi
 !> @brief
 !!\c init_all_mpi This subroutine initializes \c MPI and
 !!finds out the number of processors \c mpi_nprocs as well as the
 !!index of the current one \c mpi_myproc. The flag \c wflag is
 !!set to true only for the processor numbered 0.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE init_all_mpi
     CALL mpi_init(mpi_ierror)
     CALL mpi_comm_size(mpi_comm_world,mpi_nprocs,mpi_ierror)
@@ -79,7 +81,7 @@ CONTAINS
     IF(wflag) WRITE(*,'(a,i5)') ' number of nodes=',mpi_nprocs
     CALL mpi_barrier (mpi_comm_world, mpi_ierror)
   END SUBROUTINE init_all_mpi
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: associate_nodes
 !> @brief
 !!The first loop in this subroutine distributes the wave functions over
@@ -93,11 +95,11 @@ CONTAINS
 !!complete sequence. The third loop sets up the reverse pointers
 !!\c localindex, which has to be done in a loop over all processors to
 !!set up the information for the proper global indices.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE associate_nodes
     INTEGER :: ncount,nst,ip,iloc
     ncount=0
-    DO nst=1,nstmax  
+    DO nst=1,nstmax
        ncount=MOD(ncount,mpi_nprocs)
        node(nst)=ncount
        ncount=ncount+1
@@ -124,14 +126,14 @@ CONTAINS
     ENDIF
     CALL mpi_barrier (mpi_comm_world, mpi_ierror)
   END SUBROUTINE associate_nodes
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: collect_densities
 !> @brief
 !!This subroutine uses the \c MPI routine \c mpi_allreduce to sum
 !!up the partial densities from the different nodes, using temporary
 !!arrays \c tmp_rho and \c tmp_current (depending on whether it
 !!is a scalar or vector field) in the process.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE collect_densities
     USE Densities, ONLY : rho,tau,current,sodens,sdens
     REAL(db) :: tmp_rho(nx,ny,nz,2),tmp_current(nx,ny,nz,3,2)
@@ -156,15 +158,15 @@ CONTAINS
     CALL mpi_barrier (mpi_comm_world,mpi_ierror)
     RETURN
   END SUBROUTINE collect_densities
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: Routinename
 !> @brief
 !!This subroutine collects the single-particle properties calculated
 !!from the wave functions and thus available only for the local wave
-!!functions on each node. 
+!!functions on each node.
 !>
 !> @details
-!!It uses a simple trick: the arrays like \c sp_energy 
+!!It uses a simple trick: the arrays like \c sp_energy
 !!are defined for the full set of indices but set to zero
 !!before the calculation of these properties. On each node then the
 !!local values are calculated but inserted at the proper index for the
@@ -173,7 +175,7 @@ CONTAINS
 !!for each index one node contributes the correct value and the others
 !!zeroes. This process sounds inefficient but considering the small size
 !!of the arrays that does not matter.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE collect_sp_properties
     REAL(db) :: tmpgat(nstmax),tmpgat3(3,nstmax)
     CALL mpi_barrier (mpi_comm_world,mpi_ierror)
@@ -203,13 +205,13 @@ CONTAINS
     sp_parity=tmpgat
     CALL mpi_barrier (mpi_comm_world,mpi_ierror)
   END SUBROUTINE collect_sp_properties
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: finish_mpi
 !> @brief
 !!This is just a wrapper for the \c MPI finalization call.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE finish_mpi
-    INTEGER :: ierr    
+    INTEGER :: ierr
     CALL mpi_finalize(ierr)
   END SUBROUTINE finish_mpi
 END MODULE Parallel

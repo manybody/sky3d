@@ -12,7 +12,7 @@ PROGRAM Fileinfo
   OPEN(UNIT=10,FILE=filename,FORM='UNFORMATTED')
 ! Try to read as wave function file first
   READ(10,ERR=3,END=3) iter,time,forcename,nstmax,nneut,nprot,number,npsi, &
-         charge_number,mass_number,cm  
+         charge_number,mass_number,cm
   READ(10) nx,ny,nz,dx,dy,dz,wxyz
   WRITE(*,'(3A,I9,A,F10.2)') 'File ',filename,'is a wave function file at iteration', &
        iter,' or time ',time

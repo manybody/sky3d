@@ -1,12 +1,12 @@
 !------------------------------------------------------------------------------
 ! MODULE: Modulename
 !------------------------------------------------------------------------------
-! DESCRIPTION: 
+! DESCRIPTION:
 !> @brief
-!!This module contains the procedures for binary input and output 
-!!of the larger fields. 
+!!This module contains the procedures for binary input and output
+!!of the larger fields.
 !>
-!>@details 
+!>@details
 !!There are two variants, both of which are written
 !!at regular intervals: the wave function file \c wffile and the
 !!files containing the densities and currents. Since the former is
@@ -30,25 +30,31 @@
 !!match the purpose of this module but are placed here for convenience.
 !------------------------------------------------------------------------------
 MODULE Inout
-  USE Params
+  USE Params, ONLY: scratch, trestart, tfft, write_isospin, iter, nselect, &
+       tdynamic, time, scratch2, wffile, writeselect,db,wflag
   USE Parallel, ONLY: node,localindex,mpi_myproc
-  USE Grids
+  USE Grids, ONLY: x,y,z,der1x,der2x,der1y,der2y,der1z,der2z,wxyz,&
+       nx,ny,nz,dx,dy,dz
   USE Forces, ONLY:f
   USE Moment, ONLY: cm,cmtot
   USE Densities, ONLY: rho,tau,current,sdens,sodens
   USE Meanfield, ONLY: upot
   USE Coulomb, ONLY: wcoul
-  USE Levels
+  USE Levels, ONLY: sp_kinetic,sp_orbital,sp_parity,isospin,wocc,sp_norm, &
+       sp_energy,sp_efluct1,nstmax,npsi,nprot,nneut,npmin,charge_number,&
+       sp_spin,mass_number,psi
   IMPLICIT NONE
-  PRIVATE :: write_one_density,write_vec_density
+  PRIVATE
+  PUBLIC :: write_wavefunctions,write_densities,plot_density,sp_properties,  &
+       start_protocol
 CONTAINS
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: write_wavefunctions
 !> @brief
 !!This subroutine writes the wave functions to the disk and has two modes of
 !!operation depending on whether the code runs on distributed-memory
 !!systems in \c MPI mode or on a shared-memory or single-processor
-!!machine. 
+!!machine.
 !>
 !> @details
 !!In both cases it first determines the number of filled
@@ -58,9 +64,9 @@ CONTAINS
 !!states.
 !!
 !!  - <b> Sequential operation:</b>
-!!    this case is recognized recognized by <tt> mpi_nprocs==1</tt>. Open 
+!!    this case is recognized recognized by <tt> mpi_nprocs==1</tt>. Open
 !!    \c wffile, then write four records  containing general information.
-!!    - <em>Record 1:</em> <tt> iter, nstmax, nneut, nprot, number, npsi, 
+!!    - <em>Record 1:</em> <tt> iter, nstmax, nneut, nprot, number, npsi,
 !!      charge_number, mass_number, cm.</tt>
 !!    - <em>Record 2:</em> <tt> nx, ny, nz, dx, dy, dz, wxyz.</tt>
 !!    - <em>Record 3:</em> <tt> x, y, z.</tt>
@@ -88,7 +94,7 @@ CONTAINS
 !!    processor and \c wffile in the form \c nnn.wffile. For
 !!    example, if \c wffile has the value 'Ca40', these files will be
 !!    \c 000.Ca40, \c 001.Ca40, \c 002.Ca40, etc. up to the number of processors.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE write_wavefunctions
     USE Parallel, ONLY: mpi_myproc,mpi_nprocs,nstloc,node,localindex
     INTEGER :: nst,iq,number(2)
@@ -121,19 +127,19 @@ CONTAINS
     ENDDO
     CLOSE(UNIT=scratch2,STATUS='KEEP')
   END SUBROUTINE write_wavefunctions
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: write_densities
 !> @brief
 !!This subroutine produces a file \c iter.tdd with density and
-!!current data for the present time step or iteration with number \c iter. 
-!!In the file name \c iter is given in 6 decimal digits. 
+!!current data for the present time step or iteration with number \c iter.
+!!In the file name \c iter is given in 6 decimal digits.
 !>
 !> @details
 !!The record structure is as follows:
 !!
-!!  - <em>Record 1:</em> this contains the variables <tt> iter, time, nx, 
+!!  - <em>Record 1:</em> this contains the variables <tt> iter, time, nx,
 !!    ny, and nz to define the dimensions of the fields.</tt>
-!!  - <em>Record 2:</em> contains the variables <tt> dx, dy, dz, wxyz, x, 
+!!  - <em>Record 2:</em> contains the variables <tt> dx, dy, dz, wxyz, x,
 !!    y, and z </tt> to allow proper labelling of axes in plots, etc.
 !!  - <em>Further records:</em> for each field to be written, a record is
 !!    produced with the following information:
@@ -148,8 +154,8 @@ CONTAINS
 !!       potential)</b>.
 !!    .
 !!    After this identification record, the corresponding field itself is
-!!    written. 
-!!    The dimension varies in the following way: 
+!!    written.
+!!    The dimension varies in the following way:
 !!<table>
 !!<caption id="multi_row">Dimensions of arrays</caption>
 !!<tr><th>scalar<th>write_isospin<th>dimension
@@ -172,7 +178,7 @@ CONTAINS
 !!  -<b>O</b>: spin-orbit density \c sodens. Name \c s-o-Dens.
 !!
 !!This system is set up to be easily modified for writing additional fields.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE write_densities
     CHARACTER(10) :: filename
     CHARACTER(1) :: c
@@ -205,7 +211,7 @@ CONTAINS
     END DO
     CLOSE(UNIT=scratch)
   END SUBROUTINE write_densities
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: write_one_density
 !> @brief
 !!This subroutines does the actual output for \c write_densities in
@@ -215,12 +221,12 @@ CONTAINS
 !> INTEGER, takes the name of the density.
 !> @param[in] values
 !> REAL(db), takes the density.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE write_one_density(name,values)
     CHARACTER(*),INTENT(IN) :: name
     REAL(db),INTENT(IN) :: values(nx,ny,nz,2)
     CHARACTER(10) :: stored_name
-    REAL(db) a(nx,ny,nz)
+    REAL(db) :: a(nx,ny,nz)
     stored_name=name
     WRITE(scratch) stored_name,.FALSE.,write_isospin
     IF(write_isospin) THEN
@@ -230,22 +236,22 @@ CONTAINS
        WRITE(scratch) a
     END IF
   END SUBROUTINE write_one_density
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: write_vec_density
 !> @brief
-!!This also does the actual output for subroutines \c write_densities 
+!!This also does the actual output for subroutines \c write_densities
 !!for the case of a vector field. Its functioning should be clear from the
 !!description above.
 !> @param[in] name
 !> INTEGER, takes the name of the density.
 !> @param[in] values
 !> REAL(db), takes the vector density.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE write_vec_density(name,values)
     CHARACTER(*),INTENT(IN) :: name
     REAL(db),INTENT(IN) :: values(nx,ny,nz,3,2)
     CHARACTER(10) :: stored_name
-    REAL(db) a(nx,ny,nz,3)
+    REAL(db) :: a(nx,ny,nz,3)
     stored_name=name
     WRITE(scratch) stored_name,.TRUE.,write_isospin
     IF(write_isospin) THEN
@@ -255,7 +261,7 @@ CONTAINS
        WRITE(scratch) a
     END IF
   END SUBROUTINE write_vec_density
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: plot_density
 !> @brief
 !!Produces a simple printer plot of the density distribution in the
@@ -266,16 +272,16 @@ CONTAINS
 !> @details
 !!It is based on a very old routine found at ORNL and was translated
 !!into modern Fortran. It uses helper function \c bplina for
-!!interpolation.  
-!--------------------------------------------------------------------------- 
+!!interpolation.
+!---------------------------------------------------------------------------
   SUBROUTINE plot_density
     REAL(db),PARAMETER :: density_scale=0.14D0
     INTEGER,PARAMETER :: ixsc=10,izsc=6
     REAL(db) :: rhoplt(nx,nz),xperi
     CHARACTER(1) :: ifun(121),ibor(121)
-    CHARACTER(1),PARAMETER :: icar(25)=(/' ','1',' ','3',' ', &
+    CHARACTER(1),PARAMETER :: icar(25)=[' ','1',' ','3',' ', &
          '5',' ','7',' ','9',' ','b',' ','d',' ','f',' ','h', &
-         ' ','j',' ','l',' ','n','*' /)
+         ' ','j',' ','l',' ','n','*' ]
     REAL(db) ::  xco(nx+1),zco(nz+1),dimx,dimz,dxp,dzp, &
          xcu,zcu
     INTEGER :: nhor,nver,ntkx,ntkz,jcar,ntz,i,j
@@ -320,7 +326,7 @@ CONTAINS
     END IF
     WRITE(*,'(A,12(F6.2,4X),F6.2)') '  x= ',(xco(i),i=1,ntkx)
   END SUBROUTINE plot_density
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: bplina
 !> @brief
 !!Does a bilinear interpolation of fun(nx,nz), on xar(n) and zar(m)
@@ -338,8 +344,8 @@ CONTAINS
 !> @param[in] xcu
 !> REAL(db), takes the x-value at which the interpolation is performed
 !> @param[in] zcu
-!> REAL(db), takes the z-value at which the interpolation is performed  
-!--------------------------------------------------------------------------- 
+!> REAL(db), takes the z-value at which the interpolation is performed
+!---------------------------------------------------------------------------
   PURE FUNCTION bplina(n,m,xar,zar,fun,xcu,zcu) RESULT(ff)
     INTEGER,INTENT(IN) :: n,m
     REAL(db),INTENT(IN) :: xar(n),zar(m),fun(n,m),xcu,zcu
@@ -362,7 +368,7 @@ CONTAINS
     ff=dxf*(fun(icu+1,jcu+1)*dzf+fun(icu+1,jcu)*(1.0D0-dzf)) &
          + (1.D0-dxf)*(fun(icu,jcu+1)*dzf+fun(icu,jcu)*(1.0D0-dzf))
   END FUNCTION bplina
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: sp_properties
 !> @brief
 !!In this routine the kinetic energy, orbital and spin angular momenta
@@ -383,12 +389,12 @@ CONTAINS
 !!are combined to the desired matrix elements; the only technical point
 !!to remark is that since the result must be real, efficiency can be
 !!achieved by formulating the complex products in an explicit way. Then
-!!\c kin contains the kinetic energy (without the \f$ \hbar^2/2m \f$), 
+!!\c kin contains the kinetic energy (without the \f$ \hbar^2/2m \f$),
 !!\c cc the orbital and \c ss then spin matrix elements.
 !!
 !!Finally only the volume element, the factor of one half for the
-!!spin ad the prefactor of the kinetic energy are added. 
-!--------------------------------------------------------------------------- 
+!!spin ad the prefactor of the kinetic energy are added.
+!---------------------------------------------------------------------------
   SUBROUTINE sp_properties
     USE Trivial, ONLY: cmulx,cmuly,cmulz
     INTEGER :: nst,ix,iy,iz,is,ixx,iyy,izz
@@ -397,7 +403,7 @@ CONTAINS
     ALLOCATE(pst(nx,ny,nz,2),psx(nx,ny,nz,2),psy(nx,ny,nz,2),psz(nx,ny,nz,2),psw(nx,ny,nz,2))
     sp_orbital=0.D0
     sp_spin=0.D0
-    sp_kinetic=0.0D0  
+    sp_kinetic=0.0D0
     sp_parity=0.0D0
 
     xx=x-cmtot(1)
@@ -407,30 +413,30 @@ CONTAINS
        IF(node(nst)/=mpi_myproc) CYCLE
        pst=psi(:,:,:,:,localindex(nst))
        IF(TFFT) THEN
-          CALL cdervx(pst,psx)  
-          CALL cdervy(pst,psy)  
+          CALL cdervx(pst,psx)
+          CALL cdervy(pst,psy)
 
-          CALL cdervz(pst,psz)  
-          CALL laplace(pst,psw)  
+          CALL cdervz(pst,psz)
+          CALL laplace(pst,psw)
        ELSE
-          CALL cmulx(der1x,pst,psx,0)  
-          CALL cmuly(der1y,pst,psy,0)  
-          CALL cmulz(der1z,pst,psz,0)  
-          CALL cmulx(der2x,pst,psw,0)  
-          CALL cmuly(der2y,pst,psw,1)  
-          CALL cmulz(der2z,pst,psw,1)  
+          CALL cmulx(der1x,pst,psx,0)
+          CALL cmuly(der1y,pst,psy,0)
+          CALL cmulz(der1z,pst,psz,0)
+          CALL cmulx(der2x,pst,psw,0)
+          CALL cmuly(der2y,pst,psw,1)
+          CALL cmulz(der2z,pst,psw,1)
        ENDIF
        cc=0.D0
        ss=0.D0
        kin=0.D0
        xpar=0.D0
-       DO iz=1,nz  
-          izz=nz-iz+1  
-          DO iy=1,ny  
-             iyy=ny-iy+1  
-             DO ix=1,nx  
-                ixx=nx-ix+1  
-                DO is=1,2  
+       DO iz=1,nz
+          izz=nz-iz+1
+          DO iy=1,ny
+             iyy=ny-iy+1
+             DO ix=1,nx
+                ixx=nx-ix+1
+                DO is=1,2
                    rp=REAL(pst(ix,iy,iz,is))
                    ip=AIMAG(pst(ix,iy,iz,is))
                    cc(1)=cc(1)+ &
@@ -462,19 +468,19 @@ CONTAINS
     END DO
     DEALLOCATE(pst,psx,psy,psz,psw)
   END SUBROUTINE sp_properties
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: Routinename
 !> @brief
 !!This is given a file name and a character
 !!string for a header line to start the file contents. It is used for
 !!the <tt>*.res</tt> files.  If the file already exists, nothing is done,
 !!since this probably a restart job and output should just be added at
-!!the end of the file. 
+!!the end of the file.
 !> @param[in] filename
 !> CHARACTER, array, takes the filename.
 !> @param[in] header
 !> CHARACTER, array, takes the intended header for the file.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE start_protocol(filename,header)
     ! if the protocol file exists, do nothing, since later writes will be
     ! appended. Otherwise write the title and header lines into the new file

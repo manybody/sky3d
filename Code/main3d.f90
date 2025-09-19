@@ -1,7 +1,7 @@
 !------------------------------------------------------------------------------
 ! Programm: tdhf3d
 !------------------------------------------------------------------------------
-! DESCRIPTION: 
+! DESCRIPTION:
 !> @brief
 !!This is the main program that organizes the reading of the input and
 !!funnels the calculation into the correct subroutines.
@@ -9,7 +9,7 @@
 !>@details
 !!It consists of a number of simple steps. They are:
 !! -# initialize \c MPI in case of an \c MPI parallel job.
-!!    Start reading from standard input  beginning with 
+!!    Start reading from standard input  beginning with
 !!    namelist files for any changes in the file names.
 !! -# read the definition of the force to be used and set
 !!    it up.
@@ -53,20 +53,20 @@
 !!    work.
 !! -# finally the \c MPI system is terminated.
 !------------------------------------------------------------------------------
-PROGRAM tdhf3d  
-  USE Params
-  USE Fourier
+PROGRAM tdhf3d
+  USE Params, ONLY: wffile,converfile,monopolesfile,dipolesfile,momentafile,&
+       energiesfile,quadrupolesfile,spinfile,extfieldfile,tcoul,mprint,mplot,&
+       trestart,writeselect,write_isospin,mrest,tfft,nof,r0,mnof,tdynamic,tstatic,&
+       wflag
   USE Forces, ONLY: read_force
   USE Densities, ONLY: alloc_densities
   USE Meanfield, ONLY: alloc_fields
-  USE Levels
+  USE Levels, ONLY: nstmax, npsi, npmin
   USE Grids, ONLY: init_grid
-  USE Fragments
-  USE Parallel
+  USE Parallel, ONLY: mpi_comm_world, tmpi, mpi_ierror
   USE Dynamic, ONLY: getin_dynamic,dynamichf
   USE Static, ONLY: getin_static,init_static,statichf,harmosc
   USE Coulomb, ONLY: coulinit
-  USE User
   IMPLICIT NONE
   INTEGER :: imode,nofsave
   !***********************************************************************
@@ -173,7 +173,7 @@ PROGRAM tdhf3d
         CALL schmid
         WRITE(*,*) 'Reorthogonalization complete'
      END IF
-  ELSEIF(nof==0) THEN    
+  ELSEIF(nof==0) THEN
      CALL harmosc
   ELSE
      CALL init_user

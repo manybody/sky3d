@@ -1,7 +1,7 @@
 !------------------------------------------------------------------------------
 ! MODULE: Densities
 !------------------------------------------------------------------------------
-! DESCRIPTION: 
+! DESCRIPTION:
 !> @brief
 !!This module has two purposes: it defines and allocates the densities
 !!and currents making up the mean field,
@@ -16,8 +16,10 @@ MODULE Densities
   USE Levels, ONLY: cdervx,cdervy,cdervz
   USE Trivial, ONLY: cmulx,cmuly,cmulz
   IMPLICIT NONE
+  PRIVATE
+  PUBLIC :: rho,tau,sdens,sodens,current,alloc_densities
   SAVE
-  !>@name Scalar densities: 
+  !>@name Scalar densities:
   !>These are dimensioned <tt>(nx,ny,nz,2)</tt>,
   !>where the last index is 1 for neutrons and 2 for protons.
   !>@{
@@ -34,7 +36,7 @@ MODULE Densities
   !!\f$ \hbar^2/2m \f$. Units: \f$ {\rm fm}^{-5}$.
   !>@}
   !
-  !>@name Vector densities: 
+  !>@name Vector densities:
   !>These are dimensioned <tt>(nx,ny,nz,3,2)</tt>, where the last index is 1 for neutrons and 2 for
   !>protons, and the next-to-last stands for the Cartesian direction.
   !>@{
@@ -50,7 +52,7 @@ MODULE Densities
   REAL(db),ALLOCATABLE,DIMENSION(:,:,:,:,:) :: sdens
   !<the spin density. It is defined as
   !!\f[ \vec\sigma_q(\vec r)=\sum_{\alpha\in q} w_\alpha^2 \sum_{ss'}\psi_\alpha^*(\vec
-  !!r,s)\,\sigma_{ss'} \,\psi_\alpha(\vec r,s').\f] 
+  !!r,s)\,\sigma_{ss'} \,\psi_\alpha(\vec r,s').\f]
   !!Note that it does not include the factor \f$ \hbar/2 \f$. Units: \f$ {\rm fm}^{-3} \f$.
   REAL(db),ALLOCATABLE,DIMENSION(:,:,:,:,:) :: sodens
   !<the spin-orbit density, defined as
@@ -60,16 +62,16 @@ MODULE Densities
   !!Its units are also \f$ {\rm fm}^{-4} \f$.
   !>@}
 CONTAINS
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: alloc_densities
 !> @brief
 !!This is simply a short routine to allocate all the arrays defined in this module.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE alloc_densities
     ALLOCATE(rho(nx,ny,nz,2),tau(nx,ny,nz,2),current(nx,ny,nz,3,2), &
          sdens(nx,ny,nz,3,2),sodens(nx,ny,nz,3,2))
   END SUBROUTINE alloc_densities
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: add_density
 !> @brief
 !!This subroutine is given a single-particle wave function \c psin
@@ -93,7 +95,7 @@ CONTAINS
 !!The separate copies are then combined using the \c OPENMP <tt>REDUCE(+)</tt> directive.
 !!
 !!The local copies of the densities passed as arrays are denoted with
-!!the prefixed letter "l" for \a local; they are \c lrho, \c ltau, 
+!!the prefixed letter "l" for \a local; they are \c lrho, \c ltau,
 !!\c lcurrent, \c lsdens, and \c lsodens.
 !!
 !!If the weight is zero, there is nothing to do and the subroutine
@@ -110,7 +112,7 @@ CONTAINS
 !!
 !!The complex products always in the end evaluate to something real and
 !!the expressions are simplified to take this into account. For example,
-!!the following transformation is done: 
+!!the following transformation is done:
 !!\f{eqnarray*}{
 !!\frac{1}{2\I}(\psi^*\nabla\psi-\psi\nabla\psi^*)&=&
 !!\frac{1}{2\I}\left(\psi^*\nabla\psi-(\psi^*\nabla\psi)^*\right)\\
@@ -140,14 +142,14 @@ CONTAINS
 !> REAL(db), array, takes and adds the spin density.
 !> @param[in, out] lsodens
 !> REAL(db), array, takes and adds the spin-orbit density.
-!--------------------------------------------------------------------------- 
-  SUBROUTINE add_density(iq,weight,psin,lrho,ltau,lcurrent,lsdens,lsodens)  
+!---------------------------------------------------------------------------
+  SUBROUTINE add_density(iq,weight,psin,lrho,ltau,lcurrent,lsdens,lsodens)
     COMPLEX(db),INTENT(INOUT) :: psin(nx,ny,nz,2)
     REAL(db),DIMENSION(:,:,:,:),INTENT(INOUT) :: lrho,ltau
     REAL(db),DIMENSION(:,:,:,:,:),INTENT(INOUT) :: lcurrent,lsdens,lsodens
     INTEGER,INTENT(IN) :: iq
     REAL(db),INTENT(IN) :: weight
-    COMPLEX(db),ALLOCATABLE :: ps1(:,:,:,:)  
+    COMPLEX(db),ALLOCATABLE :: ps1(:,:,:,:)
     INTEGER :: ix,iy,iz
     ALLOCATE(ps1(nx,ny,nz,2))
     IF(weight<=0.D0) RETURN
@@ -170,9 +172,9 @@ CONTAINS
     ! x-derivatives
     !***********************************************************************
     IF(TFFT) THEN
-       CALL cdervx(psin,ps1)  
+       CALL cdervx(psin,ps1)
     ELSE
-       CALL cmulx(der1x,psin,ps1,0)  
+       CALL cmulx(der1x,psin,ps1,0)
     ENDIF
     ltau(:,:,:,iq)=ltau(:,:,:,iq)+weight* &
          (ps1(:,:,:,1)*CONJG(ps1(:,:,:,1))+ps1(:,:,:,2)*CONJG(ps1(:,:,:,2)))
@@ -191,9 +193,9 @@ CONTAINS
     ! y-derivatives
     !***********************************************************************
     IF(TFFT) THEN
-       CALL cdervy(psin,ps1)  
+       CALL cdervy(psin,ps1)
     ELSE
-       CALL cmuly(der1y,psin,ps1,0)  
+       CALL cmuly(der1y,psin,ps1,0)
     ENDIF
     ltau(:,:,:,iq)=ltau(:,:,:,iq)+weight* &
          (ps1(:,:,:,1)*CONJG(ps1(:,:,:,1))+ps1(:,:,:,2)*CONJG(ps1(:,:,:,2)))
@@ -212,9 +214,9 @@ CONTAINS
     ! z-derivatives
     !***********************************************************************
     IF(TFFT) THEN
-       CALL cdervz(psin,ps1)  
+       CALL cdervz(psin,ps1)
     ELSE
-       CALL cmulz(der1z,psin,ps1,0)  
+       CALL cmulz(der1z,psin,ps1,0)
     ENDIF
     ltau(:,:,:,iq)=ltau(:,:,:,iq)+weight* &
          (ps1(:,:,:,1)*CONJG(ps1(:,:,:,1))+ps1(:,:,:,2)*CONJG(ps1(:,:,:,2)))

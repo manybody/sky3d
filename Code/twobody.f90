@@ -1,19 +1,21 @@
 !------------------------------------------------------------------------------
 ! MODULE: Twobody
 !------------------------------------------------------------------------------
-! DESCRIPTION: 
+! DESCRIPTION:
 !> @brief
-!!This module contains the routines to distinguish between a one and two-body 
-!!system and to perform a two-body analysis in the case of a two-body collision 
+!!This module contains the routines to distinguish between a one and two-body
+!!system and to perform a two-body analysis in the case of a two-body collision
 !!including scattering angles and momenta.
 !------------------------------------------------------------------------------
 MODULE Twobody
-  USE Params
-  USE Grids
-  USE Densities
-  USE Coulomb
+  USE Params, ONLY: db,pi,time,e2,hbc
+  USE Grids, ONLY: x,y,z,nx,ny,nz,wxyz,dx,dz
+  USE Densities, ONLY: rho,current
+  USE Coulomb, ONLY: wcoul
   USE Forces, ONLY: nucleon_mass
   IMPLICIT NONE
+  PRIVATE
+  PUBLIC :: twobody_analysis,istwobody,roft,roft_old
   ! Constants
   REAL(db),PARAMETER :: threshold=1.D-5 !< threshold density to recognze separate fragmenst
   ! Data describing initial configuration
@@ -32,45 +34,45 @@ MODULE Twobody
   REAL(db) :: mass(0:2),charge(0:2),cmfrag(3,0:2),momentum(3,0:2),angmom(3,0:2)
   !>@}
   ! Data associated with the Coulomb calculation
-  REAL(db),ALLOCATABLE,PRIVATE :: rhotot(:,:,:) !< total density 
+  REAL(db),ALLOCATABLE,PRIVATE :: rhotot(:,:,:) !< total density
   REAL(db),ALLOCATABLE,PRIVATE :: currtot(:,:,:,:) !< total current density
-  INTEGER,ALLOCATABLE,PRIVATE :: frag(:,:,:) !< for each mesh pint, tells whether it is in 
+  INTEGER,ALLOCATABLE,PRIVATE :: frag(:,:,:) !< for each mesh pint, tells whether it is in
   !! fragment 1 or 2, or below the cutoff density, (value 0)
   LOGICAL  :: istwobody !< principal return value. Tells whether the system is separated.
 CONTAINS
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
 ! DESCRIPTION: twobody_analysis
 !> @brief
 !! For a two-body collision, this subroutine checks whether the system
-!! is separated and in that case determines either only the distance of 
+!! is separated and in that case determines either only the distance of
 !! the fragments or, for the final state, produces a detailed analysis
 !>
 !> @details
-!! The subroutine starts off by allocating arrays \c rhotot and, if the full 
-!! analysis is desired, \c currtot, which are then assigned the total density and 
+!! The subroutine starts off by allocating arrays \c rhotot and, if the full
+!! analysis is desired, \c currtot, which are then assigned the total density and
 !! current density, respectively. These are set to zero wherever the density
 !! is below the \c threshold. Then the following steps are taken:
 !! - For the full analysis the total current density and the isospin-dependent
-!!   density and current density are also cut off. Then the subroutine 
-!!   \c analyze is called for the whole system by setting \c frag such that 
+!!   density and current density are also cut off. Then the subroutine
+!!   \c analyze is called for the whole system by setting \c frag such that
 !!   all points have fragment index 0. The coordinate values are corrected
-!!   for a shift in the center-of-mass. The total current density is then 
+!!   for a shift in the center-of-mass. The total current density is then
 !!   adjusted to remove any overall motion of the system in the grid.
 !! - Following this, subroutine \c cut_system is called to calculation
 !!   fragment properties in the case of separation. If \c full_analysis is true,
 !!   this should be the case, as it is done only for the final state.
 !! - For \c full_analysis=false, the analysis is finished, since the fragment
 !!   distance has been calculated. Therefore there is a \c RETURN after the arrays
-!!   have been deallocated. 
-!! - After this the subroutine \c analyze is called separately for the two 
+!!   have been deallocated.
+!! - After this the subroutine \c analyze is called separately for the two
 !!   fragments to determine their properties
 !! - Based on this information, subroutine \c scattering is called to calculate
 !!   relative motion and the overall scattering results.
 !>
 !> @param[in] full_analysis
-!> LOGICAL, if TRUE the full analysis is done, otherwise only the 
+!> LOGICAL, if TRUE the full analysis is done, otherwise only the
 !> fragment separation is calculated.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE twobody_analysis(full_analysis)
     LOGICAL,INTENT(IN) :: full_analysis
     INTEGER :: i,j,k
@@ -86,7 +88,7 @@ CONTAINS
        FORALL(i=1:nx,j=1:ny,k=1:nz,rhotot(i,j,k)<threshold)
           rho(i,j,k,:)=0.D0
           currtot(i,j,k,:)=0.D0
-          current(i,j,k,:,:)=0.D0  
+          current(i,j,k,:,:)=0.D0
        END FORALL
        ! analyze total system
        frag=0
@@ -116,18 +118,18 @@ CONTAINS
     ! finally determine relative motion and total scattering effect
     CALL scattering
   END SUBROUTINE twobody_analysis
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
 ! DESCRIPTION: analyze
 !> @brief
 !! This subroutine calculates properties of the two separate fragment
 !! or of the whole system.
 !>
-!> @details 
+!> @details
 !! It evaluates integrated quantities for a subset of the mesh controlled
 !! by its argument \c ifrag in conjunction with the array \c
 !! frag. More specifically, \c ifrag=0 is used to calculate on the
 !! whole mesh while \c ifrag=1 or 2 select the points belonging to the
-!! corresponding fragment. The array \c frag contains the relevant index 
+!! corresponding fragment. The array \c frag contains the relevant index
 !! for each mesh point.
 !! - Most of the calculated quantities have an index \c ifrag to store
 !!   these results separately. Thus \c cm(1:3,0:2) is used to store the
@@ -146,7 +148,7 @@ CONTAINS
 !>
 !> @param[in] ifrag
 !> INTEGER, index of fragment 1 or 2 to be investigated, or 0 for whole system
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE analyze(ifrag)
     INTEGER,INTENT(IN) :: ifrag
     REAL(db) :: velcorr(3,0:2),omega(3),inertia(3,3),curr(3),xx,yy,zz
@@ -217,7 +219,7 @@ CONTAINS
     WRITE(*,100) 'Omega from L',omega
 100 FORMAT(A/(3D15.6))
   END SUBROUTINE analyze
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
 ! DESCRIPTION: gauss
 !> @brief
 !! This subroutine does a simple direct solution of the 3 by 3 linear
@@ -228,15 +230,15 @@ CONTAINS
 !>
 !> @param[in] a(3,3)
 !> REAL(db), Matrix of the linear system.
-!> @param[in] b(3) 
+!> @param[in] b(3)
 !> REAL(db), right-hand side of the equations.
 !> @param[out] c(3)
 !> REAL(db), solution vector.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE gauss(a,b,c)
-    REAL(db) :: a(3,3),b(3),c(3),det
-    INTENT(IN) :: a,b
-    INTENT(OUT) :: c
+    REAL(db), intent(in) :: a(3,3),b(3)
+    REAL(db), intent(out) ::c(3)
+    REAL(db) :: det
     det=a(1,3)**2*a(2,2)-2.D0*a(1,2)*a(1,3)*a(2,3)+a(1,1)*a(2,3)**2+ &
          a(1,2)**2*a(3,3)-a(1,1)*a(2,2)*a(3,3)
     IF(ABS(det)<1.D-8) THEN
@@ -253,26 +255,26 @@ CONTAINS
            -a(1,1)*a(2,2)*b(3))/det
     ENDIF
   END SUBROUTINE gauss
-  !*************************************************************** 
-!--------------------------------------------------------------------------- 
+  !***************************************************************
+!---------------------------------------------------------------------------
 ! DESCRIPTION: scattering
 !> @brief
-!! This subroutine calculates the relative motion and the various energies 
-!! in the final state and, by referring back to the initial state before the 
+!! This subroutine calculates the relative motion and the various energies
+!! in the final state and, by referring back to the initial state before the
 !! collision, also the net scattering results.
 !>
 !> @details
 !! The subroutine calculates the scattering angle as the sum of three contributions:
-!! the ingoing Rutherford angle, the rotation angle during the TDHF calculation, 
+!! the ingoing Rutherford angle, the rotation angle during the TDHF calculation,
 !! and the outgoing Rutherford angle.
-!! 
+!!
 !! The Rutherford trajectories are hyperbolas described in polar
 !! coordinates as \f[r(\phi)=\frac{k}{\epsilon\cos\phi-1}.\f]
 !! with \f$r\f$ and \f$\phi\f$ describing the relative vector of the two-body problem.
 !! It is confined to the angular region \f$-\phi_\infty<\phi<\phi_\infty\f$
 !! with the asymptotic angle \f$\phi_\infty=\cos^{-1}(\epsilon^{-1})\f$. The
 !! angle \f$\phi=0\f$ corresponds to the symmetry axis of the hyperbola.
-!! 
+!!
 !! A problem is that this axis is not directly connected to the
 !! coordinates used for the TDHF calculation, which is assumed to have
 !! \f$x\f$ and \f$z\f$ as the reaction plane. Since, however, the parameters of
@@ -280,12 +282,12 @@ CONTAINS
 !! parameter and energy of the relative motion, it suffices to know \f$r\f$
 !! to calculate the angle corresponding to it in the hyperbola system of
 !! coordinates. This is done slightly differently for the incoming and
-!! outgoing trajectories. 
-!! 
+!! outgoing trajectories.
+!!
 !! The following steps are done:
 !! - Examine the initial state before the collision: Since the properties
-!! of the fragments may not be available anymore after a restart, we have to 
-!! partially restore them from the original input files. <i>This requires 
+!! of the fragments may not be available anymore after a restart, we have to
+!! partially restore them from the original input files. <i>This requires
 !! that these files, or symbolic links to them, be present in current directory.</i>
 !! From \c for005 it reads the center-of-mass energy \f$E_{\rm cm}\f$ and
 !! impact parameter \f$b\f$ as well as the initial positions of the nuclei
@@ -293,10 +295,10 @@ CONTAINS
 !! \c fcent(:,i) in the code. Then the masses \f$A_i\f$ and charges \f$Z_i\f$
 !! are input from the fragment data files.
 !! - As the next step, the variable \c mass_case is determined to make sure the
-!! mass relation is the same in the ingoing and outgoing case. For symmetric 
+!! mass relation is the same in the ingoing and outgoing case. For symmetric
 !! collisions of course the scattering is not uniquely determined.
 !! From these data the following quantities are successively calculated:
-!!   -# The initial relative vector for the TDHF calculation 
+!!   -# The initial relative vector for the TDHF calculation
 !!   \f[\vec r(t=0)=\vec r_2(t=0)-\vec r_1(t=0),\f]
 !!   -# the initial reduced mass
 !!   \f[\mu=m_0\frac{A_1A_2}{A_1+A_2},\f]
@@ -320,23 +322,23 @@ CONTAINS
 !! scattering angle is just the difference,
 !! \f[\phi_{\rm incoming}=\phi_\infty-\phi(t=0).\f]
 !! - The rotation of the system during the TDHF calculation is obtained from the
-!! initial and final positions of the fragments via the scalar product of the 
+!! initial and final positions of the fragments via the scalar product of the
 !! relative vectors.
 !! - The code then calculates the relative motion properties in the final state:
-!! reduced mass \c mu, relative velocity \c vrel, kinetic energy \c erel, 
-!! and angular momentum of relative motion \c relangmom. 
+!! reduced mass \c mu, relative velocity \c vrel, kinetic energy \c erel,
+!! and angular momentum of relative motion \c relangmom.
 !! In addition the point-charge Coulomb interaction energy \c ecoul_point,
 !! the velocity and kinetic energy in the radial direction \c rdot and \c edot
 !! are produced for information.
 !! - For the extrapolation of the relative motion energy to infinite separation
-!! a more refinde calculation of the Coulomb energy is needed. This is done by 
-!! using  subroutine \c poisson three times: once for the total system and then 
-!! for each fragment individually by removing the charge density from all space points 
+!! a more refinde calculation of the Coulomb energy is needed. This is done by
+!! using  subroutine \c poisson three times: once for the total system and then
+!! for each fragment individually by removing the charge density from all space points
 !! associated with the other fragment. This yields \c ecoul(0:2) and the Coulomb
-!! interaction energy \c ecoul_int can then be obtained as 
+!! interaction energy \c ecoul_int can then be obtained as
 !! <tt>ecoul(0)-ecoul(1)-ecoul(2)</tt>. The asymptotic energy is then the sum of \c erel and
 !! \c ecoul_int.
-!! - Finally the deflection angle for the outgoing Rutherford trajectory 
+!! - Finally the deflection angle for the outgoing Rutherford trajectory
 !! is obtained. The main difference to
 !! the incoming trajectory is that now the quantities determining the
 !! hyperbola parameters are taken from the two-body analysis, namely the
@@ -348,7 +350,7 @@ CONTAINS
 !! the final state.
 !! - The subroutine then prints all the details.
 !>
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE scattering
     ! Varaiables needed for the calculation of the initial
     ! Rutherford trajectory
@@ -356,7 +358,7 @@ CONTAINS
     REAL(db) :: fcent(3,2)   ! c.m. vectors for the fragments
     REAL(db) :: fboost(3,2)  ! boost vectors for the fragments
     REAL(db) :: b ! impact parameter
-    REAL(db) :: ecm  ! relative kinetic energy 
+    REAL(db) :: ecm  ! relative kinetic energy
     REAL(db) :: mu ! reduced mass
     REAL(db) :: k,a,epsilon,p,pmax ! hyperbola parameters
     REAL(db) :: time ! needed for the namelist
@@ -429,7 +431,7 @@ CONTAINS
     roft=SQRT(SUM(final_relvec**2))
     tdhf_angle=ACOS(SUM(init_relvec*final_relvec)/roft)*180.D0/pi
     WRITE(*,'(A,f8.3)') 'TDHF rotation angle: ',tdhf_angle
-    !  
+    !
     ! Calculate relative motion quantities-
     ! reduced mass
     mu=nucleon_mass*mass(1)*mass(2)/(mass(1)+mass(2)) ! reduced mass
@@ -478,7 +480,7 @@ CONTAINS
     WRITE(*,'(3(A,F10.4))') 'Total Coulomb energy: ',ecoul(0), &
          ' Fragment 1: ',ecoul(1),' Fragment 2:',ecoul(2), &
          ' Coulomb interaction energy:',ecoul_int
-    ! 
+    !
     final_ecm=erel+ecoul_int
     ! now calculate final Rutherford scattering angle
     k=(relangmom(2)*hbc)**2/(e2*charge(1)*charge(2)*mu)
@@ -504,7 +506,7 @@ CONTAINS
          ' Final: ',final_ecm
     WRITE(*,'(3(A15,F10.3))') 'Radial: ',edot,' Centrifugal:', &
          e_centrifugal,' Coulomb:',ecoul_int
-    WRITE(*,'(2(A20,F10.3))') 'Initial L: ',initial_L,' Final orbital L: ',& 
+    WRITE(*,'(2(A20,F10.3))') 'Initial L: ',initial_L,' Final orbital L: ',&
          relangmom(2)
     WRITE(*,'(A20,2F10.3,A20,F10.3)') 'Fragment L: ',angmom(2,1:2), &
          'Final L_tot: ',relangmom(2)+angmom(2,1)+angmom(2,2)
@@ -513,7 +515,7 @@ CONTAINS
     WRITE(*,'(3(A15,F10.3))') 'Initial: ',initial_angle, &
          ' TDHF part: ',tdhf_angle,' Final: ',final_angle
   END SUBROUTINE scattering
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
 ! DESCRIPTION: cut_system
 !> @brief
 !! This subroutine finds out whether the system can be decomposed into two
@@ -525,74 +527,74 @@ CONTAINS
 !! tensor principal axis using function \c getslope. After calculating the
 !! fragment centers-of-mass, this is corrected iteratively. Within the loop
 !! the following steps are executed:
-!! -# If this is not the first iteration, calculate the slope of the 
+!! -# If this is not the first iteration, calculate the slope of the
 !! center-connecting line from the centers of mass.
 !! -# Call \c divpoint to find whether there is a sufficiently low density
-!! between two fragments along that line. If there is, keep track of the 
+!! between two fragments along that line. If there is, keep track of the
 !! minimum-density location.
-!! -# Taking the line from that point, calculate the properties of the 
-!! line perpendicular to the inter-center connection: the line dividing space 
+!! -# Taking the line from that point, calculate the properties of the
+!! line perpendicular to the inter-center connection: the line dividing space
 !! between the fragments.
 !! -# Then assign fragment index \c frag(ix,iy,iz) for each grid point by
-!! checking which side of the dividing line they are on. At the same time, 
+!! checking which side of the dividing line they are on. At the same time,
 !! accumulate data for the fragment masses and centers of mass.
 !! -# If the centers of mass have not changed significantly, stop the
 !! iterations. Otherwise repeat.
 !! -# Record the center distance and return if this is not a full analysis.
 !! -# Finally, make sure that the assignment of fragment index to heavier
-!! or lighter fragment remains the same. This uses array \c swap to interchange 
+!! or lighter fragment remains the same. This uses array \c swap to interchange
 !! 1 and 2.
 !>
 !> @param[in] full_analysis
 !! LOGICAL, if false, do only what is necessary for calculating the
 !! distance
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE cut_system(full_analysis)
     LOGICAL,INTENT(IN) :: full_analysis
     REAL(db) :: cent(3,2),center(3,2),angle,slopev,xx,zz,diff,vol, &
          bb,xmin,zmin,slope
     INTEGER :: ix,iy,iz,itcm,ifrag
-    INTEGER,PARAMETER :: swap(0:2)=(/ 0,2,1 /)
-    Iteration: DO itcm=1,10 
+    INTEGER,PARAMETER :: swap(0:2)=[ 0,2,1 ]
+    Iteration: DO itcm=1,10
        ! calculate slope from centers of mass
-       IF(itcm>1) THEN   
-         cent=center 
-         slope=(cent(3,2)-cent(3,1))/(cent(1,2)-cent(1,1))   
-         bb=cent(3,1)-slope*cent(1,1)   
+       IF(itcm>1) THEN
+         cent=center
+         slope=(cent(3,2)-cent(3,1))/(cent(1,2)-cent(1,1))
+         bb=cent(3,1)-slope*cent(1,1)
        ELSE   ! first iteration
          cent=0.D0
          slope=getslope()
          bb=0.D0
        ENDIF
        ! check whether separation
-       istwobody=divpoint(xmin,zmin,bb,slope) 
+       istwobody=divpoint(xmin,zmin,bb,slope)
        ! determine dividing line: slope and intercept
-       angle=ATAN(slope)   
-       slopev=dtan(angle+pi/2.0D0)   
-       bb=zmin-slopev*xmin   
+       angle=ATAN(slope)
+       slopev=dtan(angle+pi/2.0D0)
+       bb=zmin-slopev*xmin
        ! assign fragment cells
        center(:,1:2)=0.D0
-       mass(1:2)=0.0D0   
+       mass(1:2)=0.0D0
        charge(1:2)=0.0D0
-       DO iz=1,nz   
-          zz=z(iz)   
-          DO ix=1,nx   
-             xx=x(ix)   
-             diff=zz-slopev*xx-bb   
-             DO iy=1,ny   
-                vol=wxyz   
+       DO iz=1,nz
+          zz=z(iz)
+          DO ix=1,nx
+             xx=x(ix)
+             diff=zz-slopev*xx-bb
+             DO iy=1,ny
+                vol=wxyz
                 frag(ix,iy,iz)=0
                 IF(rhotot(ix,iy,iz)<threshold) CYCLE
                 IF(diff<0.0D0) THEN
                   frag(ix,iy,iz)=1
-                  ifrag=1 
-                ELSE 
+                  ifrag=1
+                ELSE
                   frag(ix,iy,iz)=2
-                  ifrag=2 
+                  ifrag=2
                 ENDIF
                 mass(ifrag)=mass(ifrag)+vol*rhotot(ix,iy,iz)
-                center(1,ifrag)=center(1,ifrag)+vol*rhotot(ix,iy,iz)*x(ix)   
-                center(2,ifrag)=center(2,ifrag)+vol*rhotot(ix,iy,iz)*y(iy)   
+                center(1,ifrag)=center(1,ifrag)+vol*rhotot(ix,iy,iz)*x(ix)
+                center(2,ifrag)=center(2,ifrag)+vol*rhotot(ix,iy,iz)*y(iy)
                 center(3,ifrag)=center(3,ifrag)+vol*rhotot(ix,iy,iz)*z(iz)
              ENDDO
           ENDDO
@@ -601,10 +603,10 @@ CONTAINS
           center(:,ifrag)=center(:,ifrag)/mass(ifrag)
        END DO
        ! stop if this is not a separated case
-       IF(.NOT.istwobody) EXIT 
+       IF(.NOT.istwobody) EXIT Iteration
        ! end iterations if the c.m. remains constant
        IF(MAX(MAXVAL(ABS(cent(1,:)-center(1,:))), &
-            MAXVAL(ABS(cent(3,:)-center(3,:))))<1.0d-05) EXIT
+            MAXVAL(ABS(cent(3,:)-center(3,:))))<1.0d-05) EXIT Iteration
     ENDDO Iteration
     ! record separation distance
     IF(istwobody) THEN
@@ -623,19 +625,19 @@ CONTAINS
       IF(mass(1)>mass(2)) RETURN
     END SELECT
     ! incorrect case: need to exchange indices
-    DO iz=1,nz   
-       DO iy=1,ny   
-          DO ix=1,nx   
+    DO iz=1,nz
+       DO iy=1,ny
+          DO ix=1,nx
              frag(ix,iy,iz)=swap(frag(ix,iy,iz))
           END DO
        END DO
     END DO
   END SUBROUTINE cut_system
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: getslope
 !> @brief
-!!In this function the slope of the fragment connection line in the 
-!! \f$x-z \f$ plane is determined. 
+!!In this function the slope of the fragment connection line in the
+!! \f$x-z \f$ plane is determined.
 !>
 !> @details
 !! The slope is determined by the
@@ -662,56 +664,56 @@ CONTAINS
 !! resulting slope is returned in the module variable \c slope.
 !>
 !> @retval newslope REAL(db), calculated slope.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   FUNCTION getslope() RESULT(newslope)
     REAL(db) ::  q2(3,3),xx,yy,zz,vol,denom,newslope
-    INTEGER :: ix,iy,iz 
-    q2=0.D0 
-    DO iz=1,nz   
+    INTEGER :: ix,iy,iz
+    q2=0.D0
+    DO iz=1,nz
        zz=z(iz)
-       DO iy=1,ny   
+       DO iy=1,ny
           yy=y(iy)
-          DO ix=1,nx   
+          DO ix=1,nx
              xx=x(ix)
              vol=wxyz*rhotot(ix,iy,iz)
-             q2(1,1)=q2(1,1)+(xx*xx+xx*xx-yy*yy-zz*zz)*vol   
-             q2(2,2)=q2(2,2)+(yy*yy+yy*yy-xx*xx-zz*zz)*vol   
-             q2(3,3)=q2(3,3)+(zz*zz+zz*zz-xx*xx-yy*yy)*vol   
-             q2(1,2)=q2(1,2)+3.D0*xx*yy*vol   
-             q2(1,3)=q2(1,3)+3.D0*xx*zz*vol   
-             q2(2,3)=q2(2,3)+3.D0*yy*zz*vol   
+             q2(1,1)=q2(1,1)+(xx*xx+xx*xx-yy*yy-zz*zz)*vol
+             q2(2,2)=q2(2,2)+(yy*yy+yy*yy-xx*xx-zz*zz)*vol
+             q2(3,3)=q2(3,3)+(zz*zz+zz*zz-xx*xx-yy*yy)*vol
+             q2(1,2)=q2(1,2)+3.D0*xx*yy*vol
+             q2(1,3)=q2(1,3)+3.D0*xx*zz*vol
+             q2(2,3)=q2(2,3)+3.D0*yy*zz*vol
           ENDDO
        ENDDO
     ENDDO
-    q2(2,1)=q2(1,2)   
-    q2(3,1)=q2(1,3)   
-    q2(3,2)=q2(2,3)   
-    denom=0.5D0*(q2(1,1)-q2(3,3)+SQRT((q2(1,1) & 
-         -q2(3,3))**2+4.D0*q2(3,1)**2)) 
-    IF(ABS(denom)<1.D-4) THEN   
-      newslope=100.D0   
-    ELSE   
+    q2(2,1)=q2(1,2)
+    q2(3,1)=q2(1,3)
+    q2(3,2)=q2(2,3)
+    denom=0.5D0*(q2(1,1)-q2(3,3)+SQRT((q2(1,1) &
+         -q2(3,3))**2+4.D0*q2(3,1)**2))
+    IF(ABS(denom)<1.D-4) THEN
+      newslope=100.D0
+    ELSE
       newslope=q2(1,3)/denom
     ENDIF
   END FUNCTION getslope
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
 ! DESCRIPTION: divpoint
 !> @brief
-!! The function divpoint examines the line determined by the axis of 
+!! The function divpoint examines the line determined by the axis of
 !! largest quadrupole moment to look for a suitable separation
-!! point between two fragments. If one is found with sufficiently low 
-!! density, it returns \c TRUE and the properties of that point in its 
+!! point between two fragments. If one is found with sufficiently low
+!! density, it returns \c TRUE and the properties of that point in its
 !! arguments. Otherwise it returns \c FALSE.
 !>
 !> @details
 !!To this end it looks at the behavior of the densities along this line.
 !!Since the line has no relation to the numerical grid, this is not
 !!trivial.
-!!  - <b> First loop: </b> Essentially it looks through the 
-!!  \f$(x,z)\f$-plane to   find points closer than half a grid spacing 
-!!  to the desired line with equation <tt>z=slope*x+bb</tt> 
-!!  (logical variable \c online). If the slope is larger than one, 
-!!  i. e., if the nuclei are separating predominantly in the 
+!!  - <b> First loop: </b> Essentially it looks through the
+!!  \f$(x,z)\f$-plane to   find points closer than half a grid spacing
+!!  to the desired line with equation <tt>z=slope*x+bb</tt>
+!!  (logical variable \c online). If the slope is larger than one,
+!!  i. e., if the nuclei are separating predominantly in the
 !!  \f$x\f$-direction, we need to take the equation
 !!  <tt>x=(z-bb)/slope</tt> instead to get better resolution. To make the
 !!  result monotonic along the line, the do loop in \f$z\f$ runs backward
@@ -721,7 +723,7 @@ CONTAINS
 !!  in arrays of length <tt>il</tt>.
 !!  - <b> Second loop: </b> now the number of fragments <tt>nf</tt>
 !!  is counted by examining this one-dimensional density curve, looking for
-!!  disconnected density humps above <tt>vacuum</tt> density. Where 
+!!  disconnected density humps above <tt>vacuum</tt> density. Where
 !!  the ``vacuum'' region starts and ends is recorded in variables
 !!  <tt>n1</tt> and <tt>n2</tt>. The logic is as follows:
 !!    -# The logical variable <tt>in\_vacuum</tt> keeps track of whether
@@ -743,84 +745,84 @@ CONTAINS
 !!  \f$(x,z)\f$-plane. The code calculates the midpoint between the two
 !!  positions and returns <tt>TRUE</tt> in this case.
 !>
-!> @return 
+!> @return
 !> LOGICAL, indicates whether there is a fragment division or not.
-!> @param[out] xmin 
+!> @param[out] xmin
 !> REAL(db), \f$x\f$-coordinate of the dividing point.
-!> @param[out] zmin 
+!> @param[out] zmin
 !> REAL(db), \f$z\f$-coordinate of the dividing point.
 !> @param[in] bb
 !> REAL(db), intercept of the line joining the fragments..
 !> @param[in] slope
 !> REAL(db), slope of the line joining the fragments.
-!--------------------------------------------------------------------------- 
-  LOGICAL FUNCTION divpoint(xmin,zmin,bb,slope) 
-    LOGICAL :: online,two,in_vacuum 
+!---------------------------------------------------------------------------
+  LOGICAL FUNCTION divpoint(xmin,zmin,bb,slope)
+    LOGICAL :: online,two,in_vacuum
     INTEGER :: iyy,iz1,iz2,idz,il,ix,iz,ixl(nx+ny+nz), &
-         izl(nx+ny+nz),i,n1,n2,nf 
-    REAL(db) :: deltax,deltaz,xx,zz,rhol(nx+ny+nz) 
+         izl(nx+ny+nz),i,n1,n2,nf
+    REAL(db) :: deltax,deltaz,xx,zz,rhol(nx+ny+nz)
     REAL(db),INTENT(OUT) :: xmin,zmin
     REAL(db),INTENT(IN) :: bb,slope
     REAL(db),PARAMETER :: vacuum=0.03D0
-    ! 
-    ! now the calculation of the dividing plane starts by examining the line 
-    ! along the axis of largest quadrupole moment 
-    ! 
+    !
+    ! now the calculation of the dividing plane starts by examining the line
+    ! along the axis of largest quadrupole moment
+    !
     iyy=ny/2;
     deltax=0.5*dx
     deltaz=0.5*dz
     ! Loop 1
-    IF(slope>=0.D0) THEN 
-      iz1=1; iz2=nz; idz=1 
-    ELSE 
-      iz1=nz; iz2=1; idz=-1 
+    IF(slope>=0.D0) THEN
+      iz1=1; iz2=nz; idz=1
+    ELSE
+      iz1=nz; iz2=1; idz=-1
     END IF
-    il=0 
-    DO ix=1,nx 
-       xx=x(ix) 
-       DO iz=iz1,iz2,idz 
-          zz=z(iz) 
-          online=.FALSE. 
-          IF(ABS(slope)<=1.D0) THEN 
-            online=ABS(zz-slope*xx-bb)<=deltaz 
-          ELSE 
-            online=ABS(xx-(zz-bb)/slope)<=deltax 
+    il=0
+    DO ix=1,nx
+       xx=x(ix)
+       DO iz=iz1,iz2,idz
+          zz=z(iz)
+          online=.FALSE.
+          IF(ABS(slope)<=1.D0) THEN
+            online=ABS(zz-slope*xx-bb)<=deltaz
+          ELSE
+            online=ABS(xx-(zz-bb)/slope)<=deltax
           END IF
-          IF(online) THEN 
-            il=il+1 
-            IF(il>nx+ny+nz) THEN 
-              WRITE(*,*) ' Increase dimensioning in function divpoint' 
-              STOP 
+          IF(online) THEN
+            il=il+1
+            IF(il>nx+ny+nz) THEN
+              WRITE(*,*) ' Increase dimensioning in function divpoint'
+              STOP
             END IF
-            ixl(il)=ix; izl(il)=iz 
+            ixl(il)=ix; izl(il)=iz
             rhol(il)=rhotot(ix,iyy,iz)
           END IF
        END DO
     END DO
     ! Loop 2
-    nf=0; in_vacuum=.TRUE. 
+    nf=0; in_vacuum=.TRUE.
     DO i=1,il
-       IF(rhol(i)>vacuum) THEN 
-         IF(in_vacuum) THEN 
-           in_vacuum=.FALSE. 
-           nf=nf+1 
-           IF(nf==2) n2=i 
-           IF(nf>2) EXIT 
+       IF(rhol(i)>vacuum) THEN
+         IF(in_vacuum) THEN
+           in_vacuum=.FALSE.
+           nf=nf+1
+           IF(nf==2) n2=i
+           IF(nf>2) EXIT
          END IF
-       ELSE 
-         IF(.NOT.in_vacuum) THEN 
-           IF(nf==1) n1=MAX(1,i-1) 
-           in_vacuum=.TRUE. 
+       ELSE
+         IF(.NOT.in_vacuum) THEN
+           IF(nf==1) n1=MAX(1,i-1)
+           in_vacuum=.TRUE.
          END IF
        END IF
     END DO
-    two=nf==2 
+    two=nf==2
     ! final processing
-    IF(two) THEN 
-      xmin=0.5D0*(x(ixl(n1))+x(ixl(n2))) 
-      zmin=0.5D0*(z(izl(n1))+z(izl(n2))) 
+    IF(two) THEN
+      xmin=0.5D0*(x(ixl(n1))+x(ixl(n2)))
+      zmin=0.5D0*(z(izl(n1))+z(izl(n2)))
     END IF
-    divpoint=two 
+    divpoint=two
   END FUNCTION divpoint
   !***************************************************
 END MODULE Twobody

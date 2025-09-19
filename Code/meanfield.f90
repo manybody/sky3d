@@ -1,7 +1,7 @@
 !------------------------------------------------------------------------------
 ! MODULE: Meanfield
 !------------------------------------------------------------------------------
-! DESCRIPTION: 
+! DESCRIPTION:
 !> @brief
 !!This module calculates all the ingredients needed for the
 !!energy functional and for applying the single-particle Hamiltonian to
@@ -23,34 +23,35 @@
 !!not need access to the wave functions.
 !------------------------------------------------------------------------------
 Module Meanfield
-  USE Params, ONLY: db,tcoul
-  USE Densities
-  USE Forces 
+  USE Params, ONLY: db,tcoul, tfft
+  USE Densities, ONLY: rho,sdens,current,tau,sodens
+  USE Forces, ONLY: f,b0,b0p,b1,b1p,b2,b2p,b3,b3p,b4,b4p,slate
   USE Grids, ONLY: nx,ny,nz,der1x,der2x,der1y,der2y,der1z,der2z
   USE Coulomb, ONLY: poisson,wcoul
   IMPLICIT NONE
-  REAL(db),ALLOCATABLE,DIMENSION(:,:,:,:)   :: upot   !<this is the local part of the mean field 
+  REAL(db),ALLOCATABLE,DIMENSION(:,:,:,:)   :: upot   !<this is the local part of the mean field
   !!\f$ U_q \f$. It is a scalar field with isospin index.
   REAL(db),ALLOCATABLE,DIMENSION(:,:,:,:)   :: bmass  !<this is the effective mass \f$ B_q \f$.
   !!It is a scalar, isospin-dependent field.
   REAL(db),ALLOCATABLE,DIMENSION(:,:,:,:)   :: divaq  !<this is the divergence of \c aq,
   !!i.e., \f$ \nabla\cdot\vec A_q \f$. Its is a scalar, isospin-dependent field.
-  REAL(db),ALLOCATABLE,DIMENSION(:,:,:,:,:) :: aq     !<This is the vector filed \f$ \vec A_q \f$. 
-  !!It is a vector, isospin-dependent field.  
+  REAL(db),ALLOCATABLE,DIMENSION(:,:,:,:,:) :: aq     !<This is the vector filed \f$ \vec A_q \f$.
+  !!It is a vector, isospin-dependent field.
   REAL(db),ALLOCATABLE,DIMENSION(:,:,:,:,:) :: spot   !<the field \f$ \vec{S}_q \f$.
   !!It is a vector, isospin-dependent field.
-  REAL(db),ALLOCATABLE,DIMENSION(:,:,:,:,:) :: wlspot !<the field \f$ \vec W_q \f$. 
+  REAL(db),ALLOCATABLE,DIMENSION(:,:,:,:,:) :: wlspot !<the field \f$ \vec W_q \f$.
   !!It is a vector, isospin-dependent field.
   REAL(db),ALLOCATABLE,DIMENSION(:,:,:,:,:) :: dbmass !<contains the gradient of \c bmass.
   !!It is a vector, isospin-dependent field.
-  PRIVATE :: divaq,aq,wlspot,dbmass
+  PRIVATE
+  PUBLIC :: upot,skyrme, hpsi,bmass,spot,alloc_fields
 CONTAINS
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: alloc_fields
 !> @brief
 !!This subroutine has the simple task of allocating all the fields that
 !!are local to the module \c Meanfield.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE alloc_fields
     ALLOCATE(upot(nx,ny,nz,2),bmass(nx,ny,nz,2),divaq(nx,ny,nz,2), &
          aq(nx,ny,nz,3,2),spot(nx,ny,nz,3,2),wlspot(nx,ny,nz,3,2), &
@@ -62,7 +63,7 @@ CONTAINS
     divaq=0.D0
     dbmass=0.D0
   END SUBROUTINE alloc_fields
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: skyrme
 !> @brief
 !!In this subroutine the various fields are calculated from the
@@ -83,7 +84,7 @@ CONTAINS
 !!\f$ \longrightarrow \f$ <tt>(b1-b1p)*rho(:,:,:,iq)+b1*rho(:,:,:,ic)</tt>
 !!This decomposition is used in all applicable cases.
 !!
-!!For intermediate results the fields \c workden (scalar) and \c workvec 
+!!For intermediate results the fields \c workden (scalar) and \c workvec
 !!(vector) are used.
 !!
 !!Now the subroutine proceeds in the following steps:
@@ -100,14 +101,14 @@ CONTAINS
 !!     Slater exchange correction (only if the \c ex parameter in the
 !!     force is nonzero) are added to \c upot for protons, <tt> iq=2 </tt>.
 !!  -# the Laplacian is applied to the densities and
-!!     the result stored in \c workden. Then the remaining terms are constructed.  
+!!     the result stored in \c workden. Then the remaining terms are constructed.
 !!     Note that the  \c iq -loop is combined with the following steps.
 !!  -# the effective mass is calculated.
 !!  -# the gradient of the density is calculated and the
 !!     spin-orbit vector \f$ \vec W_q \f$ is constructed in \c wlspot.
 !!  -# the curl of the spin density vector is calculated
 !!     and stored in \c workvec.
-!!  -# the vector \f$ \vec A_q \f$ is calculated from the current density 
+!!  -# the vector \f$ \vec A_q \f$ is calculated from the current density
 !!     and the curl of the spin density.
 !!  -# the curl of the current density is calculated and stored in \c spot.
 !!  -# now the two isospin contributions in \c spot
@@ -119,18 +120,18 @@ CONTAINS
 !!     \f$ B_q \f$ is calculated and stored in the vector variable \c dbmass.
 !!  .
 !!This concludes the calculation of all scalar and vector fields needed
-!!for the application of the Skyrme force. 
-!--------------------------------------------------------------------------- 
-  SUBROUTINE skyrme 
+!!for the application of the Skyrme force.
+!---------------------------------------------------------------------------
+  SUBROUTINE skyrme
     USE Trivial, ONLY: rmulx,rmuly,rmulz
-    REAL(db),PARAMETER :: epsilon=1.0d-25  
+    REAL(db),PARAMETER :: epsilon=1.0d-25
     REAL(db) :: rotspp,rotspn
     REAL(db),ALLOCATABLE :: workden(:,:,:,:),workvec(:,:,:,:,:)
     INTEGER :: ix,iy,iz,ic,iq,icomp
     ALLOCATE(workden(nx,ny,nz,2),workvec(nx,ny,nz,3,2))
     !  Step 1: 3-body contribution to upot.
-    DO iq=1,2  
-       ic=3-iq  
+    DO iq=1,2
+       ic=3-iq
        upot(:,:,:,iq)=(rho(:,:,:,1)+rho(:,:,:,2))**f%power * &
             ((b3*(f%power+2.D0)/3.D0-2.D0*b3p/3.D0)*rho(:,:,:,iq) &
             +b3*(f%power+2.D0)/3.D0*rho(:,:,:,ic) &
@@ -143,8 +144,8 @@ CONTAINS
        CALL rmuly(der1y,sodens(:,:,:,2,iq),workden(:,:,:,iq),1)
        CALL rmulz(der1z,sodens(:,:,:,3,iq),workden(:,:,:,iq),1)
     ENDDO
-    DO iq=1,2  
-       ic=3-iq 
+    DO iq=1,2
+       ic=3-iq
        upot(:,:,:,iq)=upot(:,:,:,iq) &
             -(b4+b4p)*workden(:,:,:,iq)-b4*workden(:,:,:,ic)
     ENDDO
@@ -157,12 +158,12 @@ CONTAINS
     ENDIF
     ! Step 4: remaining terms of upot
     DO iq=1,2
-       CALL rmulx(der2x,rho(:,:,:,iq),workden(:,:,:,iq),0)  
-       CALL rmuly(der2y,rho(:,:,:,iq),workden(:,:,:,iq),1)  
+       CALL rmulx(der2x,rho(:,:,:,iq),workden(:,:,:,iq),0)
+       CALL rmuly(der2y,rho(:,:,:,iq),workden(:,:,:,iq),1)
        CALL rmulz(der2z,rho(:,:,:,iq),workden(:,:,:,iq),1)
     ENDDO
-    DO iq=1,2  
-       ic=3-iq  
+    DO iq=1,2
+       ic=3-iq
        upot(:,:,:,iq)=upot(:,:,:,iq)+(b0-b0p)*rho(:,:,:,iq)+b0*rho(:,:,:,ic) &
                                 ! t1,t2, and tau-dependent part      !
             +(b1-b1p)*tau(:,:,:,iq)+b1*tau(:,:,:,ic) &
@@ -181,7 +182,7 @@ CONTAINS
             (b4+b4p)*workvec(:,:,:,:,iq)+b4*workvec(:,:,:,:,ic)
     END DO
     ! Step 7: calculate curl of spin density vector, store in workvec
-    DO iq=1,2  
+    DO iq=1,2
        CALL rmuly(der1y,sdens(:,:,:,3,iq),workvec(:,:,:,1,iq),0)
        CALL rmulz(der1z,sdens(:,:,:,2,iq),workvec(:,:,:,1,iq),-1)
        CALL rmulz(der1z,sdens(:,:,:,1,iq),workvec(:,:,:,2,iq),0)
@@ -197,7 +198,7 @@ CONTAINS
             -(b4+b4p)*workvec(:,:,:,:,iq)-b4*workvec(:,:,:,:,ic)
     ENDDO
     ! Step 9: calculate the curl of the current density, stopr in spot
-    DO iq=1,2  
+    DO iq=1,2
        CALL rmuly(der1y,current(:,:,:,3,iq),spot(:,:,:,1,iq),0)
        CALL rmulz(der1z,current(:,:,:,2,iq),spot(:,:,:,1,iq),-1)
        CALL rmulz(der1z,current(:,:,:,1,iq),spot(:,:,:,2,iq),0)
@@ -206,40 +207,40 @@ CONTAINS
        CALL rmuly(der1y,current(:,:,:,1,iq),spot(:,:,:,3,iq),-1)
     ENDDO
     ! Step 10: combine isospin contributions
-    DO icomp=1,3  
+    DO icomp=1,3
        DO iz=1,nz
           DO iy=1,ny
-             DO ix=1,nx  
-                rotspp=spot(ix,iy,iz,icomp,1)  
-                rotspn=spot(ix,iy,iz,icomp,2)  
-                spot(ix,iy,iz,icomp,1)=-(b4+b4p)*rotspp-b4*rotspn  
-                spot(ix,iy,iz,icomp,2)=-(b4+b4p)*rotspn-b4*rotspp  
+             DO ix=1,nx
+                rotspp=spot(ix,iy,iz,icomp,1)
+                rotspn=spot(ix,iy,iz,icomp,2)
+                spot(ix,iy,iz,icomp,1)=-(b4+b4p)*rotspp-b4*rotspn
+                spot(ix,iy,iz,icomp,2)=-(b4+b4p)*rotspn-b4*rotspp
              ENDDO
           ENDDO
        ENDDO
     ENDDO
-    ! Step 11: calculate divergence of aq in divaq 
-    DO iq=1,2  
+    ! Step 11: calculate divergence of aq in divaq
+    DO iq=1,2
        CALL rmulx(der1x,aq(:,:,:,1,iq),divaq(:,:,:,iq),0)
        CALL rmuly(der1y,aq(:,:,:,2,iq),divaq(:,:,:,iq),1)
        CALL rmulz(der1z,aq(:,:,:,3,iq),divaq(:,:,:,iq),1)
     ENDDO
     ! Step 12: calculate the gradient of the effective mass in dbmass
-    DO iq=1,2  
+    DO iq=1,2
        CALL rmulx(der1x,bmass(:,:,:,iq),dbmass(:,:,:,1,iq),0)
        CALL rmuly(der1y,bmass(:,:,:,iq),dbmass(:,:,:,2,iq),0)
        CALL rmulz(der1z,bmass(:,:,:,iq),dbmass(:,:,:,3,iq),0)
     ENDDO
     DEALLOCATE(workden,workvec)
   END SUBROUTINE skyrme
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: hpsi
 !> @brief
 !!This subroutine applies the single-particle Hamiltonian to a
 !!single-particle wave function \c pinn to produce an output wave
 !!function \c pout. The argument \c iq indicates the isospin for
 !!the wave function and \c eshift is an energy shift which is zero in
-!!the dynamic calculation but crucial to the static algorithm (see 
+!!the dynamic calculation but crucial to the static algorithm (see
 !!\c grstep in module \c Static).
 !>
 !> @details
@@ -274,18 +275,18 @@ CONTAINS
 !!  +\vec S_q\cdot\vec\sigma
 !!  -\frac{\I}{2} \left[(\nabla\cdot\vec A_q)+2\vec A_q\cdot\nabla\right].
 !!\f]
-!! 
+!!
 !!  -# the non-derivative parts not involving spin. These
 !!     arise from \f$ U_q \f$ and \f$ -\tfrac{\I}{2}\,\nabla\cdot\vec A_q \f$, which
 !!     are combined into a complex expression. The energy shift \c eshift is also included.
 !!  -# the spin current coupling is constructed by simply
 !!     using the explicit definition of the Pauli matrices and multiplying
 !!     the resulting matrix onto the spinor wave function.
-!!  -# the first and second derivative in the \f$ x \f$-direction are evaluated 
-!!     and stored in the arrays \c pswk and \c pswk2. The last term in the Hamiltonian 
+!!  -# the first and second derivative in the \f$ x \f$-direction are evaluated
+!!     and stored in the arrays \c pswk and \c pswk2. The last term in the Hamiltonian
 !!     gives rise to the two contributions
-!!     \f[ -\frac{\partial B_q}{\partial x}\frac{\partial}{\partial x}-B_q 
-!!     \frac{\partial^2}{\partial x^2}, \f] 
+!!     \f[ -\frac{\partial B_q}{\partial x}\frac{\partial}{\partial x}-B_q
+!!     \frac{\partial^2}{\partial x^2}, \f]
 !!     of which the second is evaluated
 !!     straightforwardly, while the first one is combined with the spin-orbit
 !!     contribution. The part of \f$ \I\vec W_q\cdot(\vec\sigma\times\nabla) \f$
@@ -314,22 +315,20 @@ CONTAINS
 !> COMPLEX(db), array, takes the wave function the Hamiltonian is supposed to be applied to.
 !> @param[out] pout
 !> COMPLEX(db), array, returns the Hamiltonian applied to the wave function.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE hpsi(iq,eshift,pinn,pout)
     USE Trivial, ONLY: cmulx, cmuly, cmulz
     USE Levels, ONLY: cdervx,cdervy,cdervz
-    INTEGER :: iq
-    REAL(db) :: eshift  
-    COMPLEX(db),DIMENSION(:,:,:,:) :: pinn,pout
-    INTENT(IN) :: iq,eshift
-    INTENT(INOUT) :: pinn
-    INTENT(OUT) :: pout
+    INTEGER, intent(in) :: iq
+    REAL(db), intent(in) :: eshift
+    COMPLEX(db),DIMENSION(:,:,:,:) , intent(out) :: pinn
+    COMPLEX(db),DIMENSION(:,:,:,:) , intent(out) :: pout
     INTEGER :: is,ic
     REAL(db) :: sigis
     COMPLEX(db),ALLOCATABLE,DIMENSION(:,:,:,:) :: pswk,pswk2
     ALLOCATE(pswk(nx,ny,nz,2),pswk2(nx,ny,nz,2))
     ! Step 1: non-derivative parts not involving spin
-    DO is=1,2  
+    DO is=1,2
        pout(:,:,:,is)=CMPLX(upot(:,:,:,iq)-eshift, &
             -0D0,db)*pinn(:,:,:,is)
     ENDDO
@@ -342,14 +341,14 @@ CONTAINS
          *pinn(:,:,:,1) - spot(:,:,:,3,iq)*pinn(:,:,:,2)
     ! Step 3: derivative terms in x
     IF(TFFT) THEN
-       CALL cdervx(pinn,pswk,d2psout=pswk2)  
+       CALL cdervx(pinn,pswk,d2psout=pswk2)
     ELSE
-       CALL cmulx(der1x,pinn,pswk,0)  
-       CALL cmulx(der2x,pinn,pswk2,0)  
+       CALL cmulx(der1x,pinn,pswk,0)
+       CALL cmulx(der2x,pinn,pswk2,0)
     ENDIF
-    DO is=1,2  
-       ic=3-is  
-       sigis=(3-2*is)*0.5D0  
+    DO is=1,2
+       ic=3-is
+       sigis=(3-2*is)*0.5D0
        pout(:,:,:,is)=pout(:,:,:,is) &
             -CMPLX(dbmass(:,:,:,1,iq),0.5D0*aq(:,:,:,1,iq) &
             -sigis*wlspot(:,:,:,2,iq),db)*pswk(:,:,:,is)  &
@@ -363,21 +362,21 @@ CONTAINS
          (aq(:,:,:,1,iq)+wlspot(:,:,:,2,iq))*pinn(:,:,:,2)&
          +0.5D0*wlspot(:,:,:,3,iq)*pinn(:,:,:,1)
     IF(TFFT) THEN
-       CALL cdervx(pswk2,pswk)  
+       CALL cdervx(pswk2,pswk)
     ELSE
-       CALL cmulx(der1x,pswk2,pswk,0)  
+       CALL cmulx(der1x,pswk2,pswk,0)
     ENDIF
     pout(:,:,:,:)=pout(:,:,:,:) + pswk(:,:,:,:)
     ! Step 4: derivative terms in y
     IF(TFFT) THEN
-       CALL cdervy(pinn,pswk,d2psout=pswk2)  
+       CALL cdervy(pinn,pswk,d2psout=pswk2)
     ELSE
-       CALL cmuly(der1y,pinn,pswk,0)  
-       CALL cmuly(der2y,pinn,pswk2,0)  
+       CALL cmuly(der1y,pinn,pswk,0)
+       CALL cmuly(der2y,pinn,pswk2,0)
     ENDIF
-    DO is=1,2  
-       ic=3-is  
-       sigis=(3-2*is)*0.5D0  
+    DO is=1,2
+       ic=3-is
+       sigis=(3-2*is)*0.5D0
        pout(:,:,:,is)=pout(:,:,:,is) &
             -CMPLX(dbmass(:,:,:,2,iq),0.5D0*aq(:,:,:,2,iq) &
             +sigis*wlspot(:,:,:,1,iq),db)*pswk(:,:,:,is) &
@@ -391,21 +390,21 @@ CONTAINS
          (aq(:,:,:,2,iq)-wlspot(:,:,:,1,iq))*pinn(:,:,:,2)&
          +CMPLX(0D0,0.5D0*wlspot(:,:,:,3,iq),db)*pinn(:,:,:,1)
     IF(TFFT) THEN
-       CALL cdervy(pswk2,pswk)  
+       CALL cdervy(pswk2,pswk)
     ELSE
-       CALL cmuly(der1y,pswk2,pswk,0)  
+       CALL cmuly(der1y,pswk2,pswk,0)
     ENDIF
     pout(:,:,:,:)=pout(:,:,:,:) + pswk(:,:,:,:)
     ! Step 5: derivative terms in z
     IF(TFFT) THEN
-       CALL cdervz(pinn,pswk,d2psout=pswk2)  
+       CALL cdervz(pinn,pswk,d2psout=pswk2)
     ELSE
-       CALL cmulz(der1z,pinn,pswk,0)  
-       CALL cmulz(der2z,pinn,pswk2,0)  
+       CALL cmulz(der1z,pinn,pswk,0)
+       CALL cmulz(der2z,pinn,pswk2,0)
     ENDIF
-    DO is=1,2  
-       ic=3-is  
-       sigis=(3-2*is)*0.5D0  
+    DO is=1,2
+       ic=3-is
+       sigis=(3-2*is)*0.5D0
        pout(:,:,:,is)=pout(:,:,:,is) &
             -CMPLX(dbmass(:,:,:,3,iq),0.5D0*aq(:,:,:,3,iq),db)*pswk(:,:,:,is) &
             +CMPLX(sigis*wlspot(:,:,:,1,iq),-0.5D0*wlspot(:,:,:,2,iq),db)* &
@@ -416,9 +415,9 @@ CONTAINS
     pswk2(:,:,:,2) = CMPLX(0D0,-0.5D0,db)*aq(:,:,:,3,iq)*pinn(:,:,:,2)&
          +CMPLX(-0.5D0*wlspot(:,:,:,1,iq),-0.5D0*wlspot(:,:,:,2,iq),db)*pinn(:,:,:,1)
     IF(TFFT) THEN
-       CALL cdervz(pswk2,pswk)  
+       CALL cdervz(pswk2,pswk)
     ELSE
-       CALL cmulz(der1z,pswk2,pswk,0)  
+       CALL cmulz(der1z,pswk2,pswk,0)
     ENDIF
     pout(:,:,:,:)=pout(:,:,:,:) + pswk(:,:,:,:)
     !

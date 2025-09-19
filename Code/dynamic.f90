@@ -1,7 +1,7 @@
 !------------------------------------------------------------------------------
 ! MODULE: Dynamic
 !------------------------------------------------------------------------------
-! DESCRIPTION: 
+! DESCRIPTION:
 !> @brief
 !!This module contains the routines needed for time propagation of the
 !!system. All the logic needed for this
@@ -9,20 +9,28 @@
 !!are equally used in the static calculation.
 !------------------------------------------------------------------------------
 MODULE DYNAMIC
-  USE Params
-  USE Grids, ONLY: nx,ny,nz,wxyz
-  USE Densities
-  USE Levels
-  USE Energies
-  USE Moment
+  USE Params, ONLY: energiesfile, iter, momentafile, monopolesfile, mrest, &
+       octupolesfile, quadrupolesfile, spinfile, trestart, energiesfile, &
+       mplot, mprint, nof, printnow, diatriacontapolesfile, dipolesfile, &
+       hexadecapolesfile,hbc,db,extfieldfile,wflag,scratch,time
+  USE Grids, ONLY: nx,ny,nz,wxyz,x,y,z
+  USE Densities, ONLY: rho, tau, sdens, sodens, current
+  USE Levels, ONLY: wocc, npmin, psi, sp_norm, sp_energy, sp_orbital, sp_spin, &
+      sp_kinetic, nstmax,nstloc,isospin
+  USE Forces, ONLY:f
+  USE Energies, ONLY: total_angmom, tke, ehfls, ehf, ehf0, ehf1, ehf2, ehf3, &
+       ehfc, ehfint, orbital, spin
+  USE Moment, ONLY: pnr, pcm
   USE Twobody, ONLY: twobody_analysis,istwobody,roft,roft_old
-  USE Parallel
+  USE Parallel, ONLY: tmpi, mpi_nprocs,globalindex
   USE Meanfield, ONLY: skyrme, hpsi, spot
   USE Trivial, ONLY: overlap
   USE Inout, ONLY: write_wavefunctions,write_densities, plot_density, &
        sp_properties,start_protocol
-  USE External
+  USE External, ONLY: l_val, M_val
   IMPLICIT NONE
+  PRIVATE
+  PUBLIC :: getin_dynamic,dynamichf
   SAVE
   INTEGER            :: nt                !< the number of the final time step to be
   !! calculated. In case of a restart this is smaller than the total number of time steps.
@@ -31,26 +39,26 @@ MODULE DYNAMIC
   !! expansion of the potential
   INTEGER            :: mrescm=0          !< frequency of c.m. motion correction
   REAL(db)           :: rsep              !<  the final separation distance. The calculation
-  !! is stopped if there has been a reseparation into two fragments and their distance exceeds \c rsep. 
+  !! is stopped if there has been a reseparation into two fragments and their distance exceeds \c rsep.
   LOGICAL            :: texternal=.FALSE. !< this logical variable indicates that an
   !! external field is present. See module \c External.
   LOGICAL            :: text_timedep      !< this logical variable indicates that the
   !! external field is time-dependent and does not describe an instantaneous boost.
-  REAL(db),PARAMETER :: esf=0.0D0         !< this is the energy shift for the call to \c hpsi. 
+  REAL(db),PARAMETER :: esf=0.0D0         !< this is the energy shift for the call to \c hpsi.
   !! Since it is not used in the dynamics part of the code, it
   !! is here set to the constant value of zero.
 CONTAINS
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: getin_dynamic
 !> @brief
 !!This is a relatively simple routine that reads the input for namelist
 !!\c dynamic and prints it on standard output. If \c texternal is
 !!true, it also calls \c getin_external to read the external field
 !!parameters.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE getin_dynamic
     NAMELIST /dynamic/ nt,dt,mxpact,mrescm,rsep,texternal
-    READ(5,dynamic)  
+    READ(5,dynamic)
     IF(wflag) THEN
        WRITE(*,*) '***** Parameters for the dynamic calculation *****'
        WRITE(*,"(A,I8,A,F10.5,A)") " Number of time steps:",nt, &
@@ -61,7 +69,7 @@ CONTAINS
     ENDIF
     IF(texternal) CALL getin_external
   END SUBROUTINE getin_dynamic
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: dynamichf
 !> @brief
 !!This subroutine performs the main time-integration algorithm starting
@@ -69,25 +77,25 @@ CONTAINS
 !>
 !> @details
 !!Its building blocks are:
-!!  - <b> Step 1: preparation phase:</b> this phase consists of several substeps. 
+!!  - <b> Step 1: preparation phase:</b> this phase consists of several substeps.
 !!     -# If this is not a restart, the time and iteration number are
 !!        zeroed (for a restart only the physical time is taken from the
 !!        \c wffile). The wave functions are saved in the
 !!        \c wffile, to save setup time in case the calculation has to
 !!        be restarted from this initial point.
-!!     -# The instantaneous external boost is applied using 
-!!        \c extboost. If this subroutine has applied a boost, it sets 
+!!     -# The instantaneous external boost is applied using
+!!        \c extboost. If this subroutine has applied a boost, it sets
 !!        \c text_timedep to \c .FALSE. so no further calls to
 !!        external-field routines are made (except for \c print_extfield).
 !!     -# The protocol files <tt> *.res </tt> are initialized with
-!!        their header lines.  
+!!        their header lines.
 !!     -# The densities and current are calculated in a loop over wave
-!!        function by calling \c add_densities. 
+!!        function by calling \c add_densities.
 !!        They are first set to zero and then accumulated in a
 !!        loop over the set on the local node, followed by collecting them
 !!        over all nodes.
 !!     -# The mean field and (if \c texternal is true) the
-!!        external field are calculated for time zero using routines 
+!!        external field are calculated for time zero using routines
 !!        \c skyrme and \c extfld.
 !!     -# Then \c tinfo is called to calculate and print the
 !!        single-particle quantities and the total energies at time 0 or
@@ -100,7 +108,7 @@ CONTAINS
 !!
 !!  - <b> Step 2: predictor time step:</b> the loop over the iteration
 !!    index \c iter is started. Then the densities and mean-field
-!!    components are estimated, i. e., in effect the Hamiltonian 
+!!    components are estimated, i. e., in effect the Hamiltonian
 !!    \f$ \hat h(t+\tfrac1{2}\Delta t) \f$ required by the numerical method. This is done
 !!    by evolving the wave functions for a full \c dt using the old
 !!    Hamiltonian and averaging the densities between old and new ones to
@@ -135,16 +143,16 @@ CONTAINS
 !!     -# The densities are reset to zero before the wave function loop,
 !!        so the densities summed up are the purely the densities at the end
 !!        of the time step,
-!!     -# the series expansion in \c tstep now uses the full 
+!!     -# the series expansion in \c tstep now uses the full
 !!        \c mxpact terms, and
 !!     -# the new wave functions are copied back into \c psi to be
 !!        available for the next time step.
 !!
 !!  - <b> Step 4: Center-of-mass correction: </b>
 !!    If a center-of-mass correction is desired by the user by setting
-!!    <tt> mrescm /=0</tt>, 
+!!    <tt> mrescm /=0</tt>,
 !!    subroutine \c resetcm is called every \c mrescm'th time step to
-!!    reset the center-of-mass velocity to zero.  
+!!    reset the center-of-mass velocity to zero.
 !!
 !!  - <b> Step 5: generating some output </b> At this point the time is
 !!    advanced by \c dt because the physical time is now the end of
@@ -159,7 +167,7 @@ CONTAINS
 !!  onto \c wffile depending on \c mrest.
 !!
 !!This ends the time loop and subroutine \c dynamichf itself.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE dynamichf
     INTEGER :: nst,istart
     COMPLEX(db),ALLOCATABLE :: ps4(:,:,:,:)
@@ -167,7 +175,7 @@ CONTAINS
     ! Step 1: Preparation phase
     IF(.NOT.trestart) THEN
        iter=0
-       time=0.0D0  
+       time=0.0D0
        ! save wave functions
        CALL write_wavefunctions
        IF(wflag) WRITE(*,*) 'Wrote wave function file after initialization'
@@ -216,7 +224,7 @@ CONTAINS
     !$OMP REDUCTION(+:rho,tau,current,sdens,sodens)
     DO nst=1,nstloc
        CALL add_density(isospin(globalindex(nst)),wocc(globalindex(nst)), &
-            psi(:,:,:,:,nst),rho,tau,current,sdens,sodens)  
+            psi(:,:,:,:,nst),rho,tau,current,sdens,sodens)
     ENDDO
     !$OMP END PARALLEL DO
     IF(tmpi) CALL collect_densities
@@ -227,7 +235,7 @@ CONTAINS
     !***********************************************************************
     istart=iter+1
     ! Step 2: start loop and do half-time step
-    Timestepping:  DO iter=istart,nt  
+    Timestepping:  DO iter=istart,nt
        IF(wflag) WRITE(*,'(/A,I6,A,F8.2,A)') ' Starting time step #',iter, &
             ' at time=',time,' fm/c'
        ! correction for parallel version
@@ -242,10 +250,10 @@ CONTAINS
        !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,ps4) SCHEDULE(STATIC) &
        !$OMP REDUCTION(+:rho,tau,current,sdens,sodens)
        DO nst=1,nstloc
-          ps4=psi(:,:,:,:,nst) 
+          ps4=psi(:,:,:,:,nst)
           CALL tstep(isospin(globalindex(nst)),mxpact/2,ps4)
           CALL add_density(isospin(globalindex(nst)),wocc(globalindex(nst)), &
-               ps4,rho,tau,current,sdens,sodens)  
+               ps4,rho,tau,current,sdens,sodens)
        ENDDO
        !$OMP END PARALLEL DO
        IF(tmpi) CALL collect_densities
@@ -256,7 +264,7 @@ CONTAINS
        sodens=0.5D0*sodens
        sdens=0.5D0*sdens
        ! compute mean field and add external field
-       CALL skyrme  
+       CALL skyrme
        IF(text_timedep) CALL extfld(time+dt/2.0D0)
        ! Step 3: full time step
        ! reset densities
@@ -269,25 +277,25 @@ CONTAINS
        !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,ps4) SCHEDULE(STATIC) &
        !$OMP REDUCTION(+:rho,tau,current,sdens,sodens)
        DO nst=1,nstloc
-          ps4=psi(:,:,:,:,nst) 
+          ps4=psi(:,:,:,:,nst)
           CALL tstep(isospin(globalindex(nst)),mxpact,ps4)
           CALL add_density(isospin(globalindex(nst)),wocc(globalindex(nst)), &
-               ps4,rho,tau,current,sdens,sodens)  
+               ps4,rho,tau,current,sdens,sodens)
           psi(:,:,:,:,nst)=ps4
        ENDDO
        !$OMP END PARALLEL DO
        ! sum up over nodes
        IF(tmpi) CALL collect_densities
        ! Step 4: eliminate center-of-mass motion if desired
-       IF(mrescm/=0) THEN  
-          IF(MOD(iter,mrescm)==0) THEN  
+       IF(mrescm/=0) THEN
+          IF(MOD(iter,mrescm)==0) THEN
              CALL resetcm
              !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst) SCHEDULE(STATIC) &
              !$OMP REDUCTION(+:rho,tau,current,sdens,sodens)
              DO nst=1,nstloc
                 CALL add_density(isospin(globalindex(nst)), &
                      wocc(globalindex(nst)), &
-                     psi(:,:,:,:,nst),rho,tau,current,sdens,sodens)  
+                     psi(:,:,:,:,nst),rho,tau,current,sdens,sodens)
              ENDDO
              !$OMP END PARALLEL DO
              IF(tmpi) CALL collect_densities
@@ -298,24 +306,24 @@ CONTAINS
        CALL tinfo
        ! Step 6: finishing up
        ! compute densities, currents, potentials etc.                  *
-       CALL skyrme  
+       CALL skyrme
        IF(text_timedep) CALL extfld(time+dt)
-       IF(MOD(iter,mrest)==0) THEN  
+       IF(MOD(iter,mrest)==0) THEN
           CALL write_wavefunctions
           IF(wflag) WRITE(*,*) ' Wrote restart file at end of  iter=',iter
        ENDIF
     END DO Timestepping
     DEALLOCATE(ps4)
   END SUBROUTINE dynamichf
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: tstep
 !> @brief
 !!In this subroutine one wave function given as the argument \c psout
-!!is stepped forward in time by the interval \c dt. 
+!!is stepped forward in time by the interval \c dt.
 !>
 !> @details
 !!The method used is the expansion of the exponential time-development operator
-!!cut off at the power of \c mxp, which in practice is usually around 6. 
+!!cut off at the power of \c mxp, which in practice is usually around 6.
 !!Suppressing the argument of \f$ \hat h \f$ for brevity, we can write
 !!\f[ \hat U(t,t+\Delta t)\,\phi\approx \sum_{n=0}^m \phi^{(n)} \f]
 !!with
@@ -335,25 +343,25 @@ CONTAINS
 !> REAL(db), takes the power to which the time-development operator is expanded.
 !> @param[in,out] psout
 !> REAL(db), array, takes the wave function and returns evolved wave function.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE tstep(iq,mxp,psout)
     INTEGER,INTENT(IN) :: iq,mxp
     COMPLEX(db),INTENT(INOUT) :: psout(:,:,:,:)
     INTEGER :: m,is,ix,iy,iz
-    COMPLEX(db) :: ps1(nx,ny,nz,2),ps2(nx,ny,nz,2)  
+    COMPLEX(db) :: ps1(nx,ny,nz,2),ps2(nx,ny,nz,2)
     REAL(db) :: fmd
     ps1=psout
     !***********************************************************************
     !        compute exp(-I*dt*h) by power series expansion              *
     !***********************************************************************
     DO m=1,mxp
-       fmd=-dt/(hbc*m)  
+       fmd=-dt/(hbc*m)
        CALL hpsi(iq,esf,ps1,ps2)
-       DO is=1,2  
-          DO iz=1,nz  
-             DO iy=1,ny  
-                DO ix=1,nx  
-                   ps1(ix,iy,iz,is)=& 
+       DO is=1,2
+          DO iz=1,nz
+             DO iy=1,ny
+                DO ix=1,nx
+                   ps1(ix,iy,iz,is)=&
                         CMPLX(-fmd*AIMAG(ps2(ix,iy,iz,is)),   &
                         fmd*REAL(ps2(ix,iy,iz,is)),db)
                    psout(ix,iy,iz,is)=psout(ix,iy,iz,is)+ps1(ix,iy,iz,is)
@@ -363,11 +371,11 @@ CONTAINS
        ENDDO
     END DO
   END SUBROUTINE tstep
-  !---------------------------------------------------------------------------  
+  !---------------------------------------------------------------------------
 ! DESCRIPTION: tinfo
 !> @brief
 !!This subroutine is used to output various pieces of information
-!!relevant especially to the dynamic mode of the code. 
+!!relevant especially to the dynamic mode of the code.
 !>
 !> @details
 !!It is called at
@@ -378,7 +386,7 @@ CONTAINS
 !!  - <b> Step 2: twobody analysis </b> the twobody analysis is
 !!    performed, but only if the calculation started as a twobody
 !!    scenario. This is the simplified version which essentially only
-!!    determines the fragment in case of separation.  
+!!    determines the fragment in case of separation.
 !!  - <b> Step 3: moments: </b> the moments of the distribution are
 !!    calculated using subroutine \c moments. This includes total mass,
 !!    momenta, and angular momenta. They are printed out if indicated by
@@ -392,9 +400,9 @@ CONTAINS
 !!    because some of the logic may depend on them, especially the
 !!    twobody-analysis, which needs the correct c.m., for example and is
 !!    calculated at every time step and on every node.</b>
-!! 
+!!
 !!  - <b> Step 4: single-particle quantities:</b> the single-particle
-!!    energies are calculated straightforwardly as expectation values 
+!!    energies are calculated straightforwardly as expectation values
 !!    of the Hamiltonian.
 !!    The routine \c sp_properties is then called to obtain the other
 !!    single-particle properties like angular momenta. They are
@@ -411,13 +419,13 @@ CONTAINS
 !!    The energies are protocolled in \c energiesfile and on standard
 !!    output.
 !!  - <b> Step 6: density output:</b> at intervals of \c mprint or in
-!!    the first time step the density printer plot is generated using 
+!!    the first time step the density printer plot is generated using
 !!    \c plot_densities and the binary densities are written onto <tt> *.tdd </tt>
 !!    files using \c write_densities.
 !!  - <b> Step 7: other output: </b> in the proper \c mprint interval
 !!    the single-particle state
 !!    information, and the moments are printed on standard output, using
-!!    also the routine \c moment_print. 
+!!    also the routine \c moment_print.
 !!
 !!  - <b> Step 8: check for final separation: </b> for the twobody case
 !!    it is checked whether the separation found between the two fragments
@@ -425,13 +433,13 @@ CONTAINS
 !!    derivative \c rdot of the separation distance, in which case the
 !!    program complete twobody analysis is done and the wave functions
 !!    are saved; then the job is terminated with an appropriate message.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE tinfo
     REAL(db), DIMENSION(2) :: ecoll     ! storage for collective-flow energy
     INTEGER :: il
     CHARACTER(*),PARAMETER :: &
          header='  #    v**2    Norm     Ekin    Energy &
-         &    Lx      Ly      Lz     Sx     Sy     Sz  '   
+         &    Lx      Ly      Lz     Sx     Sy     Sz  '
     !***********************************************************************
     !     calculates dynamic observables for printout                      *
     !***********************************************************************
@@ -442,26 +450,26 @@ CONTAINS
     ! Step 1
     printnow=mprint>0.AND.MOD(iter,mprint)==0
     ! Step 2: twobody analysis
-    IF(nof/=2) THEN  
+    IF(nof/=2) THEN
       istwobody=.FALSE.
     ELSE
        CALL twobody_analysis(.FALSE.) ! get distance in separated case
     ENDIF
     ! Step 3: moments calculated
-   
+
     CALL moments(L_val,M_val)
     IF(printnow.AND.wflag) THEN
-      !  OPEN(unit=scratch,file=dipolesfile,POSITION='APPEND')  
+      !  OPEN(unit=scratch,file=dipolesfile,POSITION='APPEND')
       !  WRITE(scratch,'(1x,i5,6E14.4)') iter,cmtot,cm(:,2)-cm(:,1)
       !  CLOSE(unit=scratch)
-       OPEN(unit=scratch,file=momentafile, POSITION='APPEND')  
+       OPEN(unit=scratch,file=momentafile, POSITION='APPEND')
        WRITE(scratch,'(1x,f10.2,3g14.6)') time,pcm(:,1)+pcm(:,2)
        CLOSE(unit=scratch)
        CALL moment_shortprint()
        IF(texternal) CALL print_extfield()
     ENDIF
     ! Step 4: single-particle properties
-    IF(printnow) THEN  
+    IF(printnow) THEN
        sp_energy=0.0D0
        sp_norm=0.0D0
        DO nst=1,nstloc
@@ -485,10 +493,10 @@ CONTAINS
                (current(:,:,:,1,iq)**2+current(:,:,:,2,iq)**2&
                +current(:,:,:,3,iq)**2)/rho(:,:,:,iq) )
        ENDDO
-       OPEN(unit=scratch,file=spinfile, POSITION='APPEND')  
-       WRITE(scratch,'(1x,i5,9F10.4)') iter,orbital,spin,total_angmom 
+       OPEN(unit=scratch,file=spinfile, POSITION='APPEND')
+       WRITE(scratch,'(1x,i5,9F10.4)') iter,orbital,spin,total_angmom
        CLOSE(unit=scratch)
-       OPEN(unit=scratch,file=energiesfile,POSITION='APPEND')  
+       OPEN(unit=scratch,file=energiesfile,POSITION='APPEND')
        WRITE(scratch,'(F10.2,2F8.3,2F15.7,3(1PG13.5))') &
             time,pnr,ehf,ehfint,tke,ecoll
        CLOSE(unit=scratch)
@@ -514,7 +522,7 @@ CONTAINS
        WRITE(*,'(/A)') ' Neutron Single Particle States:',header
        DO il=1,nstmax
           IF(il==npmin(2)) THEN
-             WRITE(*,'(/A)') ' Proton Single Particle States:',header  
+             WRITE(*,'(/A)') ' Proton Single Particle States:',header
           END IF
           WRITE(*,'(1X,I3,F8.5,F9.6,F8.3,F10.3,3F8.3,3F7.3)') &
                il,wocc(il),sp_norm(il),sp_kinetic(il), &
@@ -525,19 +533,19 @@ CONTAINS
     DEALLOCATE(ps1)
     ! Step 8: check whether final distance is reached and it is
     ! increasing in the twobody case
-    IF(istwobody.AND.roft>rsep.AND.roft>roft_old) THEN  
+    IF(istwobody.AND.roft>rsep.AND.roft>roft_old) THEN
        CALL twobody_analysis(.TRUE.) ! do complete version
        CALL write_wavefunctions
        CALL write_densities
        IF(wflag) WRITE(*,*) ' Final separation distance reached'
-       STOP ' Final distance reached'  
+       STOP ' Final distance reached'
     ENDIF
     initialcall=.FALSE.
   END SUBROUTINE tinfo
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: resetcm
 !> @brief
-!!This subroutine resets the center-of-mass velocity to zero. 
+!!This subroutine resets the center-of-mass velocity to zero.
 !>
 !> @details
 !!The velocity, or rather the corresponding wave vector, is calculated from
@@ -549,7 +557,7 @@ CONTAINS
 !!\f]
 !!The wave functions are then multiplied by a common plane-wave phase
 !!factor \f$ \exp(-\I\vec k\cdot \vec r) \f$ to give a counter boost.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE resetcm
     INTEGER :: ix,iy,iz,is,nst
     REAL(db) :: akf(3),totmass
@@ -560,7 +568,7 @@ CONTAINS
     END DO
     ! now apply correction to each wavefunction
     DO nst=1,nstloc
-       FORALL(is=1:2,ix=1:nx,iy=1:ny,iz=1:nz)             
+       FORALL(is=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
           psi(ix,iy,iz,is,nst)=&
                psi(ix,iy,iz,is,nst) * EXP( &
                CMPLX(0.D0,akf(1)*x(ix)+akf(2)*y(iy)+akf(3)*z(iz),db))

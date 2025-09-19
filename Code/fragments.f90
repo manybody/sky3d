@@ -1,13 +1,13 @@
 !------------------------------------------------------------------------------
 ! MODULE: Fragments
 !------------------------------------------------------------------------------
-! DESCRIPTION: 
+! DESCRIPTION:
 !> @brief
 !!This module is concerned with setting up the initial condition from
 !!data files containing fragment wave functions, usually obtained in a
-!!previous static calculation. 
+!!previous static calculation.
 !>
-!>@details 
+!>@details
 !!A typical application is the initialization of a heavy-ion reaction.
 !!Beyond that, any number of fragments (limited by the parameter
 !!variable \c mnof) can be put into the grid at prescribed positions
@@ -28,11 +28,13 @@
 
 !------------------------------------------------------------------------------
 MODULE Fragments
-  USE Params
-  USE Grids 
+  USE Params, ONLY: db,mnof,wflag,e2,hbc,pi,scratch,wffile,nof,iter,tdynamic,time, &
+       trestart,tstatic
+  USE Grids, ONLY: x,y,z,nx,ny,nz,dx,dy,dz
   USE Forces, ONLY: f,nucleon_mass
-  USE Levels
-  IMPLICIT NONE 
+  USE Levels, ONLY: npmin, npsi, sp_efluct1, sp_kinetic, sp_norm, sp_parity, sp_energy, &
+       wocc, isospin, psi, nstmax, nprot, nneut, mass_number, charge_number
+  IMPLICIT NONE
   SAVE
   PRIVATE
   LOGICAL :: fix_boost                 !<if this is set to true, the boost
@@ -70,9 +72,9 @@ MODULE Fragments
   !!fragment for each isospin. For initialization of a dynamic
   !!calculation only wave functions with a nonzero occupation are taken
   !!into account.
-  INTEGER  :: fnewnpmin(2,mnof)        !<are the starting indices for each fragment's wave 
+  INTEGER  :: fnewnpmin(2,mnof)        !<are the starting indices for each fragment's wave
   !!functions in the total set of wave functions combining all the fragments.
-  INTEGER  :: fnewnpsi(2,mnof)         !<are the ending indices for each fragment's wave 
+  INTEGER  :: fnewnpsi(2,mnof)         !<are the ending indices for each fragment's wave
   !!functions in the total set of wave functions combining all the fragments.
   INTEGER  :: fnx(mnof)                !<indicate the grid size in x-direction on which
   !!the fragment wave functions are defined.
@@ -81,9 +83,8 @@ MODULE Fragments
   INTEGER  :: fnz(mnof)                !<indicate the grid size in z-direction on which
   !!the fragment wave functions are defined.
   PUBLIC   :: getin_fragments, read_fragments
-  PRIVATE  :: locate,phases
-CONTAINS 
-!---------------------------------------------------------------------------  
+CONTAINS
+!---------------------------------------------------------------------------
 ! DESCRIPTION: getin_fragments
 !> @brief
 !!This subroutine reads the input variables, makes some consistency
@@ -124,8 +125,8 @@ CONTAINS
 !!
 !!At the end the two-body initialization \c twobody_init is called
 !!for the dynamic case with two fragments and <tt> fix_boost=.FALSE.</tt>.
-!!This calculates the \c fboost values from \c ecm and \c b. 
-!--------------------------------------------------------------------------- 
+!!This calculates the \c fboost values from \c ecm and \c b.
+!---------------------------------------------------------------------------
   SUBROUTINE getin_fragments
     INTEGER :: i
     REAL(db) :: fdx,fdy,fdz,fwxyz
@@ -141,9 +142,9 @@ CONTAINS
        fix_boost=.FALSE.
        READ(5,fragments)
     END IF
-    IF(nof/=2.AND..NOT.fix_boost) THEN  
-       IF(wflag) WRITE(*,"(//,a,//)") "Non-fixed boost only for nof=2"  
-       STOP  
+    IF(nof/=2.AND..NOT.fix_boost) THEN
+       IF(wflag) WRITE(*,"(//,a,//)") "Non-fixed boost only for nof=2"
+       STOP
     ENDIF
     IF(wflag) THEN
        IF(fix_boost) THEN
@@ -177,7 +178,7 @@ CONTAINS
                filename(i)
           WRITE(*,"(A,1P,3E12.4)") " Location(x,y,z):  ",fcent(:,i)
           WRITE(*,"(2(A,F9.4))") " Mass number: ",fmass(i), &
-               ' Charge number: ',fcharge(i)   
+               ' Charge number: ',fcharge(i)
           IF(fix_boost) &
                WRITE(*,"(A,1P,3E12.4)") " Boost(x,y,z):     ",fboost(:,i)
        END IF
@@ -208,27 +209,27 @@ CONTAINS
     mass_number=nneut+nprot
     IF(.NOT.fix_boost.AND.nof==2.AND.tdynamic) CALL twobody_init
   END SUBROUTINE getin_fragments
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: read_fragments
 !> @brief
 !!This subroutine prints summary information about which fragment wave
 !!functions occupy which range of indices. Then it does a loop over
-!!fragments to read in their wave functions using 
+!!fragments to read in their wave functions using
 !!\c read_one_fragment, followed by applying the boost to them using
 !!\c boost_fragment.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE read_fragments
     INTEGER :: iff
     IF(wflag) &
          WRITE(*,*) '***** Input of fragment wave functions *****'
-    DO iff=1,nof  
+    DO iff=1,nof
        CALL read_one_fragment(iff)
-       CALL boost_fragment(iff)  
+       CALL boost_fragment(iff)
     ENDDO
     IF(wflag) &
          WRITE(*,*) '***** All fragments loaded and boosted *****'
   END SUBROUTINE read_fragments
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: read_one_fragment
 !> @brief
 !!This subroutine reopens a fragment file
@@ -245,13 +246,13 @@ CONTAINS
 !!this information is printed.
 !!
 !!Once this loop is concluded, the spatial shift is prepared. The shift
-!!is calculated from the difference between the desired position \c fcent 
+!!is calculated from the difference between the desired position \c fcent
 !!with respect to the origin of the new coordinates given by
 !!\c x etc., and the fragment center-of-mass \c fcmtot with
 !!respect to the origin in fragment coordinates \c fx etc.
 !!Subroutine \c phases is used to calculate essentially the shift
 !!phase factor \f$ \exp(-\I\vec k\cdot\Delta\vec r) \f$, which is a product of
-!!phases in each coordinate direction \c akx, \c aky, and \c akz. 
+!!phases in each coordinate direction \c akx, \c aky, and \c akz.
 !!These have an index corresponding to \f$ \vec k \f$ in the Fourier transform.
 !!
 !!Now the index arrays \c fnode and \c flocalindex are read,
@@ -265,7 +266,7 @@ CONTAINS
 !!except for ignoring the input record.
 !!
 !!For the case of multiple files for one fragment (which is recognized
-!!by not all the indices \c fnode being zero, a short subroutine \c locate 
+!!by not all the indices \c fnode being zero, a short subroutine \c locate
 !!is used to position input at the correct location.
 !!
 !!Otherwise the wave function is read from the fragment file using the
@@ -273,14 +274,14 @@ CONTAINS
 !!full new dimension, then it is Fourier transformed, multiplied by the
 !!phase factor, and transformed back. Finally it is inserted into the
 !!total wave function array \c psi, where any zeroes are replaced by
-!!a small number, presently set to \f$ 10^{-20} \f$. 
+!!a small number, presently set to \f$ 10^{-20} \f$.
 !>
 !> @param[in] iff
 !> INTEGER, takes the umber of the fragment which is read in.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE read_one_fragment(iff)
     USE Parallel, ONLY: node,mpi_myproc,localindex
-    USE Fourier
+    USE Fourier, ONLY: pbackward,pforward
     INTEGER,INTENT(IN) :: iff
     LOGICAL :: multifile
     INTEGER :: ipn
@@ -293,8 +294,8 @@ CONTAINS
     INTEGER,DIMENSION(fnstmax(iff)) :: fnode,flocalindex
     OPEN(UNIT=scratch,FILE=filename(iff),STATUS='old',FORM=&
          'unformatted')
-    READ(scratch) 
-    READ(scratch) 
+    READ(scratch)
+    READ(scratch)
     READ(scratch) fx,fy,fz
     ! read the s.p.quantities, reinserting them into the correct positions
     READ(scratch) fwocc,fsp_energy,fsp_parity,fsp_norm,fsp_kinetic,fsp_efluct1
@@ -302,7 +303,7 @@ CONTAINS
     IF(wflag) THEN
        WRITE(*,'(A,I3)') ' ***** S.p. levels for fragment #',iff
        WRITE(*,'(A,3I5,A,2I5)') '   Iso   #new  #old  Occup.     E_sp        &
-            &Parity       Norm       E_kin      E_fluct' 
+            &Parity       Norm       E_kin      E_fluct'
     END IF
     DO iq=1,2
        DO inew=fnewnpmin(iq,iff),fnewnpsi(iq,iff)
@@ -344,7 +345,7 @@ CONTAINS
        DO nst=1,fnumber(iq,iff)
           newnst=fnewnpmin(iq,iff)+nst-1
           oldnst=fnpmin(iq,iff)+nst-1 ! includes empty states
-          IF(node(newnst)==mpi_myproc) THEN           
+          IF(node(newnst)==mpi_myproc) THEN
              ipn=localindex(newnst)
              ! open correct file and position for multifile case
              IF(multifile) CALL locate(fnode(oldnst),flocalindex(oldnst))
@@ -352,12 +353,12 @@ CONTAINS
              READ(scratch) ps1(1:fnx(iff),1:fny(iff),1:fnz(iff),:)
              DO is=1,2
                 CALL dfftw_execute_dft(pforward,ps1(:,:,:,is),ps1(:,:,:,is))
-                FORALL(ix=1:nx,iy=1:ny,iz=1:nz) 
+                FORALL(ix=1:nx,iy=1:ny,iz=1:nz)
                    ps1(ix,iy,iz,is)=ps1(ix,iy,iz,is)*akx(ix)*aky(iy)*akz(iz) &
                         /DBLE(nx*ny*nz)
                 END FORALL
                 CALL dfftw_execute_dft(pbackward,ps1(:,:,:,is),ps1(:,:,:,is))
-                WHERE(ABS(ps1)==0.D0) 
+                WHERE(ABS(ps1)==0.D0)
                    psi(:,:,:,:,ipn)=1.0D-20
                 ELSEWHERE
                    psi(:,:,:,:,ipn)=ps1
@@ -370,7 +371,7 @@ CONTAINS
     ENDDO
     CLOSE(unit=scratch)
   END SUBROUTINE read_one_fragment
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: Routinename
 !> @brief
 !!This has the task to position the file for reading wave functions at
@@ -394,7 +395,7 @@ CONTAINS
 !> INTEGER, takes the number of the file.
 !> @param[in] pos
 !> INTEGER, takes the index of the wave function in this file.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   ! position scratch file in correct location
   SUBROUTINE locate(fileno,pos)
     INTEGER,INTENT(IN) :: fileno,pos
@@ -410,7 +411,7 @@ CONTAINS
        END DO
     END IF
   END SUBROUTINE locate
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: Routinename
 !> @brief
 !!This subroutine calculates the phase factors for a one-dimensional
@@ -428,20 +429,20 @@ CONTAINS
 !> @param[out] a
 !> COMPLEX(db), array, returns the phases.
 !> @param[in] c
-!> REAL(db), takes the shift  
-!--------------------------------------------------------------------------- 
+!> REAL(db), takes the shift
+!---------------------------------------------------------------------------
   PURE SUBROUTINE phases(n,a,c)
-    INTEGER :: n,i,k
+    INTEGER :: i,k
+    INTEGER, intent(in) :: n
     COMPLEX(db),INTENT(OUT) :: a(n)
-    REAL(db) :: c
-    INTENT(IN) :: n,c
+    REAL(db), intent(in) :: c
     DO i=1,n
        k=i-1
        IF(i>(n+1)/2) k=k-n
        a(i)=EXP(CMPLX(0.D0,-2.D0*pi*k*c,db))
     END DO
   END SUBROUTINE phases
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: twobody_init
 !> @brief
 !!The purpose of this subroutine is to calculate the boost values from
@@ -458,7 +459,7 @@ CONTAINS
 !!
 !!The Coulomb energy is calculated assuming two point charges at
 !!distance \c roft and is subtracted from \c ecm to yield the
-!!kinetic energy remaining at this distance, from which the relative 
+!!kinetic energy remaining at this distance, from which the relative
 !!velocity \c vrel_d is calculated. Since the total center
 !!of mass is assumed to be at rest, the velocities of the fragments \c v1
 !!and \c v2 can then be simply obtained. The instantaneous impact parameter
@@ -471,8 +472,8 @@ CONTAINS
 !!of \c fboost as given in the input. Note that these energies are
 !!signed to indicate the direction of motion.
 !!
-!!Both velocities and energies are printed. 
-!--------------------------------------------------------------------------- 
+!!Both velocities and energies are printed.
+!---------------------------------------------------------------------------
   SUBROUTINE twobody_init
     REAL(db) :: vrel,vrel_d,b_d,v1,v2,ec,dix,diz,totmass,sint,cost, &
          xli,xmu,roft
@@ -504,7 +505,7 @@ CONTAINS
        WRITE(*,*) '***** Two-body initialization *****'
        WRITE(*,"(2(A,F12.4),A)") " c. m. Energy:",ecm, &
             ' MeV. Impact parameter b: ',b,' fm'
-       WRITE(*,"(A,F12.4)") " xli/hbar    :",xli  
+       WRITE(*,"(A,F12.4)") " xli/hbar    :",xli
        WRITE(*,*) 'Computed boost velocities in units of c'
        WRITE(*,'(A,I2,3G15.6)') (' Fragment #',i,fboost(:,i),i=1,2)
     END IF
@@ -518,12 +519,12 @@ CONTAINS
        WRITE(*,'(A,I2,3G15.6)') (' Fragment #',i,fboost(:,i),i=1,2)
     END IF
   END SUBROUTINE twobody_init
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: boost_fragment
 !> @brief
 !!This subroutine multiplies the configuration-space wave functions of
 !!fragment no. \c iff by plane-wave factors to give them
-!!translational motion. 
+!!translational motion.
 !>
 !> @details
 !!This is done by calculating the wave number
@@ -539,23 +540,23 @@ CONTAINS
 !!The rest is then straightforward.
 !>
 !> @param[in] iff
-!> INTEGER, takes the number of the fragment to be boosted. 
-!--------------------------------------------------------------------------- 
-  SUBROUTINE boost_fragment(iff)  
+!> INTEGER, takes the number of the fragment to be boosted.
+!---------------------------------------------------------------------------
+  SUBROUTINE boost_fragment(iff)
     USE Parallel, ONLY: node,localindex,mpi_myproc
     INTEGER,INTENT(IN) :: iff
     REAL(db) :: sb(3),tb(3),akf(3)
     INTEGER :: iq,nst,is,ix,iy,iz
-    sb=0.0D0  
-    tb=fboost(:,iff)  
-    WHERE(tb/=0.0D0) 
-       sb=tb/ABS(tb)  
+    sb=0.0D0
+    tb=fboost(:,iff)
+    WHERE(tb/=0.0D0)
+       sb=tb/ABS(tb)
     END WHERE
-    DO iq=1,2  
-       akf=sb*SQRT(1.0D0/f%h2m(iq)*ABS(tb)/fmass(iff))  
+    DO iq=1,2
+       akf=sb*SQRT(1.0D0/f%h2m(iq)*ABS(tb)/fmass(iff))
        DO nst=fnewnpmin(iq,iff),fnewnpsi(iq,iff)
           IF(node(nst)==mpi_myproc) THEN
-             FORALL(is=1:2,ix=1:nx,iy=1:ny,iz=1:nz)             
+             FORALL(is=1:2,ix=1:nx,iy=1:ny,iz=1:nz)
                 psi(ix,iy,iz,is,localindex(nst))=&
                      psi(ix,iy,iz,is,localindex(nst)) * EXP( &
                      CMPLX(0.D0,akf(1)*x(ix)+akf(2)*y(iy)+akf(3)*z(iz),db))
@@ -564,7 +565,7 @@ CONTAINS
        ENDDO
     ENDDO
   END SUBROUTINE boost_fragment
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: errormsg
 !> @brief
 !!Writes out error messages.
@@ -573,7 +574,7 @@ CONTAINS
 !> CHARACTER, array, takes the first message.
 !> @param[in] msg2
 !> CHARACTER, array, takes the second message.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE errormsg(msg1,msg2)
     CHARACTER(*),INTENT(IN) :: msg1,msg2
     IF(wflag) WRITE(*,*) msg1,msg2

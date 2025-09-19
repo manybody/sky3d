@@ -1,7 +1,7 @@
 !------------------------------------------------------------------------------
 ! MODULE: Modulename
 !------------------------------------------------------------------------------
-! DESCRIPTION: 
+! DESCRIPTION:
 !> @brief
 !!Module \c Forces describes the interactions used in the code. The
 !!idea is to produce a library of Skyrme forces that can be called up
@@ -21,14 +21,17 @@
 MODULE Forces
   USE Params, ONLY: db,scratch,wflag, hbc, e2, pi
   IMPLICIT NONE
+  PRIVATE
+  PUBLIC :: h2ma,f,b0,b0p,b1,b1p,b2,b2p,b3,b3p,b4,b4p,slate,nucleon_mass, ipair,p, &
+       read_force
   SAVE
   !> This contains the parameters for pairing:
   TYPE Pairing
      REAL(db) :: v0prot!<the strength of pairing for protons in MeV.
      REAL(db) :: v0neut!<the strength of pairing for neutrons in MeV.
      REAL(db) :: rho0pr!<the density parameter for the density-dependent delta pairing
-     REAL(db) :: mixture!<the parameter x which decides the mix type pairing if set to 0.5 
-                        !! and for x=0 the volume pairing can be recovered and for x = 1 the surface pairing is recovered. 
+     REAL(db) :: mixture!<the parameter x which decides the mix type pairing if set to 0.5
+                        !! and for x=0 the volume pairing can be recovered and for x = 1 the surface pairing is recovered.
 
   END TYPE Pairing
   !> This contains the parameters for the Skyrme force:
@@ -38,9 +41,9 @@ MODULE Forces
      !!exchange term. For <tt> ex=1 </tt> it is included (this is the normal
      !!case), for <tt> ex=0 </tt> not.
      INTEGER :: zpe               !<index for the treatment of the center-of-mass correction
-     REAL(db) :: h2m(2)           !<value of \f$ \frac{\hbar^2}{2m} \f$, separately 
+     REAL(db) :: h2m(2)           !<value of \f$ \frac{\hbar^2}{2m} \f$, separately
      !!for neutrons and protons.
-     !>@name Skyrme parameters. 
+     !>@name Skyrme parameters.
      !>@{
      REAL(db) :: t0,t1,t2,t3,t4
      !>@}
@@ -49,7 +52,7 @@ MODULE Forces
      REAL(db) :: x0,x1,x2,x3,b4p
      !>@}
      REAL(db) :: power            !< exponent in the nonlinear (originally three-body) term.
-     TYPE(Pairing) :: vdi         !< parameter set for the volume-delta pairing case. 
+     TYPE(Pairing) :: vdi         !< parameter set for the volume-delta pairing case.
      TYPE(Pairing) :: dddi        !< parameter set for the density-dependent delta pairing case.
   END TYPE Force
   ! include predefined forces
@@ -59,7 +62,7 @@ MODULE Forces
   !!historical reasons the values are 0: no pairing, 5: VDI pairing, and
   !!6: DDDI pairing. In the input the symbolic names are used so these
   !!numerical values are hidden to the user. For details see the input
-  !!description and module \c Pairs.      
+  !!description and module \c Pairs.
   TYPE(Force) :: f         !< this contains parameters for
   !!the Skyrme force actually used in the present calculation, packed
   !into the derived-type \c Force.
@@ -72,15 +75,15 @@ MODULE Forces
   REAL(db) :: nucleon_mass !<  the mass of the nucleon (average of
   !!neutron and Proton) in MeV calculated from \c h2ma and \c hbc.
   !
-  !>@name these are the coefficients actually used 
+  !>@name these are the coefficients actually used
   !!for the mean-field and single-particle Hamiltonian calculations
-  !!in \c skyrme and \c integ_energy. Note that only \c b4p is also included 
+  !!in \c skyrme and \c integ_energy. Note that only \c b4p is also included
   !!in the Skyrme-force definition; the others are derived from the \c t coefficients.
   !>@{
   REAL(db) :: b0,b0p,b1,b1p,b2,b2p,b3,b3p,b4,b4p,slate
   !>@}
 CONTAINS
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: Routinename
 !> @brief
 !!The purpose of the subroutine is to read the force and pairing
@@ -119,7 +122,7 @@ CONTAINS
 !!Finally the routine calculates the values of \c nucleon_mass and
 !!\c h2ma. It then prints out a description of the force and pairing
 !!parameters.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE read_force
     CHARACTER(8) :: name,pairing
     INTEGER :: ex,zpe
@@ -130,13 +133,14 @@ CONTAINS
     REAL(db) :: v0prot,v0neut,rho0pr,mixture
     INTEGER :: i
     LOGICAL :: predefined
-    LOGICAL :: turnoff_zpe=.FALSE.
+    LOGICAL :: turnoff_zpe
     ! read force definition
     NAMELIST /force/ name,pairing, &
          ex,zpe,h2m,t0,t1,t2,t3,t4,x0,x1,x2,x3,b4p,power, &
          ipair,v0prot,v0neut,rho0pr,mixture,turnoff_zpe
+    turnoff_zpe=.FALSE.
     ! mark force & pairing parameters as undefined
-    h2m=-1.0; v0prot=-1.0; v0neut=-1.0; 
+    h2m=-1.0; v0prot=-1.0; v0neut=-1.0;
     READ(5,force)
     ! seek for force in predefined ones
     predefined=.FALSE.
@@ -168,16 +172,16 @@ CONTAINS
        WRITE(*,*) '***** Zero-point-energy correction turned off'
     END IF
     ! calculate "b" and Slater coefficients
-    b0=f%t0*(1.0D0+0.5D0*f%x0)  
-    b0p=f%t0*(0.5D0+f%x0)  
-    b1=(f%t1+0.5D0*f%x1*f%t1+f%t2+0.5*f%x2*f%t2)/4.0D0  
-    b1p=(f%t1*(0.5D0+f%x1)-f%t2*(0.5D0+f%x2))/4.0D0  
+    b0=f%t0*(1.0D0+0.5D0*f%x0)
+    b0p=f%t0*(0.5D0+f%x0)
+    b1=(f%t1+0.5D0*f%x1*f%t1+f%t2+0.5*f%x2*f%t2)/4.0D0
+    b1p=(f%t1*(0.5D0+f%x1)-f%t2*(0.5D0+f%x2))/4.0D0
     b2=(3.0D0*f%t1*(1.D0+0.5D0*f%x1)-f%t2*(1.D0+0.5D0*f%x2))/8.0D0
     b2p=(3.D0*f%t1*(0.5D0+f%x1)+f%t2*(0.5D0+f%x2))/8.D0
     b3=f%t3*(1.D0+0.5D0*f%x3)/4.D0
-    b3p=f%t3*(0.5D0+f%x3)/4.D0  
-    b4=f%t4/2.D0 
-    b4p=f%b4p  
+    b3p=f%t3*(0.5D0+f%x3)/4.D0
+    b4=f%t4/2.D0
+    b4p=f%b4p
     slate=(3.0D0/pi)**(1.0D0/3.0D0)*e2
     ! now set up pairing: first case of none
     IF(TRIM(pairing)=='NONE') THEN
@@ -210,8 +214,9 @@ CONTAINS
        WRITE(*,"(5(A6,F12.5))") "t0",f%t0,"t1",f%t1,"t2",f%t2,"t3",f%t3,"t4",f%t4
        WRITE(*,"(5(A6,F12.5))") "x0",f%x0,"x1",f%x1,"x2",f%x2,"x3",f%x3,"b4p",f%b4p
        WRITE(*,"(A6,F12.5)") "Power",f%power
-       WRITE(*,"(A,I2)") " Pairing parameters: Option ipair:",ipair  
-       WRITE(*,"(3(A7,F12.5))") "v0prot",p%v0prot,"v0neut",p%v0neut,"rho0pr",p%rho0pr,'MIX',p%mixture
+       WRITE(*,"(A,I2)") " Pairing parameters: Option ipair:",ipair
+       WRITE(*,"(3(A7,F12.5))") "v0prot",p%v0prot,"v0neut",p%v0neut,"rho0pr",p%rho0pr,'MIX',&
+                                p%mixture
     ENDIF
   END SUBROUTINE read_force
 END MODULE Forces

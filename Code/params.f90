@@ -1,20 +1,28 @@
 !------------------------------------------------------------------------------
 ! MODULE: Modulename
 !------------------------------------------------------------------------------
-! DESCRIPTION: 
+! DESCRIPTION:
 !> @brief
 !!This module contains some general parameters critical to controlling
 !!the code and some mathematical and physical constants used everywhere.
 !------------------------------------------------------------------------------
 MODULE Params
   IMPLICIT NONE
+  PRIVATE
+  PUBLIC :: db,scratch,wflag, hbc,e2,pi,tfft, &
+       printnow, diatriacontapolesfile,dipolesfile, &
+       hexadecapolesfile,monopolesfile,octupolesfile,quadrupolesfile, &
+       time,r0, tdynamic,tcoul,trestart,write_isospin,iter,nselect, &
+       scratch2,wffile,writeselect,mnof,nof,tstatic,converfile,mplot, &
+       spinfile,mprint,mrest,extfieldfile,energiesfile,momentafile
+
   !**********************************************************************
   !     data type definition                                            *
   !**********************************************************************
   !>@name General paramters
   !>@{
-  INTEGER,PARAMETER :: db=SELECTED_REAL_KIND(12,100) !< this is a constant 
-  !!determining the precision of real numbers in the code in a portable manner. 
+  INTEGER,PARAMETER :: db=SELECTED_REAL_KIND(12,100) !< this is a constant
+  !!determining the precision of real numbers in the code in a portable manner.
   !!In practice it will usually be <tt> REAL(8) </tt>.
   !
   !**********************************************************************
@@ -34,15 +42,15 @@ MODULE Params
   !>files used by the code. Except for \c wffile, output is produced
   !>for an iteration or a time step at selected intervals.
   !>@{
-  CHARACTER(LEN=80) :: wffile='none'                     !<file to contain 
+  CHARACTER(LEN=80) :: wffile='none'                     !<file to contain
   !!the static single-particle
   !!wave functions plus some additional data. It is also used for
   !!restarting an interrupted calculation and is rewritten regularly
   !!(see variables \c trestart and \c mrest). It can be turned off
   !!completely using the name <tt>'NONE'</tt>.
-  CHARACTER(LEN=80) :: converfile='conver.res'           !<contains convergence 
+  CHARACTER(LEN=80) :: converfile='conver.res'           !<contains convergence
   !!information for the static calculation.
-  CHARACTER(LEN=80) :: monopolesfile='monopoles.res'     !<contains moment 
+  CHARACTER(LEN=80) :: monopolesfile='monopoles.res'     !<contains moment
   !!values of monopole (L=0) type.
   CHARACTER(LEN=80) :: dipolesfile='dipoles.res'         !<contains moment values of dipole (L=1) type.
   CHARACTER(LEN=80) :: quadrupolesfile='quadrupoles.res' !<contains moment values of quadrupole (L=2) type.
@@ -56,7 +64,7 @@ MODULE Params
   CHARACTER(LEN=80) :: momentafile='momenta.res'         !<contains components of the total
   !!momentum.
   CHARACTER(LEN=80) :: spinfile='spin.res'               !<time-dependent total, orbital, and spin
-  !!angular-momentum data as three-dimensional vectors. 
+  !!angular-momentum data as three-dimensional vectors.
   CHARACTER(LEN=80) :: extfieldfile='extfield.res'       !<contains the time-dependence of the
   !!expectation value of the external field. Present only if an
   !!external field for boost or time-dependent excitation is used along with the strength of the boost and the
@@ -118,10 +126,10 @@ MODULE Params
   !>@}
   !>@name Fragment number parameters
   !>@{
-  INTEGER,PARAMETER ::  mnof=4 !<number of fragments for the initialization maximum allowed. 
-  INTEGER :: nof               !<actual number of fragments for the initialization.               
+  INTEGER,PARAMETER ::  mnof=4 !<number of fragments for the initialization maximum allowed.
+  INTEGER :: nof               !<actual number of fragments for the initialization.
   REAL(db) :: r0=1.2D0         !<nuclear radius parameter. The nuclear radius
-  !!\f$ R=r_0A^{1/3} \f$ is used to compute the \f$ \beta \f$ and \f$ \gamma \f$ deformation parameters 
+  !!\f$ R=r_0A^{1/3} \f$ is used to compute the \f$ \beta \f$ and \f$ \gamma \f$ deformation parameters
   !!in subroutine \c moments. Units: fm.
   !>@}
 END MODULE Params

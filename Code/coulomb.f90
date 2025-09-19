@@ -1,20 +1,20 @@
 !------------------------------------------------------------------------------
 ! MODULE: Coulomb
 !------------------------------------------------------------------------------
-! DESCRIPTION: 
+! DESCRIPTION:
 !> @brief
-!!This module offers the subroutine \c poisson, which calculates the Coulomb 
-!!potential from the proton density. The two boundary conditions allowed are 
-!!distinguished by the value of the variable periodic. If it is true, the mesh 
-!!is assumed to be periodic in all three directions and the Poisson equation 
-!!is solved using the \f$\frac{1}{k^2}\f$ Green’s function in momentum space and 
-!!assuming a homogeneous negative background annulling the total charge (jellium 
-!!approximation). Otherwise the boundary condition is for an isolated charge 
-!!distribution. In this case the potential is calculated by the method of 
-!!doubling the grid in all directions with zero density, folding with the 
+!!This module offers the subroutine \c poisson, which calculates the Coulomb
+!!potential from the proton density. The two boundary conditions allowed are
+!!distinguished by the value of the variable periodic. If it is true, the mesh
+!!is assumed to be periodic in all three directions and the Poisson equation
+!!is solved using the \f$\frac{1}{k^2}\f$ Green’s function in momentum space and
+!!assuming a homogeneous negative background annulling the total charge (jellium
+!!approximation). Otherwise the boundary condition is for an isolated charge
+!!distribution. In this case the potential is calculated by the method of
+!!doubling the grid in all directions with zero density, folding with the
 !!1/r-potential in momentum space and then restricting to the physical region.
 !>
-!>@details 
+!>@details
 !!The Coulomb solver follows the ideas of \cite Eas79. We summarize
 !!here the way it is realized in the code without detailed proofs.
 !!
@@ -29,7 +29,7 @@
 !!\\&
 !!  \mbox{coordinate spacing: } {\tt dx}, {\tt dy}, {\tt dz};
 !!\\&
-!!  \mbox{momentum spacing: } 
+!!  \mbox{momentum spacing: }
 !!  {\tt dk}_x
 !!  =
 !!  \frac{2\pi}{{\tt nx}\!\cdot\!{\tt dx}},
@@ -51,7 +51,7 @@
 !!  y_{\nu_y}=(\nu_y\!-\!{\tt ny}){\tt dy}\,,\,
 !!  z_{\nu_z}=(\nu_z\!-\!{\tt nz}){\tt dz}\,;
 !!\\&
-!!  \mbox{momentum spacing: } 
+!!  \mbox{momentum spacing: }
 !!  {\tt dk}_x
 !!  =
 !!  \frac{2\pi}{{2\tt nx}\!\cdot\!{\tt dx}},
@@ -80,19 +80,19 @@
 !!     directions this would lead to a value of \f$ 2.38/\Delta x \f$. Practical
 !!     experimentation, however, showed that the underlying assumption of a
 !!     point charge can be improved by some smeared-out density for nuclear
-!!     applications; a value of \f$ 2.84/\Delta x \f$ was found to be optimal.  
-!!     We use the expression 
+!!     applications; a value of \f$ 2.84/\Delta x \f$ was found to be optimal.
+!!     We use the expression
 !!     \f[ G(0) = \frac{2.84\sqrt{3}}{\sqrt{{\tt dx}^2+{\tt dy}^2+{\tt dz}^2}} \quad.\f]
 !!  -# Prepare the Greens function in \f$ k \f$-space by
 !!     3D fast Fourier transformation (FFT) on the double grid \f$\mathcal{G}_2\f$.
 !!     \f$\tilde{G}(\mathbf{k}_{\bmu})={\tt FFT}\{G(\mathbf{r}_{\bnu})\}\f$.
-!!     The array \f$ \tilde{G}(\mathbf{k}_{\bmu}) \f$ is stored 
+!!     The array \f$ \tilde{G}(\mathbf{k}_{\bmu}) \f$ is stored
 !!     for further continued use.
 !!.
 !!Once properly prepared, the practical steps for computing
-!!the Coulomb field \f$ U_\mathrm{Coul}(\mathbf{r}_{\bnu}) \f$ for a 
+!!the Coulomb field \f$ U_\mathrm{Coul}(\mathbf{r}_{\bnu}) \f$ for a
 !!density \f$\rho(\mathbf{r}_{\bnu})\f$ given on \f$\mathcal{G}_1\f$ are
-!!  -# Extend \f$ \rho_{\bnu} \f$ from  \f$ \mathcal{G}_1 \f$ to  \f$ \mathcal{G}_2 \f$ 
+!!  -# Extend \f$ \rho_{\bnu} \f$ from  \f$ \mathcal{G}_1 \f$ to  \f$ \mathcal{G}_2 \f$
 !!     by zero padding:
 !!     \f[ \rho_2(\mathbf{r}_{\bnu}) = \left\{\begin{array}{lcl} \rho(\mathbf{r}_{\bnu}) &\mbox{ if }& 1\leq \nu_i \leq {\tt n}i \mbox{ for } i\in\{x,y,z\}\\ 0 &\mbox{ else }\end{array}\right. \f]
 !!  -# Fourier transform the density in  \f$ \mathcal{G}_2 \f$:
@@ -111,29 +111,29 @@ MODULE Coulomb
   USE Params, ONLY: db,pi,e2
   USE Grids, ONLY: nx,ny,nz,dx,dy,dz,wxyz,periodic
   USE Densities, ONLY: rho
-  USE ISO_C_BINDING
+  USE ISO_C_BINDING, ONLY: c_long
   IMPLICIT NONE
-  !>@name Dimensions of the grid on which the Fourier transform is calculated. 
-  !>For the periodic case they are identical to the regular dimensions, for the 
+  !>@name Dimensions of the grid on which the Fourier transform is calculated.
+  !>For the periodic case they are identical to the regular dimensions, for the
   !>isolated case they are doubled.
   !>@{
-  INTEGER,PRIVATE :: nx2,ny2,nz2 
+  INTEGER,PRIVATE :: nx2,ny2,nz2
   !>@}
-  !>@name Plans for FFTW complex forward and reverse transforms 
+  !>@name Plans for FFTW complex forward and reverse transforms
   !>with array dimensions depending on the boundary condition.
   !>@{
   INTEGER(C_LONG),PRIVATE,SAVE :: coulplan1,coulplan2
-  !>@}  
+  !>@}
   REAL(db),ALLOCATABLE,SAVE :: wcoul(:,:,:)  !< the Coulomb potential as a three-dimensional array. Units: MeV.
   COMPLEX(db),PRIVATE,ALLOCATABLE,SAVE :: q(:,:,:) !<array for the complex Green’s function (isolated) or array
   !!of 1/r values. Its dimension also depends on the boundary condition.
   PUBLIC :: poisson,coulinit,wcoul
-  PRIVATE :: initiq
+  PRIVATE
 CONTAINS
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: poisson
 !> @brief
-!!This subroutine solves the Poisson equation by the Fourier method. 
+!!This subroutine solves the Poisson equation by the Fourier method.
 !>
 !> @details
 !!For the periodic case, this means to just Fourier transform, multiply by
@@ -147,7 +147,7 @@ CONTAINS
 !!The key to success is not to use simply \f$1/k^2\f$ for the Fourier
 !!transform of \f$1/r\f$, but to compute it on the actual grid the same way
 !!as the densities and potentials are transformed
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
   SUBROUTINE poisson(rhocharge)
     REAL(db),INTENT(IN) :: rhocharge(nx,ny,nz)
     COMPLEX(db),ALLOCATABLE :: rho2(:,:,:)
@@ -169,15 +169,15 @@ CONTAINS
     wcoul=REAL(rho2(1:nx,1:ny,1:nz))/(nx2*ny2*nz2)
     DEALLOCATE(rho2)
   END SUBROUTINE poisson
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: coulinint
 !> @brief
-!!This subroutine does the necessary initialization. 
+!!This subroutine does the necessary initialization.
 !!
 !>
 !> @details
-!!It calculates the dimension for the Fourier transform depending on 
-!!the boundary condition, allocates the necessary arrays and sets up 
+!!It calculates the dimension for the Fourier transform depending on
+!!the boundary condition, allocates the necessary arrays and sets up
 !!the FFTW plans.
 !!Then it composes the array \c q. For the periodic case this
 !!contains the values of the Green's function \f$ 1/k^2 \f$, with zero at the
@@ -185,9 +185,9 @@ CONTAINS
 !!shortest distance $1/r$ from the origin with indices (1,1,1), replaces
 !!the value at the origin and then
 !!Fourier-transforms this to use it for folding the density with the
-!!coordinate-space Green's function.   
+!!coordinate-space Green's function.
 !>
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE coulinit
     INCLUDE 'fftw3.f'
     REAL(db),ALLOCATABLE :: iqx(:),iqy(:),iqz(:)
@@ -223,11 +223,11 @@ CONTAINS
     END IF
     DEALLOCATE(iqx,iqy,iqz)
   END SUBROUTINE coulinit
-!---------------------------------------------------------------------------  
+!---------------------------------------------------------------------------
 ! DESCRIPTION: initiq
 !> @brief
 !!This subroutine calculates the contributions of each Cartesian index
-!!to \f$r^2\f$ and \f$k^{-2}\f$. 
+!!to \f$r^2\f$ and \f$k^{-2}\f$.
 !>
 !> @details
 !!This depends on the boundary condition.  For
@@ -248,7 +248,7 @@ CONTAINS
 !> REAL(db), takes the grid spacing.
 !> @param[out] iq
 !> REAL(db), array, returns the values for \f$r^2\f$ and \f$k^{-2}\f$.
-!--------------------------------------------------------------------------- 
+!---------------------------------------------------------------------------
   SUBROUTINE initiq(n,d,iq)
     INTEGER,INTENT(IN) :: n
     REAL(db),INTENT(IN) :: d

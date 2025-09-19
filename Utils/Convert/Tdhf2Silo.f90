@@ -11,8 +11,8 @@ PROGRAM Tdhf2Silo
   CHARACTER(11) :: filename
   CHARACTER :: stored_name*10
   INTEGER :: is,ret,iret,dims(3),dbid,op,i,ndefs
-  INTEGER err, ierr, types(maxdefs), lnames(maxdefs), ldefs(maxdefs)
-  INTEGER oldlen
+  INTEGER :: err, ierr, types(maxdefs), lnames(maxdefs), ldefs(maxdefs)
+  INTEGER :: oldlen
   ! Initialize some 20 character length strings
   CHARACTER(40) :: names(maxdefs),defs(maxdefs)
   ! Store the length of each string
@@ -33,7 +33,7 @@ PROGRAM Tdhf2Silo
   ! put this into silo file
   !
   ! set dimensions for following zone-centered arrays
-  dims=(/nx,ny,nz/)
+  dims=[nx,ny,nz]
   ! make options to add cycle number and time
   ret=dbmkoptlist(5,op)
   CALL errchk(ret,' could not make optlist')
@@ -107,8 +107,8 @@ PROGRAM Tdhf2Silo
   !*******************************************************************
 CONTAINS
   SUBROUTINE write_density(rname,data)
-    CHARACTER*(*),INTENT(IN) :: rname
-    REAL(8),INTENT(IN) :: data(*)
+    CHARACTER(len=*),INTENT(IN) :: rname
+    REAL(db),INTENT(IN) :: data(:)
     WRITE(*,*) 'Writing ',rname,'  ',LEN(rname)
     ret=dbputqv1(dbid,rname,LEN(rname),'Mesh',4,data,dims,3, &
          DB_F77NULL,0,DB_DOUBLE,DB_NODECENT,op,iret)
