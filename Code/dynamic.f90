@@ -268,27 +268,22 @@ CONTAINS
        current=0.0D0
        sdens=0.0D0
        sodens=0.0D0
-       ! propagate to end of step, accumulate densities
+       ! propagate to end of step; accumulate densities only if no absorbing boundaries
        !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,ps4) SCHEDULE(STATIC) &
        !$OMP REDUCTION(+:rho,tau,current,sdens,sodens)
        DO nst=1,nstloc
           ps4=psi(:,:,:,:,nst) 
           CALL tstep(isospin(globalindex(nst)),mxpact,ps4)
-          CALL add_density(isospin(globalindex(nst)),wocc(globalindex(nst)), &
+          IF(nabsorb == 0) CALL add_density(isospin(globalindex(nst)),wocc(globalindex(nst)), &
                ps4,rho,tau,current,sdens,sodens)  
           psi(:,:,:,:,nst)=ps4
        ENDDO
        !$OMP END PARALLEL DO
        ! sum up over nodes
-       IF(tmpi) CALL collect_densities
-       ! Apply absorbing boundary conditions and recompute densities
+       IF(nabsorb == 0 .AND. tmpi) CALL collect_densities
+       ! Apply absorbing boundary conditions and compute densities from masked wavefunctions
        IF(nabsorb > 0) THEN
           CALL absbc(nabsorb,iter,nt,time)
-          rho=0.0D0
-          tau=0.0D0
-          current=0.0D0
-          sdens=0.0D0
-          sodens=0.0D0
           !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst) SCHEDULE(STATIC) &
           !$OMP REDUCTION(+:rho,tau,current,sdens,sodens)
           DO nst=1,nstloc
