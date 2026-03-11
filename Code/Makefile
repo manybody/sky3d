@@ -11,7 +11,7 @@ ifort ifort_seq ifort_omp          : export COMPILER_SKY = ifort
 #
 # ----- define libraries-----------------------------------------------------
 #
-seq omp debug seq_debug omp_debug ifort ifort_seq ifort_omp : export LIBS_SKY = -lfftw3 -llapack -lopenblas
+seq omp debug seq_debug omp_debug ifort ifort_seq ifort_omp : export LIBS_SKY = -lfftw3 -lscalapack -lopenblas
 mpi mpi_debug mpi-omp                                       : export LIBS_SKY = -lfftw3 -lscalapack -llapack -lopenblas
 apple apple_omp                                             : export LIBS_SKY = -lfftw3 -framework Accelerate -L/opt/homebrew/lib
 #
@@ -60,7 +60,7 @@ clean-exec:
 OBJS   = params.o grids.o levels.o fourier.o forces.o $(PARALLEL_SKY) \
 	inout.o coulomb.o trivial.o densities.o fragments.o twobody.o \
 	energies.o static.o meanfield.o dynamic.o pairs.o moment.o \
-	main3d.o user.o external.o ylm.o
+	main3d.o user.o external.o ylm.o abso_bc.o
 #
 LINKERFLAGS_SKY    =  $(COMPILERFLAGS_SKY)
 #
@@ -124,7 +124,9 @@ static.o : static.f90 params.o densities.o grids.o \
 
 dynamic.o : dynamic.f90 params.o densities.o grids.o trivial.o \
 	levels.o moment.o energies.o inout.o meanfield.o $(PARALLEL_SKY) \
-	twobody.o external.o Makefile
+	twobody.o external.o abso_bc.o Makefile
+
+abso_bc.o : abso_bc.f90 params.o grids.o levels.o densities.o Makefile
 
 main3d.o : main3d.f90 params.o fourier.o forces.o densities.o meanfield.o \
     levels.o grids.o fragments.o $(PARALLEL_SKY) dynamic.o static.o coulomb.o user.o \
