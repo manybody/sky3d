@@ -22,8 +22,10 @@ MODULE DYNAMIC
   USE Inout, ONLY: write_wavefunctions,write_densities, plot_density, &
        sp_properties,start_protocol
   USE External
+  USE abso_bc
   IMPLICIT NONE
   SAVE
+  INTEGER :: nabsorb=0
   INTEGER            :: nt                !< the number of the final time step to be
   !! calculated. In case of a restart this is smaller than the total number of time steps.
   REAL(db)           :: dt                !< the physical time increment in units of fm/c.
@@ -49,7 +51,7 @@ CONTAINS
 !!parameters.
 !--------------------------------------------------------------------------- 
   SUBROUTINE getin_dynamic
-    NAMELIST /dynamic/ nt,dt,mxpact,mrescm,rsep,texternal
+    NAMELIST /dynamic/ nt,dt,mxpact,mrescm,rsep,texternal,nabsorb
     READ(5,dynamic)  
     IF(wflag) THEN
        WRITE(*,*) '***** Parameters for the dynamic calculation *****'
@@ -58,6 +60,7 @@ CONTAINS
        WRITE(*,'(A,F7.2,A)') ' The calculation stops at ',rsep, &
             ' fm fragment separation'
        WRITE(*,'(A,I3)') ' Power limit in operator expansion:',mxpact
+       WRITE(*,'(A,I3)') ' Number of absorbing points:',nabsorb
     ENDIF
     IF(texternal) CALL getin_external
   END SUBROUTINE getin_dynamic
@@ -265,19 +268,31 @@ CONTAINS
        current=0.0D0
        sdens=0.0D0
        sodens=0.0D0
-       ! propagate to end of step, accumulate densities
+       ! propagate to end of step; accumulate densities only if no absorbing boundaries
        !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst,ps4) SCHEDULE(STATIC) &
        !$OMP REDUCTION(+:rho,tau,current,sdens,sodens)
        DO nst=1,nstloc
           ps4=psi(:,:,:,:,nst) 
           CALL tstep(isospin(globalindex(nst)),mxpact,ps4)
-          CALL add_density(isospin(globalindex(nst)),wocc(globalindex(nst)), &
+          IF(nabsorb == 0) CALL add_density(isospin(globalindex(nst)),wocc(globalindex(nst)), &
                ps4,rho,tau,current,sdens,sodens)  
           psi(:,:,:,:,nst)=ps4
        ENDDO
        !$OMP END PARALLEL DO
        ! sum up over nodes
-       IF(tmpi) CALL collect_densities
+       IF(nabsorb == 0 .AND. tmpi) CALL collect_densities
+       ! Apply absorbing boundary conditions and compute densities from masked wavefunctions
+       IF(nabsorb > 0) THEN
+          CALL absbc(nabsorb,iter,nt,time)
+          !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nst) SCHEDULE(STATIC) &
+          !$OMP REDUCTION(+:rho,tau,current,sdens,sodens)
+          DO nst=1,nstloc
+             CALL add_density(isospin(globalindex(nst)),wocc(globalindex(nst)), &
+                  psi(:,:,:,:,nst),rho,tau,current,sdens,sodens)
+          ENDDO
+          !$OMP END PARALLEL DO
+          IF(tmpi) CALL collect_densities
+       END IF
        ! Step 4: eliminate center-of-mass motion if desired
        IF(mrescm/=0) THEN  
           IF(MOD(iter,mrescm)==0) THEN  
